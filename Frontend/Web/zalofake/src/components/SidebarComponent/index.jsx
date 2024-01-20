@@ -7,8 +7,9 @@ import { FaRegSquareCheck } from "react-icons/fa6";
 import { IoSettingsOutline, IoSettingsSharp } from "react-icons/io5";
 import { CiCloudOn } from "react-icons/ci";
 
-function Sidebar({ curentTab, changeTab }) {
-  const [tabSelected, setTabSelected] = useState(curentTab);
+function Sidebar({ changeTab, changeMenu }) {
+  const [tabSelected, setTabSelected] = useState();
+  const [settingClick, setsettingClick] = useState(false);
 
   return (
     <>
@@ -16,8 +17,7 @@ function Sidebar({ curentTab, changeTab }) {
         <div
           className="h-20 w-20 flex justify-center items-center row-span-1"
           onClick={() => {
-            setTabSelected(curentTab == 0 ? 6 : 0);
-            changeTab(curentTab == 0 ? 6 : 0);
+            changeMenu(1);
           }}
         >
           <img src="zalo.svg" alt="avatar" className="w-12 h-12 mt-10" />
@@ -32,6 +32,9 @@ function Sidebar({ curentTab, changeTab }) {
               onClick={() => {
                 setTabSelected(1);
                 changeTab(1);
+                setsettingClick(false);
+
+                changeMenu();
               }}
             >
               {tabSelected == 1 ? (
@@ -48,6 +51,9 @@ function Sidebar({ curentTab, changeTab }) {
               onClick={() => {
                 setTabSelected(2);
                 changeTab(2);
+                setsettingClick(false);
+
+                changeMenu();
               }}
             >
               {tabSelected == 2 ? (
@@ -64,6 +70,9 @@ function Sidebar({ curentTab, changeTab }) {
               onClick={() => {
                 setTabSelected(3);
                 changeTab(3);
+                setsettingClick(false);
+
+                changeMenu();
               }}
             >
               {tabSelected == 3 ? (
@@ -83,6 +92,8 @@ function Sidebar({ curentTab, changeTab }) {
             onClick={() => {
               setTabSelected(4);
               changeTab(4);
+              setsettingClick(false);
+              changeMenu();
             }}
           >
             <CiCloudOn size={28} color="#ffffff" />
@@ -90,14 +101,14 @@ function Sidebar({ curentTab, changeTab }) {
           <div
             className={[
               " h-20 w-20 flex justify-center items-center hover:bg-[#006edc] ",
-              tabSelected == 5 ? " bg-[#006edc] " : " ",
+              settingClick ? " bg-[#006edc] " : " ",
             ]}
             onClick={() => {
-              setTabSelected(curentTab == 5 ? 6 : 5);
-              changeTab(curentTab == 5 ? 6 : 5);
+              setsettingClick(!settingClick);
+              changeMenu(2);
             }}
           >
-            {tabSelected == 5 ? (
+            {settingClick ? (
               <IoSettingsSharp size={28} color="#ffffff" />
             ) : (
               <IoSettingsOutline size={28} color="#ffffff" />
