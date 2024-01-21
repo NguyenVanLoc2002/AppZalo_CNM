@@ -2,14 +2,22 @@ import Sidebar from "../../SidebarComponent";
 import { useState } from "react";
 import MenuComponent from "../../MenuComponent";
 import ModalComponent from "../../ModalComponent/insex";
-import ContactComponent from "../../ContactComponent";
+import ContactComponent from "../../ContactComponents/ContactComponent";
 
 function MainLayout({ isLogin }) {
-  
   const [showModal, setShowModal] = useState(false);
   const [curentTab, setCurentTab] = useState();
   const [currentMenu, setCurrentMenu] = useState();
   const [language, setLanguage] = useState("vi");
+  const [userInfo, setUserInfo] = useState({
+    name: "Nguyễn Văn Tủn",
+    gender: 1,
+    dob: new Date("2002-04-24"),
+    avatar: "public/zalo.svg",
+    background: "public/bg-login.svg",
+    phone: "0123456789",
+
+  });
 
   const showModalProfile = () => {
     setShowModal(!showModal);
@@ -62,7 +70,7 @@ function MainLayout({ isLogin }) {
             </>
           ) : curentTab == 2 ? (
             <>
-              <ContactComponent />
+              <ContactComponent language={language} />
               {currentMenu == 1 ? (
                 <MenuComponent
                   language={language}
@@ -152,8 +160,10 @@ function MainLayout({ isLogin }) {
       </div>
 
       {showModal ? (
-        <ModalComponent showModal={showModalProfile} language={language} />
-      ) : <> </> }
+        <ModalComponent showModal={showModalProfile} language={language} userInfo={userInfo} />
+      ) : (
+        <> </>
+      )}
     </>
   );
 }
