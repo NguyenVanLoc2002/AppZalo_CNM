@@ -13,9 +13,9 @@ function Sidebar({ changeTab, changeMenu }) {
 
   return (
     <>
-      <div className="bg-[#0091ff] h-full w-20 grid grid-rows-12">
+      <div className="bg-[#0091ff] h-full w-[75px] grid grid-rows-12">
         <div
-          className="h-20 w-20 flex justify-center items-center row-span-1"
+          className="h-20 w-[75px] flex justify-center items-center row-span-1"
           onClick={() => {
             changeMenu(1);
           }}
@@ -26,7 +26,7 @@ function Sidebar({ changeTab, changeMenu }) {
           <div className="mt-3">
             <div
               className={[
-                " h-20 w-20 flex justify-center items-center hover:bg-[#006edc] ",
+                " h-20 w-[75px] flex justify-center items-center hover:bg-[#006edc] ",
                 tabSelected == 1 ? " bg-[#006edc] " : " ",
               ]}
               onClick={() => {
@@ -45,7 +45,7 @@ function Sidebar({ changeTab, changeMenu }) {
             </div>
             <div
               className={[
-                " h-20 w-20 flex justify-center items-center hover:bg-[#006edc] ",
+                " h-20 w-[75px] flex justify-center items-center hover:bg-[#006edc] ",
                 tabSelected == 2 ? " bg-[#006edc] " : " ",
               ]}
               onClick={() => {
@@ -64,7 +64,7 @@ function Sidebar({ changeTab, changeMenu }) {
             </div>
             <div
               className={[
-                " h-20 w-20 flex justify-center items-center hover:bg-[#006edc] ",
+                " h-20 w-[75px] flex justify-center items-center hover:bg-[#006edc] ",
                 tabSelected == 3 ? " bg-[#006edc] " : " ",
               ]}
               onClick={() => {
@@ -86,7 +86,7 @@ function Sidebar({ changeTab, changeMenu }) {
         <div className="row-span-2">
           <div
             className={[
-              "h-20 w-20 flex justify-center items-center hover:bg-[#006edc] active:bg-[#006edc]",
+              "h-20 w-[75px] flex justify-center items-center hover:bg-[#006edc] active:bg-[#006edc]",
               tabSelected == 4 ? " bg-[#006edc] " : " ",
             ]}
             onClick={() => {
@@ -100,7 +100,7 @@ function Sidebar({ changeTab, changeMenu }) {
           </div>
           <div
             className={[
-              " h-20 w-20 flex justify-center items-center hover:bg-[#006edc] ",
+              " h-20 w-[75px] flex justify-center items-center hover:bg-[#006edc] ",
               settingClick ? " bg-[#006edc] " : " ",
             ]}
             onClick={() => {
