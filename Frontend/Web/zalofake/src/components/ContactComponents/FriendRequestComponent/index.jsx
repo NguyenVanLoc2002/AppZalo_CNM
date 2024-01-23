@@ -3,7 +3,8 @@ import { faker } from "@faker-js/faker";
 import { LuMailOpen } from "react-icons/lu";
 import { PiChatCircleText } from "react-icons/pi";
 
-function FriendRequestComponent({ language }) {
+function 
+FriendRequestComponent({ language }) {
   const [friendRequests, setFriendRequests] = useState([]);
 
   var newList = [];
