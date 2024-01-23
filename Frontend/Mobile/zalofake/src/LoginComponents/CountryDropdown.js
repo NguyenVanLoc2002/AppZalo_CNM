@@ -9,7 +9,7 @@ const countries = [
 ];
 
 const CountryDropdown = () => {
-    const [selectedCountry, setSelectedCountry] = useState(null);
+    const [selectedCountry, setSelectedCountry] = useState('');
 
     return (
       <View className="relative  text-left w-75">
