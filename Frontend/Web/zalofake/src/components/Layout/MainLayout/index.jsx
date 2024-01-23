@@ -20,7 +20,7 @@ function MainLayout({ isLogin }) {
 
   const showModalProfile = () => {
     setShowModal(!showModal);
-    setCurentTab();
+    setCurrentMenu()
   };
 
   const changeTab = (tab) => {
@@ -37,9 +37,7 @@ function MainLayout({ isLogin }) {
 
   return (
     <>
-      <div
-        className="w-screen h-screen flex"
-      >
+      <div className="w-screen h-screen flex">
         <div className="h-screen">
           <Sidebar
             curentTab={curentTab}
@@ -157,18 +155,17 @@ function MainLayout({ isLogin }) {
               )}
             </>
           )}
+          {showModal ? (
+            <ModalComponent
+              showModal={showModalProfile}
+              language={language}
+              userInfo={userInfo}
+            />
+          ) : (
+            <> </>
+          )}
         </div>
       </div>
-
-      {showModal ? (
-        <ModalComponent
-          showModal={showModalProfile}
-          language={language}
-          userInfo={userInfo}
-        />
-      ) : (
-        <> </>
-      )}
     </>
   );
 }
