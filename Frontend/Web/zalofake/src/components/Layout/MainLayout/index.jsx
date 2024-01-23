@@ -16,7 +16,6 @@ function MainLayout({ isLogin }) {
     avatar: "public/zalo.svg",
     background: "public/bg-login.svg",
     phone: "0123456789",
-
   });
 
   const showModalProfile = () => {
@@ -38,7 +37,9 @@ function MainLayout({ isLogin }) {
 
   return (
     <>
-      <div className="w-screen h-screen flex">
+      <div
+        className="w-screen h-screen flex"
+      >
         <div className="h-screen">
           <Sidebar
             curentTab={curentTab}
@@ -160,7 +161,11 @@ function MainLayout({ isLogin }) {
       </div>
 
       {showModal ? (
-        <ModalComponent showModal={showModalProfile} language={language} userInfo={userInfo} />
+        <ModalComponent
+          showModal={showModalProfile}
+          language={language}
+          userInfo={userInfo}
+        />
       ) : (
         <> </>
       )}
