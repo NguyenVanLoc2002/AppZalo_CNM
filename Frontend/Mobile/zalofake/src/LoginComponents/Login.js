@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, Image, TextInput, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-const CreateAccount1 = ({ navigation }) => {
+const Login = ({ navigation }) => {
 
     const [textPhone, setTextPhone] = useState('');
     const [textPW, setTextPW] = useState('');
@@ -97,4 +97,4 @@ const CreateAccount1 = ({ navigation }) => {
         </View>
     )
 };
-export default CreateAccount1;
+export default Login;
