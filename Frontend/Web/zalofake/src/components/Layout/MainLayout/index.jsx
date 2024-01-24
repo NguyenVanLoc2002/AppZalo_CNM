@@ -3,6 +3,7 @@ import { useState } from "react";
 import MenuComponent from "../../MenuComponent";
 import ModalComponent from "../../ModalComponent/insex";
 import ContactComponent from "../../ContactComponents/ContactComponent";
+import SearchBarComponent from "../../ChatComponents/SearchBarComponent"
 
 function MainLayout({ isLogin }) {
   const [showModal, setShowModal] = useState(false);
@@ -16,7 +17,6 @@ function MainLayout({ isLogin }) {
     avatar: "public/zalo.svg",
     background: "public/bg-login.svg",
     phone: "0123456789",
-
   });
 
   const showModalProfile = () => {
@@ -49,6 +49,8 @@ function MainLayout({ isLogin }) {
         <div className="h-screen w-full relative">
           {curentTab == 1 ? (
             <>
+              <SearchBarComponent language={language} />
+              
               {/* Goi toi cac component tương ung voi tab cho nay ne nha :V  */}
               {currentMenu == 1 ? (
                 <MenuComponent
@@ -160,7 +162,11 @@ function MainLayout({ isLogin }) {
       </div>
 
       {showModal ? (
-        <ModalComponent showModal={showModalProfile} language={language} userInfo={userInfo} />
+        <ModalComponent
+          showModal={showModalProfile}
+          language={language}
+          userInfo={userInfo}
+        />
       ) : (
         <> </>
       )}
