@@ -13,17 +13,17 @@ function Sidebar({ changeTab, changeMenu }) {
 
   return (
     <>
-      <div className="bg-[#0091ff] h-full w-[75px] grid grid-rows-12">
-        <div
-          className="h-20 w-[75px] flex justify-center items-center row-span-1"
-          onClick={() => {
-            changeMenu(1);
-          }}
-        >
-          <img src="zalo.svg" alt="avatar" className="w-12 h-12 mt-10" />
-        </div>
-        <div className="row-span-9">
-          <div className="mt-3">
+      <div className="bg-[#0091ff] h-full flex flex-col items-center justify-between">
+        <div>
+          <div
+            className="h-20 w-[75px] flex justify-center items-center mt-5"
+            onClick={() => {
+              changeMenu(1);
+            }}
+          >
+            <img src="zalo.svg" alt="avatar" className="w-12 h-12" />
+          </div>
+          <div className="invisible md:visible">
             <div
               className={[
                 " h-20 w-[75px] flex justify-center items-center hover:bg-[#006edc] ",
@@ -33,7 +33,6 @@ function Sidebar({ changeTab, changeMenu }) {
                 setTabSelected(1);
                 changeTab(1);
                 setsettingClick(false);
-
                 changeMenu();
               }}
             >
@@ -52,7 +51,6 @@ function Sidebar({ changeTab, changeMenu }) {
                 setTabSelected(2);
                 changeTab(2);
                 setsettingClick(false);
-
                 changeMenu();
               }}
             >
@@ -71,7 +69,6 @@ function Sidebar({ changeTab, changeMenu }) {
                 setTabSelected(3);
                 changeTab(3);
                 setsettingClick(false);
-
                 changeMenu();
               }}
             >
@@ -83,7 +80,7 @@ function Sidebar({ changeTab, changeMenu }) {
             </div>
           </div>
         </div>
-        <div className="row-span-2">
+        <div>
           <div
             className={[
               "h-20 w-[75px] flex justify-center items-center hover:bg-[#006edc] active:bg-[#006edc]",
