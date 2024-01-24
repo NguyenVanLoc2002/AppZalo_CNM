@@ -21,7 +21,7 @@ function MainLayout({ isLogin }) {
 
   const showModalProfile = () => {
     setShowModal(!showModal);
-    setCurentTab();
+    setCurrentMenu()
   };
 
   const changeTab = (tab) => {
@@ -158,15 +158,20 @@ function MainLayout({ isLogin }) {
               )}
             </>
           )}
+          {showModal ? (
+            <ModalComponent
+              showModal={showModalProfile}
+              language={language}
+              userInfo={userInfo}
+            />
+          ) : (
+            <> </>
+          )}
         </div>
       </div>
 
       {showModal ? (
-        <ModalComponent
-          showModal={showModalProfile}
-          language={language}
-          userInfo={userInfo}
-        />
+        <ModalComponent showModal={showModalProfile} language={language} userInfo={userInfo} />
       ) : (
         <> </>
       )}
