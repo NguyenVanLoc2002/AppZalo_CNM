@@ -6,7 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 
 
-const Login = ({navigation}) => {
+const LoginMain = ({navigation}) => {
     return (
         <View className={"flex-1 flex-col justify-evenly bg-white "}>
             <View>
@@ -48,4 +48,4 @@ const Login = ({navigation}) => {
         </View>
     )
 };
-export default Login;
+export default LoginMain;
