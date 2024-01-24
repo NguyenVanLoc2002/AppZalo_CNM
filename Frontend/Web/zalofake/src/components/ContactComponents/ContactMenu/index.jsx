@@ -7,7 +7,7 @@ import { LuMailOpen } from "react-icons/lu";
 import { useState } from "react";
 
 function ContactMenu({ language, changeTab }) {
-  const [tabSelected, setTabSelected] = useState();
+  const [tabSelected, setTabSelected] = useState(0);
   return (
     <>
       <div className="h-[70px] bg-white flex justify-between items-center border-r">
