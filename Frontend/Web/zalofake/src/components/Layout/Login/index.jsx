@@ -40,7 +40,6 @@ function Login() {
               : "text-blue-500 hover:text-blue-400"
           }
           onClick={() => setLangue("en")}
-          sty
         >
           English
         </button>
