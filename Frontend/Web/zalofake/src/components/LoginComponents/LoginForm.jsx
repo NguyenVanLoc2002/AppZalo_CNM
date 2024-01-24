@@ -86,7 +86,6 @@ function LoginForm() {
             )}
           </div>
           <p className="text-red-500 text-xs italic hidden">
-            {/* Sai Mật khẩu. */}
             {langue == "vi" ? "Sai Mật khẩu." : "Wrong password."}
           </p>
           <div>
