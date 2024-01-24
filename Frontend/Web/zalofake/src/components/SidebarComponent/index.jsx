@@ -23,7 +23,7 @@ function Sidebar({ changeTab, changeMenu }) {
           >
             <img src="zalo.svg" alt="avatar" className="w-12 h-12" />
           </div>
-          <div className="invisible md:visible">
+          <div>
             <div
               className={[
                 " h-20 w-[75px] flex justify-center items-center hover:bg-[#006edc] ",
