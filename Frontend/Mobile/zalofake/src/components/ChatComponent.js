@@ -1,6 +1,7 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
+import { View, Text, TextInput } from "react-native";
 
 import ChatList from "./ChatList";
 import Contact from "./Contact";
@@ -35,6 +36,24 @@ const ChatComponent = () => {
           }
           return <Ionicons name={iconName} size={size} color={color} />;
         },
+        headerTitle: () => (
+          <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
+             <Ionicons name="search" size={24} color="white" onPress={() => console.log("Search pressed")} />
+            <TextInput placeholder="Tìm kiếm" style={{ flex: 1, color: "white" , marginLeft:20}} />
+          </View>
+        ),
+        headerRight: () => (
+          <View style={{ flexDirection: "row", marginRight:10 , justifyContent: 'center', alignItems: 'center'}}>
+            <Ionicons name="qr-code" size={24} color="white" onPress={() => console.log("QR pressed")} />
+             <View style={{marginLeft:10}}>
+             <Ionicons name="add" size={35} color="white" onPress={() => console.log("Add friend pressed")} />
+             </View>
+          </View>
+        ),
+        headerStyle: {
+          backgroundColor: "#01A4F6", // Màu nền của header
+        },
+        headerTintColor: "white", // Màu chữ của header
       })}
     >
       <Tab.Screen name="ChatList" component={ChatList} />
