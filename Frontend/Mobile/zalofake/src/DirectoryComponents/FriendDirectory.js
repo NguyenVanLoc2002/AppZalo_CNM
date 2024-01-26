@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, Image, TextInput, Modal } from "react-native";
+import { View, Text, Pressable, Image, TextInput, Modal , ScrollView} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 const listFriend = [
@@ -10,6 +10,7 @@ const FriendDirectory = ({ navigation }) => {
     const [friend, setFriend] = useState('');
 
     return (
+        <ScrollView>
         <View className={"flex-1 bg-slate-200"}>
             <View className={"flex flex-col bg-white"}>
 
@@ -49,7 +50,7 @@ const FriendDirectory = ({ navigation }) => {
                     <View key={index}>
                         <Pressable className={"flex flex-row m-2 justify-between "}>
                             <View className={"flex flex-row"}>
-                                <Image style={{ width: null, height: '50px', aspectRatio: 1 }} className={"rounded-full"} resizeMode='contain' source={require('/assets/meomeo.jpg')} ></Image>
+                               <Image className={" w-[50px] h-[50px] rounded-full"}  source={require('/assets/meomeo.jpg')} ></Image>
                                 <Text className={"flex justify-center items-center text-base font-semibold ml-2"}>{friend}</Text>
                             </View>
                             <View className={"flex flex-row items-center"}>
@@ -94,6 +95,7 @@ const FriendDirectory = ({ navigation }) => {
             </View>
 
         </View>
+        </ScrollView>
     )
 };
 export default FriendDirectory;
