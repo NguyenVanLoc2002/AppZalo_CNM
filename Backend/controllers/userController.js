@@ -4,11 +4,12 @@ const bcrypt = require("bcrypt");
 
 const User = require("../models/User");
 const Media = require("../models/media");
+const mongoose = require("mongoose");
 const saltRounds = 10;
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: "30d",
+    expiresIn: "1d",
   });
 };
 
@@ -42,12 +43,13 @@ exports.loginUser = async (req, res) => {
   try {
     const user = await User.findOne({ phone });
     if (user && (await user.matchPassword(password))) {
-      res.json({
-        _id: user._id,
+      res.cookie("token", generateToken(user._id), {
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000, // 30 days
+      });
+      res.status(200).json({
         name: user.name,
-        email: user.email,
         phone: user.phone,
-        status: user.status,
         token: generateToken(user._id),
       });
     } else {
@@ -91,46 +93,26 @@ exports.sendOTP = async (req, res) => {};
 
 // update user avatar
 
-exports.updateUserAvatar = async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    user.avatar = req.file.id;
-    await user.save();
-    res.json(user);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
-
 // Tạo một middleware để xử lý yêu cầu upload avatar
 exports.uploadAvatar = async (req, res) => {
   // Kiểm tra định dạng hình ảnh
   const file = await req.file;
   console.log(req.file);
   try {
-    if (file?.type !== "image/jpeg" && file?.type !== "image/png") {
-      return res.status(400).send("Định dạng hình ảnh không hợp lệ");
-    }
-
-    // Lưu trữ hình ảnh vào cơ sở dữ liệu
-    const media = new Media({
-      fileName: file.name,
-      contentType: file.type,
+    // Lưu trữ thông tin tệp tin trong MongoDB
+    const newMedia = new Media({
+      _id: new mongoose.Types.ObjectId(),
+      fileName: file.originalname,
+      contentType: file.mimetype,
       data: file.buffer,
     });
 
-    media.save();
 
-    // Cập nhật avatar của người dùng
-    const user = await User.findOne(req.body.phone);
+    const savedMedia = await newMedia.save();
 
-    user.avatar = media._id;
-
-    user.save();
-
-    // Trả về kết quả
-    return res.status(200).send({
-      avatar: media._id,
+    res.json({
+      message: "File uploaded successfully",
+      mediaId: savedMedia._id,
     });
   } catch (error) {
     res.status(400).json({ message: error.message });
