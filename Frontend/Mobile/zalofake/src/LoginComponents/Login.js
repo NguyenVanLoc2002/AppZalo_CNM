@@ -6,6 +6,7 @@ import { View, Text, Pressable, Image } from "react-native";
 
 
 const Login = ({navigation}) => {
+    
     return (
         <View className={"flex-1 flex-col justify-evenly bg-white "}>
             <View>
