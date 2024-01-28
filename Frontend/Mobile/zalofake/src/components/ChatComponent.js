@@ -2,11 +2,11 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 
-import ChatList from "./ChatList";
+import Chat from "./chat/Chat";
 import Contact from "./Contact";
 import Explore from "./Explore";
 import News from "./News";
-import Info from "./Info";
+import FriendProfile from "./friendProfile/FriendProfile";
 
 const Tab = createBottomTabNavigator();
 
@@ -37,11 +37,11 @@ const ChatComponent = () => {
         },
       })}
     >
-      <Tab.Screen name="ChatList" component={ChatList} />
+      <Tab.Screen name="ChatList" component={Chat} />
       <Tab.Screen name="Contact" component={Contact} />
       <Tab.Screen name="Explore" component={Explore} />
       <Tab.Screen name="News" component={News} />
-      <Tab.Screen name="Info" component={Info} />
+      <Tab.Screen name="Info" component={FriendProfile} />
     </Tab.Navigator>
   );
 };
