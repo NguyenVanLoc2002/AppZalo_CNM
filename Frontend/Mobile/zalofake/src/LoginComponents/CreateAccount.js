@@ -8,7 +8,10 @@ const CreateAccount = ({ navigation }) => {
 
     const handleTextChange = (input) => {
         // Kiểm tra nếu input chỉ chứa chữ cái và có độ dài từ 2 đến 40 ký tự bao gồm tiếng việt
-        const isValidInput = /^[a-zA-ZđĐàÀáÁâÂấẤầẦẩẨẫẪậẬắẮằẰẳẲẵẴặẶèÈéÉêÊếẾềỂễỆìÌíÍĩĨịỊòÒóÓôÔốỐồỒổỔỗỖộỘùÙúÚũŨụỤủỦưỨỨừỪửỬữỮựỰỳỲýÝỵỴỷỶỹỸ\s]{2,40}$/.test(input);
+        // const isValidInput = /^[a-zA-ZđĐàÀáÁâÂấẤầẦẩẨẫẪậẬắẮằẰẳẲẵẴặẶèÈéÉêÊếẾềỂễỆìÌíÍĩĨịỊòÒóÓôÔốỐồỒổỔỗỖộỘùÙúÚũŨụỤủỦưỨỨừỪửỬữỮựỰỳỲýÝỵỴỷỶỹỸ\s]{2,40}$/.test(input);
+        const isValidInput = /^([a-zA-Zá-ỹÁ-Ỹ\s]{2,40})$/.test(input);
+        // const isValidInput = /^([\p{L}\s]{2,40})$/.test(input);
+        
         setTextName(input);
         if (isValidInput) {
             setIsValidName(true);
