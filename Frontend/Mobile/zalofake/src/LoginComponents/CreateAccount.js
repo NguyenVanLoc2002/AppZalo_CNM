@@ -3,7 +3,7 @@ import { View, Text, Pressable, Image, TextInput } from "react-native";
 
 
 const CreateAccount = ({ navigation }) => {
-    const [textName, setTextName] = useState();
+    const [textName, setTextName] = useState('');
     const [isValidName, setIsValidName] = useState(false);
 
     const handleTextChange = (input) => {
@@ -29,16 +29,23 @@ const CreateAccount = ({ navigation }) => {
                 <TextInput
                     onChangeText={handleTextChange}
                     value={textName}
-                    style={{ borderBottomColor: '#64D6EA', borderBottomWidth: 2 }} placeholder="Gồm 2-40 kí tự" className={"font-semibold placeholder-gray-400 text-lg focus:outline-none mt-5"}></TextInput>
+                    placeholder="Gồm 2-40 kí tự" className={"font-semibold placeholder-gray-400 text-lg focus:outline-none mt-5 border-b-[#64D6EA] border-b-[2px]"}></TextInput>
                 <Text className={"font-semibold text-blac mt-5"}>Lưu ý khi đặt tên:</Text>
                 <Text className={"font-semibold text-black mt-5"}>Không vi phạm <Pressable><Text className={"font-semibold text-blue-500 p-2"}>Quy định đặt tên trên Zalo</Text></Pressable></Text>
                 <Text className={"font-semibold text-black "}>Nên sử dụng tên thật để giúp bạn bè dễ nhận ra bạn</Text>
             </View>
             <View className={"flex-1 justify-end items-end m-5"}>
-                <Pressable style={{ width: 70, height: 70, justifyContent: "center", alignItems: "center", backgroundColor: isValidName ? '#0091FF' : '#BFD3F8', }} className={"btn rounded-full font-bold text-white"}
-                disabled={!isValidName} onPress={handlePressablePress}>
-                    <View><Image style={{ width: 50, height: 50 }} source={require('/assets/arrow.png')} ></Image>
-                    </View></Pressable>
+                <Pressable   
+                className={
+                  "w-[70px] h-[70px] btn rounded-full font-bold text-white items-center justify-center " +
+                  `${isValidName ? " bg-[#0091FF]" : " bg-[#BFD3F8]"}`
+                }
+                disabled={!isValidName} 
+                onPress={handlePressablePress}>
+                    <View><Image  className={
+                  "w-[50px] h-[50px]" } source={require('/assets/arrow.png')} ></Image> 
+                    </View>
+                    </Pressable>
             </View>
 
         </View>
