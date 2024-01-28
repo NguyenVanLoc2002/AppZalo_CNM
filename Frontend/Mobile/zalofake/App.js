@@ -71,7 +71,7 @@ export default function App() {
       {/* 6 Screen Login */}
 
       <Stack.Navigator initialRouteName="LoginMain">
-        <Stack.Screen name="LoginMain" component={LoginMain} options={{ headerShown: false }} />
+        <Stack.Screen name="LoginMain" component={CreateAccount} options={{ headerShown: false }} />
         <Stack.Screen name="CreateAccount" component={CreateAccount} options={{
           headerStyle: {
             backgroundColor: '#0091FF',
