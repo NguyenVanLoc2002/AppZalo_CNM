@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, Image, TextInput, Modal } from "react-native";
-import { CheckBox } from 'react-native-elements';
-import CountryDropdown from './CountryDropdown'
+
 
 
 const EnterAuthCode = () => {
@@ -23,9 +22,9 @@ const EnterAuthCode = () => {
             <TextInput className="mr-3 border-b-2 border-gray-300" style={{ width: 30 }}></TextInput>
             <TextInput className="mr-3 border-b-2 border-gray-300" style={{ width: 30 }}></TextInput>
           </View>
-          <View className="flex flex-row justify-center"><Text className={"font-bold text-gray-400 "}>Gửi lại mã <Text className={"font-bold text-sky-300 "}>00:57</Text></Text></View>
+          <View className="flex flex-row justify-center"><Text className={"font-bold text-gray-400 "}>Gửi lại mã <Text className={"font-bold text-[#0091FF] "}>00:57</Text></Text></View>
           <View className={"flex justify-center items-center m-5"}>
-            <Pressable style={{ width: 120, height: 40, justifyContent: "center", alignItems: "center", backgroundColor: "gray" }} className={"btn rounded-full  text-white"}
+            <Pressable className={"btn rounded-full  text-white w-[120px] h-[50px] justify-center items-center bg-gray-400"}
             ><Text className={" text-white"}>Tiếp tục</Text>
             </Pressable>
           </View>
