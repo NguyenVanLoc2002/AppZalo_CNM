@@ -2,7 +2,7 @@ import { MdPhoneIphone } from "react-icons/md";
 import { FaLock } from "react-icons/fa";
 import { IoEyeOff, IoEye } from "react-icons/io5";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useOutletContext } from "react-router-dom";
 
 function LoginForm() {
@@ -11,8 +11,25 @@ function LoginForm() {
   const [showPass, setShowPass] = useState(false);
   const langue = useOutletContext();
   const [isLogin, setIsLogin] = useState(false);
-  
+  const [phoneId, setPhoneId] = useState([]);
 
+  useEffect(() => {
+    const getPhoneIdCountry = async () => {
+      const res = await fetch("https://restcountries.com/v3.1/region/asia");
+      const data = await res.json();
+      data.map((item) => {
+        setPhoneId((phoneId) => [
+          //check if phoneId already exist
+          ...phoneId.filter((phone) => phone.id !== item.cca2),
+          {
+            id: item.cca2,
+            phoneId: item.idd.root + item.idd.suffixes?.[0],
+          },
+        ]);
+      });
+    };
+    getPhoneIdCountry();
+  }, []);
 
   const handleLogin = () => {
     window.location.href = "/chat";
@@ -37,12 +54,15 @@ function LoginForm() {
               <MdPhoneIphone size={16} color="#555555" />
             </span>
             <select className="select focus:border-none focus:outline-none">
-              <option defaultValue={""}>+84</option>
-              <option>+1</option>
-              <option>+2</option>
-              <option>+3</option>
-              <option>+4</option>
-              <option>+5</option>
+              {phoneId.map((item) => (
+                <option
+                  value={item.phoneId}
+                  key={item.id}
+                  className="select focus:border-none focus:outline-none"
+                >
+                    {item.id + item.phoneId}
+                </option>
+              ))}
             </select>
             <input
               className="rounded w-full py-1 px-3 border-none
