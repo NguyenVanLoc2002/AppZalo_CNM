@@ -8,7 +8,7 @@ const CreateAccount1 = ({ navigation }) => {
     const [isCheckedUse, setIsCheckedUse] = useState(false);
     const [isCheckedInter, setIsCheckedInter] = useState(false);
     const [isModalVisible, setModalVisible] = useState(false);
-    const [textPhone, setTextPhone] = useState();
+    const [textPhone, setTextPhone] = useState('');
     const [isValidPhone, setIsValidPhone] = useState(false);
 
     const toggleModal = () => {
@@ -47,7 +47,7 @@ const CreateAccount1 = ({ navigation }) => {
     return (
         <View className={"flex-1  bg-white"}>
             <View className={"bg-gray-200"}><Text className={"font-bold text-black-400 p-2 text-center"}>Nhập số điện thoại của bạn để tạo tài khoản mới</Text></View>
-            <View className={"flex flex-row m-5"} style={{ borderBottomColor: '#64D6EA', borderBottomWidth: 2 }}>
+            <View className={"flex flex-row m-5 border-b-[#64D6EA] border-b-[2px]"} >
                 <CountryDropdown />
                 <TextInput
                     onChangeText={handleTextChange}
@@ -83,10 +83,13 @@ const CreateAccount1 = ({ navigation }) => {
 
             </View>
             <View className={"flex-1 justify-end items-end m-5"}>
-                <Pressable style={{ width: 70, height: 70, justifyContent: "center", alignItems: "center", backgroundColor: (isValidPhone && isCheckedInter && isCheckedUse) ? '#0091FF' : '#BFD3F8', }} className={"btn rounded-full font-bold text-white"}
+                <Pressable
+                    className={
+                        "w-[70px] h-[70px] btn rounded-full font-bold text-white items-center justify-center " +
+                        `${!isValidPhone || !isCheckedInter || !isCheckedUse ? " bg-[#BFD3F8]" : " bg-[#0091FF]"}`}
                     disabled={!isValidPhone || !isCheckedInter || !isCheckedUse} onPress={handlePressablePress}
                 >
-                    <View><Image style={{ width: 50, height: 50 }} source={require('/assets/arrow.png')} ></Image>
+                    <View><Image className={"w-[50px] h-[50px]"} source={require('/assets/arrow.png')} ></Image>
                     </View></Pressable>
             </View>
             <Modal
@@ -96,7 +99,7 @@ const CreateAccount1 = ({ navigation }) => {
                 onRequestClose={toggleModal}>
                 <View className={'flex-1 justify-center items-center bg-black bg-opacity-50'}>
                     <View className={"bg-white w-60"}>
-                        <View style={{ borderBottomColor: 'gray', borderBottomWidth: 1 }} >
+                        <View className={"border-b-gray-400 border-b-[1px]"}>
                             <Text className={"font-bold text-black-400 text-left m-3"}>Xác nhận số điện thoại (+84){textPhone} ?</Text>
                         </View>
                         <View>
