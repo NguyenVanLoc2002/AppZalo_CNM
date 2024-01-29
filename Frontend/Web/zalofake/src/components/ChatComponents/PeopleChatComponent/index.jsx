@@ -1,26 +1,22 @@
 import { useState } from "react";
-import { AiFillLike } from "react-icons/ai";
+import { AiFillLike, AiOutlineUsergroupAdd } from "react-icons/ai";
 import { BiScreenshot, BiSmile } from "react-icons/bi";
 import { BsThreeDots } from "react-icons/bs";
-import {
-  FaAddressCard,
-  FaCaretDown,
-  FaPhoneAlt,
-  FaVideo,
-} from "react-icons/fa";
+import { FaAddressCard, FaCaretDown, FaVideo } from "react-icons/fa";
 import { FiCheckSquare } from "react-icons/fi";
 import { IoIosLink } from "react-icons/io";
 import { IoImageOutline } from "react-icons/io5";
-import { LuSticker } from "react-icons/lu";
-import { MdFormatColorText } from "react-icons/md";
+import { LuPencilLine, LuSticker } from "react-icons/lu";
+import { MdFormatColorText, MdPhone } from "react-icons/md";
 import {
+  PiBellRingingThin,
   PiDesktopDuotone,
   PiMagnifyingGlass,
   PiTagSimpleLight,
 } from "react-icons/pi";
 import { RiBatteryChargeLine } from "react-icons/ri";
-import { MdPhone } from "react-icons/md";
 import { TfiAlarmClock } from "react-icons/tfi";
+import { TiPinOutline } from "react-icons/ti";
 
 function PeopleChatComponent({ language }) {
   const [content, setContent] = useState("");
@@ -148,10 +144,42 @@ function PeopleChatComponent({ language }) {
       </div>
       <div className="h-screen w-full bg-gray w-3/12">
         <div className="h-[70px] bg-white flex justify-center items-center border-b">
-            <p className="text-lg font-medium">Thông tin hội thoại</p>
+          <p className="text-lg font-medium">Thông tin hội thoại</p>
         </div>
-        <div  className="h-[calc(100%-70px)] items-center  overflow-y-auto">
-
+        <div className="h-[calc(100%-70px)] items-center  overflow-y-auto">
+          <div className="h-[200px] bg-white items-center flex-col">
+            <div className="flex justify-center pt-2">
+              <img src="zalo.svg" alt="avatar" />
+            </div>
+            <div className="flex justify-center pt-2">
+              <p className="text-lg font-semibold">Le Nguyen Sinh</p>
+              <div className="flex items-center ml-2 rounded-full bg-gray-200 p-1 hover:bg-gray-400">
+                <button>
+                  <LuPencilLine size={20} />
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center justify-between pt-2">
+              <div className="flex-col items-center justify-center">
+                <button className="flex items-center ml-2 rounded-full bg-gray-200 p-1 hover:bg-gray-400">
+                  <PiBellRingingThin size={22} />
+                </button>
+                <p className="text-pretty flex items-center ">Tắt thông báo</p>
+              </div>
+              <div className="flex-col items-center ">
+                <button className="flex items-center ml-2 rounded-full bg-gray-200 p-1 hover:bg-gray-400">
+                  <TiPinOutline size={22} />
+                </button>
+                <p className="text-pretty  ">Ghim hội thoại </p>
+              </div>
+              <div className="flex-col items-center">
+                <button className="flex items-center ml-2 rounded-full bg-gray-200 p-1 hover:bg-gray-400">
+                  <AiOutlineUsergroupAdd size={22} />
+                </button>
+                <p className="text-balance ">Tạo nhóm trò truyện</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </>
