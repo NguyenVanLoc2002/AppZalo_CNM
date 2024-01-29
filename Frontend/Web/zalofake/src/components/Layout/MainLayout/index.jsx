@@ -3,7 +3,7 @@ import { useState } from "react";
 import MenuComponent from "../../MenuComponent";
 import ModalComponent from "../../ModalComponent/insex";
 import ContactComponent from "../../ContactComponents/ContactComponent";
-import SearchBarComponent from "../../ChatComponents/SearchBarComponent"
+import ChatComponents from "../../ChatComponents/ChatComponent";
 
 function MainLayout({ isLogin }) {
   const [showModal, setShowModal] = useState(false);
@@ -49,7 +49,7 @@ function MainLayout({ isLogin }) {
         <div className="h-screen w-full relative">
           {curentTab == 1 ? (
             <>
-              <SearchBarComponent language={language} />
+              <ChatComponents language={language} />
               
               {/* Goi toi cac component tương ung voi tab cho nay ne nha :V  */}
               {currentMenu == 1 ? (
