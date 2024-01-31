@@ -1,9 +1,12 @@
 import { MdPhoneIphone } from "react-icons/md";
 import { FaLock } from "react-icons/fa";
 import { IoEyeOff, IoEye } from "react-icons/io5";
+import { IoMdArrowDropdown } from "react-icons/io";
 
 import { useState, useEffect } from "react";
 import { Link, useOutletContext } from "react-router-dom";
+
+import { codes } from "country-calling-code";
 
 function LoginForm() {
   const [phone, setPhone] = useState("");
@@ -11,24 +14,27 @@ function LoginForm() {
   const [showPass, setShowPass] = useState(false);
   const langue = useOutletContext();
   const [isLogin, setIsLogin] = useState(false);
+  const [code, setCode] = useState("+84");
+
   const [phoneId, setPhoneId] = useState([]);
 
   useEffect(() => {
-    const getPhoneIdCountry = async () => {
-      const res = await fetch("https://restcountries.com/v3.1/region/asia");
+    const getPhoneId = async () => {
+      const res = await fetch("https://restcountries.com/v3.1/all");
       const data = await res.json();
       data.map((item) => {
         setPhoneId((phoneId) => [
-          //check if phoneId already exist
           ...phoneId.filter((phone) => phone.id !== item.cca2),
           {
             id: item.cca2,
-            phoneId: item.idd.root + item.idd.suffixes?.[0],
+            name: item.name.common,
+            flag: item.flags.png,
+            phone: item.idd.root + item.idd.suffixes?.[0],
           },
         ]);
       });
     };
-    getPhoneIdCountry();
+    getPhoneId();
   }, []);
 
   const handleLogin = () => {
@@ -36,11 +42,17 @@ function LoginForm() {
     setIsLogin(true);
     Link.contextType = isLogin;
   };
+
+  const selectedCode = (item) => {
+    //close dropdown
+    document.querySelector(".dropdown").removeAttribute("open");
+    setCode(item.phone);
+  };
   return (
     <>
-      <div className="w-[400px] text-sm">
+      <div className="w-[400px] text-sm h-full">
         <div className="w-full p-1 bg-white flex justify-around">
-          <p className="text-center text-sm uppercase py-3 text-gray-400">
+          <p className="text-center text-sm uppercase py-3 text-gray-400 truncate">
             {langue == "vi" ? "Với số Mã QR" : "With QR code"}
           </p>
           <p className="text-center text-sm font-bold uppercase py-3 mb-[-5px] border-b border-black">
@@ -53,17 +65,42 @@ function LoginForm() {
             <span>
               <MdPhoneIphone size={16} color="#555555" />
             </span>
-            <select className="select focus:border-none focus:outline-none">
-              {phoneId.map((item) => (
-                <option
-                  value={item.phoneId}
-                  key={item.id}
-                  className="select focus:border-none focus:outline-none"
-                >
-                    {item.id + item.phoneId}
-                </option>
-              ))}
-            </select>
+            <details className="dropdown mx-3">
+              <summary
+                tabIndex={0}
+                role="button"
+                className="flex items-center justify-between"
+              >
+                {code}
+                <IoMdArrowDropdown size={16} color="#555555" className="ml-3" />
+              </summary>
+              <ul
+                tabIndex={0}
+                className="dropdown-content z-50 absolute left-0 mt-2 py-1 w-72 bg-white border border-gray-200 rounded-md overflow-y-auto max-h-96"
+              >
+                {phoneId
+                  //sort by name country alphabet
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((item) => (
+                    <li
+                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer w-full my-2 z-50"
+                      key={item.id}
+                      onClick={() => selectedCode(item)}
+                    >
+                      <img
+                        src={item.flag}
+                        alt={item.name}
+                        className="w-6 h-4 mr-2 inline-block"
+                      />
+                      <span>{item.name}</span>
+                      <span className="text-gray-400 text-sm">
+                        {item.phone}
+                      </span>
+                    </li>
+                  ))}
+              </ul>
+            </details>
+
             <input
               className="rounded w-full py-1 px-3 border-none
                 text-gray-700 focus:outline-none focus:shadow-outline"
