@@ -1,5 +1,5 @@
 import React from "react";
-import { createMaterialTopTabNavigator  } from "@react-navigation/material-top-tabs";
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { Ionicons } from "@expo/vector-icons";
 
 import FriendDirectory from "./FriendDirectory";
@@ -10,19 +10,7 @@ const Tab = createMaterialTopTabNavigator();
 
 const DirectoryComponents = () => {
   return (
-    
-    <Tab.Navigator
-      initialRouteName="Bạn bè"
-      tabBarPosition="top"
-      // screenOptions={({ route }) => ({
-      //   tabBarIcon: ({ focused, color, size }) => {
-      //     if (route.name === "Bạn bè") { 
-      //     } else if (route.name === "Nhóm") { 
-      //     } else if (route.name === "QA") {
-      //     } 
-      //   },
-      // })}
-    >
+    <Tab.Navigator initialRouteName="Bạn bè" tabBarPosition="top">
       <Tab.Screen name="Bạn bè" component={FriendDirectory} />
       <Tab.Screen name="Nhóm" component={GroupDirectory} />
       <Tab.Screen name="QA" component={QA} />
