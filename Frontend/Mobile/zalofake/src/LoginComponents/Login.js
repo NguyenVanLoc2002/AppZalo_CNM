@@ -1,100 +1,187 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, Image, TextInput, Modal } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  Image,
+  TextInput,
+  StyleSheet,
+} from "react-native";
 
 const Login = ({ navigation }) => {
+  const [textPhone, setTextPhone] = useState("");
+  const [textPW, setTextPW] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
+  const [isValid, setIsValid] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-    const [textPhone, setTextPhone] = useState('');
-    const [textPW, setTextPW] = useState('');
-    const [isFocused, setIsFocused] = useState(false);
-    const [isValid, setIsValid] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
+  const toggleShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
 
-    const toggleShowPassword = () => {
-        setShowPassword(!showPassword);
-    };
+  const handleFocus = () => {
+    setIsFocused(true);
+  };
 
+  const handleBlur = () => {
+    setIsFocused(false);
+  };
 
-    const handleFocus = () => {
-        setIsFocused(true);
-    };
+  const handleTextChange = (input) => {
+    setTextPhone(input);
+  };
 
-    const handleBlur = () => {
-        setIsFocused(false);
-    };
+  const handleTextPWChange = (input) => {
+    setTextPW(input);
+  };
 
-    const handleTextChange = (input) => {
-        setTextPhone(input);
-    };
-    const handleTextPWChange = (input) => {
-        setTextPW(input);
-    };
+  useEffect(() => {
+    if (textPhone.length > 0 && textPW.length > 0) {
+      setIsValid(true);
+    } else {
+      setIsValid(false);
+    }
+  }, [textPhone, textPW]);
 
-    useEffect(() => {
-        if (textPhone.length > 0 && textPW.length > 0) {
-            setIsValid(true);
-        } else {
-            setIsValid(false);
-        }
-
-    }, [textPhone, textPW]);
-
-
-    return (
-        <View className={"flex-1 justify-between bg-white"}>
-            <View>
-                <View className={"bg-gray-200"}><Text className={"font-bold text-black-400 p-2 text-center"}>Vui lòng nhập số điện thoại và mật khẩu để đăng nhập</Text></View>
-                <View className={"flex flex-row m-5 "} >
-                    <TextInput
-                        id='phone'
-                        onChangeText={handleTextChange}
-                        value={textPhone}
-                        placeholder="Số điện thoại" className={"w-[100%] pl-3 font-semibold placeholder-gray-400 text-base border-b-gray-300 focus:border-b-[#64D6EA] border-b-[2px] focus:outline-none"}></TextInput>
-                </View>
-                <View className={"flex flex-row justify-between ml-5 mr-5 border-b-[2px] " + `${!isFocused ? "border-b-gray-300" : " border-b-[#64D6EA]"}`}>
-                    <TextInput
-                        id='pw'
-                        secureTextEntry={!showPassword}
-                        onChangeText={handleTextPWChange}
-                        value={textPW}
-                        onFocus={handleFocus}
-                        onBlur={handleBlur}
-                        placeholder="Mật khẩu" className={"pl-3  font-semibold placeholder-gray-400 text-base focus:outline-none "}></TextInput>
-                    <View >
-                        <Pressable className={"flex "}
-                            onPress={toggleShowPassword}>
-                            {showPassword ? (
-                                <Text className={"font-semibold text-base text-gray-400"}>ẨN</Text>
-                            ) : (
-                                <Text className={"font-semibold text-base text-gray-400"}>HIỆN</Text>
-                            )}
-                        </Pressable>
-                    </View>
-                </View>
-                <Pressable className={"m-5"}>
-                    <Text className={"font-bold text-[#0091FF] text-base"}>Lấy lại mật khẩu </Text>
-                </Pressable>
-            </View>
-            <View className="flex flex-row justify-between">
-                <Text className={"font-bold text-gray-400 text-base mt-5"}>Câu hỏi thường gặp<Text className={"text-lg"}>{'\u003E'}</Text></Text>
-                <View className={"mb-5"}>
-                    <Pressable
-                        className={
-                            "w-[70px] h-[70px] btn rounded-full font-bold text-white items-center justify-center "
-                            + `${isValid ? " bg-[#0091FF]" : " bg-[#BFD3F8]"}`
-                        }
-                        disabled={!isValid}
-                    >
-                        <View><Image className={
-                            "w-[50px] h-[50px]"} source={require('/assets/arrow.png')} ></Image>
-                        </View>
-                    </Pressable>
-                </View>
-
-            </View>
-
-
-        </View>
-    )
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>
+          Vui lòng nhập số điện thoại và mật khẩu để đăng nhập
+        </Text>
+      </View>
+      <View style={styles.inputContainer}>
+        <TextInput
+          id="phone"
+          onChangeText={handleTextChange}
+          value={textPhone}
+          placeholder="Số điện thoại"
+          placeholderTextColor={"gray"}
+          style={styles.input}
+        />
+      </View>
+      <View
+        style={[
+          styles.inputContainer,
+          { borderBottomColor: isFocused ? "#64D6EA" : "gray" },
+        ]}
+      >
+        <TextInput
+          id="pw"
+          secureTextEntry={!showPassword}
+          onChangeText={handleTextPWChange}
+          value={textPW}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          placeholder="Mật khẩu"
+          placeholderTextColor={"gray"}
+          style={styles.input}
+        />
+        <Pressable onPress={toggleShowPassword} style={styles.showHideButton}>
+          <Text style={styles.showHide}>{showPassword ? "Ẩn" : "Hiện"}</Text>
+        </Pressable>
+      </View>
+      <Pressable style={styles.forgotPassword}>
+        <Text style={styles.forgotPasswordText}>Lấy lại mật khẩu</Text>
+      </Pressable>
+      <View style={styles.bottomContainer}>
+        <Pressable style={styles.faqButton}>
+          <Text style={styles.faq}>Câu hỏi thường gặp</Text>
+        </Pressable>
+        <Pressable
+          style={[
+            styles.button,
+            { backgroundColor: isValid ? "#0091FF" : "#BFD3F8" },
+          ]}
+          disabled={!isValid}
+          onPress={() => navigation.navigate("ChatComponent")}
+        >
+          <Image
+            style={styles.buttonImage}
+            source={require("/assets/arrow.png")}
+          />
+        </Pressable>
+      </View>
+    </View>
+  );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "white",
+    paddingHorizontal: 10,
+  },
+  header: {
+    backgroundColor: "#E5E7EB",
+    paddingVertical: 10,
+    marginBottom: 10,
+    opacity: 0.5,
+  },
+  headerText: {
+    fontWeight: "bold",
+    color: "black",
+    textAlign: "center",
+  },
+  inputContainer: {
+    marginVertical: 10,
+    outlineStyle: "none",
+  },
+  input: {
+    padding: 10,
+    fontWeight: "500",
+    fontSize: 16,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "gray",
+  },
+  showHideButton: {
+    position: "absolute",
+    right: 10,
+    bottom: 10,
+  },
+  showHide: {
+    fontWeight: "bold",
+    fontSize: 16,
+    color: "gray",
+  },
+  forgotPassword: {
+    alignSelf: "flex-start",
+    marginBottom: 10,
+  },
+  forgotPasswordText: {
+    fontWeight: "bold",
+    fontSize: 16,
+    color: "#0091FF",
+  },
+  bottomContainer: {
+    position: "absolute",
+    bottom: 20,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 10,
+  },
+  faqButton: {
+    flex: 1,
+  },
+  faq: {
+    fontWeight: "bold",
+    color: "gray",
+    fontSize: 16,
+  },
+  button: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  buttonImage: {
+    width: 50,
+    height: 50,
+  },
+});
+
 export default Login;
