@@ -10,6 +10,8 @@ function ListChatComponent({ language }) {
   const [valueSearch, setValueSearch] = useState("");
   const [isHovered, setIsHovered] = useState(false);
   const [friendList, setFriendList] = useState([]);
+  const [activeTab, setActiveTab] = useState("all");
+  const [showUnread, setShowUnread] = useState(false);
 
   var newFriendList = [];
 
@@ -19,10 +21,25 @@ function ListChatComponent({ language }) {
         id: faker.string.uuid(),
         name: faker.internet.userName(),
         avatar: faker.image.avatar(),
+        unread: faker.datatype.boolean(),
       });
     }
     setFriendList(newFriendList);
   }, []);
+
+  const changeTab = (tab) => {
+    setActiveTab(tab);
+    if (tab === "all") {
+      setFriendList(friendList);
+      setShowUnread(false);
+     
+    } else if (tab === "unread") {
+      const listFriendUnread = friendList.filter((friend) => friend.unread);
+      setFriendList(listFriendUnread);
+      setShowUnread(true);
+     
+    }
+  };
 
   return (
     <>
@@ -47,8 +64,26 @@ function ListChatComponent({ language }) {
         </div>
         <div className="flex items-center px-5 mt-1 pb-2 text-sm">
           <div className="flex items-center justify-evenly">
-            <p>Tất cả</p>
-            <p className="ml-10">Chưa đọc</p>
+            <button
+              className={`focus:outline-none ${
+                activeTab === "all"
+                  ? "text-blue-500 font-semibold underline underline-offset-8"
+                  : "font-semibold text-gray-500"
+              }`}
+              onClick={() => changeTab("all")}
+            >
+              <p>Tất cả</p>
+            </button>
+            <button
+              className={`focus:outline-none ${
+                activeTab === "unread"
+                  ? "text-blue-500 font-semibold underline underline-offset-8"
+                  : "font-semibold text-gray-500"
+              }`}
+              onClick={() => changeTab("unread")}
+            >
+              <p className="ml-10">Chưa đọc</p>
+            </button>
           </div>
           <div className="flex items-center justify-evenly ml-auto">
             <div className="flex items-center ">
@@ -102,6 +137,7 @@ function ListChatComponent({ language }) {
           {friendList.map((friend) => (
             // eslint-disable-next-line react/jsx-key
             <div
+              key={friend.id}
               className="flex justify-between hover:bg-gray-200 transition-colors duration-300 ease-in-out p-2"
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
@@ -124,8 +160,10 @@ function ListChatComponent({ language }) {
                     <button>
                       <IoIosMore size={20} opacity={1.8} />
                     </button>
+                  ) : !showUnread ? (
+                    friend.unread ? 'Chưa đọc' : 'Hôm qua'
                   ) : (
-                    "Hôm qua"
+                    friend.unread ? 'Chưa đọc' : ''
                   )}
                 </p>
               </div>
