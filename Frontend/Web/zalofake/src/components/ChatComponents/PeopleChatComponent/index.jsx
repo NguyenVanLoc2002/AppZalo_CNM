@@ -22,9 +22,8 @@ import { MdFormatColorText, MdPhone } from "react-icons/md";
 import {
   PiAlarmThin,
   PiBellRingingThin,
-  PiDesktopDuotone,
   PiMagnifyingGlass,
-  PiTagSimpleLight,
+  PiTagSimpleLight
 } from "react-icons/pi";
 import { RiAlarmLine, RiBatteryChargeLine } from "react-icons/ri";
 import { TfiAlarmClock } from "react-icons/tfi";
