@@ -5,8 +5,7 @@ import { CiSearch } from "react-icons/ci";
 import { FaSortDown } from "react-icons/fa";
 import { IoIosMore } from "react-icons/io";
 
-
-function ListChatComponent({ language, isAddFriend  }) {
+function ListChatComponent({ language, isAddFriend, isAddGroup }) {
   const [valueSearch, setValueSearch] = useState("");
   const [isHovered, setIsHovered] = useState(false);
   const [friendList, setFriendList] = useState([]);
@@ -14,7 +13,6 @@ function ListChatComponent({ language, isAddFriend  }) {
   const [showUnread, setShowUnread] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [originalFriendList, setOriginalFriendList] = useState([]);
-  
 
   useEffect(() => {
     const newFriendList = [];
@@ -42,6 +40,21 @@ function ListChatComponent({ language, isAddFriend  }) {
     }
   };
 
+  //Lọc dữ liệu tên bạn bè
+  const handleInputChange = (e) => {
+    const searchTerm = e.target.value;
+    setValueSearch(searchTerm);
+
+    if (searchTerm.trim() === "") {
+      setFriendList(originalFriendList);
+    } else {
+      const filteredFriends = originalFriendList.filter((friend) =>
+        friend.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFriendList(filteredFriends);
+    }
+  };
+
   return (
     <>
       <div className="border-r">
@@ -60,15 +73,14 @@ function ListChatComponent({ language, isAddFriend  }) {
                 className="h-9 w-full bg-transparent outline-none px-3"
                 placeholder="Search"
                 value={valueSearch}
-                onChange={(e) => setValueSearch(e.target.valueSearch)}
+                onChange={handleInputChange}
                 onFocus={() => setIsInputFocused(true)}
-                onBlur={() => setIsInputFocused(false)}
               />
             </div>
           </div>
           <div className="px-3 w-1/4 flex items-center justify-around">
             {isInputFocused ? (
-              <button>Đóng</button>
+              <button onClick={() => setIsInputFocused(false)}>Đóng</button>
             ) : (
               <>
                 <button
@@ -77,7 +89,10 @@ function ListChatComponent({ language, isAddFriend  }) {
                 >
                   <AiOutlineUserAdd size={18} opacity={0.8} />
                 </button>
-                <button className="p-2 rounded-lg hover:bg-gray-300">
+                <button
+                  className="p-2 rounded-lg hover:bg-gray-300"
+                  onClick={() => isAddGroup(true)}
+                >
                   <AiOutlineUsergroupAdd size={20} opacity={0.8} />
                 </button>
               </>
@@ -135,7 +150,7 @@ function ListChatComponent({ language, isAddFriend  }) {
               // eslint-disable-next-line react/jsx-key
               <div
                 key={friend.id}
-                className="flex justify-between hover:bg-gray-200 transition-colors duration-300 ease-in-out p-2"
+                className="flex items-center justify-between hover:bg-gray-200 transition-colors duration-300 ease-in-out p-2"
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
               >
@@ -155,39 +170,49 @@ function ListChatComponent({ language, isAddFriend  }) {
         ) : (
           <>
             <div className="h-full w-full max-h-full">
-              <div
-                className="flex justify-between p-2 hover:bg-gray-200 transition-colors duration-300 ease-in-out"
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
-              >
-                <div className="bg-blue w-14 ">
-                  <img
-                    className="rounded-full"
-                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Circle-icons-cloud.svg/768px-Circle-icons-cloud.svg.png"
-                    alt="cloud"
-                  />
-                </div>
-                <div className="flex-col mr-auto ml-2 p-1">
-                  <p className="font-semibold">Cloud của tôi</p>
-                  <p className="text-gray-600 mt-auto" style={{ fontSize: 14 }}>
-                    Bạn: Giáo trình
-                  </p>
-                </div>
-                <div>
-                  <p
-                    className="text-sm hover:text-gray-600"
-                    style={{ fontSize: 12 }}
+              {activeTab === "all" ? (
+                <>
+                  {" "}
+                  <div
+                    className="flex justify-between p-2 hover:bg-gray-200 transition-colors duration-300 ease-in-out"
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
                   >
-                    {isHovered ? (
-                      <button>
-                        <IoIosMore size={20} opacity={1.8} />
-                      </button>
-                    ) : (
-                      "Hôm qua"
-                    )}
-                  </p>
-                </div>
-              </div>
+                    <div className="bg-blue w-14 ">
+                      <img
+                        className="rounded-full"
+                        src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Circle-icons-cloud.svg/768px-Circle-icons-cloud.svg.png"
+                        alt="cloud"
+                      />
+                    </div>
+                    <div className="flex-col mr-auto ml-2 p-1">
+                      <p className="font-semibold">Cloud của tôi</p>
+                      <p
+                        className="text-gray-600 mt-auto"
+                        style={{ fontSize: 14 }}
+                      >
+                        Bạn: Giáo trình
+                      </p>
+                    </div>
+                    <div>
+                      <p
+                        className="text-sm hover:text-gray-600"
+                        style={{ fontSize: 12 }}
+                      >
+                        {isHovered ? (
+                          <button>
+                            <IoIosMore size={20} opacity={1.8} />
+                          </button>
+                        ) : (
+                          "Hôm qua"
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <></>
+              )}
 
               {friendList.map((friend) => (
                 // eslint-disable-next-line react/jsx-key
@@ -247,7 +272,6 @@ function ListChatComponent({ language, isAddFriend  }) {
           </>
         )}
       </div>
-      
     </>
   );
 }
