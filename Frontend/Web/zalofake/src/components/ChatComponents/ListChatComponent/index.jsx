@@ -99,7 +99,7 @@ function ListChatComponent({ language, isAddFriend, isAddGroup }) {
             )}
           </div>
         </div>
-        <div className="flex items-center px-5 mt-1 pb-2 text-sm">
+        <div className="flex h-[35px] items-center px-5 mt-1 pb-2 text-sm">
           {isInputFocused ? (
             <div>
               <p className="font-semibold">Tìm gần đây</p>
@@ -143,7 +143,7 @@ function ListChatComponent({ language, isAddFriend, isAddGroup }) {
           )}
         </div>
       </div>
-      <div className="h-[calc(100%-102px)] bg-white border overflow-y-auto">
+      <div className="h-[calc(100%-110px)] bg-white border overflow-y-auto">
         {isInputFocused ? (
           <>
             {friendList.map((friend) => (
