@@ -38,7 +38,7 @@ function ChatComponents({ language }) {
     setFriendList(newFriendList);
   }, []);
 
-  console.log(friendList.slice(0,3));
+  console.log(friendList.slice(0, 3));
   const handleRadioChange = (friendId) => {
     setFriendList((prevList) =>
       prevList.map((friend) =>
@@ -70,8 +70,8 @@ function ChatComponents({ language }) {
         </div>
         <PeopleChatComponent language={language} />
         {isAddFriend && (
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2/5 h-[550px] bg-white rounded-lg shadow-lg ">
-            <div className=" flex items-center justify-between p-4 border-b text-lg font-semibold">
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2/5 h-[90%] bg-white rounded-lg shadow-lg ">
+            <div className=" flex items-center justify-between p-4 border-b text-lg font-semibold h-[10%]">
               <p>Thêm bạn </p>
               <button
                 onClick={() => {
@@ -82,7 +82,7 @@ function ChatComponents({ language }) {
                 x
               </button>
             </div>
-            <div className=" flex items-center justify-between p-4 ">
+            <div className=" flex items-center justify-between p-4 h-[10%]">
               <button className="flex items-center border-b pb-1 w-40">
                 <img
                   src="https://emojigraph.org/media/apple/flag-vietnam_1f1fb-1f1f3.png"
@@ -112,8 +112,8 @@ function ChatComponents({ language }) {
               </div>
             </div>
             <div
-              className={`flex-col overflow-y-auto p-4 mb-3 ${
-                showAllNewFriends ? "max-h-80" : ""
+              className={`flex-col p-4 mb-3 h-[65%] ${
+                showAllNewFriends ? "overflow-y-auto" : "overflow-y-hidden"
               }`}
             >
               <div className="flex items-center">
@@ -150,8 +150,8 @@ function ChatComponents({ language }) {
                 )}
               </div>
             </div>
-            <div className="flex items-center p-2 border-t">
-              <div className="flex ml-auto">
+            <div className="flex items-center border-t h-[15%]">
+              <div className="flex ml-auto mb-auto mt-1">
                 <button
                   className="rounded-lg bg-gray-300 p-3 pl-6 pr-6 mr-3 hover:bg-gray-500"
                   onClick={() => setIsAddFriend(false)}
@@ -166,8 +166,8 @@ function ChatComponents({ language }) {
           </div>
         )}
         {isAddGroup && (
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2/5 h-[550px] bg-white rounded-lg shadow-lg ">
-            <div className=" flex items-center justify-between p-4 border-b text-lg font-semibold">
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2/5 h-[90%] bg-white rounded-lg shadow-lg ">
+            <div className=" flex items-center justify-between p-4 border-b text-lg font-semibold h-[10%]">
               <p>Tạo nhóm</p>
               <button
                 onClick={() => {
@@ -178,7 +178,7 @@ function ChatComponents({ language }) {
                 x
               </button>
             </div>
-            <div className=" flex items-center justify-between pl-4 pr-4 pt-2 ">
+            <div className=" flex items-center justify-between pl-4 pr-4 pt-2 h-[10%]">
               <button className="flex rounded-full border p-3">
                 <MdCameraAlt size={25} fill="gray" />
               </button>
@@ -201,16 +201,14 @@ function ChatComponents({ language }) {
               </div>
             </div>
             <div
-              className={`${
-                isInputFocusGroup === true
-                  ? "flex items-center rounded-full border border-blue-500 m-4 "
-                  : "flex items-center border rounded-full  m-4 "
+              className={` h-[8%] flex items-center rounded-full border  m-4 mt-2 mb-2 ${
+                isInputFocusGroup === true ? " border-blue-500 " : ""
               } `}
             >
               <HiMagnifyingGlass size={18} className="ml-2" />
               <input
                 type="text"
-                className="h-9 w-[89%] outline-none ml-2 "
+                className="h-[97%] w-[89%] outline-none ml-2 "
                 placeholder="Nhập tên, số điện thoại hoặc danh sách số điện thoại"
                 value={nameGroup}
                 onChange={(e) => setNameGroup(e.target.nameGroup)}
@@ -218,7 +216,7 @@ function ChatComponents({ language }) {
                 onBlur={() => setIsInputFocusGroup(false)}
               />
             </div>
-            <div className="flex items-center  pl-4 pr-4 pb-4 overflow-x-auto  w-full border-b">
+            <div className=" h-[15%] flex items-center  pl-4 pr-4 pb-4 overflow-x-auto  w-full border-b">
               {buttons.map((label, index) => (
                 <button
                   key={index}
@@ -233,7 +231,7 @@ function ChatComponents({ language }) {
                 </button>
               ))}
             </div>
-            <div className="flex-col pt-2 p-4 items-center overflow-y-auto">
+            <div className=" h-[42%] flex-col pt-2 p-4 items-center overflow-y-auto">
               <p className="font-semibold">Trò chuyện gần đây</p>
               <div className="flex-col max-h-44 mt-2">
                 {friendList.map((friend) => (
@@ -264,8 +262,8 @@ function ChatComponents({ language }) {
               </div>
             </div>
 
-            <div className="flex items-center p-2 border-t">
-              <div className="flex ml-auto">
+            <div className="flex items-center border-t h-[15%]">
+              <div className="flex ml-auto mb-auto mt-1">
                 <button
                   className="rounded-lg bg-gray-300 p-3 pl-6 pr-6 mr-3 hover:bg-gray-500"
                   onClick={() => setIsAddGroup(false)}
