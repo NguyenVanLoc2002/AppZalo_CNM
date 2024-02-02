@@ -61,7 +61,7 @@ function ChatComponents({ language }) {
   return (
     <>
       <div className="relative bg-gray-100 h-screen w-full flex">
-        <div className="h-screen w-5/12 bg-white">
+        <div className="h-screen w-4/12 bg-white">
           <ListChatComponent
             language={language}
             isAddFriend={setIsAddFriend}
