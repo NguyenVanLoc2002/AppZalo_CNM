@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import FriendDirectory from "./FriendDirectory";
 import GroupDirectory from "./GroupDirectory";
-import QA from "./QA";
+import OA from "./OA";
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -13,7 +13,7 @@ const DirectoryComponents = () => {
     <Tab.Navigator initialRouteName="Bạn bè" tabBarPosition="top">
       <Tab.Screen name="Bạn bè" component={FriendDirectory} />
       <Tab.Screen name="Nhóm" component={GroupDirectory} />
-      <Tab.Screen name="QA" component={QA} />
+      <Tab.Screen name="OA" component={OA} />
     </Tab.Navigator>
   );
 };

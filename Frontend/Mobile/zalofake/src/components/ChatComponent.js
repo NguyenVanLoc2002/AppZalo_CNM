@@ -4,9 +4,10 @@ import { Ionicons } from "@expo/vector-icons";
 
 import Chat from "./chat/Chat";
 import Explore from "./Explore";
-import News from "./News";
+import News from "../NewsComponents/News";
 import FriendProfile from "./friendProfile/FriendProfile";
 import DirectoryComponents from "../DirectoryComponents/DirectoryComponents";
+import Info from "../InfoComponents/Info";
 
 const Tab = createBottomTabNavigator();
 
@@ -41,7 +42,7 @@ const ChatComponent = () => {
       <Tab.Screen name="Contact" component={DirectoryComponents} />
       <Tab.Screen name="Explore" component={Explore} />
       <Tab.Screen name="News" component={News} />
-      <Tab.Screen name="Info" component={FriendProfile} />
+      <Tab.Screen name="Info" component={Info} />
     </Tab.Navigator>
   );
 };
