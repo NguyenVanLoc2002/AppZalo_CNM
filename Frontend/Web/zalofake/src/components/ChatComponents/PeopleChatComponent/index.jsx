@@ -56,7 +56,7 @@ function PeopleChatComponent({ language }) {
           {i % 2 === 0 ? "Obi-Wan Kenobi" : "Anakin"}
           <time className="text-xs opacity-50">12:45</time>
         </div>
-        <div className="chat-bubble">
+        <div className="chat-bubble bg-gray-100 text-black">
           {i % 2 === 0 ? "You were the Chosen One!" : "I hate you!"}
         </div>
         <div className="chat-footer opacity-50">
@@ -67,7 +67,7 @@ function PeopleChatComponent({ language }) {
   }
   return (
     <>
-      <div className="relative h-screen w-full bg-white w-9/12 border-r relative z-0" >
+      <div className="relative h-screen bg-white w-9/12 border-r  z-0" >
         <div className="h-[10%] bg-white flex justify-between items-center border-b">
           <div className="flex items-center">
             <img src="zalo.svg" alt="avatar" />

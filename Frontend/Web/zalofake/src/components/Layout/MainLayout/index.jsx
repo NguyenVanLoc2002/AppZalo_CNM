@@ -19,7 +19,6 @@ function MainLayout({ isLogin }) {
     phone: "0123456789",
   });
 
-  console.log(document.cookie);
   const showModalProfile = () => {
     setShowModal(!showModal);
     setCurrentMenu()
