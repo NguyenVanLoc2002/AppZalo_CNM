@@ -23,7 +23,7 @@ import {
   PiAlarmThin,
   PiBellRingingThin,
   PiMagnifyingGlass,
-  PiTagSimpleLight
+  PiTagSimpleLight,
 } from "react-icons/pi";
 import { RiAlarmLine, RiBatteryChargeLine } from "react-icons/ri";
 import { TfiAlarmClock } from "react-icons/tfi";
@@ -67,7 +67,7 @@ function PeopleChatComponent({ language }) {
   }
   return (
     <>
-      <div className="relative h-screen w-full bg-white w-9/12 border-r relative z-0" >
+      <div className="relative bg-white h-screen sm:w-[calc(100%-24rem)] w-0 border-r relative z-0">
         <div className="h-[10%] bg-white flex justify-between items-center border-b">
           <div className="flex items-center">
             <img src="zalo.svg" alt="avatar" />
@@ -98,9 +98,7 @@ function PeopleChatComponent({ language }) {
         </div>
 
         {/*Content Chat */}
-        <div className="h-[75%] pl-3 pr-3 overflow-y-auto">
-          {chats}
-        </div>
+        <div className="h-[75%] pl-3 pr-3 overflow-y-auto">{chats}</div>
 
         <div className="h-[15%] bg-white flex-col border-t">
           <div className="h-[40%] bg-white flex justify-between items-center border-b p-1">
@@ -165,7 +163,10 @@ function PeopleChatComponent({ language }) {
         <div className="fixed top-0 right-0 h-screen bg-gray w-4/12 z-10 bg-gray-300 border-l  drop-shadow-2xl">
           <div className="h-[70px] bg-white flex justify-center items-center border-b">
             <p className="flex text-lg font-medium">Thông tin hội thoại</p>
-            <button className="flex top-0 right-2 fixed text-lg font-medium" onClick={toggleSidebar}> 
+            <button
+              className="flex top-0 right-2 fixed text-lg font-medium"
+              onClick={toggleSidebar}
+            >
               x
             </button>
           </div>
