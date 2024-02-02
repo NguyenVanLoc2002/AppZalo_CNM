@@ -17,9 +17,9 @@ import AddFriends from "./src/components/AddFriends";
 import CreateGroup from "./src/components/CreateGroup";
 import LoginMain from "./src/LoginComponents/LoginMain"
 import ChatComponent from "./src/components/ChatComponent";
-import Chat from "./src/components/Chat";
-import Info from "./src/components/Info";
-import News from "./src/components/News";
+import Chat from "./src/components/chat/Chat";
+import Info from "./src/InfoComponents/Info";
+import News from "./src/NewsComponents/News";
 import Notice from "./src/NewsComponents/Notice"
 import PostStatus from "./src/NewsComponents/PostStatus";
 import PersonalPage from "./src/InfoComponents/PersonalPage";
@@ -36,7 +36,7 @@ export default function App() {
       <Stack.Navigator initialRouteName="LoginMain">
         <Stack.Screen
           name="LoginMain"
-          component={LoginMain}
+          component={Info}
           options={{ headerShown: false }}
         />
 
@@ -98,10 +98,7 @@ export default function App() {
         <Stack.Screen name="FriendProfile" component={FriendProfile} />
         <Stack.Screen name="AddFriends" component={AddFriends} />
         <Stack.Screen name="CreateGroup" component={CreateGroup} />
-      
-        <Stack.Screen name="ChatComponent" component={ChatComponent}
-        options={{ headerShown: false }}
-        />        
+        
         <Stack.Screen name="ChatContent" component={Chat} />   
         <Stack.Screen name="News" component={News}/> 
         <Stack.Screen name="Notice" component={Notice}/> 
