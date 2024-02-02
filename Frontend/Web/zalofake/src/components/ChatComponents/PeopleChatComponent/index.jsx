@@ -68,7 +68,7 @@ function PeopleChatComponent({ language }) {
   return (
     <>
       <div className="relative h-screen w-full bg-white w-9/12 border-r relative z-0" >
-        <div className="h-[70px] bg-white flex justify-between items-center border-b">
+        <div className="h-[10%] bg-white flex justify-between items-center border-b">
           <div className="flex items-center">
             <img src="zalo.svg" alt="avatar" />
           </div>
@@ -98,11 +98,11 @@ function PeopleChatComponent({ language }) {
         </div>
 
         {/*Content Chat */}
-        <div className="h-[calc(100%-170px)] pl-3 pr-3 overflow-y-auto">
+        <div className="h-[75%] pl-3 pr-3 overflow-y-auto">
           {chats}
         </div>
 
-        <div className="h-[100px] bg-white flex-col border-t">
+        <div className="h-[15%] bg-white flex-col border-t">
           <div className="h-[40%] bg-white flex justify-between items-center border-b p-1">
             <button className="hover:bg-gray-300 p-2 rounded">
               <LuSticker size={20} />
