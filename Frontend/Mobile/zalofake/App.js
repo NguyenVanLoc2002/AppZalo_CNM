@@ -1,32 +1,30 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-// import "./style.css";
+import CreateAccount from "./src/components/LoginComponents/CreateAccount";
+import CreateAccount1 from "./src/components/LoginComponents/CreateAccount1";
+import EnterAuthCode from "./src/components/LoginComponents/EnterAuthCode";
+import Login from "./src/components/LoginComponents/Login";
 
-import CreateAccount from "./src/LoginComponents/CreateAccount";
-import CreateAccount1 from "./src/LoginComponents/CreateAccount1";
-import EnterAuthCode from "./src/LoginComponents/EnterAuthCode";
-import Login from "./src/LoginComponents/Login";
-
-import SearchFriends from "./src/components/searchFriends/SearchFriends";
-import Message from "./src/components/message/Message";
-import FriendProfileSettings from "./src/components/friendProfile/FriendProfileSettings";
-import MessageSettings from "./src/components/message/MessageSettings";
-import FriendProfile from "./src/components/friendProfile/FriendProfile";
-import AddFriends from "./src/components/AddFriends";
-import CreateGroup from "./src/components/CreateGroup";
-import LoginMain from "./src/LoginComponents/LoginMain";
-import ChatComponent from "./src/components/ChatComponent";
-import Chat from "./src/components/chat/Chat";
-import Info from "./src/InfoComponents/Info";
-import News from "./src/NewsComponents/News";
-import Notice from "./src/NewsComponents/Notice";
-import PostStatus from "./src/NewsComponents/PostStatus";
-import PersonalPage from "./src/InfoComponents/PersonalPage";
-import PersonalDetail from "./src/InfoComponents/PersonalDetail";
-import PersonalPrivacy from "./src/InfoComponents/PersonalPrivacy";
-import AccountVsSecurity from "./src/InfoComponents/AccoutVsSecurity";
-import PersonalSetting from "./src/InfoComponents/PersonalSetting";
+import SearchFriends from "./src/components/ChatComponents/searchFriends/SearchFriends";
+import Message from "./src/components/ChatComponents/message/Message";
+import FriendProfileSettings from "./src/components/ChatComponents/friendProfile/FriendProfileSettings";
+import MessageSettings from "./src/components/ChatComponents/message/MessageSettings";
+import FriendProfile from "./src/components/ChatComponents/friendProfile/FriendProfile";
+import AddFriends from "./src/components/ChatComponents/AddFriends";
+import CreateGroup from "./src/components/ChatComponents/CreateGroup";
+import LoginMain from "./src/components/LoginComponents/LoginMain";
+import MainComponent from "./src/MainComponent";
+import Chat from "./src/components/ChatComponents/chat/Chat";
+import Info from "./src/components/InfoComponents/Info";
+import News from "./src/components/NewsComponents/News";
+import Notice from "./src/components/NewsComponents/Notice";
+import PostStatus from "./src/components/NewsComponents/PostStatus";
+import PersonalPage from "./src/components/InfoComponents/PersonalPage";
+import PersonalDetail from "./src/components/InfoComponents/PersonalDetail";
+import PersonalPrivacy from "./src/components/InfoComponents/PersonalPrivacy";
+import AccountVsSecurity from "./src/components/InfoComponents/AccoutVsSecurity";
+import PersonalSetting from "./src/components/InfoComponents/PersonalSetting";
 
 const Stack = createNativeStackNavigator();
 
@@ -93,7 +91,7 @@ export default function App() {
         />
         <Stack.Screen
           name="ChatComponent"
-          component={ChatComponent}
+          component={MainComponent}
           options={{
             headerShown: false,
           }}
