@@ -1,66 +1,165 @@
-import { View, Text, Pressable } from 'react-native'
-import React from 'react'
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import FontAwesomeIcons from 'react-native-vector-icons/FontAwesome5';
+import { View, Text, Pressable } from "react-native";
+import React from "react";
 
-const PersonalDetail = ({navigation}) => {
+const PersonalDetail = ({ navigation }) => {
+  navigation.setOptions({
+    headerTitle: () => (
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <Text style={{ color: "white", fontSize: 20, fontWeight: "bold" }}>
+          Min Nguyên
+        </Text>
+      </View>
+    ),
+    headerStyle: {
+      backgroundColor: "#0091FF",
+      shadowColor: "#fff",
+    },
+    headerTintColor: "#fff",
+    headerTitleStyle: {
+      fontWeight: "bold",
+      fontSize: 20,
+    },
+  });
 
-    navigation.setOptions({
-        headerTitle: () => (
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Text className={"text-white text-lg font-semibold"}>Min Nguyên</Text>
-          </View>
-        ),
-        headerStyle: {
-          backgroundColor: "#0091FF",
-          shadowColor: "#fff",
-        },
-        headerTintColor: "#fff",
-        headerTitleStyle: {
-          fontWeight: "bold",
-          fontSize: 20,
-        },
-      });
-    return (
-        <View className={"bg-white h-full"}>
-           
-            {/* Body */}
-            <View className={""}>
-                <Pressable className={"ml-2 mt-2 py-2 px-4 border-b border-gray-300"}>
-                    <Text className={"text-base font-medium"}>Thông tin</Text>
-                </Pressable>
-                <Pressable className={"ml-2 mt-2 py-2 px-4 border-b border-gray-300"}>
-                    <Text className={"text-base font-medium"}>Đổi ảnh đại diện</Text>
-                </Pressable>
-                <Pressable className={"ml-2 mt-2 py-2 px-4 border-b border-gray-300"}>
-                    <Text className={"text-base font-medium"}>Đổi ảnh bìa</Text>
-                </Pressable>
-                <Pressable className={"ml-2 mt-2 py-2 px-4 border-b border-gray-300"}>
-                    <Text className={"text-base font-medium"}>Cập nhật giới thiệu bản thân</Text>
-                </Pressable>
-                <Pressable className={"ml-2 mt-2 py-2 px-4 border-b border-gray-300"}>
-                    <Text className={"text-base font-medium"}>Ví của tôi</Text>
-                </Pressable>
-            </View>
-            <View className={"bg-gray-100 h-2 w-full"}></View>
-            {/* Setting */}
-            <View className={""}>
-                <Text className={"ml-2 px-4 mt-2 text-base text-[#4b91c8] font-semibold"}>Cài đặt</Text>
-                <Pressable className={"ml-2 mt-2 py-2 px-4 border-b border-gray-300"}>
-                    <Text className={"text-base font-medium"}>Mã QR của tôi</Text>
-                </Pressable>
-                <Pressable onPress={() => {navigation.navigate("PersonalPrivacy")}} className={"ml-2 mt-2 py-2 px-4 border-b border-gray-300"}>
-                    <Text className={"text-base font-medium"}>Quyền riêng tư</Text>
-                </Pressable>
-                <Pressable onPress={() => {navigation.navigate("AccountVsSecurity")}} className={"ml-2 mt-2 py-2 px-4 border-b border-gray-300"}>
-                    <Text className={"text-base font-medium"}>Quản lý tài khoản</Text>
-                </Pressable>
-                <Pressable className={"ml-2 mt-2 py-2 px-4 border-b border-gray-300"}>
-                    <Text className={"text-base font-medium"}>Cài đặt chung</Text>
-                </Pressable>
-            </View>
-        </View>
-    )
-}
+  return (
+    <View style={{ backgroundColor: "white", height: "100%" }}>
+      {/* Body */}
+      <View>
+        <Pressable
+          style={{
+            marginLeft: 2,
+            marginTop: 2,
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderBottomWidth: 1,
+            borderBottomColor: "#ccc",
+          }}
+        >
+          <Text style={{ fontSize: 16 }}>Thông tin</Text>
+        </Pressable>
+        <Pressable
+          style={{
+            marginLeft: 2,
+            marginTop: 2,
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderBottomWidth: 1,
+            borderBottomColor: "#ccc",
+          }}
+        >
+          <Text style={{ fontSize: 16 }}>Đổi ảnh đại diện</Text>
+        </Pressable>
+        <Pressable
+          style={{
+            marginLeft: 2,
+            marginTop: 2,
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderBottomWidth: 1,
+            borderBottomColor: "#ccc",
+          }}
+        >
+          <Text style={{ fontSize: 16 }}>Đổi ảnh bìa</Text>
+        </Pressable>
+        <Pressable
+          style={{
+            marginLeft: 2,
+            marginTop: 2,
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderBottomWidth: 1,
+            borderBottomColor: "#ccc",
+          }}
+        >
+          <Text style={{ fontSize: 16 }}>Cập nhật giới thiệu bản thân</Text>
+        </Pressable>
+        <Pressable
+          style={{
+            marginLeft: 2,
+            marginTop: 2,
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderBottomWidth: 1,
+            borderBottomColor: "#ccc",
+          }}
+        >
+          <Text style={{ fontSize: 16 }}>Ví của tôi</Text>
+        </Pressable>
+      </View>
+      <View
+        style={{ backgroundColor: "#f0f0f0", height: 2, width: "100%" }}
+      ></View>
+      {/* Setting */}
+      <View>
+        <Text
+          style={{
+            marginLeft: 2,
+            paddingHorizontal: 20,
+            marginTop: 20,
+            fontSize: 16,
+            color: "#4b91c8",
+            fontWeight: "bold",
+          }}
+        >
+          Cài đặt
+        </Text>
+        <Pressable
+          style={{
+            marginLeft: 2,
+            marginTop: 2,
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderBottomWidth: 1,
+            borderBottomColor: "#ccc",
+          }}
+        >
+          <Text style={{ fontSize: 16 }}>Mã QR của tôi</Text>
+        </Pressable>
+        <Pressable
+          onPress={() => {
+            navigation.navigate("PersonalPrivacy");
+          }}
+          style={{
+            marginLeft: 2,
+            marginTop: 2,
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderBottomWidth: 1,
+            borderBottomColor: "#ccc",
+          }}
+        >
+          <Text style={{ fontSize: 16 }}>Quyền riêng tư</Text>
+        </Pressable>
+        <Pressable
+          onPress={() => {
+            navigation.navigate("AccountVsSecurity");
+          }}
+          style={{
+            marginLeft: 2,
+            marginTop: 2,
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderBottomWidth: 1,
+            borderBottomColor: "#ccc",
+          }}
+        >
+          <Text style={{ fontSize: 16 }}>Quản lý tài khoản</Text>
+        </Pressable>
+        <Pressable
+          style={{
+            marginLeft: 2,
+            marginTop: 2,
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderBottomWidth: 1,
+            borderBottomColor: "#ccc",
+          }}
+        >
+          <Text style={{ fontSize: 16 }}>Cài đặt chung</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+};
 
-export default PersonalDetail
+export default PersonalDetail;
