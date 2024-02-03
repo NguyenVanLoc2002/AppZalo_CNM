@@ -32,7 +32,7 @@ const News = ({ navigation }) => {
           name="search"
           size={24}
           color="white"
-          style={{ marginLeft: 10 }}
+          style={{ marginLeft: 5, marginRight: 25 }}
         />
         <TextInput
           onFocus={() => {
@@ -41,10 +41,12 @@ const News = ({ navigation }) => {
           style={{
             height: 45,
             width: 300,
-            marginLeft: 10,
+            marginLeft: 25,
+            fontSize: 16
           }}
           placeholder="Tìm kiếm"
           placeholderTextColor={"white"}
+          
         />
       </View>
     ),
@@ -324,7 +326,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   headerIcon: {
-    padding: 5,
+    padding: 10,
     marginLeft: 15,
   },
   headerTitleContainer: {
