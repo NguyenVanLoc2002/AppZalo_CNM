@@ -16,7 +16,7 @@ const upload = require('../middlewares/multerMiddleware')
 router.use(cookieParser())
 //get methods
 router.get("/get-all-users",protect,getAllUsers)
-router.get("/get/:phone",getUserByPhone)
+router.get("/get/:phone",protect,getUserByPhone)
 
 //post methods
 router.post('/login', loginUser)

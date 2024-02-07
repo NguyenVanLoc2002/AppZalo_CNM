@@ -98,7 +98,7 @@ const Login = ({ navigation }) => {
         >
           <Image
             style={styles.buttonImage}
-            source={require("/assets/arrow.png")}
+            source={require("../../../assets/arrow.png")}
           />
         </Pressable>
       </View>

@@ -1,50 +1,52 @@
 import { View, Text, Switch, Pressable, Image, StyleSheet } from "react-native";
-import { React, useState } from "react";
+import { React, useEffect, useState } from "react";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
 
 const PostStatus = ({ navigation }) => {
-  navigation.setOptions({
-    headerRight: () => (
-      <View style={styles.headerRightContainer}>
-        <Switch
-          style={styles.switch}
-          trackColor={{ false: "#0eaaff", true: "#81b0ff" }}
-          thumbColor={"white"}
-          ios_backgroundColor="#3e3e3e"
-        />
-        <Pressable>
-          <Text style={styles.headerText}>Đăng</Text>
-        </Pressable>
-      </View>
-    ),
-    headerTitle: () => (
-      <View style={{ alignItems: "center" }}>
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Ionicons
-            name="people"
-            size={20}
-            color="#828282"
-            style={{ paddingHorizontal: 4 }}
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={styles.headerRightContainer}>
+          <Switch
+            style={styles.switch}
+            trackColor={{ false: "#0eaaff", true: "#81b0ff" }}
+            thumbColor={"white"}
+            ios_backgroundColor="#3e3e3e"
           />
-          <Text style={styles.headerText}>Tất cả bạn bè</Text>
-          <Pressable style={{ paddingBottom: 2, paddingHorizontal: 4 }}>
-            <FontAwesomeIcons name="sort-down" size={20} color="black" />
+          <Pressable>
+            <Text style={styles.headerText}>Đăng</Text>
           </Pressable>
         </View>
-        <Text style={styles.subHeaderText}>Xem bởi bạn bè trên Zalo</Text>
-      </View>
-    ),
-    headerStyle: {
-      backgroundColor: "#FFFFFF",
-      shadowColor: "#FFFFFF",
-    },
-    headerTintColor: "black",
-    headerTitleStyle: {
-      fontWeight: "bold",
-      fontSize: 20,
-    },
-  });
+      ),
+      headerTitle: () => (
+        <View style={{ alignItems: "center" }}>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Ionicons
+              name="people"
+              size={20}
+              color="#828282"
+              style={{ paddingHorizontal: 4 }}
+            />
+            <Text style={styles.headerText}>Tất cả bạn bè</Text>
+            <Pressable style={{ paddingBottom: 2, paddingHorizontal: 4 }}>
+              <FontAwesomeIcons name="sort-down" size={20} color="black" />
+            </Pressable>
+          </View>
+          <Text style={styles.subHeaderText}>Xem bởi bạn bè trên Zalo</Text>
+        </View>
+      ),
+      headerStyle: {
+        backgroundColor: "#FFFFFF",
+        shadowColor: "#FFFFFF",
+      },
+      headerTintColor: "black",
+      headerTitleStyle: {
+        fontWeight: "bold",
+        fontSize: 20,
+      },
+    });
+  }, [navigation]);
 
   const [selectedImages, setSelectedImages] = useState([]);
 
@@ -135,49 +137,49 @@ const PostStatus = ({ navigation }) => {
         <View style={styles.imageGrid}>
           <Pressable style={styles.imageItem}>
             <Image
-              source={require("/assets/story_1.png")}
+              source={require("../../../assets/story_1.png")}
               style={styles.image}
               resizeMode="contain"
             />
           </Pressable>
           <Pressable style={styles.imageItem}>
             <Image
-              source={require("/assets/story_1.png")}
+              source={require("../../../assets/story_1.png")}
               style={styles.image}
               resizeMode="contain"
             />
           </Pressable>
           <Pressable style={styles.imageItem}>
             <Image
-              source={require("/assets/story_1.png")}
+              source={require("../../../assets/story_1.png")}
               style={styles.image}
               resizeMode="contain"
             />
           </Pressable>
           <Pressable style={styles.imageItem}>
             <Image
-              source={require("/assets/story_1.png")}
+              source={require("../../../assets/story_1.png")}
               style={styles.image}
               resizeMode="contain"
             />
           </Pressable>
           <Pressable style={styles.imageItem}>
             <Image
-              source={require("/assets/story_1.png")}
+              source={require("../../../assets/story_1.png")}
               style={styles.image}
               resizeMode="contain"
             />
           </Pressable>
           <Pressable style={styles.imageItem}>
             <Image
-              source={require("/assets/story_1.png")}
+              source={require("../../../assets/story_1.png")}
               style={styles.image}
               resizeMode="contain"
             />
           </Pressable>
           <Pressable style={styles.imageItem}>
             <Image
-              source={require("/assets/story_1.png")}
+              source={require("../../../assets/story_1.png")}
               style={styles.image}
               resizeMode="contain"
             />
