@@ -47,7 +47,7 @@ const Notice = ({ navigation }) => {
       <View style={styles.noticeContainer}>
         <Pressable style={styles.pressableContainer}>
           <ImageBackground
-            source={require("/assets/avata-story-1.png")}
+            source={require("../../../assets/avata-story-1.png")}
             style={styles.imageBackground}
             resizeMode="contain"
           >
@@ -65,7 +65,7 @@ const Notice = ({ navigation }) => {
         </View>
         <Pressable style={styles.pressableContainer}>
           <Image
-            source={require("/assets/ic_threeDots.png")}
+            source={require("../../../assets/ic_threeDots.png")}
             style={styles.imageIcon}
             resizeMode="contain"
           />
@@ -75,7 +75,7 @@ const Notice = ({ navigation }) => {
       <View style={styles.noticeContainer}>
         <Pressable style={styles.pressableContainer}>
           <ImageBackground
-            source={require("/assets/avata-story-3.png")}
+            source={require("../../../assets/avata-story-3.png")}
             style={styles.imageBackground}
             resizeMode="contain"
           >
@@ -100,7 +100,7 @@ const Notice = ({ navigation }) => {
         </View>
         <Pressable style={styles.pressableContainer}>
           <Image
-            source={require("/assets/ic_threeDots.png")}
+            source={require("../../../assets/ic_threeDots.png")}
             style={styles.imageIcon}
             resizeMode="contain"
           ></Image>
@@ -111,7 +111,7 @@ const Notice = ({ navigation }) => {
       <View style={styles.noticeContainer}>
         <Pressable style={styles.pressableContainer}>
           <ImageBackground
-            source={require("/assets/avata-story-4.png")}
+            source={require("../../../assets/avata-story-4.png")}
             style={styles.imageBackground}
             resizeMode="contain"
           >
@@ -134,7 +134,7 @@ const Notice = ({ navigation }) => {
         </View>
         <Pressable style={styles.pressableContainer}>
           <Image
-            source={require("/assets/ic_threeDots.png")}
+            source={require("../../../assets/ic_threeDots.png")}
             style={styles.imageIcon}
             resizeMode="contain"
           ></Image>
@@ -145,7 +145,7 @@ const Notice = ({ navigation }) => {
       <View style={styles.noticeContainer}>
         <Pressable style={styles.pressableContainer}>
           <ImageBackground
-            source={require("/assets/avata-story-4.png")}
+            source={require("../../../assets/avata-story-4.png")}
             style={styles.imageBackground}
             resizeMode="contain"
           >
@@ -168,7 +168,7 @@ const Notice = ({ navigation }) => {
         </View>
         <Pressable style={styles.pressableContainer}>
           <Image
-            source={require("/assets/ic_threeDots.png")}
+            source={require("../../../assets/ic_threeDots.png")}
             style={styles.imageIcon}
             resizeMode="contain"
           ></Image>
@@ -177,7 +177,7 @@ const Notice = ({ navigation }) => {
       <View style={styles.noticeContainer}>
         <Pressable style={styles.pressableContainer}>
           <ImageBackground
-            source={require("/assets/avata-story-1.png")}
+            source={require("../../../assets/avata-story-1.png")}
             style={styles.imageBackground}
             resizeMode="contain"
           >
@@ -195,7 +195,7 @@ const Notice = ({ navigation }) => {
         </View>
         <Pressable style={styles.pressableContainer}>
           <Image
-            source={require("/assets/ic_threeDots.png")}
+            source={require("../../../assets/ic_threeDots.png")}
             style={styles.imageIcon}
             resizeMode="contain"
           />
@@ -205,7 +205,7 @@ const Notice = ({ navigation }) => {
       <View style={styles.noticeContainer}>
         <Pressable style={styles.pressableContainer}>
           <ImageBackground
-            source={require("/assets/avata-story-3.png")}
+            source={require("../../../assets/avata-story-3.png")}
             style={styles.imageBackground}
             resizeMode="contain"
           >
@@ -230,7 +230,7 @@ const Notice = ({ navigation }) => {
         </View>
         <Pressable style={styles.pressableContainer}>
           <Image
-            source={require("/assets/ic_threeDots.png")}
+            source={require("../../../assets/ic_threeDots.png")}
             style={styles.imageIcon}
             resizeMode="contain"
           ></Image>
@@ -241,7 +241,7 @@ const Notice = ({ navigation }) => {
       <View style={styles.noticeContainer}>
         <Pressable style={styles.pressableContainer}>
           <ImageBackground
-            source={require("/assets/avata-story-4.png")}
+            source={require("../../../assets/avata-story-4.png")}
             style={styles.imageBackground}
             resizeMode="contain"
           >
@@ -264,7 +264,7 @@ const Notice = ({ navigation }) => {
         </View>
         <Pressable style={styles.pressableContainer}>
           <Image
-            source={require("/assets/ic_threeDots.png")}
+            source={require("../../../assets/ic_threeDots.png")}
             style={styles.imageIcon}
             resizeMode="contain"
           ></Image>
@@ -275,7 +275,7 @@ const Notice = ({ navigation }) => {
       <View style={styles.noticeContainer}>
         <Pressable style={styles.pressableContainer}>
           <ImageBackground
-            source={require("/assets/avata-story-4.png")}
+            source={require("../../../assets/avata-story-4.png")}
             style={styles.imageBackground}
             resizeMode="contain"
           >
@@ -298,7 +298,7 @@ const Notice = ({ navigation }) => {
         </View>
         <Pressable style={styles.pressableContainer}>
           <Image
-            source={require("/assets/ic_threeDots.png")}
+            source={require("../../../assets/ic_threeDots.png")}
             style={styles.imageIcon}
             resizeMode="contain"
           ></Image>
