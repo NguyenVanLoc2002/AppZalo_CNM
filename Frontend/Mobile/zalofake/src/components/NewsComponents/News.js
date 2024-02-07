@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -12,62 +12,63 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
 
 const News = ({ navigation }) => {
-  navigation.setOptions({
-    headerRight: () => (
-      <View style={styles.headerRightContainer}>
-        <Pressable style={styles.headerIcon}>
-          <Ionicons name="image" size={24} color="white" />
-        </Pressable>
-        <Pressable
-          onPress={() => navigation.navigate("Notice")}
-          style={styles.headerIcon}
-        >
-          <FontAwesomeIcons name="bell" size={24} color="white" />
-        </Pressable>
-      </View>
-    ),
-    headerTitle: () => (
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <Ionicons
-          name="search"
-          size={24}
-          color="white"
-          style={{ marginLeft: 5, marginRight: 25 }}
-        />
-        <TextInput
-          onFocus={() => {
-            navigation.navigate("SearchFriends");
-          }}
-          style={{
-            height: 45,
-            width: 300,
-            marginLeft: 25,
-            fontSize: 16
-          }}
-          placeholder="Tìm kiếm"
-          placeholderTextColor={"white"}
-          
-        />
-      </View>
-    ),
-    headerStyle: {
-      backgroundColor: "#0091FF",
-      shadowColor: "#fff",
-    },
-    headerTintColor: "#fff",
-    headerTitleStyle: {
-      fontWeight: "bold",
-      fontSize: 20,
-    },
-  });
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={styles.headerRightContainer}>
+          <Pressable style={styles.headerIcon}>
+            <Ionicons name="image" size={24} color="white" />
+          </Pressable>
+          <Pressable
+            onPress={() => navigation.navigate("Notice")}
+            style={styles.headerIcon}
+          >
+            <FontAwesomeIcons name="bell" size={24} color="white" />
+          </Pressable>
+        </View>
+      ),
+      headerTitle: () => (
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Ionicons
+            name="search"
+            size={24}
+            color="white"
+            style={{ marginLeft: 5, marginRight: 25 }}
+          />
+          <TextInput
+            onFocus={() => {
+              navigation.navigate("SearchFriends");
+            }}
+            style={{
+              height: 45,
+              width: 300,
+              marginLeft: 25,
+              fontSize: 16,
+            }}
+            placeholder="Tìm kiếm"
+            placeholderTextColor={"white"}
+          />
+        </View>
+      ),
+      headerStyle: {
+        backgroundColor: "#0091FF",
+        shadowColor: "#fff",
+      },
+      headerTintColor: "#fff",
+      headerTitleStyle: {
+        fontWeight: "bold",
+        fontSize: 20,
+      },
+    });
+  }, [navigation]);
 
   return (
-    <View>
+    <View style={styles.container}>
       {/* Đăng status */}
       <View style={styles.statusContainer}>
         <View style={styles.avatarContainer}>
           <Image
-            source={require("/assets/avata-story-3.png")}
+            source={require("../../../assets/avata-story-3.png")}
             style={styles.avatar}
           />
           <Pressable
@@ -106,7 +107,7 @@ const News = ({ navigation }) => {
         <View style={styles.storyList}>
           <Pressable>
             <ImageBackground
-              source={require("/assets/story_1.png")}
+              source={require("../../../assets/story_1.png")}
               style={styles.storyItem}
             >
               <Pressable style={styles.storyIconContainer}>
@@ -117,7 +118,7 @@ const News = ({ navigation }) => {
           </Pressable>
           <Pressable>
             <ImageBackground
-              source={require("/assets/story_1.png")}
+              source={require("../../../assets/story_1.png")}
               style={styles.storyItem}
             >
               <Pressable style={styles.storyIconContainer}>
@@ -128,7 +129,7 @@ const News = ({ navigation }) => {
           </Pressable>
           <Pressable>
             <ImageBackground
-              source={require("/assets/story_1.png")}
+              source={require("../../../assets/story_1.png")}
               style={styles.storyItem}
             >
               <Pressable style={styles.storyIconContainer}>
@@ -146,7 +147,7 @@ const News = ({ navigation }) => {
           <View style={styles.statusHeader}>
             <Pressable>
               <Image
-                source={require("/assets/avata-story-1.png")}
+                source={require("../../../assets/avata-story-1.png")}
                 style={styles.statusAvatar}
               />
             </Pressable>
@@ -158,7 +159,7 @@ const News = ({ navigation }) => {
             </View>
             <Pressable style={styles.statusOptions}>
               <Image
-                source={require("/assets/ic_threeDots.png")}
+                source={require("../../../assets/ic_threeDots.png")}
                 style={styles.statusOptionsIcon}
                 resizeMode="contain"
               />
@@ -171,7 +172,7 @@ const News = ({ navigation }) => {
           </View>
           <View style={styles.statusImageContainer}>
             <Image
-              source={require("/assets/status-1.png")}
+              source={require("../../../assets/status-1.png")}
               style={styles.statusImage}
             />
           </View>
@@ -204,7 +205,7 @@ const News = ({ navigation }) => {
           <View style={styles.statusHeader}>
             <Pressable>
               <Image
-                source={require("/assets/avata-story-1.png")}
+                source={require("../../../assets/avata-story-1.png")}
                 style={styles.statusAvatar}
               />
             </Pressable>
@@ -216,7 +217,7 @@ const News = ({ navigation }) => {
             </View>
             <Pressable style={styles.statusOptions}>
               <Image
-                source={require("/assets/ic_threeDots.png")}
+                source={require("../../../assets/ic_threeDots.png")}
                 style={styles.statusOptionsIcon}
                 resizeMode="contain"
               />
@@ -229,7 +230,7 @@ const News = ({ navigation }) => {
           </View>
           <View style={styles.statusImageContainer}>
             <Image
-              source={require("/assets/status-1.png")}
+              source={require("../../../assets/status-1.png")}
               style={styles.statusImage}
             />
           </View>
@@ -262,7 +263,7 @@ const News = ({ navigation }) => {
           <View style={styles.statusHeader}>
             <Pressable>
               <Image
-                source={require("/assets/avata-story-1.png")}
+                source={require("../../../assets/avata-story-1.png")}
                 style={styles.statusAvatar}
               />
             </Pressable>
@@ -274,7 +275,7 @@ const News = ({ navigation }) => {
             </View>
             <Pressable style={styles.statusOptions}>
               <Image
-                source={require("/assets/ic_threeDots.png")}
+                source={require("../../../assets/ic_threeDots.png")}
                 style={styles.statusOptionsIcon}
                 resizeMode="contain"
               />
@@ -287,7 +288,7 @@ const News = ({ navigation }) => {
           </View>
           <View style={styles.statusImageContainer}>
             <Image
-              source={require("/assets/status-1.png")}
+              source={require("../../../assets/status-1.png")}
               style={styles.statusImage}
             />
           </View>
@@ -322,6 +323,10 @@ const News = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "white",
+  },
   headerRightContainer: {
     flexDirection: "row",
   },
@@ -384,7 +389,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   storyTitle: {
-    fontWeight: 600,
+    fontWeight: "600",
     fontSize: 16,
     paddingHorizontal: 10,
     paddingTop: 10,
@@ -412,7 +417,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   storyName: {
-    fontWeight: 600,
+    fontWeight: "600",
     color: "white",
     fontSize: 12,
   },
@@ -457,7 +462,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 18,
-    fontWeight: 400,
+    fontWeight: "400",
   },
   statusImageContainer: {
     width: "100%",
