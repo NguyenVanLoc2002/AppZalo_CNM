@@ -1,121 +1,210 @@
-import React, { useState } from 'react';
-import { View, Text, Pressable, Image, TextInput, Modal } from "react-native";
-import { CheckBox } from 'react-native-elements';
-import CountryDropdown from './CountryDropdown'
 
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  Image,
+  TextInput,
+  Modal,
+  StyleSheet,
+} from "react-native";
+import { CheckBox } from "react-native-elements";
+import CountryDropdown from "./CountryDropdown";
 
 const CreateAccount1 = ({ navigation }) => {
-    const [isCheckedUse, setIsCheckedUse] = useState(false);
-    const [isCheckedInter, setIsCheckedInter] = useState(false);
-    const [isModalVisible, setModalVisible] = useState(false);
-    const [textPhone, setTextPhone] = useState('');
-    const [isValidPhone, setIsValidPhone] = useState(false);
+  const [isCheckedUse, setIsCheckedUse] = useState(false);
+  const [isCheckedInter, setIsCheckedInter] = useState(false);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [textPhone, setTextPhone] = useState("");
+  const [isValidPhone, setIsValidPhone] = useState(false);
 
-    const toggleModal = () => {
-        setModalVisible(!isModalVisible);
-    };
-    const handleCheckUse = () => {
-        setIsCheckedUse(!isCheckedUse);
-    };
-    const handleCheckInter = () => {
-        setIsCheckedInter(!isCheckedInter);
-    };
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
 
-    const handleTextChange = (input) => {
+  const handleCheckUse = () => {
+    setIsCheckedUse(!isCheckedUse);
+  };
 
-        const isValidInput = /^[0-9]{8,20}$/.test(input);
+  const handleCheckInter = () => {
+    setIsCheckedInter(!isCheckedInter);
+  };
 
-        setTextPhone(input);
-        if (isValidInput) {
-            setIsValidPhone(true);
-        } else {
-            setIsValidPhone(false);
-        }
-    };
-    const handlePressablePress = () => {
-        if (isValidPhone && isCheckedInter && isCheckedUse) {
-            toggleModal()
-        }
-    };
-    const handleXacNhan = () => {
+  const handleTextChange = (input) => {
+    const isValidInput = /^[0-9]{8,20}$/.test(input);
 
-        toggleModal();
-        navigation.navigate("EnterAuthCode");
-    };
+    setTextPhone(input);
+    setIsValidPhone(isValidInput);
+  };
 
+  const handlePressablePress = () => {
+    if (isValidPhone && isCheckedInter && isCheckedUse) {
+      toggleModal();
+    }
+  };
 
-    return (
-        <View className={"flex-1  bg-white"}>
-            <View className={"bg-gray-200"}><Text className={"font-bold text-black-400 p-2 text-center"}>Nhập số điện thoại của bạn để tạo tài khoản mới</Text></View>
-            <View className={"flex flex-row m-5 border-b-[#64D6EA] border-b-[2px]"} >
-                <CountryDropdown />
-                <TextInput
-                    onChangeText={handleTextChange}
-                    value={textPhone}
-                    placeholder="Nhập số điện thoại" className={"pl-3 font-semibold placeholder-gray-400 text-lg focus:outline-none "}></TextInput>
+  const handleXacNhan = () => {
+    toggleModal();
+    navigation.navigate("EnterAuthCode");
+  };
 
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>
+          Nhập số điện thoại của bạn để tạo tài khoản mới
+        </Text>
+      </View>
+      <View style={styles.inputContainer}>
+        <CountryDropdown />
+        <TextInput
+          onChangeText={handleTextChange}
+          value={textPhone}
+          placeholder="Nhập số điện thoại"
+          style={styles.input}
+        />
+      </View>
+      <View style={styles.checkBoxContainer}>
+        <CheckBox
+          checked={isCheckedUse}
+          onPress={handleCheckUse}
+          title="Tôi đồng ý với các điều khoản sử dụng Zalo"
+          containerStyle={styles.checkBox}
+          textStyle={styles.checkBoxText}
+        />
+        <CheckBox
+          checked={isCheckedInter}
+          onPress={handleCheckInter}
+          title="Tôi đồng ý với các điều khoản Mạng xã hội của Zalo"
+          containerStyle={styles.checkBox}
+          textStyle={styles.checkBoxText}
+        />
+      </View>
+      <Pressable
+        style={[
+          styles.button,
+          {
+            backgroundColor:
+              !isValidPhone || !isCheckedInter || !isCheckedUse
+                ? "#BFD3F8"
+                : "#0091FF",
+          },
+        ]}
+        disabled={!isValidPhone || !isCheckedInter || !isCheckedUse}
+        onPress={handlePressablePress}
+      >
+        <Image
+          style={styles.buttonIcon}
+          source={require("../../../assets/arrow.png")}
+        />
+      </Pressable>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={toggleModal}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalHeaderText}>
+              Xác nhận số điện thoại (+84){textPhone} ?
+            </Text>
+            <Text style={styles.modalText}>
+              Số điện thoại này sẽ được sử dụng để nhận mã xác thực
+            </Text>
+            <View style={styles.modalButtonContainer}>
+              <Pressable onPress={toggleModal}>
+                <Text style={styles.modalButton}>HỦY</Text>
+              </Pressable>
+              <Pressable onPress={handleXacNhan}>
+                <Text style={styles.modalButton}>XÁC NHẬN</Text>
+              </Pressable>
             </View>
-            <View className={"flex flex-col"}>
-                <CheckBox
-                    checked={isCheckedUse}
-                    onPress={handleCheckUse}
-                    title={
-                        <View className={'flex-row'}>
-                            <Text className={"font-medium text-black "}>
-                                Tôi đồng ý với các <Text className={"font-medium text-sky-400 "}>
-                                    điều khoản sử dụng Zalo
-                                </Text></Text>
-                        </View>
-                    }
-                />
-                <CheckBox
-                    checked={isCheckedInter}
-                    onPress={handleCheckInter}
-                    title={
-                        <View className={'flex-row'}>
-                            <Text className={"font-medium text-black "}>
-                                Tôi đồng ý với các <Text className={"font-medium text-sky-400 "}>
-                                    điều khoản Mạng xã hội của Zalo
-                                </Text></Text>
-                        </View>
-                    }
-                />
-
-            </View>
-            <View className={"flex-1 justify-end items-end m-5"}>
-                <Pressable
-                    className={
-                        "w-[70px] h-[70px] btn rounded-full font-bold text-white items-center justify-center " +
-                        `${!isValidPhone || !isCheckedInter || !isCheckedUse ? " bg-[#BFD3F8]" : " bg-[#0091FF]"}`}
-                    disabled={!isValidPhone || !isCheckedInter || !isCheckedUse} onPress={handlePressablePress}
-                >
-                    <View><Image className={"w-[50px] h-[50px]"} source={require('/assets/arrow.png')} ></Image>
-                    </View></Pressable>
-            </View>
-            <Modal
-                animationType="slide"
-                transparent={true}
-                visible={isModalVisible}
-                onRequestClose={toggleModal}>
-                <View className={'flex-1 justify-center items-center bg-black bg-opacity-50'}>
-                    <View className={"bg-white w-60"}>
-                        <View className={"border-b-gray-400 border-b-[1px]"}>
-                            <Text className={"font-bold text-black-400 text-left m-3"}>Xác nhận số điện thoại (+84){textPhone} ?</Text>
-                        </View>
-                        <View>
-                            <Text className={"font-normal text-black-400 text-left m-3"}>Số điện thoại này sẽ được sử dụng để nhận mã xác thực</Text>
-                        </View>
-                        <View className={"flex-end flex-row justify-end"} >
-                            <Pressable onPress={toggleModal} ><Text className={"font-bold text-black-400 text-center m-2"} >HỦY</Text></Pressable>
-                            <Pressable
-                                onPress={handleXacNhan}
-                            ><Text className={"font-bold text-sky-400 text-center m-2"}>XÁC NHẬN</Text></Pressable>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
-
+          </View>
         </View>
-    )
+      </Modal>
+    </View>
+  );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  header: {
+    backgroundColor: "#ddd",
+    padding: 10,
+  },
+  headerText: {
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  inputContainer: {
+    flexDirection: "row",
+    margin: 20,
+    borderBottomWidth: 2,
+    borderBottomColor: "#64D6EA",
+  },
+  input: {
+    flex: 1,
+    paddingLeft: 10,
+    fontSize: 16,
+  },
+  checkBoxContainer: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+  },
+  checkBox: {
+    backgroundColor: "transparent",
+    borderWidth: 0,
+  },
+  checkBoxText: {
+    fontWeight: "normal",
+  },
+  button: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: "#BFD3F8",
+    justifyContent: "center",
+    alignItems: "center",
+    alignSelf: "center",
+  },
+  buttonIcon: {
+    width: 40,
+    height: 40,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    width: 300,
+    padding: 20,
+    borderRadius: 10,
+  },
+  modalHeaderText: {
+    fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  modalText: {
+    marginBottom: 20,
+  },
+  modalButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+  },
+  modalButton: {
+    fontWeight: "bold",
+    marginHorizontal: 10,
+    color: "#0091FF",
+  },
+});
+
 export default CreateAccount1;
