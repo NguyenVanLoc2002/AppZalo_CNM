@@ -1,30 +1,39 @@
-import { View, Text, Pressable, Image, TextInput,Picker  } from "react-native";
-import React, { useState } from 'react';
+import { View, Text } from "react-native";
+import React, { useState } from "react";
+import SelectDropdown from "react-native-select-dropdown";
+import {AntDesign} from '@expo/vector-icons'
 
-const countries = [
-  'VN',
-  'USA',
-  'UK',
-  'Cam',
-];
+const countries = ["VN", "USA", "UK", "Cam"];
 
 const CountryDropdown = () => {
-    const [selectedCountry, setSelectedCountry] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState("");
 
-    return (
-      <View className="relative  text-left w-75">
-        <Picker
-          selectedValue={selectedCountry}
-          onValueChange={(itemValue) => setSelectedCountry(itemValue)}
-          className="  py-2 focus:outline-none focus:border-sky-300 text font-bold text-sky-400"
-        >
-          {countries.map((country, index) => (
-            <Picker.Item   key={index} label={country} value={country} />
-          ))}
-        </Picker>
-      </View>
-    );
-  };
+  return (
+    <View >
+      <SelectDropdown
+        data={countries}
+        onSelect={(selectedItem, index) => {
+          setSelectedCountry(selectedItem);
+        }}
+        buttonTextAfterSelection={(selectedItem, index) => {
+          return selectedItem;
+        }}
+        rowTextForSelection={(item, index) => {
+          return item;
+        }}
+        buttonStyle={{ width: 70, backgroundColor: "white"}}
+        renderCustomizedButtonChild={(selectedItem, index) => {
+          return (
+            <View style={{justifyContent: "space-around", alignItems : 'center', flexDirection: "row"}}>
+              <Text>{selectedCountry}</Text>
+              <AntDesign name="caretdown" size={10} color="gray" />
 
+            </View>
+          );
+        }}
+      />
+    </View>
+  );
+};
 
 export default CountryDropdown;
