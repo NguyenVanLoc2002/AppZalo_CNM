@@ -41,7 +41,7 @@ const OA = ({ navigation }) => {
             <Pressable key={index} style={styles.officialAccountItem}>
               <Image
                 style={styles.avatar}
-                source={require("/assets/meomeo.jpg")}
+                source={require("../../../assets/meomeo.jpg")}
               />
               <Text style={styles.officialAccountText}>{officialAccount}</Text>
             </Pressable>

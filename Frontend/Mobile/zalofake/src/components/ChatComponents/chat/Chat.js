@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -14,6 +14,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 function Chat({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
 
+  useEffect(() => {
   navigation.setOptions({
     headerRight: () => (
       <View style={styles.headerRightContainer}>
@@ -60,7 +61,7 @@ function Chat({ navigation }) {
       fontWeight: "bold",
       fontSize: 20,
     },
-  });
+  });}, []);
 
   // Mảng dữ liệu mẫu
   const [users, setUsers] = useState([
