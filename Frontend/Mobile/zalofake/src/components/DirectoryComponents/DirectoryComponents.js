@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, TextInput, Pressable, StyleSheet } from "react-native";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { Ionicons } from "@expo/vector-icons";
@@ -10,57 +10,59 @@ import OA from "./OA";
 const Tab = createMaterialTopTabNavigator();
 
 const DirectoryComponents = ({ navigation }) => {
-  navigation.setOptions({
-    headerRight: () => (
-      <View style={styles.headerRightContainer}>
-        <Pressable
-          style={styles.headerIcon}
-          onPress={() => {
-            navigation.navigate("AddFriends");
-          }}
-        >
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={styles.headerRightContainer}>
+          <Pressable
+            style={styles.headerIcon}
+            onPress={() => {
+              navigation.navigate("AddFriends");
+            }}
+          >
+            <Ionicons
+              name="person-add-outline"
+              size={24}
+              color="white"
+              // style={{ marginRight: 10 }}
+            />
+          </Pressable>
+        </View>
+      ),
+      headerTitle: () => (
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Ionicons
-            name="person-add-outline"
+            name="search"
             size={24}
             color="white"
-            style={{ marginRight: 10 }}
+            style={{ marginLeft: 5, marginRight: 25 }}
           />
-        </Pressable>
-      </View>
-    ),
-    headerTitle: () => (
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <Ionicons
-          name="search"
-          size={24}
-          color="white"
-          style={{ marginLeft: 5, marginRight: 25 }}
-        />
-        <TextInput
-          onFocus={() => {
-            navigation.navigate("SearchFriends");
-          }}
-          style={{
-            height: 45,
-            width: 300,
-            marginLeft: 25,
-            fontSize: 16,
-          }}
-          placeholder="Tìm kiếm"
-          placeholderTextColor={"white"}
-        />
-      </View>
-    ),
-    headerStyle: {
-      backgroundColor: "#0091FF",
-      shadowColor: "#fff",
-    },
-    headerTintColor: "#fff",
-    headerTitleStyle: {
-      fontWeight: "bold",
-      fontSize: 20,
-    },
-  });
+          <TextInput
+            onFocus={() => {
+              navigation.navigate("SearchFriends");
+            }}
+            style={{
+              height: 45,
+              width: 300,
+              marginLeft: 25,
+              fontSize: 16,
+            }}
+            placeholder="Tìm kiếm"
+            placeholderTextColor={"white"}
+          />
+        </View>
+      ),
+      headerStyle: {
+        backgroundColor: "#0091FF",
+        shadowColor: "#fff",
+      },
+      headerTintColor: "#fff",
+      headerTitleStyle: {
+        fontWeight: "bold",
+        fontSize: 20,
+      },
+    });
+  }, [navigation]);
 
   return (
     <Tab.Navigator initialRouteName="Bạn bè" tabBarPosition="top">
@@ -78,8 +80,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   headerIcon: {
-    padding: 10,
-    marginLeft: 15,
+    marginRight: 20,
+
   },
   headerTitleContainer: {
     flexDirection: "row",
