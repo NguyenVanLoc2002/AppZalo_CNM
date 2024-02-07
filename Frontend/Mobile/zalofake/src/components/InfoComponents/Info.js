@@ -1,57 +1,64 @@
-
-import { View, Text, Pressable, Image, StyleSheet, TextInput } from "react-native";
-import React from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  Image,
+  StyleSheet,
+  TextInput,
+  ScrollView,
+} from "react-native";
+import React, { useEffect } from "react";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
 import { ProgressBar } from "react-native-paper";
 
 const Info = ({ navigation }) => {
-
-  navigation.setOptions({
-    headerRight: () => (
-      <View style={styles.headerRightContainer}>
-      
-        <Pressable
-          onPress={() => navigation.navigate("PersonalSetting")}
-          style={styles.headerIcon}
-        >
-          <Ionicons name="settings-outline" size={24} color="white" />
-        </Pressable>
-      </View>
-    ),
-    headerTitle: () => (
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <Ionicons
-          name="search"
-          size={24}
-          color="white"
-          style={{ marginLeft: 5, marginRight: 25 }}
-        />
-        <TextInput
-          onFocus={() => {
-            navigation.navigate("SearchFriends");
-          }}
-          style={{
-            height: 45,
-            width: 300,
-            marginLeft: 25,
-            fontSize: 16
-          }}
-          placeholder="Tìm kiếm"
-          placeholderTextColor={"white"}
-        />
-      </View>
-    ),
-    headerStyle: {
-      backgroundColor: "#0091FF",
-      shadowColor: "#fff",
-    },
-    headerTintColor: "#fff",
-    headerTitleStyle: {
-      fontWeight: "bold",
-      fontSize: 20,
-    },
-  });
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={styles.headerRightContainer}>
+          <Pressable
+            onPress={() => navigation.navigate("PersonalSetting")}
+            style={styles.headerIcon}
+          >
+            <Ionicons name="settings-outline" size={24} color="white" />
+          </Pressable>
+        </View>
+      ),
+      headerTitle: () => (
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Ionicons
+            name="search"
+            size={24}
+            color="white"
+            style={{ marginLeft: 5, marginRight: 25 }}
+          />
+          <TextInput
+            onFocus={() => {
+              navigation.navigate("SearchFriends");
+            }}
+            style={{
+              height: 45,
+              width: 300,
+              marginLeft: 25,
+              fontSize: 16,
+            }}
+            placeholder="Tìm kiếm"
+            placeholderTextColor={"white"}
+          />
+        </View>
+      ),
+      headerStyle: {
+        backgroundColor: "#0091FF",
+        shadowColor: "#fff",
+      },
+      headerTintColor: "#fff",
+      headerTitleStyle: {
+        fontWeight: "bold",
+        fontSize: 20,
+      },
+    });
+  }, [navigation]);
 
   return (
     <View style={styles.container}>
@@ -65,7 +72,7 @@ const Info = ({ navigation }) => {
         >
           <View style={styles.avatarContainer}>
             <Image
-              source={require("/assets/avata-story-3.png")}
+              source={require("../../../assets/avata-story-3.png")}
               style={styles.avatar}
             ></Image>
           </View>
@@ -100,19 +107,6 @@ const Info = ({ navigation }) => {
         </View>
         <View style={styles.iconContainer}>
           <FontAwesomeIcons name="crown" size={16} color="#e48e04" />
-        </View>
-      </Pressable>
-
-      {/* Ví QR */}
-      <Pressable style={styles.selectContainer}>
-        <View style={styles.iconContainer}>
-          <Ionicons name="qr-code-outline" size={24} color="#0091FF" />
-        </View>
-        <View style={styles.textContent}>
-          <Text style={styles.boldText}>Ví QR</Text>
-          <Text style={styles.grayText}>
-            Lưu trữ và xuất trình các mã QR quan trọng
-          </Text>
         </View>
       </Pressable>
 
@@ -244,9 +238,7 @@ const styles = StyleSheet.create({
   selectContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
-    paddingVertical: 20,
-    // paddingHorizontal: 2,
+    paddingHorizontal: 2,
     borderBottomColor: "gray",
     borderBottomWidth: 0.5,
   },

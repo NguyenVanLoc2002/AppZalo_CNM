@@ -39,11 +39,11 @@ const PersonalPage = ({ navigation }) => {
     <View style={{ backgroundColor: "#f1f2f6", flex: 1 }}>
       <View style={{ alignItems: "center" }}>
         <Image
-          source={require("/assets/cover-image.png")}
+          source={require("../../../assets/cover-image.png")}
           style={{ width: "100%", height: 160 }}
         />
         <Image
-          source={require("/assets/avata-story-3.png")}
+          source={require("../../../assets/avata-story-3.png")}
           style={{ width: 96, height: 96, marginTop: -48, borderRadius: 48 }}
         />
       </View>
@@ -198,15 +198,15 @@ const PersonalPage = ({ navigation }) => {
             }}
           >
             <Image
-              source={require("/assets/status-HPNY-1.png")}
+              source={require("../../../assets/status-HPNY-1.png")}
               style={{ width: "31%", aspectRatio: 1, marginBottom: 8 }}
             />
             <Image
-              source={require("/assets/status-HPNY-2.png")}
+              source={require("../../../assets/status-HPNY-2.png")}
               style={{ width: "31%", aspectRatio: 1, marginBottom: 8 }}
             />
             <Image
-              source={require("/assets/status-HPNY-3.png")}
+              source={require("../../../assets/status-HPNY-3.png")}
               style={{ width: "31%", aspectRatio: 1, marginBottom: 8 }}
             />
           </View>
@@ -235,7 +235,7 @@ const PersonalPage = ({ navigation }) => {
               </Pressable>
               <Pressable>
                 <Image
-                  source={require("/assets/ic_threeDots.png")}
+                  source={require("../../../assets/ic_threeDots.png")}
                   style={{ width: 20, height: 20, resizeMode: "contain" }}
                 />
               </Pressable>
