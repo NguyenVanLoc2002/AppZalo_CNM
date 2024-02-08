@@ -92,88 +92,104 @@ const Info = ({ navigation }) => {
       </View>
 
       {/* View select */}
-      {/* Đăng ký nhạc chờ */}
-      <Pressable style={styles.selectContainer}>
-        <View style={styles.iconContainer}>
-          <FontAwesomeIcons name="music" size={24} color="#0091FF" />
-        </View>
-        <View style={styles.textContent}>
-          <View style={styles.textRow}>
-            <Text style={styles.boldText}>Nhạc chờ Zalo</Text>
+      <View
+        style={{
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginTop: 3,
+        }}
+      >
+        {/* Đăng ký nhạc chờ */}
+        <Pressable style={styles.selectContainer}>
+          <View style={styles.iconContainer}>
+            <FontAwesomeIcons name="music" size={24} color="#0091FF" />
           </View>
-          <Text style={styles.grayText}>
-            Đăng ký nhạc chờ, thể hiện cá tính
-          </Text>
-        </View>
-        <View style={styles.iconContainer}>
-          <FontAwesomeIcons name="crown" size={16} color="#e48e04" />
-        </View>
-      </Pressable>
+          <View style={styles.textContent}>
+            <View style={styles.textRow}>
+              <Text style={styles.boldText}>Nhạc chờ Zalo</Text>
+            </View>
+            <Text style={styles.grayText}>
+              Đăng ký nhạc chờ, thể hiện cá tính
+            </Text>
+          </View>
+          <View style={styles.iconContainer}>
+            <FontAwesomeIcons name="crown" size={16} color="#e48e04" />
+          </View>
+        </Pressable>
 
-      {/* Clound */}
-      <Pressable style={styles.selectContainer}>
-        <View style={styles.iconContainer}>
-          <Ionicons name="cloudy-outline" size={24} color="#0091FF" />
-        </View>
-        <View style={styles.textContent}>
-          <Text style={styles.boldText}>Clound của tôi</Text>
-          <Text style={styles.grayText}>372,2 MB / 1 GB</Text>
-          <ProgressBar style={{ height: 2 }} progress={0.5} color="#0091FF" />
-        </View>
-        <View style={styles.iconContainer}>
-          <Ionicons name="arrow-forward" size={24} color="#cccccc" />
-        </View>
-      </Pressable>
+        {/* Clound */}
+        <Pressable style={styles.selectContainer}>
+          <View style={styles.iconContainer}>
+            <Ionicons name="cloudy-outline" size={24} color="#0091FF" />
+          </View>
+          <View style={styles.textContent}>
+            <Text style={styles.boldText}>Clound của tôi</Text>
+            <Text style={styles.grayText}>372,2 MB / 1 GB</Text>
+            <ProgressBar style={{ height: 2 }} progress={0.5} color="#0091FF" />
+          </View>
+          <View style={styles.iconContainer}>
+            <Ionicons name="arrow-forward" size={24} color="#cccccc" />
+          </View>
+        </Pressable>
+        <View />
+        <View
+          style={{
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginTop: 1,
+          }}
+        >
+          {/* Bộ nhớ */}
+          <Pressable style={styles.selectContainer}>
+            <View style={styles.iconContainer}>
+              <FontAwesomeIcons name="chart-pie" size={24} color="#0091FF" />
+            </View>
+            <View style={styles.textContent}>
+              <Text style={styles.boldText}>Dung lượng và dữ liệu</Text>
+              <Text style={styles.grayText}>Quản lý dữ liệu Zalo của bạn</Text>
+            </View>
+            <View style={styles.iconContainer}>
+              <Ionicons name="arrow-forward" size={24} color="#cccccc" />
+            </View>
+          </Pressable>
 
-      {/* Bộ nhớ */}
-      <Pressable style={styles.selectContainer}>
-        <View style={styles.iconContainer}>
-          <FontAwesomeIcons name="chart-pie" size={24} color="#0091FF" />
-        </View>
-        <View style={styles.textContent}>
-          <Text style={styles.boldText}>Dung lượng và dữ liệu</Text>
-          <Text style={styles.grayText}>Quản lý dữ liệu Zalo của bạn</Text>
-        </View>
-        <View style={styles.iconContainer}>
-          <Ionicons name="arrow-forward" size={24} color="#cccccc" />
-        </View>
-      </Pressable>
+          {/* Tài khoản và bảo mật*/}
+          <Pressable
+            onPress={() => {
+              navigation.navigate("AccountVsSecurity");
+            }}
+            style={styles.selectContainer}
+          >
+            <View style={styles.iconContainer}>
+              <Ionicons name="shield-checkmark" size={22} color="#0091FF" />
+            </View>
+            <View style={styles.textContent}>
+              <Text style={styles.boldText}>Tài khoản và bảo mật</Text>
+            </View>
+            <View style={styles.iconContainer}>
+              <Ionicons name="arrow-forward" size={24} color="#cccccc" />
+            </View>
+          </Pressable>
 
-      {/* Tài khoản và bảo mật*/}
-      <Pressable
-        onPress={() => {
-          navigation.navigate("AccountVsSecurity");
-        }}
-        style={styles.selectContainer}
-      >
-        <View style={styles.iconContainer}>
-          <Ionicons name="shield-checkmark" size={22} color="#0091FF" />
+          {/* Quyền riêng tư*/}
+          <Pressable
+            onPress={() => {
+              navigation.navigate("PersonalPrivacy");
+            }}
+            style={styles.selectContainer}
+          >
+            <View style={styles.iconContainer}>
+              <FontAwesomeIcons name="user-lock" size={22} color="#0091FF" />
+            </View>
+            <View style={styles.textContent}>
+              <Text style={styles.boldText}>Quyền riêng tư</Text>
+            </View>
+            <View style={styles.iconContainer}>
+              <Ionicons name="arrow-forward" size={24} color="#cccccc" />
+            </View>
+          </Pressable>
         </View>
-        <View style={styles.textContent}>
-          <Text style={styles.boldText}>Tài khoản và bảo mật</Text>
-        </View>
-        <View style={styles.iconContainer}>
-          <Ionicons name="arrow-forward" size={24} color="#cccccc" />
-        </View>
-      </Pressable>
-
-      {/* Quyền riêng tư*/}
-      <Pressable
-        onPress={() => {
-          navigation.navigate("PersonalPrivacy");
-        }}
-        style={styles.selectContainer}
-      >
-        <View style={styles.iconContainer}>
-          <FontAwesomeIcons name="user-lock" size={22} color="#0091FF" />
-        </View>
-        <View style={styles.textContent}>
-          <Text style={styles.boldText}>Quyền riêng tư</Text>
-        </View>
-        <View style={styles.iconContainer}>
-          <Ionicons name="arrow-forward" size={24} color="#cccccc" />
-        </View>
-      </Pressable>
+      </View>
     </View>
   );
 };
@@ -181,7 +197,6 @@ const Info = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
   },
   headerRightContainer: {
     flexDirection: "row",
@@ -206,8 +221,8 @@ const styles = StyleSheet.create({
   infoContainer: {
     flexDirection: "row",
     backgroundColor: "white",
-    marginBottom: 2,
     paddingHorizontal: 5,
+    paddingVertical: 10,
   },
   pressableContainer: {
     flex: 1,
@@ -241,10 +256,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
     borderBottomColor: "gray",
     borderBottomWidth: 0.5,
+    backgroundColor: "white",
   },
   iconContainer: {
     width: "20%",
-    height: "100%",
+    height: 100,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -257,7 +273,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   boldText: {
-    fontWeight: "bold",
+    fontWeight: "400",
     fontSize: 16,
   },
   grayText: {
