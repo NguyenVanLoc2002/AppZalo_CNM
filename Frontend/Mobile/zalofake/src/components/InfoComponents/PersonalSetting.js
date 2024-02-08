@@ -1,38 +1,37 @@
 import { View, Text, Pressable } from "react-native";
-import React from "react";
-import {Entypo, Ionicons} from "react-native-vector-icons";
+import React, { useEffect } from "react";
+import { Entypo, Ionicons } from "react-native-vector-icons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
 
 const PersonalSetting = ({ navigation }) => {
-  navigation.setOptions({
-    headerRight: () => (
-      <View style={{ flexDirection: "row", paddingHorizontal: 16 }}>
-        <Pressable style={{ paddingHorizontal: 2 }}>
-          <Ionicons name="search" size={24} color="white" />
-        </Pressable>
-      </View>
-    ),
-    headerTitle: () => (
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <Text style={{ color: "white", fontSize: 20, fontWeight: "bold" }}>
-          Cài đặt
-        </Text>
-      </View>
-    ),
-    headerStyle: {
-      backgroundColor: "#0091FF",
-      shadowColor: "#fff",
-    },
-    headerTintColor: "#fff",
-    headerTitleStyle: {
-      fontSize: 20,
-    },
-  });
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={{ flexDirection: "row", paddingHorizontal: 16 }}>
+          <Pressable style={{ paddingHorizontal: 2 }}>
+            <Ionicons name="search" size={24} color="white" />
+          </Pressable>
+        </View>
+      ),
+      headerTitle: () => (
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text style={{ color: "white", fontSize: 20, fontWeight: "bold" }}>
+            Cài đặt
+          </Text>
+        </View>
+      ),
+      headerStyle: {
+        backgroundColor: "#0091FF",
+        shadowColor: "#fff",
+      },
+      headerTintColor: "#fff",
+      headerTitleStyle: {
+        fontSize: 20,
+      },
+    });
+  }, [navigation]);
   return (
     <View>
-      {/* View select */}
-
-      {/* Tài khoản và bảo mật*/}
       <Pressable
         onPress={() => {
           navigation.navigate("AccountVsSecurity");
