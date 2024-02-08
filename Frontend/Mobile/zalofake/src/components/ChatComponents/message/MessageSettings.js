@@ -1,5 +1,5 @@
 import { View, Text, Image, Pressable, ScrollView } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Ionicons,
   MaterialCommunityIcons,
@@ -13,6 +13,27 @@ const MessageSettings = ({ navigation, route }) => {
   const [isPinChat, setPinChat] = useState(false);
   const [isHideChat, setHideChat] = useState(false);
   const [isNotifyIncomingCalls, setNotifyIncomingCalls] = useState(false);
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerTitle: () => (
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text style={{ color: "white", fontSize: 20, fontWeight: "bold" }}>
+            Tùy chọn
+          </Text>
+        </View>
+      ),
+      headerStyle: {
+        backgroundColor: "#0091FF",
+        shadowColor: "#fff",
+      },
+      headerTintColor: "white",
+      headerTitleStyle: {
+        fontWeight: "bold",
+        fontSize: 20,
+      },
+    });
+  }, [navigation]);
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: "white" }}>
@@ -53,7 +74,7 @@ const MessageSettings = ({ navigation, route }) => {
         >
           <View
             style={{
-              backgroundColor: "gray",
+              backgroundColor: "#F2F2F2",
               borderRadius: 25,
               padding: 5,
               opacity: 0.5,
@@ -80,7 +101,7 @@ const MessageSettings = ({ navigation, route }) => {
         >
           <View
             style={{
-              backgroundColor: "gray",
+              backgroundColor: "#F2F2F2",
               borderRadius: 25,
               padding: 5,
               opacity: 0.5,
@@ -107,7 +128,7 @@ const MessageSettings = ({ navigation, route }) => {
         >
           <View
             style={{
-              backgroundColor: "gray",
+              backgroundColor: "#F2F2F2",
               borderRadius: 25,
               padding: 5,
               opacity: 0.5,
@@ -134,7 +155,7 @@ const MessageSettings = ({ navigation, route }) => {
         >
           <View
             style={{
-              backgroundColor: "gray",
+              backgroundColor: "#F2F2F2",
               borderRadius: 25,
               padding: 5,
               opacity: 0.5,
