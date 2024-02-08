@@ -1,4 +1,4 @@
-import { View, Text, Switch, Pressable, Image, StyleSheet } from "react-native";
+import { View, Text, Switch, Pressable, Image, StyleSheet, FlatList, ScrollView } from "react-native";
 import { React, useEffect, useState } from "react";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
@@ -85,11 +85,15 @@ const PostStatus = ({ navigation }) => {
         </Pressable>
       </View>
       <View style={styles.imageContainer}>
-        <View style={{ width: "100%", height: "50%", borderWidth: 1 }}>
-          {selectedImages.map((imageUri, index) => (
-            <Pressable key={index} onPress={() => handleSelectImage(imageUri)}>
+        <View style={{ width: "100%", height: "30%", borderWidth: 1 }}>
+          
+          <FlatList
+          data={selectedImages}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item }) => (
+            <Pressable onPress={() => handleSelectImage(item)}>
               <Image
-                source={{ uri: imageUri }}
+                source={{ uri: item }}
                 style={{
                   width: 100,
                   height: 100,
@@ -98,7 +102,8 @@ const PostStatus = ({ navigation }) => {
                 }}
               />
             </Pressable>
-          ))}
+          )}
+          />
         </View>
         <View style={styles.iconContainer}>
           <View
