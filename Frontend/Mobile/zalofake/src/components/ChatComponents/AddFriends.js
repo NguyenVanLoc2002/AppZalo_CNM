@@ -1,6 +1,6 @@
 import { View, Text, Image, TextInput } from "react-native";
 import React from "react";
-import { Ionicons,AntDesign } from "@expo/vector-icons";
+import { Ionicons, AntDesign } from "@expo/vector-icons";
 
 const AddFriends = () => {
   return (
@@ -22,17 +22,21 @@ const AddFriends = () => {
             // flex : 1,
             justifyContent: "space-between",
             alignItems: "center",
-            paddingVertical: 15
+            paddingVertical: 15,
           }}
         >
-          <Text style={{ fontSize: 20, color: 'white', fontWeight: 600 }}>Meo Meo</Text>
+          <Text style={{ fontSize: 20, color: "white", fontWeight: 600 }}>
+            Meo Meo
+          </Text>
           <Image
             source={{
               uri: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRP9K07HCn8Ia93xqZUHwjXID8gc3EUsasv7Q&usqp=CAU",
             }}
-            style={{ height: 80, width: 80, resizeMode: "cover"}}
+            style={{ height: 80, width: 80, resizeMode: "cover" }}
           />
-          <Text style={{ fontSize: 10, color: 'white' }}>Quét mã để thêm bạn Zalo với tôi</Text>
+          <Text style={{ fontSize: 10, color: "white" }}>
+            Quét mã để thêm bạn Zalo với tôi
+          </Text>
         </View>
       </View>
       <View
@@ -43,14 +47,13 @@ const AddFriends = () => {
           flexDirection: "row",
           justifyContent: "center",
           alignItems: "center",
+
         }}
       >
         <TextInput
           style={{
             height: 40,
-            width: "100%",
-            marginLeft: 40,
-            marginRight: 10,
+            width: "80%",
             borderRadius: 10,
             color: "black",
             backgroundColor: "#F2F2F2",
@@ -59,24 +62,11 @@ const AddFriends = () => {
           placeholder="Nhập số điện thoại"
           placeholderTextColor={"#8B8B8B"}
         />
-        <View
-          style={{
-            backgroundColor: "#0091FF",
-            alignItems: "center",
-            justifyContent: "center",
-            height: 40,
-            width: 40,
-            borderRadius: 25,
-            marginEnd: 20,
-          }}
-        >
-          <Ionicons
-            name="arrow-forward"
-            size={25}
-            color="grap"
-            style={{ marginHorizontal: 10 }}
-          />
-        </View>
+        <Ionicons
+          name="arrow-forward"
+          size={25}
+          style={{ marginHorizontal: 10 }}
+        />
       </View>
       <View
         style={{
