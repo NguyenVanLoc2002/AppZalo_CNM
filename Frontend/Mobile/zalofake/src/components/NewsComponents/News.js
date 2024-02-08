@@ -7,6 +7,7 @@ import {
   ImageBackground,
   Pressable,
   StyleSheet,
+  ScrollView,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
@@ -63,7 +64,7 @@ const News = ({ navigation }) => {
   }, [navigation]);
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       {/* Đăng status */}
       <View style={styles.statusContainer}>
         <View style={styles.avatarContainer}>
@@ -318,7 +319,7 @@ const News = ({ navigation }) => {
           </View>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -461,7 +462,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   statusText: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: "400",
   },
   statusImageContainer: {
