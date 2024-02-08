@@ -1,42 +1,47 @@
-import React, { useState } from "react";
-import { View, Text, Image, Pressable, TextInput } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, Image, Pressable, TextInput, ScrollView } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
 
 const PersonalPage = ({ navigation }) => {
   const [status, setStatus] = useState("");
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={{ flexDirection: "row", paddingHorizontal:5 }}>
+          <Pressable style={{ paddingHorizontal: 8 }}>
+            <Ionicons name="sync-circle-outline" size={24} color="white" />
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              navigation.navigate("PersonalDetail");
+            }}
+            style={{ paddingHorizontal: 8 }}
+          >
+            <Ionicons
+              name="ellipsis-horizontal-sharp"
+              size={24}
+              color="white"
+            />
+          </Pressable>
+        </View>
+      ),
+      headerTitle: () => (
+        <Text style={{ color: "white", fontSize: 20, fontWeight: "bold" }}>
+          Trang cá nhân
+        </Text>
+      ),
 
-  navigation.setOptions({
-    headerRight: () => (
-      <View style={{ flexDirection: "row", paddingHorizontal: 16 }}>
-        <Pressable style={{ paddingHorizontal: 8 }}>
-          <Ionicons name="sync-circle-outline" size={24} color="white" />
-        </Pressable>
-        <Pressable
-          onPress={() => {
-            navigation.navigate("PersonalDetail");
-          }}
-          style={{ paddingHorizontal: 8 }}
-        >
-          <Ionicons name="ellipsis-horizontal-sharp" size={24} color="white" />
-        </Pressable>
-      </View>
-    ),
-    headerTitle: () => (
-      <Text style={{ color: "white", fontSize: 20, fontWeight: "bold" }}>
-        Trang cá nhân
-      </Text>
-    ),
-
-    headerTintColor: "#fff",
-    headerStyle: {
-      backgroundColor: "#0091FF",
-      shadowColor: "#fff",
-    },
-  });
+      headerTintColor: "#fff",
+      headerStyle: {
+        backgroundColor: "#0091FF",
+        shadowColor: "#fff",
+      },
+    });
+  }, [navigation]);
 
   return (
-    <View style={{ backgroundColor: "#f1f2f6", flex: 1 }}>
+    <ScrollView style={{ backgroundColor: "#f1f2f6", flex: 1 }}>
       <View style={{ alignItems: "center" }}>
         <Image
           source={require("../../../assets/cover-image.png")}
@@ -58,7 +63,7 @@ const PersonalPage = ({ navigation }) => {
             marginBottom: 16,
           }}
         >
-          <FontAwesomeIcons name="pen" size={18} color="#66a1f0" />
+          <FontAwesomeIcons name="pen" size={14} color="#66a1f0" />
           <Text style={{ color: "#66a1f0", marginLeft: 8 }}>
             Cập nhật giới thiệu bản thân
           </Text>
@@ -68,7 +73,7 @@ const PersonalPage = ({ navigation }) => {
       <View
         style={{
           flexDirection: "row",
-          justifyContent: "space-around",
+          justifyContent: "space-between",
           marginHorizontal: 16,
           marginBottom: 16,
         }}
@@ -154,9 +159,9 @@ const PersonalPage = ({ navigation }) => {
           <Ionicons name="lock-closed" size={16} color="#899097" />
         </View>
         <View style={{ flex: 1, paddingHorizontal: 8 }}>
-          <Text style={{ color: "gray", fontWeight: "bold" }}>
+          <Text style={{ color: "gray", fontWeight: "400" }}>
             Bạn bè của bạn sẽ không xem được các bài đăng dưới đây.{" "}
-            <Text style={{ color: "#12aee3", fontWeight: "bold" }}>
+            <Text style={{ color: "#12aee3", fontWeight: "500" }}>
               Thay đổi cài đặt
             </Text>
           </Text>
@@ -174,7 +179,7 @@ const PersonalPage = ({ navigation }) => {
             marginBottom: 8,
           }}
         >
-          <Text style={{ fontWeight: "bold" }}>8 tháng 9, 2020</Text>
+          <Text style={{ fontWeight: "500" }}>8 tháng 9, 2020</Text>
         </View>
         <View
           style={{
@@ -218,33 +223,34 @@ const PersonalPage = ({ navigation }) => {
                 marginRight: 24,
               }}
             >
-              <Ionicons name="heart-circle-outline" size={26} color="black" />
-              <Text style={{ marginLeft: 4, fontWeight: "bold" }}>2</Text>
+              <Ionicons name="heart-circle-outline" size={26} color="gray" />
+              <Text style={{ marginLeft: 4, fontWeight: "500" }}>2</Text>
             </Pressable>
             <Pressable style={{ flexDirection: "row", alignItems: "center" }}>
               <Ionicons
                 name="chatbubble-ellipses-outline"
                 size={26}
-                color="black"
+                color="gray"
               />
-              <Text style={{ marginLeft: 4, fontWeight: "bold" }}>2</Text>
+              <Text style={{ marginLeft: 4, fontWeight: "500" }}>2</Text>
             </Pressable>
             <View style={{ flex: 1, alignItems: "flex-end" }}>
               <Pressable>
-                <Ionicons name="people" size={26} color="black" />
+                <Ionicons name="people" size={22} color="gray" />
               </Pressable>
               <Pressable>
                 <Image
                   source={require("../../../assets/ic_threeDots.png")}
-                  style={{ width: 20, height: 20, resizeMode: "contain" }}
+                  style={{ width: 18, height: 18, resizeMode: "contain" }}
                 />
               </Pressable>
             </View>
           </View>
         </View>
+        
         {/* Code cho status thứ hai */}
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
