@@ -2,66 +2,88 @@ import React, { useEffect, useState } from "react";
 import {
   Text,
   View,
-  FlatList,
   Image,
-  TextInput,
   ScrollView,
   Pressable,
   Modal,
   Switch,
-  SafeAreaView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-// import { SafeAreaView } from "react-native-safe-area-context";
 
 const FriendProfile = ({ navigation, route }) => {
   const { user } = route.params;
   const [isAnNhatKy, setAnNhatKy] = useState(false);
-  const anNhatKy = () => setAnNhatKy(!previousState);
+  const anNhatKy = () => setAnNhatKy(!isAnNhatKy);
   const [isChanXem, setChanXem] = useState(false);
-  const chanXem = () => setChanXem(!previousState);
+  const chanXem = () => setChanXem(!isChanXem);
   const [isModalVisible, setModalVisible] = useState(false);
 
   const PostItem = ({ post }) => (
     <View
       style={{
-        backgroundColor: "gray",
         marginHorizontal: 20,
         marginVertical: 10,
       }}
     >
-      <Text>{post.content}</Text>
-      <View style={{ flexDirection: "row" }}>
+      <Text style={{marginVertical: 10, fontWeight: "500"}}>{post.content}</Text>
+      <View
+        style={{
+          flexDirection: "row",
+          flexWrap: "wrap",
+        }}
+      >
         {post.image.map((imageUrl, index) => (
           <Image
             key={index}
             source={{ uri: imageUrl }}
-            style={{ width: 100, height: 100, paddingStart: 15 }}
+            style={{
+              width: 100,
+              height: 100,
+              paddingStart: 15,
+              marginHorizontal: 5,
+              marginVertical: 5,
+            }}
           />
         ))}
       </View>
+
       <View
-        style={{ flexDirection: "row", alignItems: "center", marginTop: 10 }}
+        style={{ flexDirection: "row", alignItems: "center", marginTop: 15, justifyContent: "space-between" }}
       >
-        <Ionicons name="heart" size={20} color="red" style={{ padding: 8 }} />
-        <Text>{post.likes} người</Text>
-        <View style={{ flex: 1 }} />
-        <Text style={{ marginEnd: 10 }}>{post.comments} bình luận</Text>
-      </View>
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <Ionicons
-          name="heart-outline"
-          size={20}
-          color="black"
-          style={{ padding: 8 }}
-        />
-        <Ionicons
-          name="chatbox-ellipses-outline"
-          size={20}
-          color="black"
-          style={{ padding: 8 }}
-        />
-        <View style={{ flex: 1 }} />
+        <View
+          style={{ flexDirection: "row", alignItems: "center", marginRight: 5 }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginRight: 5,
+            }}
+          >
+            <Ionicons
+              name="heart"
+              size={20}
+              color="red"
+              style={{ padding: 8 }}
+            />
+            <Text>{post.likes} người</Text>
+          </View>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginRight: 5,
+            }}
+          >
+            <Ionicons
+              name="chatbox-ellipses-outline"
+              size={20}
+              color="black"
+              style={{ padding: 8 }}
+            />
+            <Text style={{ marginEnd: 10 }}>{post.comments} bình luận</Text>
+          </View>
+        </View>
         <Ionicons
           name="ellipsis-horizontal-sharp"
           size={20}
@@ -73,12 +95,12 @@ const FriendProfile = ({ navigation, route }) => {
   );
 
   const DayItem = ({ day }) => (
-    <View>
+    <View style={{ flex: 1 }}>
       <Text
         style={{
           fontSize: 16,
-          fontWeight: "bold",
-          backgroundColor: "#545454",
+          fontWeight: "500",
+          backgroundColor: "gray",
           opacity: 0.42,
           width: 150,
           marginLeft: 20,
@@ -89,11 +111,9 @@ const FriendProfile = ({ navigation, route }) => {
       >
         {day.date}
       </Text>
-      <FlatList
-        data={day.posts}
-        keyExtractor={(item) => item.content}
-        renderItem={({ item }) => <PostItem post={item} />}
-      />
+      {day.posts.map((post, index) => (
+        <PostItem key={index} post={post} />
+      ))}
     </View>
   );
 
@@ -180,24 +200,69 @@ const FriendProfile = ({ navigation, route }) => {
         },
       ],
     },
+    {
+      date: "12 tháng 12, 2024",
+      posts: [
+        {
+          content: "Nội dung bài đăng 1",
+          image: [
+            "https://randomuser.me/api/portraits/men/96.jpg",
+            "https://randomuser.me/api/portraits/men/55.jpg",
+            "https://randomuser.me/api/portraits/men/68.jpg",
+            "https://randomuser.me/api/portraits/men/70.jpg",
+            "https://randomuser.me/api/portraits/men/72.jpg",
+          ],
+          likes: 10,
+          comments: 5,
+        },
+        {
+          content: "Nội dung bài đăng 1",
+          image: [
+            "https://randomuser.me/api/portraits/men/96.jpg",
+            "https://randomuser.me/api/portraits/men/55.jpg",
+          ],
+          likes: 10,
+          comments: 5,
+        },
+        {
+          content: "Nội dung bài đăng 1",
+          image: [
+            "https://randomuser.me/api/portraits/men/96.jpg",
+            "https://randomuser.me/api/portraits/men/55.jpg",
+          ],
+          likes: 10,
+          comments: 5,
+        },
+        {
+          content: "Nội dung bài đăng 1",
+          image: [
+            "https://randomuser.me/api/portraits/men/96.jpg",
+            "https://randomuser.me/api/portraits/men/55.jpg",
+          ],
+          likes: 10,
+          comments: 5,
+        },
+      ],
+    },
   ]);
 
   return (
     <View style={{ flex: 1 }}>
-      <View style={{ backgroundColor: "#F4F4F4" }}>
+      <ScrollView style={{ backgroundColor: "#F4F4F4", height: "100%" }}>
         <Image
           source={{ uri: user.url }}
-          style={{ height: 200, resizeMode: "cover" }}
+          style={{ height: 220, width: "100%" }}
+          resizeMode="cover"
         />
         <Image
           source={{ uri: user.url }}
           style={{
-            height: 150,
-            width: 150,
+            height: 120,
+            width: 120,
             borderRadius: 75,
             borderWidth: 2,
             borderColor: "white",
-            marginTop: -90,
+            marginTop: -70,
             alignSelf: "center",
           }}
         />
@@ -207,9 +272,9 @@ const FriendProfile = ({ navigation, route }) => {
           </Text>
           <Ionicons
             name="pencil"
-            size={24}
+            size={18}
             color="black"
-            style={{ padding: 10 }}
+            style={{ padding: 8 }}
           />
         </View>
         <View
@@ -256,14 +321,12 @@ const FriendProfile = ({ navigation, route }) => {
             <Text>Video</Text>
           </Pressable>
         </View>
-        <View style={{ flex: 1, height: 200 ,backgroundColor:'white'}}>
-          {/* <FlatList
-            data={postData}
-            keyExtractor={(item) => item.date}
-            renderItem={({ item }) => <DayItem day={item} />}
-          /> */}
+        <View style={{ flex: 1, height: "100%" }}>
+          {postData.map((day, index) => (
+            <DayItem key={index} day={day} />
+          ))}
         </View>
-      </View>
+      </ScrollView>
       <Pressable
         style={{
           position: "absolute",
@@ -283,12 +346,35 @@ const FriendProfile = ({ navigation, route }) => {
         />
         <Text style={{ color: "black", marginLeft: 8 }}>Nhắn tin</Text>
       </Pressable>
-      <Modal
-        animationType="none"
-        transparent={true}
-        visible={isModalVisible}
-        onRequestClose={() => setModalVisible(!isModalVisible)}
+
+      {/* <View
+        style={{
+          position: "absolute",
+          bottom: 16,
+          right: 30,
+          width: "100%",
+          height: "100%",
+          alignItems: "flex-end",
+        }}
       >
+        <Pressable
+          style={{
+            backgroundColor: "white",
+            flexDirection: "row",
+            alignItems: "center",
+            padding: 10,
+            borderRadius: 50,
+          }}
+        >
+          <Ionicons
+            name="chatbubble-ellipses-outline"
+            size={24}
+            color="#0091FF"
+          />
+          <Text style={{ color: "black", marginLeft: 8 }}>Nhắn tin</Text>
+        </Pressable>
+      </View> */}
+      <Modal animationType="slide" transparent={true} visible={isModalVisible}>
         <Pressable
           style={{
             flex: 1,
@@ -301,7 +387,9 @@ const FriendProfile = ({ navigation, route }) => {
             style={{
               backgroundColor: "white",
               padding: 10,
-              borderTopStartRadius: 30,
+              borderTopStartRadius: 20,
+              borderTopEndRadius: 20,
+              width: "100%",
             }}
           >
             <Text

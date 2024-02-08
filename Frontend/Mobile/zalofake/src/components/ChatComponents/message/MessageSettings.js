@@ -1,4 +1,4 @@
-import { View, Text, Image, Pressable } from "react-native";
+import { View, Text, Image, Pressable, ScrollView } from "react-native";
 import React, { useState } from "react";
 import {
   Ionicons,
@@ -15,7 +15,7 @@ const MessageSettings = ({ navigation, route }) => {
   const [isNotifyIncomingCalls, setNotifyIncomingCalls] = useState(false);
 
   return (
-    <View style={{ flex: 1, backgroundColor: "white" }}>
+    <ScrollView style={{ flex: 1, backgroundColor: "white" }}>
       <Pressable
         style={{
           height: 150,
@@ -61,7 +61,7 @@ const MessageSettings = ({ navigation, route }) => {
           >
             <Ionicons
               name="search"
-              size={27}
+              size={24}
               color="black"
               style={{ padding: 5 }}
             />
@@ -88,7 +88,7 @@ const MessageSettings = ({ navigation, route }) => {
           >
             <Ionicons
               name="person-outline"
-              size={27}
+              size={24}
               color="black"
               style={{ padding: 5 }}
             />
@@ -115,7 +115,7 @@ const MessageSettings = ({ navigation, route }) => {
           >
             <Ionicons
               name="brush-outline"
-              size={27}
+              size={24}
               color="black"
               style={{ padding: 5 }}
             />
@@ -142,7 +142,7 @@ const MessageSettings = ({ navigation, route }) => {
           >
             <Ionicons
               name="notifications-outline"
-              size={27}
+              size={24}
               color="black"
               style={{ padding: 5 }}
             />
@@ -163,7 +163,7 @@ const MessageSettings = ({ navigation, route }) => {
       >
         <Ionicons
           name="notifications-outline"
-          size={27}
+          size={24}
           color="black"
           style={{ marginHorizontal: 15 }}
         />
@@ -181,7 +181,7 @@ const MessageSettings = ({ navigation, route }) => {
       >
         <Ionicons
           name="pencil"
-          size={27}
+          size={24}
           color="black"
           style={{ marginHorizontal: 15 }}
         />
@@ -199,7 +199,7 @@ const MessageSettings = ({ navigation, route }) => {
       >
         <Ionicons
           name="star-outline"
-          size={27}
+          size={24}
           color="black"
           style={{ marginHorizontal: 15 }}
         />
@@ -217,7 +217,7 @@ const MessageSettings = ({ navigation, route }) => {
       >
         <Ionicons
           name="time-outline"
-          size={27}
+          size={24}
           color="black"
           style={{ marginHorizontal: 15 }}
         />
@@ -244,7 +244,7 @@ const MessageSettings = ({ navigation, route }) => {
       >
         <Ionicons
           name="images-outline"
-          size={27}
+          size={24}
           color="black"
           style={{ marginHorizontal: 15 }}
         />
@@ -263,7 +263,7 @@ const MessageSettings = ({ navigation, route }) => {
       >
         <Ionicons
           name="add-circle-outline"
-          size={27}
+          size={24}
           color="black"
           style={{ marginHorizontal: 15 }}
         />
@@ -281,7 +281,7 @@ const MessageSettings = ({ navigation, route }) => {
       >
         <Ionicons
           name="person-add-outline"
-          size={27}
+          size={24}
           color="black"
           style={{ marginHorizontal: 15 }}
         />
@@ -299,7 +299,7 @@ const MessageSettings = ({ navigation, route }) => {
       >
         <Ionicons
           name="people-outline"
-          size={27}
+          size={24}
           color="black"
           style={{ marginHorizontal: 15 }}
         />
@@ -318,7 +318,7 @@ const MessageSettings = ({ navigation, route }) => {
       >
         <MaterialCommunityIcons
           name="pin-outline"
-          size={27}
+          size={24}
           color="black"
           style={{ marginHorizontal: 15 }}
         />
@@ -344,7 +344,7 @@ const MessageSettings = ({ navigation, route }) => {
       >
         <Ionicons
           name="eye-off-outline"
-          size={27}
+          size={24}
           color="black"
           style={{ marginHorizontal: 15 }}
         />
@@ -370,7 +370,7 @@ const MessageSettings = ({ navigation, route }) => {
       >
         <Ionicons
           name="call-outline"
-          size={27}
+          size={24}
           color="black"
           style={{ marginHorizontal: 15 }}
         />
@@ -396,7 +396,7 @@ const MessageSettings = ({ navigation, route }) => {
       >
         <Ionicons
           name="stopwatch-outline"
-          size={27}
+          size={24}
           color="black"
           style={{ marginHorizontal: 15 }}
         />
@@ -414,7 +414,7 @@ const MessageSettings = ({ navigation, route }) => {
       >
         <Ionicons
           name="settings-outline"
-          size={27}
+          size={24}
           color="black"
           style={{ marginHorizontal: 15 }}
         />
@@ -433,7 +433,7 @@ const MessageSettings = ({ navigation, route }) => {
       >
         <Ionicons
           name="warning-outline"
-          size={27}
+          size={24}
           color="black"
           style={{ marginHorizontal: 15 }}
         />
@@ -449,7 +449,7 @@ const MessageSettings = ({ navigation, route }) => {
       >
         <SimpleLineIcons
           name="ban"
-          size={27}
+          size={24}
           color="black"
           style={{ marginHorizontal: 15 }}
         />
@@ -459,7 +459,7 @@ const MessageSettings = ({ navigation, route }) => {
         <View style={{ flex: 1 }} />
         <Ionicons
           name="chevron-forward-outline"
-          size={27}
+          size={24}
           color="black"
           style={{ marginHorizontal: 15 }}
         />
@@ -474,7 +474,7 @@ const MessageSettings = ({ navigation, route }) => {
       >
         <Ionicons
           name="pie-chart-outline"
-          size={27}
+          size={24}
           color="black"
           style={{ marginHorizontal: 15 }}
         />
@@ -492,7 +492,7 @@ const MessageSettings = ({ navigation, route }) => {
       >
         <Ionicons
           name="trash-outline"
-          size={27}
+          size={24}
           color="red"
           style={{ marginHorizontal: 15 }}
         />
@@ -500,7 +500,7 @@ const MessageSettings = ({ navigation, route }) => {
           Xóa lịch sử trò chuyện
         </Text>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
