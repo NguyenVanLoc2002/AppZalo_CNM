@@ -1,29 +1,31 @@
-import { View, Text, Pressable } from "react-native";
-import React from "react";
+import { View, Text, Pressable, ScrollView } from "react-native";
+import React, { useEffect } from "react";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
 
 const PersonalPrivacy = ({ navigation }) => {
-  navigation.setOptions({
-    headerTitle: () => (
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <Text style={{ color: "white", fontSize: 20, fontWeight: "bold" }}>
-          Quyền riêng tư
-        </Text>
-      </View>
-    ),
-    headerStyle: {
-      backgroundColor: "#0091FF",
-      shadowColor: "#fff",
-    },
-    headerTintColor: "#fff",
-    headerTitleStyle: {
-      fontSize: 20,
-    },
-  });
+  useEffect(() => {
+    navigation.setOptions({
+      headerTitle: () => (
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text style={{ color: "white", fontSize: 20, fontWeight: "bold" }}>
+            Quyền riêng tư
+          </Text>
+        </View>
+      ),
+      headerStyle: {
+        backgroundColor: "#0091FF",
+        shadowColor: "#fff",
+      },
+      headerTintColor: "#fff",
+      headerTitleStyle: {
+        fontSize: 20,
+      },
+    });
+  }, [navigation]);
 
   return (
-    <View>
+    <ScrollView>
       {/* Body */}
       <View>
         {/* Cá nhân */}
@@ -451,7 +453,7 @@ const PersonalPrivacy = ({ navigation }) => {
           </Pressable>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
