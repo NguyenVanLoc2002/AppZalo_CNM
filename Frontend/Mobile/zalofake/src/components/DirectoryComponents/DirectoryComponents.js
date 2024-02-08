@@ -22,7 +22,7 @@ const DirectoryComponents = ({ navigation }) => {
           >
             <Ionicons
               name="person-add-outline"
-              size={24}
+              size={22}
               color="white"
               // style={{ marginRight: 10 }}
             />
