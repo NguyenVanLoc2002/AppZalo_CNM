@@ -1,8 +1,21 @@
 import { View, Text, Image, TextInput } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import { Ionicons, AntDesign } from "@expo/vector-icons";
 
-const AddFriends = () => {
+const AddFriends = ({ navigation }) => {
+  useEffect(() => {
+    navigation.setOptions({
+      headerTitle: "Thêm bạn",
+      headerStyle: {
+        backgroundColor: "white",
+        shadowColor: "#fff",
+      },
+      headerTitleStyle: {
+        fontWeight: "bold",
+        fontSize: 20,
+      },
+    });
+  }, [navigation]);
   return (
     <View style={{ flex: 1, backgroundColor: "#E5E9EB" }}>
       <View
@@ -19,7 +32,6 @@ const AddFriends = () => {
             width: 170,
             backgroundColor: "#447FAC",
             borderRadius: 20,
-            // flex : 1,
             justifyContent: "space-between",
             alignItems: "center",
             paddingVertical: 15,
@@ -47,7 +59,6 @@ const AddFriends = () => {
           flexDirection: "row",
           justifyContent: "center",
           alignItems: "center",
-
         }}
       >
         <TextInput
@@ -62,49 +73,53 @@ const AddFriends = () => {
           placeholder="Nhập số điện thoại"
           placeholderTextColor={"#8B8B8B"}
         />
-        <Ionicons
-          name="arrow-forward"
-          size={25}
-          style={{ marginHorizontal: 10 }}
-        />
+        <View
+          style={{
+            backgroundColor: "#F2F2F2",
+            borderRadius: 50,
+            marginLeft: 10,
+          }}
+        >
+          <Ionicons name="arrow-forward" size={22} style={{ margin: 10 }} />
+        </View>
       </View>
       <View
         style={{
-          height: 50,
           marginTop: 2,
           alignItems: "center",
           backgroundColor: "white",
           flexDirection: "row",
+          paddingVertical: 18,
         }}
       >
-        <Ionicons name="qr-code" size={27} style={{ marginHorizontal: 15 }} />
+        <Ionicons
+          name="qr-code"
+          size={24}
+          style={{ marginHorizontal: 15 }}
+          color={"#447FAC"}
+        />
         <Text style={{ textAlign: "center" }}>Quét mã QR</Text>
       </View>
       <View style={{ backgroundColor: "white", marginTop: 10 }}>
         <View
           style={{
-            height: 50,
+            paddingVertical: 18,
             marginTop: 2,
             alignItems: "center",
             flexDirection: "row",
+            borderBottomColor: "#E5E9EB",
+            borderBottomWidth: 0.5,
           }}
         >
           <AntDesign
             name="contacts"
-            size={27}
+            size={24}
             style={{ marginHorizontal: 15 }}
+            color={"#447FAC"}
           />
           <Text style={{ textAlign: "center" }}>Danh bạ máy</Text>
         </View>
-        <View
-          style={{
-            height: 1,
-            backgroundColor: "gray",
-            marginLeft: 20,
-            marginEnd: 10,
-            opacity: 0.2,
-          }}
-        />
+
         <View
           style={{
             height: 50,
@@ -115,13 +130,21 @@ const AddFriends = () => {
         >
           <Ionicons
             name="people-outline"
-            size={27}
+            size={24}
             style={{ marginHorizontal: 15 }}
+            color={"#447FAC"}
           />
           <Text style={{ textAlign: "center" }}>Bạn bè có thể quen</Text>
         </View>
       </View>
-      <Text style={{ textAlign: "center", fontSize: 12, marginTop: 10 }}>
+      <Text
+        style={{
+          textAlign: "center",
+          fontSize: 13,
+          marginTop: 20,
+          color: "gray",
+        }}
+      >
         Xem lời mời kết bạn đã gửi tại trang Danh bạ Zalo
       </Text>
     </View>
