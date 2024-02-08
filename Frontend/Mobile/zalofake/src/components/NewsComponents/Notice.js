@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -12,34 +12,36 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
 
 const Notice = ({ navigation }) => {
-  navigation.setOptions({
-    headerRight: () => (
-      <View style={{ flexDirection: "row" }}>
-        <Pressable>
-          <Ionicons
-            name="settings-outline"
-            size={24}
-            color="white"
-            style={{ padding: 5, paddingStart: 15 }}
-          />
-        </Pressable>
-      </View>
-    ),
-    headerTitle: () => (
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <Text style={styles.headerTitle}>Thông báo mới</Text>
-      </View>
-    ),
-    headerStyle: {
-      backgroundColor: "#0091FF",
-      shadowColor: "#fff",
-    },
-    headerTintColor: "#fff",
-    headerTitleStyle: {
-      fontWeight: "bold",
-      fontSize: 20,
-    },
-  });
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={{ flexDirection: "row" }}>
+          <Pressable>
+            <Ionicons
+              name="settings-outline"
+              size={24}
+              color="white"
+              style={{ padding: 5, paddingStart: 15 }}
+            />
+          </Pressable>
+        </View>
+      ),
+      headerTitle: () => (
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text style={styles.headerTitle}>Thông báo mới</Text>
+        </View>
+      ),
+      headerStyle: {
+        backgroundColor: "#0091FF",
+        shadowColor: "#fff",
+      },
+      headerTintColor: "#fff",
+      headerTitleStyle: {
+        fontWeight: "bold",
+        fontSize: 20,
+      },
+    });
+  }, [navigation]);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
