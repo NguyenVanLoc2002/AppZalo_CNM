@@ -117,26 +117,40 @@ const News = ({ navigation }) => {
               <Text style={styles.storyName}>Tạo mới</Text>
             </ImageBackground>
           </Pressable>
-          <Pressable>
+          <Pressable
+            style={{
+              borderWidth: 0.5,
+              borderRadius: 10,
+              padding: 3,
+              marginHorizontal: 5,
+            }}
+          >
             <ImageBackground
-              source={require("../../../assets/story_1.png")}
+              source={require("../../../assets/status-HPNY-2.png")}
               style={styles.storyItem}
             >
-              <Pressable style={styles.storyIconContainer}>
+              {/* <Pressable style={styles.storyIconContainer}>
                 <FontAwesomeIcons name="pen" size={10} color="white" />
               </Pressable>
-              <Text style={styles.storyName}>Tạo mới</Text>
+              <Text style={styles.storyName}>Tạo mới</Text> */}
             </ImageBackground>
           </Pressable>
-          <Pressable>
+          <Pressable
+            style={{
+              borderWidth: 0.5,
+              borderRadius: 10,
+              padding: 3,
+              marginHorizontal: 5,
+            }}
+          >
             <ImageBackground
-              source={require("../../../assets/story_1.png")}
+              source={require("../../../assets/status-HPNY-3.png")}
               style={styles.storyItem}
             >
-              <Pressable style={styles.storyIconContainer}>
+              {/* <Pressable style={styles.storyIconContainer}>
                 <FontAwesomeIcons name="pen" size={10} color="white" />
               </Pressable>
-              <Text style={styles.storyName}>Tạo mới</Text>
+              <Text style={styles.storyName}>Tạo mới</Text> */}
             </ImageBackground>
           </Pressable>
         </View>
@@ -168,7 +182,7 @@ const News = ({ navigation }) => {
           </View>
           <View style={styles.statusContent}>
             <Text style={styles.statusText}>
-              “KHI BẠN CHỌN BÌNH YÊN, NÓ ĐI KÈM VỚI RẤT NHIỀU LỜI TẠM BIỆT”
+              Khi bạn chọn bình yên, nó đi kèm với rất nhiều lời tạm biệt
             </Text>
           </View>
           <View style={styles.statusImageContainer}>
@@ -179,12 +193,12 @@ const News = ({ navigation }) => {
           </View>
           <View style={styles.statusActions}>
             <View style={styles.statusLike}>
-              <Pressable>
+              <Pressable style={styles.statusLikeText}>
                 <Ionicons name="heart" size={22} color="#ef243a" />
+                <Text style={{ marginLeft: 5 }}>
+                  Trần Hằng và 15 người khác
+                </Text>
               </Pressable>
-              <Text style={styles.statusLikeText}>
-                Trần Hằng và 15 người khác
-              </Text>
               <Text style={styles.statusCommentText}>1 bình luận</Text>
             </View>
             <View style={styles.statusButtons}>
@@ -192,123 +206,7 @@ const News = ({ navigation }) => {
                 <Ionicons name="heart-outline" size={22} color="black" />
                 <Text style={styles.statusButtonText}>Thích</Text>
               </Pressable>
-              <Pressable style={styles.statusButton}>
-                <Ionicons
-                  name="chatbox-ellipses-outline"
-                  size={22}
-                  color="black"
-                />
-              </Pressable>
-            </View>
-          </View>
-        </View>
-        <View style={styles.status}>
-          <View style={styles.statusHeader}>
-            <Pressable>
-              <Image
-                source={require("../../../assets/avata-story-1.png")}
-                style={styles.statusAvatar}
-              />
-            </Pressable>
-            <View style={styles.statusInfo}>
-              <Pressable>
-                <Text style={styles.statusName}>Thuỳ Linh</Text>
-              </Pressable>
-              <Text style={styles.statusTime}>9 phút trước</Text>
-            </View>
-            <Pressable style={styles.statusOptions}>
-              <Image
-                source={require("../../../assets/ic_threeDots.png")}
-                style={styles.statusOptionsIcon}
-                resizeMode="contain"
-              />
-            </Pressable>
-          </View>
-          <View style={styles.statusContent}>
-            <Text style={styles.statusText}>
-              “KHI BẠN CHỌN BÌNH YÊN, NÓ ĐI KÈM VỚI RẤT NHIỀU LỜI TẠM BIỆT”
-            </Text>
-          </View>
-          <View style={styles.statusImageContainer}>
-            <Image
-              source={require("../../../assets/status-1.png")}
-              style={styles.statusImage}
-            />
-          </View>
-          <View style={styles.statusActions}>
-            <View style={styles.statusLike}>
-              <Pressable>
-                <Ionicons name="heart" size={22} color="#ef243a" />
-              </Pressable>
-              <Text style={styles.statusLikeText}>
-                Trần Hằng và 15 người khác
-              </Text>
-              <Text style={styles.statusCommentText}>1 bình luận</Text>
-            </View>
-            <View style={styles.statusButtons}>
-              <Pressable style={styles.statusButton}>
-                <Ionicons name="heart-outline" size={22} color="black" />
-                <Text style={styles.statusButtonText}>Thích</Text>
-              </Pressable>
-              <Pressable style={styles.statusButton}>
-                <Ionicons
-                  name="chatbox-ellipses-outline"
-                  size={22}
-                  color="black"
-                />
-              </Pressable>
-            </View>
-          </View>
-        </View>
-        <View style={styles.status}>
-          <View style={styles.statusHeader}>
-            <Pressable>
-              <Image
-                source={require("../../../assets/avata-story-1.png")}
-                style={styles.statusAvatar}
-              />
-            </Pressable>
-            <View style={styles.statusInfo}>
-              <Pressable>
-                <Text style={styles.statusName}>Thuỳ Linh</Text>
-              </Pressable>
-              <Text style={styles.statusTime}>9 phút trước</Text>
-            </View>
-            <Pressable style={styles.statusOptions}>
-              <Image
-                source={require("../../../assets/ic_threeDots.png")}
-                style={styles.statusOptionsIcon}
-                resizeMode="contain"
-              />
-            </Pressable>
-          </View>
-          <View style={styles.statusContent}>
-            <Text style={styles.statusText}>
-              “KHI BẠN CHỌN BÌNH YÊN, NÓ ĐI KÈM VỚI RẤT NHIỀU LỜI TẠM BIỆT”
-            </Text>
-          </View>
-          <View style={styles.statusImageContainer}>
-            <Image
-              source={require("../../../assets/status-1.png")}
-              style={styles.statusImage}
-            />
-          </View>
-          <View style={styles.statusActions}>
-            <View style={styles.statusLike}>
-              <Pressable>
-                <Ionicons name="heart" size={22} color="#ef243a" />
-              </Pressable>
-              <Text style={styles.statusLikeText}>
-                Trần Hằng và 15 người khác
-              </Text>
-              <Text style={styles.statusCommentText}>1 bình luận</Text>
-            </View>
-            <View style={styles.statusButtons}>
-              <Pressable style={styles.statusButton}>
-                <Ionicons name="heart-outline" size={22} color="black" />
-                <Text style={styles.statusButtonText}>Thích</Text>
-              </Pressable>
-              <Pressable style={styles.statusButton}>
+              <Pressable style={[styles.statusButton, {marginLeft: 20, paddingHorizontal: 10}]}>
                 <Ionicons
                   name="chatbox-ellipses-outline"
                   size={22}
@@ -326,7 +224,7 @@ const News = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
+    backgroundColor: "#DDE6ED",
   },
   headerRightContainer: {
     flexDirection: "row",
@@ -376,7 +274,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#f5f5f5",
     borderRadius: 25,
-    // width: "22%",
     justifyContent: "center",
     paddingHorizontal: 15,
     paddingVertical: 8,
@@ -477,32 +374,38 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   statusActions: {
-    flexDirection: "row",
     marginTop: 10,
-    alignItems: "center",
   },
   statusLike: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
   },
   statusLikeText: {
+    flexDirection: "row",
     marginLeft: 5,
-    marginRight: 10,
   },
   statusCommentText: {
     marginRight: 10,
   },
   statusButtons: {
     flexDirection: "row",
+    alignItems: "center",
+    paddingLeft: 5,
+    marginTop: 5,
   },
   statusButton: {
     flexDirection: "row",
     alignItems: "center",
-    marginRight: 10,
+    justifyContent: "center",
+    borderRadius: 20,
+    backgroundColor: "#F2F2F2",
+    padding: 5,
   },
   statusButtonText: {
     marginLeft: 5,
+    marginRight: 20,
   },
 });
 

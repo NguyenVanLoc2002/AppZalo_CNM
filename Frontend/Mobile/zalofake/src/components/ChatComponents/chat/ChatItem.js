@@ -12,50 +12,56 @@ const ChatItem = ({ item }) => {
         backgroundColor: "white",
       }}
     >
-      <Image
-        source={{ uri: item.url }}
-        style={{ width: 55, height: 55, borderRadius: 25 }}
-      />
-      <View style={{ flex: 1 }}>
-        <View
+      <View
+        style={{ width: "15%", justifyContent: "center", alignItems: "center" }}
+      >
+        <Image
+          source={{ uri: item.url }}
+          style={{ width: 55, height: 55, borderRadius: 25 }}
+        />
+      </View>
+      <View
+        style={{
+          width: "65%",
+          alignItems: "flex-start",
+          paddingLeft: 20,
+        }}
+      >
+        <Text style={{ fontSize: 20, marginBottom: 5 }}>{item.ten}</Text>
+        <Text
           style={{
-            flexDirection: "row",
-            paddingStart: 10,
-            justifyContent: "space-between",
-            marginBottom: 10,
+            fontSize: 14,
+            opacity: 0.5,
+          }}
+          numberOfLines={1}
+        >
+          {item.tinNhan}
+        </Text>
+      </View>
+      <View
+        style={{
+          width: "18%",
+          justifyContent: "center",
+          alignItems: "flex-end",
+        }}
+      >
+        <Text style={{ marginBottom: 5 }}>
+          {item.thoiGian === 0 ? "vừa xong" : `${item.thoiGian} phút`}
+        </Text>
+        <Text
+          style={{
+            backgroundColor: "red",
+            width: 20,
+            height: 20,
+            textAlign: "center",
+            borderRadius: 25,
+            color: "white",
+            fontWeight: "bold",
+            display: item.soTNChuaDoc === 0 ? "none" : "flex",
           }}
         >
-          <Text style={{ fontSize: 20 }}>{item.ten}</Text>
-          <Text>{item.thoiGian} phút</Text>
-        </View>
-        <View
-          style={{
-            flexDirection: "row",
-            paddingStart: 10,
-            justifyContent: "space-between",
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 14,
-              opacity: 0.5,
-            }}
-            numberOfLines={1}
-          >
-            {item.tinNhan}
-          </Text>
-          <Text
-            style={{
-              backgroundColor: "red",
-              width: 20,
-              height: 20,
-              textAlign: "center",
-              borderRadius: 25,
-            }}
-          >
-            {item.soTNChuaDoc}
-          </Text>
-        </View>
+          {item.soTNChuaDoc}
+        </Text>
       </View>
     </View>
   );
