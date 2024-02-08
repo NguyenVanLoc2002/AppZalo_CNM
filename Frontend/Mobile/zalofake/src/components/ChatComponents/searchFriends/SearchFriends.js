@@ -5,11 +5,9 @@ import {
   FlatList,
   Image,
   TextInput,
-  ScrollView,
   Pressable,
-  SafeAreaView,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
 function SearchFriends({ navigation }) {
   useEffect(() => {
@@ -17,7 +15,11 @@ function SearchFriends({ navigation }) {
       headerRight: () => (
         <View style={{ flexDirection: "row", justifyContent: "center" }}>
           <Pressable>
-            <Ionicons name="qr-code" size={24} color="white" />
+            <MaterialCommunityIcons
+              name={"qrcode-scan"}
+              color={"white"}
+              size={22}
+            />
           </Pressable>
         </View>
       ),
@@ -29,11 +31,11 @@ function SearchFriends({ navigation }) {
             backgroundColor: "white",
             borderRadius: 10,
             paddingHorizontal: 5,
-            paddingVertical: 10,
+            paddingVertical: 3,
             width: 280,
           }}
         >
-          <Ionicons name="search" size={22} color="gray" />
+          <Ionicons name="search" size={18} color="gray" />
           <TextInput
             style={{ marginLeft: 5 }}
             placeholder="Tìm kiếm"

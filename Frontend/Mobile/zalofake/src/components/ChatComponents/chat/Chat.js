@@ -7,6 +7,7 @@ import {
   TextInput,
   Pressable,
   Modal,
+  SafeAreaView,
 } from "react-native";
 import ChatItem from "./ChatItem";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -15,53 +16,59 @@ function Chat({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
-  navigation.setOptions({
-    headerRight: () => (
-      <View style={styles.headerRightContainer}>
-        <Pressable style={styles.headerIcon}>
-          <MaterialCommunityIcons name="qrcode-scan" size={24} color="white" />
-        </Pressable>
-        <Pressable
-          onPress={() => setModalVisible(!isModalVisible)}
-          style={styles.headerIcon}
-        >
-          <Ionicons name="add" size={24} color="white" />
-        </Pressable>
-      </View>
-    ),
-    headerTitle: () => (
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <Ionicons
-          name="search"
-          size={24}
-          color="white"
-          style={{ marginLeft: 5, marginRight: 25 }}
-        />
-        <TextInput
-          onFocus={() => {
-            navigation.navigate("SearchFriends");
-          }}
-          style={{
-            height: 45,
-            width: 300,
-            marginLeft: 25,
-            fontSize: 16,
-          }}
-          placeholder="Tìm kiếm"
-          placeholderTextColor={"white"}
-        />
-      </View>
-    ),
-    headerStyle: {
-      backgroundColor: "#0091FF",
-      shadowColor: "#fff",
-    },
-    headerTintColor: "#fff",
-    headerTitleStyle: {
-      fontWeight: "bold",
-      fontSize: 20,
-    },
-  });}, []);
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={styles.headerRightContainer}>
+          <Pressable style={styles.headerIcon}>
+            <MaterialCommunityIcons
+              name="qrcode-scan"
+              size={22}
+              color="white"
+            />
+          </Pressable>
+          <Pressable
+            onPress={() => setModalVisible(!isModalVisible)}
+            style={styles.headerIcon}
+          >
+            <Ionicons name="add" size={24} color="white" />
+          </Pressable>
+        </View>
+      ),
+      headerTitle: () => (
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Ionicons
+            name="search"
+            size={24}
+            color="white"
+            style={{ marginLeft: 5, marginRight: 25 }}
+          />
+          <TextInput
+            onFocus={() => {
+              navigation.navigate("SearchFriends");
+            }}
+            focusable={false}
+            style={{
+              height: 45,
+              width: 300,
+              marginLeft: 25,
+              fontSize: 16,
+            }}
+            placeholder="Tìm kiếm"
+            placeholderTextColor={"white"}
+          />
+        </View>
+      ),
+      headerStyle: {
+        backgroundColor: "#0091FF",
+        shadowColor: "#fff",
+      },
+      headerTintColor: "#fff",
+      headerTitleStyle: {
+        fontWeight: "bold",
+        fontSize: 20,
+      },
+    });
+  }, [navigation]);
 
   // Mảng dữ liệu mẫu
   const [users, setUsers] = useState([
@@ -145,7 +152,7 @@ function Chat({ navigation }) {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1 }}>
       <FlatList
         data={users}
         renderItem={({ item }) => (
@@ -188,8 +195,8 @@ function Chat({ navigation }) {
             >
               <Ionicons
                 name="person-add-outline"
-                size={24}
-                color="black"
+                size={22}
+                color="grey"
                 style={{ marginRight: 10 }}
               />
               <Text>Thêm bạn</Text>
@@ -203,8 +210,8 @@ function Chat({ navigation }) {
             >
               <Ionicons
                 name="people-outline"
-                size={24}
-                color="black"
+                size={22}
+                color="grey"
                 style={{ marginRight: 10 }}
               />
               <Text>Tạo nhóm</Text>
@@ -218,8 +225,8 @@ function Chat({ navigation }) {
             >
               <Ionicons
                 name="cloud-outline"
-                size={24}
-                color="black"
+                size={22}
+                color="grey"
                 style={{ marginRight: 10 }}
               />
               <Text>Cloud của tôi</Text>
@@ -233,8 +240,8 @@ function Chat({ navigation }) {
             >
               <Ionicons
                 name="calendar-outline"
-                size={24}
-                color="black"
+                size={22}
+                color="grey"
                 style={{ marginRight: 10 }}
               />
               <Text>Lịch Zalo</Text>
@@ -248,8 +255,8 @@ function Chat({ navigation }) {
             >
               <Ionicons
                 name="videocam-outline"
-                size={24}
-                color="black"
+                size={22}
+                color="grey"
                 style={{ marginRight: 10 }}
               />
               <Text>Tạo cuộc gọi nhóm</Text>
@@ -263,8 +270,8 @@ function Chat({ navigation }) {
             >
               <Ionicons
                 name="desktop-outline"
-                size={24}
-                color="black"
+                size={22}
+                color="grey"
                 style={{ marginRight: 10 }}
               />
               <Text>Thiết bị đăng nhập</Text>
@@ -272,16 +279,18 @@ function Chat({ navigation }) {
           </View>
         </Pressable>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 const styles = StyleSheet.create({
   headerRightContainer: {
     flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginRight: 10,
   },
   headerIcon: {
     padding: 10,
-    marginLeft: 15,
   },
   headerTitleContainer: {
     flexDirection: "row",
