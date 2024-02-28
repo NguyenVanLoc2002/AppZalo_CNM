@@ -13,11 +13,13 @@ const sessionSchema = new mongoose.Schema({
   app_type: {
     type: String,
     enum: ["web", "mobile"],
-    required: true,
   },
   is_logged_in: {
     type: Boolean,
     default: true,
+  },
+  refreshToken: {
+    type: String,
   },
 });
 
