@@ -6,7 +6,7 @@ function Login() {
 
   
   return (
-    <div className="w-screen h-screen bg-[url('public/bg-login.svg')] bg-cover bg-center font-roboto">
+    <div className="w-screen h-screen bg-[url('/bg-login.svg')] bg-cover bg-center font-roboto">
       <div className="pt-10">
         <h1 className="text-[#0068ff] text-center font-semibold text-[3.5rem]">
           ZaloFake
