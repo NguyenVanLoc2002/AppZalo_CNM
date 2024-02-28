@@ -16,7 +16,7 @@ const userSchema = new Schema({
   },
   status: { type: String, optional: true },
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, optional: true},
+  updatedAt: { type: Date, optional: true },
   lastActive: { type: Date },
   friendList: { type: [mongoose.Types.ObjectId], required: false },
   groupList: { type: [mongoose.Types.ObjectId], required: false },
@@ -28,6 +28,7 @@ const userSchema = new Schema({
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
+
 
 //create user model
 const User = mongoose.model("User", userSchema);
