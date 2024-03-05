@@ -56,7 +56,7 @@ function PeopleChatComponent({ language }) {
           {i % 2 === 0 ? "Obi-Wan Kenobi" : "Anakin"}
           <time className="text-xs opacity-50">12:45</time>
         </div>
-        <div className="chat-bubble">
+        <div className="chat-bubble bg-gray-100 text-black">
           {i % 2 === 0 ? "You were the Chosen One!" : "I hate you!"}
         </div>
         <div className="chat-footer opacity-50">
