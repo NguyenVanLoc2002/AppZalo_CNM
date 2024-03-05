@@ -24,7 +24,7 @@ function FriendListComponent({ language }) {
   }, []);
   return (
     <>
-      <div className="h-[70px] w-full flex items-center bg-white border-b fixed">
+      <div className="h-[70px] w-full flex items-center bg-white border-b fixed z-20">
         <RiContactsLine size={20} className="mx-5" />
         <p className="text-xl font-semibold">
           {language == "vi" ? "Danh sách bạn bè" : "Friend list"}
