@@ -38,7 +38,6 @@ function ChatComponents({ language }) {
     setFriendList(newFriendList);
   }, []);
 
-  console.log(friendList.slice(0, 3));
   const handleRadioChange = (friendId) => {
     setFriendList((prevList) =>
       prevList.map((friend) =>
