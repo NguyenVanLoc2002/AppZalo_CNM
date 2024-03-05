@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
-function Login() {
+
+const Login = () => {
   const [langue, setLangue] = useState("vi"); // [vi, en]
-  const [isLogin, setIsLogin] = useState(false);
 
   
   return (
