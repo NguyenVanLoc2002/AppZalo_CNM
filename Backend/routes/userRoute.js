@@ -22,7 +22,7 @@ router.get("/get/:phone",getUserByPhone)
 router.post('/login', loginUser)
 router.post('/register', registerUser)
 router.post('/otp/send', sendOTP)
-router.post('/upload-avatar',protect,upload.single("user-avatar"), uploadAvatar)
+// router.post('/upload-avatar',protect,upload.single("user-avatar"), uploadAvatar)
 
 
 module.exports = router
