@@ -24,7 +24,6 @@ exports.protect = async (req, res, next) => {
           app_type,
           is_logged_in: true,
         });
-        console.log(isLogin);
         if (!isLogin) {
           return res.status(401).json({ message: "Not authorized" });
         }
