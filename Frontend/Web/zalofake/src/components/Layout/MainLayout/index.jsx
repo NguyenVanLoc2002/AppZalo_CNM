@@ -5,7 +5,7 @@ import ModalComponent from "../../ModalComponent/insex";
 import ContactComponent from "../../ContactComponents/ContactComponent";
 import ChatComponents from "../../ChatComponents/ChatComponent";
 
-function MainLayout({ isLogin }) {
+function MainLayout() {
   const [showModal, setShowModal] = useState(false);
   const [curentTab, setCurentTab] = useState();
   const [currentMenu, setCurrentMenu] = useState();
