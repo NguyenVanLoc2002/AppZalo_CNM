@@ -5,42 +5,42 @@ import { IoMdArrowDropdown } from "react-icons/io";
 
 import { useState, useEffect } from "react";
 import { Link, useOutletContext } from "react-router-dom";
-
-import { codes } from "country-calling-code";
+import useLogin from "../../hooks/useLogin";
 
 function LoginForm() {
   const [phone, setPhone] = useState("");
   const [password, setPwssword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const langue = useOutletContext();
-  const [isLogin, setIsLogin] = useState(false);
   const [code, setCode] = useState("+84");
-
   const [phoneId, setPhoneId] = useState([]);
+
+  const { loading, login } = useLogin();
 
   useEffect(() => {
     const getPhoneId = async () => {
       const res = await fetch("https://restcountries.com/v3.1/all");
       const data = await res.json();
-      data.map((item) => {
-        setPhoneId((phoneId) => [
-          ...phoneId.filter((phone) => phone.id !== item.cca2),
-          {
-            id: item.cca2,
-            name: item.name.common,
-            flag: item.flags.png,
-            phone: item.idd.root + item.idd.suffixes?.[0],
-          },
-        ]);
+      data.forEach((item) => {
+        if (item.cca2) {
+          setPhoneId((phoneId) => [
+            ...phoneId.filter((phone) => phone.id !== item.cca2),
+            {
+              id: item.cca2,
+              name: item.name.common,
+              flag: item.flags.png,
+              phone: item.idd.root + item.idd.suffixes?.[0],
+            },
+          ]);
+        }
       });
     };
     getPhoneId();
   }, []);
 
-  const handleLogin = () => {
-    window.location.href = "/chat";
-    setIsLogin(true);
-    Link.contextType = isLogin;
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    await login(phone, password);
   };
 
   const selectedCode = (item) => {
@@ -154,9 +154,13 @@ function LoginForm() {
               disabled={phone.length === 0 || password.length < 6}
               onClick={handleLogin}
             >
-              {langue == "vi"
-                ? "Đăng nhập bằng mật khẩu"
-                : "Login with password"}
+              {loading ? (
+                <span className="loading loading-spinner "></span>
+              ) : langue == "vi" ? (
+                "Đăng nhập bằng mật khẩu"
+              ) : (
+                "Login with password"
+              )}
             </button>
             <Link
               className="hover:border-[#0068ff] border text-[#0190f3] rounded block w-full my-3 py-3 disabled:opacity-70 text-center"
