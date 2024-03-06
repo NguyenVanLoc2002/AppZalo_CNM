@@ -28,7 +28,6 @@ const { Schema } = mongoose;
 // });
 
 const userSchema = new Schema({
-  userId:{type:String, required:true},
   phone: { type: String, unique: true, required: true },
   password: { type: String, required: true }, 
   profile:{
