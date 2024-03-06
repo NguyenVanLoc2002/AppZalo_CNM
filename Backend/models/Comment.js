@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 
 const commentSchema = new mongoose.Schema({
-  commentId: { type: String, required: true },
   postId: { type: mongoose.Schema.Types.ObjectId, ref: "posts", required: true }, // Tham chiếu đến bài đăng tương ứng
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "users", required: true }, // Tham chiếu đến người dùng tạo bình luận
   contents: [
