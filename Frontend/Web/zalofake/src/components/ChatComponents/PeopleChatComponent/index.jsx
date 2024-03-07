@@ -94,7 +94,7 @@ function PeopleChatComponent({ language }) {
   }
   return (
     <>
-      <div className="relative bg-white h-screen sm:w-[calc(100%-24rem)] w-0 border-r z-0">
+      <div className="relative bg-white h-screen sm:w-[calc(100%-24rem)] w-0 border-r relative z-0">
         <div className="h-[10%] bg-white flex justify-between items-center border-b">
           <div className="flex items-center">
             <img src="zalo.svg" alt="avatar" />
