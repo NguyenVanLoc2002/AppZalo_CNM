@@ -5,23 +5,20 @@ const { Schema } = mongoose;
 
 const userSchema = new Schema({
   phone: { type: String, unique: true, required: true },
-  password: { type: String, required: true },
-  profile: {
+  password: { type: String, required: true }, 
+  profile:{
+    avatar: { 
+      ulr: { type: String },
+      public_id: { type: String }
+    },
     name: { type: String, required: true },
-    email: { type: String, optional: true },
-    dob: { type: Date, optional: true },
-    gender: { type: String, optional: true },
-    avatar: { type: mongoose.Types.ObjectId, optional: true },
-    cover: { type: mongoose.Types.ObjectId, optional: true },
+    gender:{ type: String, enum: ['male', 'female', 'other'] },
+    dob:{type: Date}
   },
-  status: { type: String, optional: true },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, optional: true },
-  lastActive: { type: Date },
-  friendList: { type: [mongoose.Types.ObjectId], required: false },
-  groupList: { type: [mongoose.Types.ObjectId], required: false },
-  posts: { type: [mongoose.Types.ObjectId], required: false },
-  moments: { type: [mongoose.Types.ObjectId], required: false },
+  friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  groups: [{ type: mongoose.Schema.Types.ObjectId, ref: 'groups' }],
+  status: { type: String, default: "active" }, 
+  lastActive: { type: Date, default: Date.now },
 });
 
 //match password method
