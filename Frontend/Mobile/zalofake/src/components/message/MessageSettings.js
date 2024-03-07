@@ -14,6 +14,23 @@ const MessageSettings = ({ navigation, route }) => {
   const [isHideChat, setHideChat] = useState(false);
   const [isNotifyIncomingCalls, setNotifyIncomingCalls] = useState(false);
 
+  navigation.setOptions({
+    headerTitle: () => (
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        {user.ten}
+      </View>
+    ),
+    headerStyle: {
+      backgroundColor: "#0091FF",
+      shadowColor: "#fff",
+    },
+    headerTintColor: "#fff",
+    headerTitleStyle: {
+      fontWeight: "bold",
+      fontSize: 20,
+    },
+  });
+
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
       <Pressable
