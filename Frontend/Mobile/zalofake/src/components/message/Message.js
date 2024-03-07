@@ -4,7 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 
 const Message = ({ navigation, route }) => {
   const {user} = route.params
-  console.log(user);
 
   navigation.setOptions({
 
