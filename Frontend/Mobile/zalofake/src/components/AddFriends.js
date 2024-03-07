@@ -1,8 +1,24 @@
-import { View, Text, Image, TextInput } from "react-native";
+import { View, Text, Image, TextInput, Pressable } from "react-native";
 import React from "react";
-import { Ionicons,AntDesign } from "@expo/vector-icons";
+import { Ionicons, AntDesign } from "@expo/vector-icons";
 
-const AddFriends = () => {
+const AddFriends = ({ navigation }) => {
+  navigation.setOptions({
+    headerTitle: () => (
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        Thêm bạn
+      </View>
+    ),
+    headerStyle: {
+      backgroundColor: "#0091FF",
+      shadowColor: "#fff",
+    },
+    headerTintColor: "#fff",
+    headerTitleStyle: {
+      fontWeight: "bold",
+      fontSize: 20,
+    },
+  });
   return (
     <View style={{ flex: 1, backgroundColor: "#E5E9EB" }}>
       <View
@@ -22,17 +38,21 @@ const AddFriends = () => {
             // flex : 1,
             justifyContent: "space-between",
             alignItems: "center",
-            paddingVertical: 15
+            paddingVertical: 15,
           }}
         >
-          <Text style={{ fontSize: 20, color: 'white', fontWeight: 600 }}>Meo Meo</Text>
+          <Text style={{ fontSize: 20, color: "white", fontWeight: 600 }}>
+            Meo Meo
+          </Text>
           <Image
             source={{
               uri: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRP9K07HCn8Ia93xqZUHwjXID8gc3EUsasv7Q&usqp=CAU",
             }}
-            style={{ height: 80, width: 80, resizeMode: "cover"}}
+            style={{ height: 80, width: 80, resizeMode: "cover" }}
           />
-          <Text style={{ fontSize: 10, color: 'white' }}>Quét mã để thêm bạn Zalo với tôi</Text>
+          <Text style={{ fontSize: 10, color: "white" }}>
+            Quét mã để thêm bạn Zalo với tôi
+          </Text>
         </View>
       </View>
       <View
