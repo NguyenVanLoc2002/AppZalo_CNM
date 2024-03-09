@@ -1,7 +1,5 @@
-const mongoose = require("mongoose");
-
+const cloudinary = require("../configs/Cloudinary.config");
 const User = require("../models/User");
-const Media = require("../models/media");
 
 exports.getUserById = async (req, res) => {
   try {
@@ -23,28 +21,33 @@ exports.getUserByPhone = async (req, res) => {
   }
 };
 
-
 exports.sendOTP = async (req, res) => {};
 
-
 exports.uploadAvatar = async (req, res) => {
-  const file = await req.file;
-  console.log(req.file);
   try {
-    const newMedia = new Media({
-      _id: new mongoose.Types.ObjectId(),
-      fileName: file.originalname,
-      contentType: file.mimetype,
-      data: file.buffer,
-    });
+    const userId = req.body.userId;
 
-    const savedMedia = await newMedia.save();
-
-    res.json({
-      message: "File uploaded successfully",
-      mediaId: savedMedia._id,
+    if (!userId) {
+      return res.status(400).json({ message: "userId is required" });
+    }
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+    if (user.profile.avatar) {
+      await cloudinary.uploader.destroy(user.profile.avatar.public_id);
+    }
+    const result = await cloudinary.uploader.upload(req.file.path);
+    user.profile.avatar = {
+      url: result.secure_url,
+      public_id: result.public_id,
+    };
+    await user.save();
+    return res.status(200).json({
+      message: "Avatar uploaded successfully",
+      avatar: user.profile.avatar,
     });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(400).json({ name: error.name, message: error.message });
   }
 };
