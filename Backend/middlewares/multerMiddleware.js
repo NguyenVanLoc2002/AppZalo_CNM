@@ -1,22 +1,17 @@
-const multer = require('multer');
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const multer = require("multer");
+const cloudinary = require("../configs/Cloudinary.config");
 
-const storage = multer.memoryStorage();  // Sử dụng memoryStorage để lưu trữ file trong bộ nhớ
-
-const fileFilter = (req, file, cb) => {
-    // reject a file
-    if(file.mimetype === 'image/jpeg' || file.mimetype === 'image/png'){
-        cb(null, true)
-    }else{
-        cb(null, false)
-    }
-}
-
-const upload = multer({
-    storage: storage,
-    limits: {
-        fileSize: 1024 * 1024 * 5
-    },
-    fileFilter: fileFilter
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "Zalo_Fake_App",
+    format: async (req, file) => ["png", "jpg","jpeg", "mp4"], 
+    public_id: (req, file) =>req.body.userId + "-" +  file.fieldname + "-" + Date.now(),
+  }
 });
 
-module.exports = upload;
+const multerUpload = multer({ storage});
+
+
+module.exports = multerUpload;

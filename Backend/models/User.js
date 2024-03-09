@@ -8,7 +8,7 @@ const userSchema = new Schema({
   password: { type: String, required: true }, 
   profile:{
     avatar: { 
-      ulr: { type: String },
+      url: { type: String },
       public_id: { type: String }
     },
     name: { type: String, required: true },
