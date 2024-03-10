@@ -97,6 +97,7 @@ exports.logoutUser = async (req, res) => {
 };
 
 exports.registerUser = async (req, res) => {
+  console.log(req);
   const { name, password, phone } = req.body;
   if (await User.findOne({ phone })) {
     return res.status(409).json({ message: "Phone number already exists" });
