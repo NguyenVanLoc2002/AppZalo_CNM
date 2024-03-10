@@ -11,14 +11,13 @@ import {
 } from "react-native";
 import { CheckBox } from "react-native-elements";
 import CountryDropdown from "./CountryDropdown";
-import axios from 'axios';
 import Toast from 'react-native-toast-message';
-
+import axiosInstance from '../configs/axiosInstance'
 
 const showToastSuccess = (notice) => {
   Toast.show({
     text1: notice,
-    type:'success',
+    type: 'success',
     topOffset: 0,
     position: 'top',
   });
@@ -26,10 +25,10 @@ const showToastSuccess = (notice) => {
 const showToastError = (notice) => {
   Toast.show({
     text1: notice,
-    type:'error',
+    type: 'error',
     topOffset: 0,
     position: 'top',
- 
+
   });
 }
 
@@ -73,11 +72,11 @@ const CreateAccount1 = ({ navigation, route }) => {
       showToastError('Số điện thoại phải từ 8 đến 20 chữ số.')
     } else if (!/^[A-Za-z\d@$!%*?&#]{6,}$/.test(textPW)) {
       showToastError('Mật khẩu phải có ít nhất 6 ký tự');
-    }else if (!/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{6,}$/.test(textPW)) {
+    } else if (!/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{6,}$/.test(textPW)) {
       showToastError('MK chứa ít nhất 1 chữ,1 số,1 ký tự đặc biệt');
-    }  else if (!(textPW === textRetypePW)) {
+    } else if (!(textPW === textRetypePW)) {
       showToastError('Vui lòng nhập xác nhận mật khẩu trùng khớp')
-    } else if(!isCheckedInter||!isCheckedUse){
+    } else if (!isCheckedInter || !isCheckedUse) {
       showToastError('Vui lòng chấp nhận các điều khoản')
     }
     else {
@@ -113,27 +112,25 @@ const CreateAccount1 = ({ navigation, route }) => {
   };
 
   const handleSubmit = async (e) => {
-    try {
-      const response = await axios.post('http://192.168.3.29:3000/api/auth/register', {
+
+      axiosInstance.post('/auth/register', {
         phone: textPhone,
         password: textPW,
         name: name
-      });
-      console.log(response.data);
-      toggleModalLogin()
-      // showToastSuccess('Success')
-      
-    } catch (error) {
-      console.log(error);
-      toggleModalLogin()
-      if (error.response && error.response.status === 400 && error.response.status === 409 && error.response.status === 500) {
+      }).then(response => {
+        console.log(response.data);
+        toggleModalLogin()
+         // showToastSuccess('Success')
+      }).catch (error=> {
+      if (error.response && (error.response.status === 400 || error.response.status === 409 || error.response.status === 500)) {
         // Nếu lỗi là 400,409,500 (Conflict), lấy thông điệp từ phản hồi
         showToastError(error.response.data.message);
       } else {
         // Xử lý các lỗi khác
         showToastError('Lỗi');
       }
-    }
+    })
+
   };
 
   return (
@@ -246,7 +243,7 @@ const CreateAccount1 = ({ navigation, route }) => {
           </View>
         </View>
       </Modal>
-     
+
       <Modal
         animationType="slide"
         transparent={true}
@@ -257,12 +254,12 @@ const CreateAccount1 = ({ navigation, route }) => {
           <View style={styles.modalContent}>
             <Text style={styles.modalHeaderText}>
               Đăng ký thành công!
-             
+
             </Text>
             <Text style={styles.modalText}>
               Bạn muốn về trang chủ hay trang đăng nhập?
             </Text>
-           
+
             <View style={styles.modalButtonContainer}>
               <Pressable onPress={handleXacNhanLoginMain}>
                 <Text style={styles.modalButton}>Trang chủ</Text>
@@ -361,8 +358,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     color: "#0091FF",
   },
-  toastContainer:{
-    zIndex:99
+  toastContainer: {
+    zIndex: 99
   }
 });
 
