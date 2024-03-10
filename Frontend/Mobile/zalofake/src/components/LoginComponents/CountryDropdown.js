@@ -6,7 +6,7 @@ import {AntDesign} from '@expo/vector-icons'
 const countries = ["VN", "USA", "UK", "Cam"];
 
 const CountryDropdown = () => {
-  const [selectedCountry, setSelectedCountry] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState("VN");
 
   return (
     <View >
