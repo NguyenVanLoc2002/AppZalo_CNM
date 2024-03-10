@@ -8,29 +8,41 @@ import {
   TextInput,
   StyleSheet,
 } from "react-native";
+import Toast from 'react-native-toast-message';
+
+const showToastError = (notice) => {
+  Toast.show({
+    text1: notice,
+    type:'error',
+    topOffset: 0,
+    position: 'top',
+ 
+  });
+}
 
 const CreateAccount = ({ navigation }) => {
   const [textName, setTextName] = useState("");
-  const [isValidName, setIsValidName] = useState(false);
+ 
 
   const handleTextChange = (input) => {
-    const isValidInput = /^([a-zA-Zá-ỹÁ-Ỹ\s]{2,40})$/.test(input);
 
     setTextName(input);
-    if (isValidInput) {
-      setIsValidName(true);
-    } else {
-      setIsValidName(false);
-    }
+
   };
   const handlePressablePress = () => {
-    if (isValidName) {
-      navigation.navigate("CreateAccount1",{ name: textName });
+    if (/^([a-zA-Zá-ỹÁ-Ỹ\s]{2,40})$/.test(textName)) {
+      navigation.navigate("CreateAccount1", { name: textName });
+    }else{
+      showToastError('Vui lòng nhập tên là chữ và ít nhất 2 kí tự');
     }
   };
 
   return (
     <View style={styles.container}>
+      <View style={styles.toastContainer}>
+        <Toast
+        />
+      </View>
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Tên zalo</Text>
         <TextInput
@@ -50,10 +62,9 @@ const CreateAccount = ({ navigation }) => {
       <View style={styles.buttonContainer}>
         <Pressable
           style={[
-            styles.button,
-            isValidName ? styles.validButton : styles.invalidButton,
+            styles.button,styles.validButton
           ]}
-          disabled={!isValidName}
+         
           onPress={handlePressablePress}
         >
           <View>
@@ -122,6 +133,9 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
   },
+  toastContainer:{
+    zIndex:99
+  }
 });
 
 export default CreateAccount;
