@@ -25,7 +25,7 @@ const CreateAccount = ({ navigation }) => {
   };
   const handlePressablePress = () => {
     if (isValidName) {
-      navigation.navigate("CreateAccount1");
+      navigation.navigate("CreateAccount1",{ name: textName });
     }
   };
 
