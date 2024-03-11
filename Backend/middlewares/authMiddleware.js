@@ -18,6 +18,7 @@ exports.protect = async (req, res, next) => {
             .status(401)
             .json({ message: "Not authorized, token failed or expired" });
         }
+        req.user = user; // Thêm thông tin người dùng vào đối tượng req
         const isLogin = await Session.findOne({
           user_id: user.user_id,
           device_id: user.device_id,
