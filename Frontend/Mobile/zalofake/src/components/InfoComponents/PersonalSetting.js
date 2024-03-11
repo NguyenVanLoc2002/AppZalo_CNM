@@ -1,4 +1,4 @@
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, ScrollView } from "react-native";
 import React, { useEffect } from "react";
 import { Entypo, Ionicons } from "react-native-vector-icons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
@@ -32,6 +32,7 @@ const PersonalSetting = ({ navigation }) => {
   }, [navigation]);
   return (
     <View>
+      <ScrollView>
       <Pressable
         onPress={() => {
           navigation.navigate("AccountVsSecurity");
@@ -320,6 +321,7 @@ const PersonalSetting = ({ navigation }) => {
           <Text style={{ fontSize: 16 }}>Đăng xuất</Text>
         </View>
       </Pressable>
+      </ScrollView>
     </View>
   );
 };
