@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
-function Login() {
+
+const Login = () => {
   const [langue, setLangue] = useState("vi"); // [vi, en]
-  const [isLogin, setIsLogin] = useState(false);
 
   
   return (
-    <div className="w-screen h-screen bg-[url('assets/bg-login.svg')] bg-cover bg-center font-roboto">
+    <div className="w-screen h-screen bg-[url('/bg-login.svg')] bg-cover bg-center font-roboto">
       <div className="pt-10">
         <h1 className="text-[#0068ff] text-center font-semibold text-[3.5rem]">
           ZaloFake
@@ -40,7 +40,6 @@ function Login() {
               : "text-blue-500 hover:text-blue-400"
           }
           onClick={() => setLangue("en")}
-          sty
         >
           English
         </button>
