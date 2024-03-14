@@ -9,8 +9,8 @@ const chatRouter = require("./routes/chat.router");
 const { app, server } = require("./socket/socket.io");
 const authMiddleware = require("./middlewares/authMiddleware");
 
-
 const bodyParser = require('body-parser');
+
 
 // Sử dụng body-parser middleware để xử lý dữ liệu form-urlencoded
 app.use(bodyParser.urlencoded({ extended: true }));

@@ -1,28 +1,58 @@
 const cloudinary = require("../configs/Cloudinary.config.js");
 const Chat = require("../models/Chat.js");
 
+//Upload media to cloudinary
+const uploadMediaToCloudinary = async (file) => {
+  try {
+    const result = await cloudinary.uploader.upload(file.path);
+    return {
+      url: result.secure_url,
+      public_id: result.public_id,
+    };
+  } catch (error) {
+    throw new Error("Failled to upload media to Cloudinary");
+  }
+};
+
 //Gửi tin nhắn mới cho một người dùng cụ thể.
 exports.sendMessage = async (req, resp) => {
-  console.log(req.user);
   try {
+    // console.log(req.files);
     const senderId = req.user.user_id; // Lấy userId của người gửi từ thông tin đăng nhập (đã được đặt trong middleware auth)
     const receiverId = req.params.userId;
-    const { contents } = req.body;
+    let contents = [];
     console.log(contents);
-    console.log(senderId);
-    console.log(receiverId);
 
-    if (!contents || contents.length === 0) {
-      return resp.status(400).json({ message: "Content is required" });
+    // Kiểm tra xem req.body có tồn tại không và có chứa nội dung không
+    if (req.body) {
+      // Nếu có nội dung, thêm vào mảng contents
+        contents.push({
+          type: "text",
+          data: req.body.data,
+      });
     }
+    
 
-    // Kiểm tra từng phần tử trong mảng contents
-    for (const content of contents) {
-      if (!content.data.trim()) {
-        return resp.status(400).json({ message: "Content is required" });
+    //Upload media to Cloudinary if any
+    for (const file of req.files) {
+      if (
+        file.mimetype.startsWith("image/") ||
+        file.mimetype.startsWith("video/")
+      ) {
+        const media = await uploadMediaToCloudinary(file);
+        contents.push({
+          type: file.mimetype.startsWith("image/") ? "image" : "video",
+          data: media.url,
+        });
+      } else {
+        const media = uploadMediaToCloudinary(file);
+        contents.push({
+          type: file.mimetype,
+          data: media.url,
+        });
       }
     }
-
+    console.log(contents);
     // Tạo và lưu tin nhắn mới vào cơ sở dữ liệu
     const message = new Chat({ senderId, receiverId, contents });
     await message.save();
