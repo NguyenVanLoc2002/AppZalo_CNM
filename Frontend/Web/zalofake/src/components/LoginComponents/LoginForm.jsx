@@ -1,28 +1,62 @@
 import { MdPhoneIphone } from "react-icons/md";
 import { FaLock } from "react-icons/fa";
 import { IoEyeOff, IoEye } from "react-icons/io5";
+import { IoMdArrowDropdown } from "react-icons/io";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useOutletContext } from "react-router-dom";
+import useLogin from "../../hooks/useLogin";
 
 function LoginForm() {
   const [phone, setPhone] = useState("");
-  const [password, setPwssword] = useState("");
+  const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const langue = useOutletContext();
-  const [isLogin, setIsLogin] = useState(false);
+  const [code, setCode] = useState("+84");
+  const [phoneId, setPhoneId] = useState([]);
 
+  const { loading, login } = useLogin();
 
-  const handleLogin = () => {
-    window.location.href = "/chat";
-    setIsLogin(true);
-    Link.contextType = isLogin;
+  useEffect(() => {
+    const getPhoneId = async () => {
+      const res = await fetch("https://restcountries.com/v3.1/all");
+      const data = await res.json();
+      data.forEach((item) => {
+        if (item.cca2) {
+          setPhoneId((phoneId) => [
+            ...phoneId.filter((phone) => phone.id !== item.cca2),
+            {
+              id: item.cca2,
+              name: item.name.common,
+              flag: item.flags.png,
+              phone: item.idd.root + item.idd.suffixes?.[0],
+            },
+          ]);
+        }
+      });
+    };
+    getPhoneId();
+  }, []);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    if (phone.length === 0 || password.length < 6) {
+      // Hiển thị thông báo lỗi khi số điện thoại hoặc mật khẩu không hợp lệ
+      return;
+    }
+    await login(phone, password);
+  };
+
+  const selectedCode = (item) => {
+    //close dropdown
+    document.querySelector(".dropdown").removeAttribute("open");
+    setCode(item.phone);
   };
   return (
     <>
-      <div className="w-[400px] text-sm">
+      <div className="w-[400px] text-sm h-full">
         <div className="w-full p-1 bg-white flex justify-around">
-          <p className="text-center text-sm uppercase py-3 text-gray-400">
+          <p className="text-center text-sm uppercase py-3 text-gray-400 truncate">
             {langue == "vi" ? "Với số Mã QR" : "With QR code"}
           </p>
           <p className="text-center text-sm font-bold uppercase py-3 mb-[-5px] border-b border-black">
@@ -35,14 +69,42 @@ function LoginForm() {
             <span>
               <MdPhoneIphone size={16} color="#555555" />
             </span>
-            <select className="select focus:border-none focus:outline-none">
-              <option defaultValue={""}>+84</option>
-              <option>+1</option>
-              <option>+2</option>
-              <option>+3</option>
-              <option>+4</option>
-              <option>+5</option>
-            </select>
+            <details className="dropdown mx-3">
+              <summary
+                tabIndex={0}
+                role="button"
+                className="flex items-center justify-between"
+              >
+                {code}
+                <IoMdArrowDropdown size={16} color="#555555" className="ml-3" />
+              </summary>
+              <ul
+                tabIndex={0}
+                className="dropdown-content z-50 absolute left-0 mt-2 py-1 w-72 bg-white border border-gray-200 rounded-md overflow-y-auto max-h-96"
+              >
+                {phoneId
+                  //sort by name country alphabet
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((item) => (
+                    <li
+                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer w-full my-2 z-50"
+                      key={item.id}
+                      onClick={() => selectedCode(item)}
+                    >
+                      <img
+                        src={item.flag}
+                        alt={item.name}
+                        className="w-6 h-4 mr-2 inline-block"
+                      />
+                      <span>{item.name}</span>
+                      <span className="text-gray-400 text-sm">
+                        {item.phone}
+                      </span>
+                    </li>
+                  ))}
+              </ul>
+            </details>
+
             <input
               className="rounded w-full py-1 px-3 border-none
                 text-gray-700 focus:outline-none focus:shadow-outline"
@@ -67,7 +129,7 @@ function LoginForm() {
               type={showPass ? "text" : "password"}
               placeholder={langue == "vi" ? "Mật khẩu" : "Password"}
               value={password}
-              onChange={(e) => setPwssword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
             />
             {showPass ? (
               <IoEyeOff
@@ -86,7 +148,6 @@ function LoginForm() {
             )}
           </div>
           <p className="text-red-500 text-xs italic hidden">
-            {/* Sai Mật khẩu. */}
             {langue == "vi" ? "Sai Mật khẩu." : "Wrong password."}
           </p>
           <div>
@@ -97,9 +158,13 @@ function LoginForm() {
               disabled={phone.length === 0 || password.length < 6}
               onClick={handleLogin}
             >
-              {langue == "vi"
-                ? "Đăng nhập bằng mật khẩu"
-                : "Login with password"}
+              {loading ? (
+                <span className="loading loading-spinner "></span>
+              ) : langue == "vi" ? (
+                "Đăng nhập bằng mật khẩu"
+              ) : (
+                "Login with password"
+              )}
             </button>
             <Link
               className="hover:border-[#0068ff] border text-[#0190f3] rounded block w-full my-3 py-3 disabled:opacity-70 text-center"

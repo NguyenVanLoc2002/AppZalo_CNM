@@ -1,0 +1,34 @@
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuthContext } from "./contexts/AuthContext";
+import Login from "./components/Layout/Login";
+import LoginForm from "./components/LoginComponents/LoginForm";
+import LoginMobileDevice from "./components/LoginComponents/LoginMobileDevice";
+import FogotPassword from "./components/LoginComponents/FogotPassword";
+import MainLayout from "./components/Layout/MainLayout";
+import { Toaster } from "react-hot-toast";
+
+const App = () => {
+  const { authUser } = useAuthContext();
+  return (
+    <>
+      <Routes>
+        <Route
+          path="/"
+          element={authUser ? <MainLayout /> : <Navigate to={"/login"} />}
+        />
+        <Route
+          path="/login"
+          element={authUser ? <Navigate to={"/"} /> : <Login />}
+        >
+          <Route index element={<LoginForm />} />
+          <Route path="mobile" element={<LoginMobileDevice />} />
+          <Route path="forgot" element={<FogotPassword />} />
+        </Route>
+      </Routes>
+      <Toaster />
+    </>
+  );
+};
+
+export default App;
