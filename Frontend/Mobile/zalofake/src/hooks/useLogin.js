@@ -27,15 +27,11 @@ const useLogin = () => {
         setAccessToken(data.accessToken);
         setRefreshToken(data.refreshToken);
       } else {
-        Toast.show({
-          type: "error",
-          text1: "Error",
-          text2: `${data.error}`,
-          visibilityTime: 3000, // 3 giây
-        });
+        showMesg("Error during login", "error"); // Hiển thị thông báo lỗi khi đăng nhập không thành công
       }
     } catch (error) {
       console.error("Error during login:", error);
+      showMesg("Error during login", "error"); // Hiển thị thông báo lỗi khi có lỗi trong quá trình đăng nhập
     }
     setLoading(false);
   };
