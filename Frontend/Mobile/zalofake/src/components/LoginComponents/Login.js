@@ -6,6 +6,7 @@ import {
   Image,
   TextInput,
   StyleSheet,
+  ActivityIndicator,
 } from "react-native";
 import useLogin from "../../hooks/useLogin";
 import { useAuthContext } from "../../contexts/AuthContext";
@@ -17,6 +18,7 @@ const Login = ({ navigation }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isValid, setIsValid] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // State for loading indicator
 
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
@@ -47,7 +49,9 @@ const Login = ({ navigation }) => {
   }, [textPhone, textPW]);
 
   const handleLogin = async () => {
+    setIsLoading(true);
     await login(textPhone, textPW);
+    setIsLoading(false);
     navigation.navigate("ChatComponent");
   };
 
@@ -101,14 +105,17 @@ const Login = ({ navigation }) => {
             styles.button,
             { backgroundColor: isValid ? "#0091FF" : "#BFD3F8" },
           ]}
-          disabled={!isValid}
-          // onPress={() => navigation.navigate("ChatComponent")}
+          disabled={!isValid || isLoading}
           onPress={handleLogin}
         >
-          <Image
-            style={styles.buttonImage}
-            source={require("../../../assets/arrow.png")}
-          />
+          {isLoading ? (
+            <ActivityIndicator color="white" /> // Show loading indicator
+          ) : (
+            <Image
+              style={styles.buttonImage}
+              source={require("../../../assets/arrow.png")}
+            />
+          )}
         </Pressable>
       </View>
     </View>
