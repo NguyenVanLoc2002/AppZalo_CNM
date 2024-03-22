@@ -1,5 +1,8 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { encode as base64Encode, decode as base64Decode } from "base-64"; // Import thư viện mã hóa base64
+
+const ENCRYPTION_KEY = "CongNgheMoi"; // Khóa bí mật, thay bằng khóa thực tế của bạn
 
 const AuthContext = createContext();
 
@@ -15,18 +18,23 @@ export const AuthContextProvider = ({ children }) => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const storedAuthUser = await AsyncStorage.getItem("authUser");
-        const storedAccessToken = await AsyncStorage.getItem("accessToken");
-        const storedRefreshToken = await AsyncStorage.getItem("refreshToken");
+        const encryptedAuthUser = await AsyncStorage.getItem("authUser");
+        const encryptedAccessToken = await AsyncStorage.getItem("accessToken");
+        const encryptedRefreshToken = await AsyncStorage.getItem(
+          "refreshToken"
+        );
 
-        if (storedAuthUser) {
-          setAuthUser(JSON.parse(storedAuthUser));
+        if (encryptedAuthUser) {
+          const decryptedAuthUser = base64Decode(encryptedAuthUser); // Giải mã base64
+          setAuthUser(JSON.parse(decryptedAuthUser));
         }
-        if (storedAccessToken) {
-          setAccessToken(storedAccessToken);
+        if (encryptedAccessToken) {
+          const decryptedAccessToken = base64Decode(encryptedAccessToken);
+          setAccessToken(decryptedAccessToken);
         }
-        if (storedRefreshToken) {
-          setRefreshToken(storedRefreshToken);
+        if (encryptedRefreshToken) {
+          const decryptedRefreshToken = base64Decode(encryptedRefreshToken);
+          setRefreshToken(decryptedRefreshToken);
         }
       } catch (error) {
         console.error("Error loading data from AsyncStorage:", error);
@@ -35,22 +43,24 @@ export const AuthContextProvider = ({ children }) => {
 
     loadData();
   }, []);
-
   useEffect(() => {
     const saveData = async () => {
       try {
         if (authUser) {
-          await AsyncStorage.setItem("authUser", JSON.stringify(authUser));
+          const encryptedAuthUser = base64Encode(JSON.stringify(authUser)); // Mã hóa base64
+          await AsyncStorage.setItem("authUser", encryptedAuthUser);
         } else {
           await AsyncStorage.removeItem("authUser");
         }
         if (accessToken) {
-          await AsyncStorage.setItem("accessToken", accessToken);
+          const encryptedAccessToken = base64Encode(accessToken);
+          await AsyncStorage.setItem("accessToken", encryptedAccessToken);
         } else {
           await AsyncStorage.removeItem("accessToken");
         }
         if (refreshToken) {
-          await AsyncStorage.setItem("refreshToken", refreshToken);
+          const encryptedRefreshToken = base64Encode(refreshToken);
+          await AsyncStorage.setItem("refreshToken", encryptedRefreshToken);
         } else {
           await AsyncStorage.removeItem("refreshToken");
         }

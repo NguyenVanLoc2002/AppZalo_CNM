@@ -6,7 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function App() {
   // const clearAsync = async () => {
-  //   console.log(AsyncStorage.getAllKeys());
+  //   // console.log(AsyncStorage.getAllKeys());
   //   await AsyncStorage.clear();
   // };
   // clearAsync();
