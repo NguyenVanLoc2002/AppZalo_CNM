@@ -31,7 +31,6 @@ const Stack = createNativeStackNavigator();
 export default function RootComponent() {
   const { authUser } = useAuthContext();
 
-  console.log("auth Root Compo", authUser);
   return authUser ? (
     <Stack.Navigator initialRouteName="ChatComponent">
       <Stack.Screen
