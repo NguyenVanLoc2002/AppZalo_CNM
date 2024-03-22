@@ -12,7 +12,7 @@ const Tab = createBottomTabNavigator();
 
 const MainComponent = () => {
   const { authUser } = useAuthContext();
-  console.log(authUser);
+  // console.log(authUser);
   return (
     <Tab.Navigator
       initialRouteName="ChatList"
