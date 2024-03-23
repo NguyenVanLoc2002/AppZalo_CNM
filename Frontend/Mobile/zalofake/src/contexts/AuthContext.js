@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { encode as base64Encode, decode as base64Decode } from "base-64"; // Import thư viện mã hóa base64
+import { encode as base64Encode, decode as base64Decode } from "base-64"; 
 
-const ENCRYPTION_KEY = "CongNgheMoi"; // Khóa bí mật, thay bằng khóa thực tế của bạn
+const ENCRYPTION_KEY = "CongNgheMoi"; 
 
 const AuthContext = createContext();
 
