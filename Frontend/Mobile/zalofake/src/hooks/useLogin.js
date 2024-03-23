@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useAuthContext } from "../contexts/AuthContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message";
 import * as Device from "expo-device";
 
@@ -27,11 +26,17 @@ const useLogin = () => {
         setAccessToken(data.accessToken);
         setRefreshToken(data.refreshToken);
       } else {
-        showMesg("Error during login", "error"); // Hiển thị thông báo lỗi khi đăng nhập không thành công
+        showMesg("Error during login", "error");
       }
     } catch (error) {
-      console.error("Error during login:", error);
-      showMesg("Error during login", "error"); // Hiển thị thông báo lỗi khi có lỗi trong quá trình đăng nhập
+      if (error.request) {
+        showMesg("Error server, please try again !", "error");
+        throw error;
+      } else {
+        console.error("Error during login:", error);
+        showMesg("Error during login", "error");
+        throw error;
+      }
     }
     setLoading(false);
   };
