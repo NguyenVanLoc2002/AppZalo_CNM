@@ -9,7 +9,7 @@ import useLogin from "../../hooks/useLogin";
 
 function LoginForm() {
   const [phone, setPhone] = useState("");
-  const [password, setPwssword] = useState("");
+  const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const langue = useOutletContext();
   const [code, setCode] = useState("+84");
@@ -40,6 +40,10 @@ function LoginForm() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    if (phone.length === 0 || password.length < 6) {
+      // Hiển thị thông báo lỗi khi số điện thoại hoặc mật khẩu không hợp lệ
+      return;
+    }
     await login(phone, password);
   };
 
@@ -125,7 +129,7 @@ function LoginForm() {
               type={showPass ? "text" : "password"}
               placeholder={langue == "vi" ? "Mật khẩu" : "Password"}
               value={password}
-              onChange={(e) => setPwssword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
             />
             {showPass ? (
               <IoEyeOff
