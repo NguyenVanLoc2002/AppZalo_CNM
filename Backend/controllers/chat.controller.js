@@ -4,7 +4,14 @@ const Chat = require("../models/Chat.js");
 //Upload media to cloudinary
 const uploadMediaToCloudinary = async (file) => {
   try {
-    const result = await cloudinary.uploader.upload(file.path);
+    let result;
+    if (file.mimetype.startsWith("image/")) {
+      result = await cloudinary.uploader.upload(file.path);
+    } else if (file.mimetype.startsWith("video/")) {
+      result = await cloudinary.uploader.upload(file.path, {
+        resource_type: "video",
+      });
+    }
     return {
       url: result.secure_url,
       public_id: result.public_id,
@@ -17,42 +24,49 @@ const uploadMediaToCloudinary = async (file) => {
 //Gửi tin nhắn mới cho một người dùng cụ thể.
 exports.sendMessage = async (req, resp) => {
   try {
-    // console.log(req.files);
+    console.log("req.files: ", req.files);
+    console.log("req.body: ", req.body);
     const senderId = req.user.user_id; // Lấy userId của người gửi từ thông tin đăng nhập (đã được đặt trong middleware auth)
     const receiverId = req.params.userId;
     let contents = [];
     console.log(contents);
 
     // Kiểm tra xem req.body có tồn tại không và có chứa nội dung không
-    if (req.body) {
+    if (Object.keys(req.body).length) {
       // Nếu có nội dung, thêm vào mảng contents
-        contents.push({
-          type: "text",
-          data: req.body.data,
+      contents.push({
+        type: "text",
+        data: req.body.data,
       });
     }
-    
 
     //Upload media to Cloudinary if any
-    for (const file of req.files) {
-      if (
-        file.mimetype.startsWith("image/") ||
-        file.mimetype.startsWith("video/")
-      ) {
-        const media = await uploadMediaToCloudinary(file);
-        contents.push({
-          type: file.mimetype.startsWith("image/") ? "image" : "video",
-          data: media.url,
-        });
-      } else {
-        const media = uploadMediaToCloudinary(file);
-        contents.push({
-          type: file.mimetype,
-          data: media.url,
-        });
+    if (req.files) {
+      for (const file of req.files) {
+        if (
+          file.mimetype.startsWith("image/") ||
+          file.mimetype.startsWith("video/")
+        ) {
+          const media = await uploadMediaToCloudinary(file);
+          contents.push({
+            type: file.mimetype.startsWith("image/") ? "image" : "video",
+            data: media.url,
+          });
+        } else {
+          const media = uploadMediaToCloudinary(file);
+          contents.push({
+            type: file.mimetype,
+            data: media.url,
+          });
+        }
       }
     }
     console.log(contents);
+
+    if (!contents || !contents.length) {
+      throw new Error("Contents are empty or contain no fields");
+    }
+
     // Tạo và lưu tin nhắn mới vào cơ sở dữ liệu
     const message = new Chat({ senderId, receiverId, contents });
     await message.save();
