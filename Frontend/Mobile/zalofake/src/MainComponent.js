@@ -6,10 +6,13 @@ import Chat from "./components/ChatComponents/chat/Chat";
 import News from "./components/NewsComponents/News";
 import DirectoryComponents from "./components/DirectoryComponents/DirectoryComponents";
 import Info from "./components/InfoComponents/Info";
+import { useAuthContext } from "./contexts/AuthContext";
 
 const Tab = createBottomTabNavigator();
 
 const MainComponent = () => {
+  const { authUser } = useAuthContext();
+  // console.log(authUser);
   return (
     <Tab.Navigator
       initialRouteName="ChatList"
