@@ -7,8 +7,11 @@ import {
   TextInput,
   StyleSheet,
 } from "react-native";
+import useLogin from "../../hooks/useLogin";
+import { useAuthContext } from "../../contexts/AuthContext";
 
 const Login = ({ navigation }) => {
+  const { login } = useLogin();
   const [textPhone, setTextPhone] = useState("");
   const [textPW, setTextPW] = useState("");
   const [isFocused, setIsFocused] = useState(false);
@@ -42,6 +45,11 @@ const Login = ({ navigation }) => {
       setIsValid(false);
     }
   }, [textPhone, textPW]);
+
+  const handleLogin = async () => {
+    await login(textPhone, textPW);
+    navigation.navigate("ChatComponent");
+  };
 
   return (
     <View style={styles.container}>
@@ -94,7 +102,8 @@ const Login = ({ navigation }) => {
             { backgroundColor: isValid ? "#0091FF" : "#BFD3F8" },
           ]}
           disabled={!isValid}
-          onPress={() => navigation.navigate("ChatComponent")}
+          // onPress={() => navigation.navigate("ChatComponent")}
+          onPress={handleLogin}
         >
           <Image
             style={styles.buttonImage}
