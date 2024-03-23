@@ -2,16 +2,29 @@ const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const multer = require("multer");
 const cloudinary = require("../configs/Cloudinary.config");
 
-const storage = new CloudinaryStorage({
+const uploadImage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: "Zalo_Fake_App",
-    format: async (req, file) => ["png", "jpg","jpeg", "mp4"], 
-    public_id: (req, file) =>req.body.userId + "-" +  file.fieldname + "-" + Date.now(),
-  }
+    allowed_formats: ["jpg", "png", "jpeg"],
+    public_id: (req, file) => {
+      return `zaloFake_${file.fieldname}_${Date.now()}`;
+    },
+  },
 });
 
-const multerUpload = multer({ storage});
+const uploadVideo = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "Zalo_Fake_App",
+    allowed_formats: ["mp4"],
+    resource_type: "video",
+    public_id: (req, file) => {
+      return `zaloFake_${file.fieldname}_${Date.now()}`;
+    },
+  },
+});
 
-
-module.exports = multerUpload;
+const multerUploadImage = multer({ storage: uploadImage });
+const multerUploadVideo = multer({ storage: uploadVideo });
+module.exports = { multerUploadImage, multerUploadVideo };
