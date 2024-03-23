@@ -10,7 +10,12 @@ const {app, server} = require('./socket/socket.io')
 
 
 dotenv.config()
-app.use(cors())
+app.use(cors(
+    {
+        origin: "*",
+        credentials: true
+    }
+))
 app.use(express.json())
 app.use(CookieParser())
 
