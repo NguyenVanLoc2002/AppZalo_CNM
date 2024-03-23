@@ -20,7 +20,7 @@ const showToastError = (notice) => {
   });
 }
 
-const CreateAccount = ({ navigation }) => {
+const RegisterName = ({ navigation }) => {
   const [textName, setTextName] = useState("");
  
 
@@ -31,7 +31,7 @@ const CreateAccount = ({ navigation }) => {
   };
   const handlePressablePress = () => {
     if (/^([a-zA-Zá-ỹÁ-Ỹ\s]{2,40})$/.test(textName)) {
-      navigation.navigate("CreateAccount1", { name: textName });
+      navigation.navigate("RegisterInfo", { name: textName });
     }else{
       showToastError('Vui lòng nhập tên là chữ và ít nhất 2 kí tự');
     }
@@ -138,4 +138,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default CreateAccount;
+export default RegisterName;

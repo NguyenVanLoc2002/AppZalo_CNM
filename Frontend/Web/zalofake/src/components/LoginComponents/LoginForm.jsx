@@ -3,6 +3,7 @@ import { FaLock } from "react-icons/fa";
 import { IoEyeOff, IoEye } from "react-icons/io5";
 import { IoMdArrowDropdown } from "react-icons/io";
 
+
 import { useState, useEffect } from "react";
 import { Link, useOutletContext } from "react-router-dom";
 import useLogin from "../../hooks/useLogin";
@@ -162,13 +163,16 @@ function LoginForm() {
                 "Login with password"
               )}
             </button>
+
+            
+
             <Link
               className="hover:border-[#0068ff] border text-[#0190f3] rounded block w-full my-3 py-3 disabled:opacity-70 text-center"
-              to="/mobile"
+              to="register"
             >
               {langue == "vi"
-                ? "Đăng nhập bằng thiết bị di động"
-                : "Sign in with mobile device"}
+                ? "Đăng ký"
+                : "Register"}
             </Link>
             <Link
               className="block hover:underline hover:text-blue-400 text-center text-gray-700"
