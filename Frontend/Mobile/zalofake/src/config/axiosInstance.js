@@ -2,9 +2,13 @@
 // import config from "./config";
 // import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const axios = require("axios");
-const config = require("./config");
-const AsyncStorage = require("@react-native-async-storage/async-storage");
+// const axios = require("axios");
+// const config = require("./config");
+// const AsyncStorage = require("@react-native-async-storage/async-storage");
+
+import axios from "axios";
+import config from "./config";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 let isRefreshing = false;
 let refreshSubscribers = [];
@@ -16,6 +20,8 @@ const axiosInstance = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+console.log("axiosInstance:", axiosInstance);
 
 // Hàm để thêm các subscriber vào mảng
 function subscribeTokenRefresh(callback) {
@@ -94,4 +100,4 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-module.exports = axiosInstance;
+export default axiosInstance;
