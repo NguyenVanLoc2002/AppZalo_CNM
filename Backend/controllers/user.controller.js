@@ -37,10 +37,10 @@ exports.uploadAvatar = async (req, res) => {
     if (user.profile.avatar) {
       await cloudinary.uploader.destroy(user.profile.avatar.public_id);
     }
-    const result = await cloudinary.uploader.upload(req.file.path);
+    // const 
     user.profile.avatar = {
-      url: result.secure_url,
-      public_id: result.public_id,
+      public_id: req.file.public_id,
+      url: req.file.url,
     };
     await user.save();
     return res.status(200).json({
@@ -51,3 +51,5 @@ exports.uploadAvatar = async (req, res) => {
     res.status(400).json({ name: error.name, message: error.message });
   }
 };
+
+
