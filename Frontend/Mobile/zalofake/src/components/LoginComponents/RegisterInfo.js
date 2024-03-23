@@ -32,7 +32,7 @@ const showToastError = (notice) => {
   });
 }
 
-const CreateAccount1 = ({ navigation, route }) => {
+const RegisterInfo = ({ navigation, route }) => {
 
   const [isCheckedUse, setIsCheckedUse] = useState(false);
   const [isCheckedInter, setIsCheckedInter] = useState(false);
@@ -363,4 +363,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default CreateAccount1;
+export default RegisterInfo;
