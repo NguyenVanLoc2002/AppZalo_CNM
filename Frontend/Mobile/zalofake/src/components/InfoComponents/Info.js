@@ -200,10 +200,11 @@ const styles = StyleSheet.create({
   },
   headerRightContainer: {
     flexDirection: "row",
+    backgroundColor: "red",
   },
   headerIcon: {
-    padding: 20,
-    marginLeft: 15,
+    // padding: 20,
+    // marginLeft: 15,
   },
   headerTitleContainer: {
     flexDirection: "row",
