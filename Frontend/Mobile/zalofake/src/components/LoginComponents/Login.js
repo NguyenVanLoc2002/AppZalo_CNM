@@ -50,9 +50,16 @@ const Login = ({ navigation }) => {
 
   const handleLogin = async () => {
     setIsLoading(true);
-    await login(textPhone, textPW);
-    setIsLoading(false);
-    navigation.navigate("ChatComponent");
+    await login(textPhone, textPW)
+      .then(() => {
+        console.log("Login successfully");
+        setIsLoading(false);
+        navigation.navigate("ChatComponent");
+      })
+      .catch((error) => {
+        setIsLoading(false);
+        console.error("Error during login:", error);
+      });
   };
 
   return (
