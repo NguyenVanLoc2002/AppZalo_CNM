@@ -7,7 +7,7 @@ const {
   uploadAvatar,
 } = require("../controllers/user.controller");
 const { protect, isRootUser } = require("../middlewares/authMiddleware");
-const multerUpload= require("../middlewares/multerMiddleware");
+const {multerUploadImage}= require("../middlewares/multerMiddleware");
 
 //get methods
 router.get("/get/:phone", protect, isRootUser, getUserByPhone);
@@ -17,7 +17,7 @@ router.post("/otp/send", sendOTP);
 router.post(
   "/upload-avatar",
   protect,
-  multerUpload.single("user-avatar"),
+  multerUploadImage.single("user-avatar"),
   uploadAvatar
 );
 
