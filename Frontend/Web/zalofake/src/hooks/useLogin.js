@@ -19,14 +19,11 @@ const useLogin = () => {
         setAuthUser(data.user);
         setAccessToken(data.accessToken);
       } else {
-        // Hiển thị thông báo lỗi từ data.message
         toast.error(data.message);
       }
     } catch (error) {
-      // Xử lý lỗi khi gọi API
-      // console.error(error);
-      // Hiển thị thông báo lỗi phù hợp
-      toast.error("An error occurred while logging in.");
+      
+      toast.error("Login failed! Please try again.");
     }
     setLoading(false);
   };
