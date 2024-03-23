@@ -2,8 +2,10 @@ import { View, Text, Pressable, ScrollView } from "react-native";
 import React, { useEffect } from "react";
 import { Entypo, Ionicons } from "react-native-vector-icons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
+import useLogout from "../../hooks/useLogout";
 
 const PersonalSetting = ({ navigation }) => {
+
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -30,6 +32,16 @@ const PersonalSetting = ({ navigation }) => {
       },
     });
   }, [navigation]);
+
+  const handleLogout = async () => {
+    const isLoggedOut = await useLogout();
+    if (isLoggedOut) {
+      navigation.navigate('LoginMain')
+    }
+
+  };
+
+
   return (
     <View>
       <ScrollView>
@@ -274,6 +286,7 @@ const PersonalSetting = ({ navigation }) => {
             borderRadius: 20,
             marginRight: 10,
           }}
+          onPress={handleLogout}
         >
           <Ionicons
             name="chatbubble-ellipses-outline"
