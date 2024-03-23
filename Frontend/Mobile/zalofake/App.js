@@ -1,8 +1,8 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-import CreateAccount from "./src/components/LoginComponents/CreateAccount";
-import CreateAccount1 from "./src/components/LoginComponents/CreateAccount1";
+import RegisterName from "./src/components/LoginComponents/RegisterName";
+import RegisterInfo from "./src/components/LoginComponents/RegisterInfo";
 import EnterAuthCode from "./src/components/LoginComponents/EnterAuthCode";
 import Login from "./src/components/LoginComponents/Login";
 
@@ -39,8 +39,8 @@ export default function App() {
         />
 
         <Stack.Screen
-          name="CreateAccount"
-          component={CreateAccount}
+          name="RegisterName"
+          component={RegisterName}
           options={{
             headerStyle: {
               backgroundColor: "#0091FF",
@@ -50,8 +50,8 @@ export default function App() {
           }}
         />
         <Stack.Screen
-          name="CreateAccount1"
-          component={CreateAccount1}
+          name="RegisterInfo"
+          component={RegisterInfo}
           options={{
             headerStyle: {
               backgroundColor: "#0091FF",
