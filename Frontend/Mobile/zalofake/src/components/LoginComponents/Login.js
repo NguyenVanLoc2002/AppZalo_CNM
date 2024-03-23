@@ -58,7 +58,6 @@ const Login = ({ navigation }) => {
       })
       .catch((error) => {
         setIsLoading(false);
-        console.error("Error during login:", error);
       });
   };
 
