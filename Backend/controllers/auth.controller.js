@@ -50,7 +50,7 @@ exports.loginUser = async (req, res) => {
     if (user && (await user.matchPassword(password))) {
       const token = generateAccessToken(device_id, user._id, phone);
       const refreshToken = generateRefreshToken(device_id, user._id, phone);
-      
+
       await createOrUpdateSession(user._id, device_id, app_type, refreshToken);
       const { password, _id, ...userWithoutPassword } = user.toObject();
 
@@ -124,7 +124,8 @@ exports.registerUser = async (req, res) => {
 };
 
 exports.refreshToken = async (req, res) => {
-  const reToken = req.cookies.refreshToken;
+  const reToken = req.cookies.refreshToken || req.body.refreshToken;
+  console.log(req.body.refreshToken);
   if (!reToken) return res.status(403).json("You're not authenticated !");
   const storeRefreshToken = await Session.findOne({ refreshToken: reToken });
   if (!storeRefreshToken)
@@ -138,29 +139,9 @@ exports.refreshToken = async (req, res) => {
       user.user_id,
       user.phone
     );
-    const newRefreshToken = generateRefreshToken(
-      user.device_id,
-      user.user_id,
-      user.phone
-    );
-
-    storeRefreshToken.refreshToken = newRefreshToken;
-    storeRefreshToken.save();
-
-    if (app_type === "web") {
-      res.cookie("refreshToken", newRefreshToken, {
-        httpOnly: true,
-        path: "/",
-        sameSite: "strict",
-      });
-      return res.status(200).json({
-        newAccessToken,
-      });
-    } else {
-      return res.status(200).json({
-        newAccessToken,
-        newRefreshToken,
-      });
-    }
+    console.log("token is refreshed!");
+    return res.status(200).json({
+      newAccessToken,
+    });
   });
 };
