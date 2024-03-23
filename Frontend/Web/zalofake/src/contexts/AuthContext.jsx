@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext();
@@ -7,16 +8,20 @@ export const useAuthContext = () => {
 };
 
 export const AuthContextProvider = ({ children }) => {
-  const [authUser, setAuthUser] = useState(null);
-  const [accessToken, setAccessToken] = useState(null);
+  const [authUser, setAuthUser] = useState(JSON.parse(localStorage.getItem('authUser')));
+  const [accessToken, setAccessToken] = useState(JSON.parse(localStorage.getItem('accessToken')));
 
   useEffect(() => {
-    /* save accessToken : 
-    - to Redux store
-    - to localStorage
-    -> you can choose one of them or both, 
-    As long as you can get the accessToken anywhere in the app
-    */
+    if (authUser) {
+      localStorage.setItem("authUser", JSON.stringify(authUser));
+    } else {
+      localStorage.removeItem("authUser");
+    }
+    if (accessToken) {
+      localStorage.setItem("accessToken", JSON.stringify(accessToken));
+    } else {
+      localStorage.removeItem("accessToken");
+    }
   }, [authUser, accessToken]);
 
   return (
