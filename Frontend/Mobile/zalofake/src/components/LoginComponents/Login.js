@@ -7,6 +7,7 @@ import {
   TextInput,
   StyleSheet,
 } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Login = ({ navigation }) => {
   const [textPhone, setTextPhone] = useState("");
@@ -14,6 +15,8 @@ const Login = ({ navigation }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isValid, setIsValid] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // const [storedData, setStoredData] = useState(null);
 
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
@@ -33,6 +36,34 @@ const Login = ({ navigation }) => {
 
   const handleTextPWChange = (input) => {
     setTextPW(input);
+  };
+
+  const handleDangNhap = () => {
+    
+    // saveData()
+    retrieveData()
+  };
+  const saveData = async () => {
+    try {
+      await AsyncStorage.setItem('refreshToken', 'Bao Truc hihi');
+      console.log('Dữ liệu đã được lưu vào LocalStorage.');
+    } catch (error) {
+      console.log('Đã xảy ra lỗi khi lưu dữ liệu vào LocalStorage.');
+    }
+  }
+
+  const retrieveData = async () => {
+    try {
+      const message = await AsyncStorage.getItem('refreshToken');
+      if (message !== null) {
+        // setStoredData(message);
+        console.log(message)
+      } else {
+        console.log('Không có dữ liệu được lưu trong LocalStorage.');
+      }
+    } catch (error) {
+      console.log('Đã xảy ra lỗi khi truy xuất dữ liệu từ LocalStorage.');
+    }
   };
 
   useEffect(() => {
@@ -81,7 +112,7 @@ const Login = ({ navigation }) => {
           <Text style={styles.showHide}>{showPassword ? "Ẩn" : "Hiện"}</Text>
         </Pressable>
       </View>
-      <Pressable style={styles.forgotPassword}>
+      <Pressable style={styles.forgotPassword} onPress={saveData}>
         <Text style={styles.forgotPasswordText}>Lấy lại mật khẩu</Text>
       </Pressable>
       <View style={styles.bottomContainer}>
@@ -94,7 +125,7 @@ const Login = ({ navigation }) => {
             { backgroundColor: isValid ? "#0091FF" : "#BFD3F8" },
           ]}
           disabled={!isValid}
-          onPress={() => navigation.navigate("ChatComponent")}
+          onPress={handleDangNhap}
         >
           <Image
             style={styles.buttonImage}
