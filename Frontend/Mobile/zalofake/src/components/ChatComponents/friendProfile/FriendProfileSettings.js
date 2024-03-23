@@ -105,4 +105,4 @@ const toggleHideJournal = () => setHideJournal(!isHideJournal);
     )
 }
 
-export default FriendProfileSettings
+export default FriendProfileSettings;
