@@ -16,10 +16,9 @@ const Info = ({ navigation }) => {
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <View style={styles.headerRightContainer}>
-          <Pressable
+        <View style={{ flexDirection: "row", paddingHorizontal: 16 }}>
+          <Pressable style={{ paddingHorizontal: 2 }}
             onPress={() => navigation.navigate("PersonalSetting")}
-            style={styles.headerIcon}
           >
             <Ionicons name="settings-outline" size={24} color="white" />
           </Pressable>
@@ -31,7 +30,7 @@ const Info = ({ navigation }) => {
             name="search"
             size={24}
             color="white"
-            style={{ marginLeft: 5, marginRight: 25 }}
+            style={{ marginLeft: 5, marginRight: 15 }}
           />
           <TextInput
             onFocus={() => {
@@ -39,8 +38,8 @@ const Info = ({ navigation }) => {
             }}
             style={{
               height: 45,
-              width: 300,
-              marginLeft: 25,
+              width: 200,
+              marginLeft: 20,
               fontSize: 16,
             }}
             placeholder="Tìm kiếm"
@@ -200,6 +199,7 @@ const styles = StyleSheet.create({
   },
   headerRightContainer: {
     flexDirection: "row",
+    // backgroundColor: "red",
   },
   headerIcon: {
     marginRight: 10,
