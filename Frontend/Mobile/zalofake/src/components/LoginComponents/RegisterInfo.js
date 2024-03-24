@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   View,
@@ -8,32 +7,31 @@ import {
   TextInput,
   Modal,
   StyleSheet,
+  ActivityIndicator,
 } from "react-native";
 import { CheckBox } from "react-native-elements";
 import CountryDropdown from "./CountryDropdown";
-import Toast from 'react-native-toast-message';
-import axiosInstance from '../configs/axiosInstance'
+import Toast from "react-native-toast-message";
+import axiosInstance from "../configs/axiosInstance";
 
 const showToastSuccess = (notice) => {
   Toast.show({
     text1: notice,
-    type: 'success',
+    type: "success",
     topOffset: 0,
-    position: 'top',
+    position: "top",
   });
-}
+};
 const showToastError = (notice) => {
   Toast.show({
     text1: notice,
-    type: 'error',
+    type: "error",
     topOffset: 0,
-    position: 'top',
-
+    position: "top",
   });
-}
+};
 
 const RegisterInfo = ({ navigation, route }) => {
-
   const [isCheckedUse, setIsCheckedUse] = useState(false);
   const [isCheckedInter, setIsCheckedInter] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
@@ -43,6 +41,8 @@ const RegisterInfo = ({ navigation, route }) => {
   const [textRetypePW, setTextRetypePW] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showRetypePassword, setShowRetypePassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
   const { name } = route.params;
 
   const toggleModal = () => {
@@ -52,11 +52,9 @@ const RegisterInfo = ({ navigation, route }) => {
     setModalLoginVisible(!isModalLoginVisible);
   };
 
-
   const handleCheckUse = () => {
     setIsCheckedUse(!isCheckedUse);
   };
-
 
   const handleCheckInter = () => {
     setIsCheckedInter(!isCheckedInter);
@@ -66,27 +64,31 @@ const RegisterInfo = ({ navigation, route }) => {
     setTextPhone(input);
   };
 
-
   const handlePressablePress = () => {
     if (!/^[0-9]{8,20}$/.test(textPhone)) {
-      showToastError('Số điện thoại phải từ 8 đến 20 chữ số.')
+      showToastError("Số điện thoại phải từ 8 đến 20 chữ số.");
     } else if (!/^[A-Za-z\d@$!%*?&#]{6,}$/.test(textPW)) {
-      showToastError('Mật khẩu phải có ít nhất 6 ký tự');
-    } else if (!/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{6,}$/.test(textPW)) {
-      showToastError('MK chứa ít nhất 1 chữ,1 số,1 ký tự đặc biệt');
+      showToastError("Mật khẩu phải có ít nhất 6 ký tự");
+    } else if (
+      !/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{6,}$/.test(
+        textPW
+      )
+    ) {
+      showToastError("MK chứa ít nhất 1 chữ,1 số,1 ký tự đặc biệt");
     } else if (!(textPW === textRetypePW)) {
-      showToastError('Vui lòng nhập xác nhận mật khẩu trùng khớp')
+      showToastError("Vui lòng nhập xác nhận mật khẩu trùng khớp");
     } else if (!isCheckedInter || !isCheckedUse) {
-      showToastError('Vui lòng chấp nhận các điều khoản')
-    }
-    else {
+      showToastError("Vui lòng chấp nhận các điều khoản");
+    } else {
       toggleModal();
     }
   };
 
-  const handleXacNhan = () => {
+  const handleXacNhan = async () => {
     toggleModal();
-    handleSubmit();
+    setIsLoading(true);
+    await handleSubmit();
+    setIsLoading(false);
   };
 
   const handleXacNhanLogin = () => {
@@ -108,40 +110,41 @@ const RegisterInfo = ({ navigation, route }) => {
   };
   const handleTextRetypePWChange = (input) => {
     setTextRetypePW(input);
-
   };
 
   const handleSubmit = async (e) => {
-
-      axiosInstance.post('/auth/register', {
+    await axiosInstance
+      .post("/auth/register", {
         phone: textPhone,
         password: textPW,
-        name: name
-      }).then(response => {
-        console.log(response.data);
-        toggleModalLogin()
-         // showToastSuccess('Success')
-      }).catch (error=> {
-      if (error.response && (error.response.status === 400 || error.response.status === 409 || error.response.status === 500)) {
-        // Nếu lỗi là 400,409,500 (Conflict), lấy thông điệp từ phản hồi
-        showToastError(error.response.data.message);
-      } else {
-        // Xử lý các lỗi khác
-        showToastError('Lỗi');
-      }
-    })
-
+        name: name,
+      })
+      .then((response) => {
+        setIsLoading(true);
+        toggleModalLogin();
+      })
+      .catch((error) => {
+        if (
+          error.response &&
+          (error.response.status === 400 ||
+            error.response.status === 409 ||
+            error.response.status === 500)
+        ) {
+          showToastError(error.response.data.message);
+          setIsLoading(false);
+        } else {
+          setIsLoading(false);
+          showToastError("Lỗi");
+        }
+      });
   };
 
   return (
-
     <View style={styles.container}>
       <View style={styles.toastContainer}>
-        <Toast
-        />
+        <Toast />
       </View>
       <View style={styles.header}>
-
         <Text style={styles.headerText}>
           Nhập số điện thoại của bạn để tạo tài khoản mới
         </Text>
@@ -158,7 +161,6 @@ const RegisterInfo = ({ navigation, route }) => {
       </View>
 
       <View style={styles.inputContainer}>
-
         <TextInput
           id="pw"
           secureTextEntry={!showPassword}
@@ -171,7 +173,6 @@ const RegisterInfo = ({ navigation, route }) => {
         <Pressable onPress={toggleShowPassword} style={styles.showHideButton}>
           <Text style={styles.showHide}>{showPassword ? "Ẩn" : "Hiện"}</Text>
         </Pressable>
-
       </View>
       <View style={styles.inputContainer}>
         <TextInput
@@ -183,8 +184,13 @@ const RegisterInfo = ({ navigation, route }) => {
           placeholderTextColor={"gray"}
           style={styles.input}
         />
-        <Pressable onPress={toggleShowRetypePassword} style={styles.showHideButton}>
-          <Text style={styles.showHide}>{showRetypePassword ? "Ẩn" : "Hiện"}</Text>
+        <Pressable
+          onPress={toggleShowRetypePassword}
+          style={styles.showHideButton}
+        >
+          <Text style={styles.showHide}>
+            {showRetypePassword ? "Ẩn" : "Hiện"}
+          </Text>
         </Pressable>
       </View>
 
@@ -213,10 +219,14 @@ const RegisterInfo = ({ navigation, route }) => {
         ]}
         onPress={handlePressablePress}
       >
-        <Image
-          style={styles.buttonIcon}
-          source={require("../../../assets/arrow.png")}
-        />
+        {isLoading ? (
+          <ActivityIndicator color="white" />
+        ) : (
+          <Image
+            style={styles.buttonImage}
+            source={require("../../../assets/arrow.png")}
+          />
+        )}
       </Pressable>
       <Modal
         animationType="slide"
@@ -252,10 +262,7 @@ const RegisterInfo = ({ navigation, route }) => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalHeaderText}>
-              Đăng ký thành công!
-
-            </Text>
+            <Text style={styles.modalHeaderText}>Đăng ký thành công!</Text>
             <Text style={styles.modalText}>
               Bạn muốn về trang chủ hay trang đăng nhập?
             </Text>
@@ -272,7 +279,6 @@ const RegisterInfo = ({ navigation, route }) => {
         </View>
       </Modal>
     </View>
-
   );
 };
 
@@ -301,7 +307,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   error: {
-    color: 'red',
+    color: "red",
     paddingLeft: 20,
     fontSize: 16,
   },
@@ -359,8 +365,8 @@ const styles = StyleSheet.create({
     color: "#0091FF",
   },
   toastContainer: {
-    zIndex: 99
-  }
+    zIndex: 99,
+  },
 });
 
 export default RegisterInfo;
