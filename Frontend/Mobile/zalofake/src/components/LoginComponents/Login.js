@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
 } from "react-native";
 import useLogin from "../../hooks/useLogin";
-import { useAuthContext } from "../../contexts/AuthContext";
 
 const Login = ({ navigation }) => {
   const { login } = useLogin();
@@ -18,8 +17,7 @@ const Login = ({ navigation }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isValid, setIsValid] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); // State for loading indicator
-
+  const [isLoading, setIsLoading] = useState(false);
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
   };
@@ -40,32 +38,8 @@ const Login = ({ navigation }) => {
     setTextPW(input);
   };
 
-  const handleDangNhap = () => {
-    
-    // saveData()
-    retrieveData()
-  };
-  const saveData = async () => {
-    try {
-      await AsyncStorage.setItem('refreshToken', 'Bao Truc hihi');
-      console.log('Dữ liệu đã được lưu vào LocalStorage.');
-    } catch (error) {
-      console.log('Đã xảy ra lỗi khi lưu dữ liệu vào LocalStorage.');
-    }
-  }
-
-  const retrieveData = async () => {
-    try {
-      const message = await AsyncStorage.getItem('refreshToken');
-      if (message !== null) {
-        // setStoredData(message);
-        console.log(message)
-      } else {
-        console.log('Không có dữ liệu được lưu trong LocalStorage.');
-      }
-    } catch (error) {
-      console.log('Đã xảy ra lỗi khi truy xuất dữ liệu từ LocalStorage.');
-    }
+  const handleForgetPassword = () => {
+    console.log("Forget password");
   };
 
   useEffect(() => {
@@ -127,7 +101,7 @@ const Login = ({ navigation }) => {
           <Text style={styles.showHide}>{showPassword ? "Ẩn" : "Hiện"}</Text>
         </Pressable>
       </View>
-      <Pressable style={styles.forgotPassword} onPress={saveData}>
+      <Pressable style={styles.forgotPassword} onPress={handleForgetPassword}>
         <Text style={styles.forgotPasswordText}>Lấy lại mật khẩu</Text>
       </Pressable>
       <View style={styles.bottomContainer}>
@@ -143,7 +117,7 @@ const Login = ({ navigation }) => {
           onPress={handleLogin}
         >
           {isLoading ? (
-            <ActivityIndicator color="white" /> // Show loading indicator
+            <ActivityIndicator color="white" />
           ) : (
             <Image
               style={styles.buttonImage}
