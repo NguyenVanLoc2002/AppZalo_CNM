@@ -8,8 +8,15 @@ export const useAuthContext = () => {
 };
 
 export const AuthContextProvider = ({ children }) => {
-  const [authUser, setAuthUser] = useState(JSON.parse(localStorage.getItem('authUser')));
-  const [accessToken, setAccessToken] = useState(JSON.parse(localStorage.getItem('accessToken')));
+  const [authUser, setAuthUser] = useState(
+    JSON.parse(localStorage.getItem("authUser"))
+  );
+  const [accessToken, setAccessToken] = useState(
+    JSON.parse(localStorage.getItem("accessToken"))
+  );
+  const [refreshToken, setRefreshToken] = useState(
+    JSON.parse(localStorage.getItem("refreshToken"))
+  );
 
   useEffect(() => {
     if (authUser) {
@@ -22,11 +29,23 @@ export const AuthContextProvider = ({ children }) => {
     } else {
       localStorage.removeItem("accessToken");
     }
-  }, [authUser, accessToken]);
+    if (refreshToken) {
+      localStorage.setItem("refreshToken", JSON.stringify(refreshToken));
+    } else {
+      localStorage.removeItem("refreshToken");
+    }
+  }, [authUser, accessToken, refreshToken]);
 
   return (
     <AuthContext.Provider
-      value={{ authUser, setAuthUser, accessToken, setAccessToken }}
+      value={{
+        authUser,
+        setAuthUser,
+        accessToken,
+        setAccessToken,
+        refreshToken,
+        setRefreshToken,
+      }}
     >
       {children}
     </AuthContext.Provider>
