@@ -7,7 +7,7 @@ export const useAuthContext = () => {
   return useContext(AuthContext);
 };
 
-AsyncStorage.clear();
+// AsyncStorage.clear();
 export const AuthContextProvider = ({ children }) => {
   const [authUser, setAuthUser] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
