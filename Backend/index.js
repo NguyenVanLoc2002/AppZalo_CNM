@@ -6,7 +6,9 @@ const { connectDB } = require('./configs/connectDBConfig.config')
 const userRoute = require('./routes/user.routes')
 const authRoute = require('./routes/auth.routes')
 const {app, server} = require('./socket/socket.io')    
+const bodyParser = require('body-parser');
 
+app.use(bodyParser.urlencoded({extended:true}))
 
 
 dotenv.config()
@@ -14,6 +16,12 @@ app.use(cors(
     {
         origin: "*",
         credentials: true
+    }
+))
+app.use(cors(
+    {
+        origin:"*",
+        credentials:true
     }
 ))
 app.use(express.json())
