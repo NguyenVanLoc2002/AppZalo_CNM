@@ -1,37 +1,31 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axiosInstance from "../components/configs/axiosInstance";
+import axiosInstance from "../api/axiosInstance";
+import { useAuthContext } from "../contexts/AuthContext";
 
-const useLogout = async () => {
+const useLogout = () => {
+  const { setAuthUser, setAccessToken, setRefreshToken } = useAuthContext();
+  const logout = async () => {
     try {
-        // Kiểm tra token
-        const authUser = await AsyncStorage.getItem("authUser");
-        const accessToken = await AsyncStorage.getItem('accessToken');
-        const refreshToken = await AsyncStorage.getItem('refreshToken')
-  
-        console.log('authUser: ', authUser)
-        console.log('accessToken: ', accessToken)
-        console.log('refreshToken: ', refreshToken)
-
-        // Gửi yêu cầu logout tới server
-        if (refreshToken !== null) {
-          const response = await axiosInstance.post("/api/auth/logout", {
-            headers: {
-              Authorization: `JWT ${refreshToken}`
-            }
-          });
-  
-          if (response.data.success) {
-            await AsyncStorage.removeItem('accessToken');
-            await AsyncStorage.removeItem('refreshToken');
-            return true
-          }
+      const refreshToken = JSON.parse(
+        await AsyncStorage.getItem("refreshToken")
+      );
+      if (refreshToken != null) {
+        const response = await axiosInstance.post("/auth/logout", {
+          refreshToken: refreshToken,
+        });
+        if (response.status === 200) {
+          await AsyncStorage.clear();
+          setAuthUser(null);
+          setAccessToken(null);
+          setRefreshToken(null);
         }
-        return false
-  
-      } catch (error) {
-        // Xử lý lỗi mạng hoặc lỗi khác
-        console.error("Error during login", error);
       }
-}
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  return logout;
+};
 
 export default useLogout;
