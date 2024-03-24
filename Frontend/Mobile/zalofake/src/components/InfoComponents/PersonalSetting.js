@@ -1,5 +1,5 @@
 import { View, Text, Pressable } from "react-native";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Entypo, Ionicons } from "react-native-vector-icons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
 
@@ -30,6 +30,7 @@ const PersonalSetting = ({ navigation }) => {
       },
     });
   }, [navigation]);
+
   return (
     <View>
       <Pressable
