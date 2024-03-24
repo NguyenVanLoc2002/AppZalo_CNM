@@ -1,8 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { encode as base64Encode, decode as base64Decode } from "base-64"; 
-
-const ENCRYPTION_KEY = "CongNgheMoi"; 
 
 const AuthContext = createContext();
 
@@ -10,6 +7,7 @@ export const useAuthContext = () => {
   return useContext(AuthContext);
 };
 
+AsyncStorage.clear();
 export const AuthContextProvider = ({ children }) => {
   const [authUser, setAuthUser] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
@@ -18,26 +16,20 @@ export const AuthContextProvider = ({ children }) => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const encryptedAuthUser = await AsyncStorage.getItem("authUser");
-        const encryptedAccessToken = await AsyncStorage.getItem("accessToken");
-        const encryptedRefreshToken = await AsyncStorage.getItem(
-          "refreshToken"
-        );
-
-        if (encryptedAuthUser) {
-          const decryptedAuthUser = base64Decode(encryptedAuthUser); // Giải mã base64
-          setAuthUser(JSON.parse(decryptedAuthUser));
+        const AuthUser = await AsyncStorage.getItem("authUser");
+        const AccessToken = await AsyncStorage.getItem("accessToken");
+        const RefreshToken = await AsyncStorage.getItem("refreshToken");
+        if (AuthUser) {
+          setAuthUser(JSON.parse(AuthUser));
         }
-        if (encryptedAccessToken) {
-          const decryptedAccessToken = base64Decode(encryptedAccessToken);
-          setAccessToken(decryptedAccessToken);
+        if (AccessToken) {
+          setAccessToken(JSON.parse(AccessToken));
         }
-        if (encryptedRefreshToken) {
-          const decryptedRefreshToken = base64Decode(encryptedRefreshToken);
-          setRefreshToken(decryptedRefreshToken);
+        if (RefreshToken) {
+          setRefreshToken(JSON.parse(RefreshToken));
         }
       } catch (error) {
-        console.error("Error loading data from AsyncStorage:", error);
+        throw new Error("Error loading data from AsyncStorage:", error);
       }
     };
 
@@ -47,30 +39,27 @@ export const AuthContextProvider = ({ children }) => {
     const saveData = async () => {
       try {
         if (authUser) {
-          const encryptedAuthUser = base64Encode(JSON.stringify(authUser)); // Mã hóa base64
-          await AsyncStorage.setItem("authUser", encryptedAuthUser);
-        } else {
-          await AsyncStorage.removeItem("authUser");
+          await AsyncStorage.setItem("authUser", JSON.stringify(authUser));
         }
         if (accessToken) {
-          const encryptedAccessToken = base64Encode(accessToken);
-          await AsyncStorage.setItem("accessToken", encryptedAccessToken);
-        } else {
-          await AsyncStorage.removeItem("accessToken");
+          await AsyncStorage.setItem(
+            "accessToken",
+            JSON.stringify(accessToken)
+          );
         }
         if (refreshToken) {
-          const encryptedRefreshToken = base64Encode(refreshToken);
-          await AsyncStorage.setItem("refreshToken", encryptedRefreshToken);
-        } else {
-          await AsyncStorage.removeItem("refreshToken");
+          await AsyncStorage.setItem(
+            "refreshToken",
+            JSON.stringify(refreshToken)
+          );
         }
       } catch (error) {
-        console.error("Error saving data to AsyncStorage:", error);
+        throw new Error("Error saving data to AsyncStorage:", error);
       }
     };
 
     saveData();
-  }, [authUser]);
+  }, [authUser, accessToken, refreshToken]);
 
   return (
     <AuthContext.Provider
