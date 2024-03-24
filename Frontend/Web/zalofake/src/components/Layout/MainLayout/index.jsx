@@ -7,7 +7,7 @@ import ChatComponents from "../../ChatComponents/ChatComponent";
 
 function MainLayout() {
   const [showModal, setShowModal] = useState(false);
-  const [curentTab, setCurentTab] = useState();
+  const [curentTab, setCurentTab] = useState(1);
   const [currentMenu, setCurrentMenu] = useState();
   const [language, setLanguage] = useState("vi");
   const [userInfo, setUserInfo] = useState({
