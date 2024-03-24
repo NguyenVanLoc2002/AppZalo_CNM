@@ -34,7 +34,7 @@ const LoginMain = ({ navigation }) => {
         </Pressable>
         <Pressable
           style={[styles.button, styles.secondaryButton]}
-          onPress={() => navigation.navigate("CreateAccount")}
+          onPress={() => navigation.navigate("RegisterName")}
         >
           <Text style={[styles.buttonText, styles.secondaryButtonText]}>
             ĐĂNG KÝ
