@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   View,
@@ -8,40 +7,35 @@ import {
   TextInput,
   StyleSheet,
 } from "react-native";
-import Toast from 'react-native-toast-message';
+import Toast from "react-native-toast-message";
 
 const showToastError = (notice) => {
   Toast.show({
     text1: notice,
-    type:'error',
+    type: "error",
     topOffset: 0,
-    position: 'top',
- 
+    position: "top",
   });
-}
+};
 
 const RegisterName = ({ navigation }) => {
   const [textName, setTextName] = useState("");
- 
 
   const handleTextChange = (input) => {
-
     setTextName(input);
-
   };
   const handlePressablePress = () => {
     if (/^([a-zA-Zá-ỹÁ-Ỹ\s]{2,40})$/.test(textName)) {
       navigation.navigate("RegisterInfo", { name: textName });
-    }else{
-      showToastError('Vui lòng nhập tên là chữ và ít nhất 2 kí tự');
+    } else {
+      showToastError("Vui lòng nhập tên là chữ và ít nhất 2 kí tự");
     }
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.toastContainer}>
-        <Toast
-        />
+        <Toast />
       </View>
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Tên zalo</Text>
@@ -61,10 +55,7 @@ const RegisterName = ({ navigation }) => {
       </View>
       <View style={styles.buttonContainer}>
         <Pressable
-          style={[
-            styles.button,styles.validButton
-          ]}
-         
+          style={[styles.button, styles.validButton]}
           onPress={handlePressablePress}
         >
           <View>
@@ -133,9 +124,9 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
   },
-  toastContainer:{
-    zIndex:99
-  }
+  toastContainer: {
+    zIndex: 99,
+  },
 });
 
 export default RegisterName;

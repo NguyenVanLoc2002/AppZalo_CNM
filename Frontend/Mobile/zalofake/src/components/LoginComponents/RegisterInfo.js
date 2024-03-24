@@ -12,7 +12,7 @@ import {
 import { CheckBox } from "react-native-elements";
 import CountryDropdown from "./CountryDropdown";
 import Toast from "react-native-toast-message";
-import axiosInstance from "../configs/axiosInstance";
+import axiosInstance from "../../api/axiosInstance";
 
 const showToastSuccess = (notice) => {
   Toast.show({

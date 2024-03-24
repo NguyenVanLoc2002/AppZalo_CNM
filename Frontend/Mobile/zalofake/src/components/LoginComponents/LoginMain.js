@@ -15,7 +15,7 @@ const LoginMain = ({ navigation }) => {
       <View style={styles.textContainer}>
         <Text style={styles.boldText}>Gọi video ổn định</Text>
         <Text style={styles.normalText}>
-          Trò chuyện thật đã với chất lượng video ổn định mọi lúc mọi nơi
+          Trò chuyện thật đã  mọi lúc mọi nơi
         </Text>
       </View>
       <View style={styles.iconContainer}>
