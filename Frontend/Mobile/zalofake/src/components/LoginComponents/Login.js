@@ -40,6 +40,34 @@ const Login = ({ navigation }) => {
     setTextPW(input);
   };
 
+  const handleDangNhap = () => {
+    
+    // saveData()
+    retrieveData()
+  };
+  const saveData = async () => {
+    try {
+      await AsyncStorage.setItem('refreshToken', 'Bao Truc hihi');
+      console.log('Dữ liệu đã được lưu vào LocalStorage.');
+    } catch (error) {
+      console.log('Đã xảy ra lỗi khi lưu dữ liệu vào LocalStorage.');
+    }
+  }
+
+  const retrieveData = async () => {
+    try {
+      const message = await AsyncStorage.getItem('refreshToken');
+      if (message !== null) {
+        // setStoredData(message);
+        console.log(message)
+      } else {
+        console.log('Không có dữ liệu được lưu trong LocalStorage.');
+      }
+    } catch (error) {
+      console.log('Đã xảy ra lỗi khi truy xuất dữ liệu từ LocalStorage.');
+    }
+  };
+
   useEffect(() => {
     if (textPhone.length > 0 && textPW.length > 0) {
       setIsValid(true);
@@ -99,7 +127,7 @@ const Login = ({ navigation }) => {
           <Text style={styles.showHide}>{showPassword ? "Ẩn" : "Hiện"}</Text>
         </Pressable>
       </View>
-      <Pressable style={styles.forgotPassword}>
+      <Pressable style={styles.forgotPassword} onPress={saveData}>
         <Text style={styles.forgotPasswordText}>Lấy lại mật khẩu</Text>
       </Pressable>
       <View style={styles.bottomContainer}>
