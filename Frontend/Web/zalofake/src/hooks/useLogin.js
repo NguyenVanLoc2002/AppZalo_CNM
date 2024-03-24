@@ -14,15 +14,16 @@ const useLogin = () => {
         phone,
         password,
       });
+
       const data = response.data;
       if (response.status === 200) {
         setAuthUser(data.user);
         setAccessToken(data.accessToken);
       } else {
+        // Hiển thị thông báo lỗi từ data.message
         toast.error(data.message);
       }
     } catch (error) {
-      
       toast.error("Login failed! Please try again.");
     }
     setLoading(false);
