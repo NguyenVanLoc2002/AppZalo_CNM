@@ -52,25 +52,32 @@ exports.loginUser = async (req, res) => {
       const refreshToken = generateRefreshToken(device_id, user._id, phone);
 
       await createOrUpdateSession(user._id, device_id, app_type, refreshToken);
-      const { password, _id, ...userWithoutPassword } = user.toObject();
+      const { password, _id, friends, groups, ...userWithoutPassword } =
+        user.toObject();
 
-      if (app_type === "web") {
-        res.cookie("refreshToken", refreshToken, {
-          httpOnly: true,
-          path: "/",
-          sameSite: "strict",
-        });
-        res.status(200).json({
-          user: userWithoutPassword,
-          accessToken: token,
-        });
-      } else {
-        res.status(200).json({
-          user: userWithoutPassword,
-          accessToken: token,
-          refreshToken,
-        });
-      }
+      // if (app_type === "web") {
+      //   res.cookie("refreshToken", refreshToken, {
+      //     httpOnly: true,
+      //     path: "/",
+      //     sameSite: "strict",
+      //   });
+      //   res.status(200).json({
+      //     user: userWithoutPassword,
+      //     accessToken: token,
+      //   });
+      // } else {
+      //   res.status(200).json({
+      //     user: userWithoutPassword,
+      //     accessToken: token,
+      //     refreshToken,
+      //   });
+      // }
+
+      res.status(200).json({
+        user: userWithoutPassword,
+        accessToken: token,
+        refreshToken,
+      });
     } else {
       res.status(401).json({ message: "Invalid phone or password" });
     }
@@ -91,6 +98,7 @@ exports.logoutUser = async (req, res) => {
       storeRefreshToken.save();
       res.clearCookie("refreshToken");
       io.emit("user_disconnected", user.user_id);
+      console.log("Logout successfully");
       return res.status(200).json("Logout successfully");
     });
   } else return res.status(403).json("You're not authenticated !");
