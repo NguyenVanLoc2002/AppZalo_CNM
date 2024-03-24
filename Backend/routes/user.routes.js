@@ -11,6 +11,7 @@ const {multerUploadImage}= require("../middlewares/multerMiddleware");
 
 //get methods
 router.get("/get/:phone", protect, isRootUser, getUserByPhone);
+router.get("/get/:phone", protect, isRootUser, getUserByPhone);
 
 //post methods
 router.post("/otp/send", sendOTP);
