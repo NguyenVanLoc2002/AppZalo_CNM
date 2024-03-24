@@ -6,16 +6,32 @@ import { GoDatabase } from "react-icons/go";
 import { FiTool } from "react-icons/fi";
 import { GrLanguage } from "react-icons/gr";
 import { IoIosArrowForward } from "react-icons/io";
+import axiosInstance from "../configs/axiosInstance";
 
 function MenuComponent({ language, setLanguage, typeMenu, showModal }) {
   const [tabSelected, setTabSelected] = useState("");
+
+  const handleLogout = () => {
+    axiosInstance
+      .post("/auth/logout")
+      .then((res) => {
+        console.log(res.data);
+        window.location.href = "/login";
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+      
+    
+  };
 
   return typeMenu == "setting" ? (
     <>
       <div className="h-[285px] w-[225px] bg-white rounded-sm shadow-xl absolute bottom-[85px] -left-16 z-40 grid grid-rows-7">
         <div className="row-span-2">
-          <div className="px-3 py-2  w-full flex items-center hover:bg-gray-200"
-          onClick={showModal}
+          <div
+            className="px-3 py-2  w-full flex items-center hover:bg-gray-200"
+            onClick={showModal}
           >
             <CiUser size={20} color="#555555" />
             <p className="text-sm ml-6">
@@ -189,10 +205,7 @@ function MenuComponent({ language, setLanguage, typeMenu, showModal }) {
               {language == "vi" ? "Hồ sơ của bạn" : "Profile"}
             </p>
           </div>
-          <div
-            className="px-3 py-[10px]  w-full flex items-center hover:bg-gray-200 justify-between relative"
-            
-          >
+          <div className="px-3 py-[10px]  w-full flex items-center hover:bg-gray-200 justify-between relative">
             <p className="text-sm w-full ml-2">
               {language == "vi" ? "Cài đặt" : "Setting"}
             </p>
@@ -202,7 +215,7 @@ function MenuComponent({ language, setLanguage, typeMenu, showModal }) {
         <div className="row-span-1">
           <div
             className="p-2 w-full flex items-center hover:bg-gray-200 "
-            onClick={() => (window.location.href = "/")}
+            onClick={handleLogout}
           >
             <p className="text-sm ml-3">
               {language == "vi" ? "Đăng xuất" : "Logout"}
