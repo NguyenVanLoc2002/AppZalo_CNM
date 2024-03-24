@@ -3,7 +3,7 @@ import { useAuthContext } from "../contexts/AuthContext";
 import Toast from "react-native-toast-message";
 import * as Device from "expo-device";
 
-import axiosInstance from "../components/configs/axiosInstance";
+import axiosInstance from "../api/axiosInstance";
 
 const useLogin = () => {
   const [loading, setLoading] = useState(false);
