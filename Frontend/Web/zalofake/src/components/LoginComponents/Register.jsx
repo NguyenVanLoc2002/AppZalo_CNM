@@ -1,10 +1,10 @@
 import { MdPhoneIphone } from "react-icons/md";
-import { toast, Toaster } from 'react-hot-toast';
+import { toast, Toaster } from "react-hot-toast";
 
 import { useState } from "react";
 import { Link, useOutletContext } from "react-router-dom";
 import { IoEyeOff, IoEye } from "react-icons/io5";
-import axiosInstance from '../../configs/axiosInstance'
+import axiosInstance from "../../configs/axiosInstance";
 
 function Register() {
   const [phone, setPhone] = useState("");
@@ -18,6 +18,7 @@ function Register() {
   const [isCheckedInter, setIsCheckedInter] = useState(false);
 
   const [showModal, setShowModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const openModal = () => {
     setShowModal(true);
@@ -34,77 +35,100 @@ function Register() {
     setIsCheckedUse(!isCheckedUse);
   };
 
-
   const handleCheckInter = () => {
     setIsCheckedInter(!isCheckedInter);
   };
 
-
   const handlePressablePress = () => {
     if (!/^[0-9]{8,20}$/.test(phone)) {
-      toast.error('Số điện thoại phải từ 8 đến 20 chữ số.')
-    }
-    else if (!(/^([a-zA-Zá-ỹÁ-Ỹ\s]{2,40})$/.test(name))) {
-      toast.error('Vui lòng nhập tên là chữ và ít nhất 2 kí tự chữ');
+      toast.error("Số điện thoại phải từ 8 đến 20 chữ số.");
+    } else if (!/^([a-zA-Zá-ỹÁ-Ỹ\s]{2,40})$/.test(name)) {
+      toast.error("Vui lòng nhập tên là chữ và ít nhất 2 kí tự chữ");
     } else if (!/^[A-Za-z\d@$!%*?&#]{6,}$/.test(password)) {
-      toast.error('Mật khẩu phải có ít nhất 6 ký tự');
-    } else if (!/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{6,}$/.test(password)) {
-      toast.error('MK chứa ít nhất 1 chữ,1 số,1 ký tự đặc biệt');
+      toast.error("Mật khẩu phải có ít nhất 6 ký tự");
+    } else if (
+      !/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{6,}$/.test(
+        password
+      )
+    ) {
+      toast.error("MK chứa ít nhất 1 chữ,1 số,1 ký tự đặc biệt");
     } else if (!(password === confirmPassword)) {
-      toast.error('Vui lòng nhập xác nhận mật khẩu trùng khớp')
+      toast.error("Vui lòng nhập xác nhận mật khẩu trùng khớp");
     } else if (!isCheckedInter || !isCheckedUse) {
-      toast.error('Vui lòng chấp nhận các điều khoản')
-    }
-    else {
-      handleSubmit()
+      toast.error("Vui lòng chấp nhận các điều khoản");
+    } else {
+      handleSubmit();
     }
   };
 
   const handleSubmit = async (e) => {
+    setIsLoading(true);
     try {
-      const response = await axiosInstance.post('/auth/register', {
+      const response = await axiosInstance.post("/auth/register", {
         phone: phone,
         password: password,
-        name: name
+        name: name,
       });
-      openModal()
+      openModal();
+      setIsLoading(false);
     } catch (error) {
-      if (error.response && (error.response.status === 400 || error.response.status === 409 || error.response.status === 500)) {
-        // Nếu lỗi là 400, 409, 500 (Conflict), lấy thông điệp từ phản hồi
+      if (
+        error.response &&
+        (error.response.status === 400 ||
+          error.response.status === 409 ||
+          error.response.status === 500)
+      ) {
         toast.error(error.response.data.message);
+        setIsLoading(false);
       } else {
-        console.log(2);
-        // Xử lý các lỗi khác
-        toast.error('Đã xảy ra lỗi');
+        toast.error("Đã xảy ra lỗi");
+        setIsLoading(false);
       }
     }
-   
   };
 
   const handleXacNhan = () => {
-    closeModal()
+    closeModal();
     window.location.href = "/login";
   };
-  
+
   const handleTuChoi = () => {
-    closeModal()
+    closeModal();
     window.location.href = "/login/register";
   };
 
   return (
     <>
-      <div><Toaster /></div>
-      <div className=" flex justify-center items-center" >
+      <div>
+        <Toaster />
+      </div>
+      <div className=" flex justify-center items-center">
         {/* Modal xác nhận khi đăng ký thành công */}
         {showModal && (
           <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 z-50">
             <div className="bg-white p-8 rounded-lg shadow-lg">
-              <h2 className="text-xl font-bold mb-4 text-center">Đăng ký thành công!</h2>
-              <p>{langue == "vi" ? "Bạn có muốn chuyển về trang đăng nhập không?" : "Registration successful! Do you want to return to the login page?"}</p>
+              <h2 className="text-xl font-bold mb-4 text-center">
+                Đăng ký thành công!
+              </h2>
+              <p>
+                {langue == "vi"
+                  ? "Bạn có muốn chuyển về trang đăng nhập không?"
+                  : "Registration successful! Do you want to return to the login page?"}
+              </p>
               <div className="flex justify-around">
-                <button className="bg-blue-500 text-white px-4 py-2  mt-4 rounded hover:bg-blue-600 text-center " onClick={handleXacNhan}>Yes</button>
-                <button className="bg-gray-400 text-white px-5 py-2 mt-4 rounded hover:bg-gray-600 text-center" onClick={handleTuChoi}>No</button>
-                </div>
+                <button
+                  className="bg-blue-500 text-white px-4 py-2  mt-4 rounded hover:bg-blue-600 text-center "
+                  onClick={handleXacNhan}
+                >
+                  Yes
+                </button>
+                <button
+                  className="bg-gray-400 text-white px-5 py-2 mt-4 rounded hover:bg-gray-600 text-center"
+                  onClick={handleTuChoi}
+                >
+                  No
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -187,7 +211,11 @@ function Register() {
                   text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 id="confirmPassword"
                 type={showConfirmPass ? "text" : "password"}
-                placeholder={langue == "vi" ? "Nhập lại mật khẩu" : "Enter confirm password"}
+                placeholder={
+                  langue == "vi"
+                    ? "Nhập lại mật khẩu"
+                    : "Enter confirm password"
+                }
                 value={confirmPassword}
                 onChange={(e) => setConfirmPwssword(e.target.value)}
               />
@@ -216,7 +244,12 @@ function Register() {
                 type="checkbox"
                 checked={isCheckedUse}
                 onChange={handleCheckUse}
-              /><span >{langue == "vi" ? "Tôi đồng ý với các điều khoản sử dụng Zalo" : "I agree to the terms of use of Zalo"}</span>
+              />
+              <span>
+                {langue == "vi"
+                  ? "Tôi đồng ý với các điều khoản sử dụng Zalo"
+                  : "I agree to the terms of use of Zalo"}
+              </span>
             </div>
 
             <div className="my-6 flex items-center">
@@ -227,7 +260,12 @@ function Register() {
                 type="checkbox"
                 checked={isCheckedInter}
                 onChange={handleCheckInter}
-              /><span >{langue == "vi" ? "Tôi đồng ý với các điều khoản Mạng xã hội của Zalo" : "I agree to Zalo's Social Network terms"}</span>
+              />
+              <span>
+                {langue == "vi"
+                  ? "Tôi đồng ý với các điều khoản Mạng xã hội của Zalo"
+                  : "I agree to Zalo's Social Network terms"}
+              </span>
             </div>
 
             <div>
@@ -235,10 +273,23 @@ function Register() {
                 className="bg-primary hover:bg-primaryHover text-white 
                     rounded focus:outline-none focus:shadow-outline block w-full disabled:opacity-50 py-3"
                 type="button"
-                disabled={phone.length === 0 || password.length === 0 || name.length === 0 || confirmPassword === 0 || !isCheckedInter || !isCheckedUse}
+                disabled={
+                  phone.length === 0 ||
+                  password.length === 0 ||
+                  name.length === 0 ||
+                  confirmPassword === 0 ||
+                  !isCheckedInter ||
+                  !isCheckedUse
+                }
                 onClick={handleRegister}
               >
-                {langue == "vi" ? "Đăng ký" : "Register"}
+                {isLoading ? (
+                  <span className="loading loading-spinner "></span>
+                ) : langue == "vi" ? (
+                  "Đăng ký"
+                ) : (
+                  "Register"
+                )}
               </button>
 
               <Link
