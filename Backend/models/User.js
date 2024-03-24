@@ -11,6 +11,10 @@ const userSchema = new Schema({
       url: { type: String },
       public_id: { type: String }
     },
+    background: { 
+      url: { type: String },
+      public_id: { type: String }
+    },
     name: { type: String, required: true },
     gender:{ type: String, enum: ['male', 'female', 'other'] },
     dob:{type: Date}

@@ -1,11 +1,11 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuthContext } from "./contexts/AuthContext";
-import Login from "./components/Layout/Login";
+import Login from "./page/Login";
 import LoginForm from "./components/LoginComponents/LoginForm";
 import Register from "./components/LoginComponents/Register";
 import FogotPassword from "./components/LoginComponents/FogotPassword";
-import MainLayout from "./components/Layout/MainLayout";
+import MainLayout from "./page/MainLayout";
 import { Toaster } from "react-hot-toast";
 
 const App = () => {
