@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useAuthContext } from "../contexts/AuthContext";
 import toast from "react-hot-toast";
-import axiosInstance from "../components/configs/axiosInstance";
+import axiosInstance from "../api/axiosInstance";
 
 const useLogin = () => {
   const [loading, setLoading] = useState(false);
-  const { setAuthUser, setAccessToken } = useAuthContext();
+  const { setAuthUser, setAccessToken, setRefreshToken } = useAuthContext();
 
   const login = async (phone, password) => {
     setLoading(true);
@@ -19,8 +19,8 @@ const useLogin = () => {
       if (response.status === 200) {
         setAuthUser(data.user);
         setAccessToken(data.accessToken);
+        setRefreshToken(data.refreshToken);
       } else {
-        // Hiển thị thông báo lỗi từ data.message
         toast.error(data.message);
       }
     } catch (error) {
