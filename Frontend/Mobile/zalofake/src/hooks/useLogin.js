@@ -33,7 +33,6 @@ const useLogin = () => {
         showMesg("Error server, please try again !", "error");
         throw error;
       } else {
-        console.error("Error during login:", error);
         showMesg("Error during login", "error");
         throw error;
       }
