@@ -52,27 +52,9 @@ exports.loginUser = async (req, res) => {
       const refreshToken = generateRefreshToken(device_id, user._id, phone);
 
       await createOrUpdateSession(user._id, device_id, app_type, refreshToken);
-      const { password, _id, friends, groups, ...userWithoutPassword } =
-        user.toObject();
-
-      // if (app_type === "web") {
-      //   res.cookie("refreshToken", refreshToken, {
-      //     httpOnly: true,
-      //     path: "/",
-      //     sameSite: "strict",
-      //   });
-      //   res.status(200).json({
-      //     user: userWithoutPassword,
-      //     accessToken: token,
-      //   });
-      // } else {
-      //   res.status(200).json({
-      //     user: userWithoutPassword,
-      //     accessToken: token,
-      //     refreshToken,
-      //   });
-      // }
-
+      const { password, _id, friends, groups,createdAt,status,lastActive, ...userWithoutPassword } =
+      user.toObject();
+      io.emit("user_connected", user._id);
       res.status(200).json({
         user: userWithoutPassword,
         accessToken: token,
@@ -133,13 +115,10 @@ exports.registerUser = async (req, res) => {
 
 exports.refreshToken = async (req, res) => {
   const reToken = req.cookies.refreshToken || req.body.refreshToken;
-  console.log(req.body.refreshToken);
   if (!reToken) return res.status(403).json("You're not authenticated !");
   const storeRefreshToken = await Session.findOne({ refreshToken: reToken });
   if (!storeRefreshToken)
     return res.status(403).json("Refresh Token is not valid !");
-  const user_agent = req.headers["user-agent"];
-  const app_type = user_agent ? "web" : "mobile";
   jwt.verify(reToken, process.env.JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json("Refresh Token is not valid 2!");
     const newAccessToken = generateAccessToken(

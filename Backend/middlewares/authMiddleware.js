@@ -75,3 +75,4 @@ exports.isRootUser = async (req, res, next) => {
     }
   }
 };
+
