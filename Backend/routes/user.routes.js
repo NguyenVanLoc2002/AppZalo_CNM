@@ -18,7 +18,7 @@ router.post("/otp/send", sendOTP);
 router.post(
   "/upload-avatar",
   protect,
-  multerUpload.single("user-avatar"),
+  multerUploadImage.single("user-avatar"),
   uploadAvatar
 );
 
