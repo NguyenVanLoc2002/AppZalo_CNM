@@ -1,4 +1,3 @@
-
 import React from "react";
 import { View, Text, Pressable, Image, StyleSheet } from "react-native";
 
@@ -16,7 +15,7 @@ const LoginMain = ({ navigation }) => {
       <View style={styles.textContainer}>
         <Text style={styles.boldText}>Gọi video ổn định</Text>
         <Text style={styles.normalText}>
-          Trò chuyện thật đã với chất lượng video ổn định mọi lúc mọi nơi
+          Trò chuyện thật đã  mọi lúc mọi nơi
         </Text>
       </View>
       <View style={styles.iconContainer}>
@@ -35,7 +34,7 @@ const LoginMain = ({ navigation }) => {
         </Pressable>
         <Pressable
           style={[styles.button, styles.secondaryButton]}
-          onPress={() => navigation.navigate("CreateAccount")}
+          onPress={() => navigation.navigate("RegisterName")}
         >
           <Text style={[styles.buttonText, styles.secondaryButtonText]}>
             ĐĂNG KÝ
@@ -71,7 +70,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   image: {
-    width: '100%',
+    width: "100%",
     height: 200,
   },
   textContainer: {
