@@ -76,7 +76,6 @@ io.on("connection", async (socket) => {
   );
   io.to(socket.id).emit("online_friends", onlineFriendsId);
 
-  // sent list of online friends of user to the user connected
   socket.on("get_online_friends", async (user) => {
     const onlineFriends = await getOnlineFriends(user);
     const onlineFriendsId = onlineFriends.map(
