@@ -6,15 +6,18 @@ import {
   Image,
   TextInput,
   StyleSheet,
+  ActivityIndicator,
 } from "react-native";
+import useLogin from "../../hooks/useLogin";
 
 const Login = ({ navigation }) => {
+  const { login } = useLogin();
   const [textPhone, setTextPhone] = useState("");
   const [textPW, setTextPW] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [isValid, setIsValid] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
+  const [isLoading, setIsLoading] = useState(false);
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
   };
@@ -35,6 +38,10 @@ const Login = ({ navigation }) => {
     setTextPW(input);
   };
 
+  const handleForgetPassword = () => {
+    console.log("Forget password");
+  };
+
   useEffect(() => {
     if (textPhone.length > 0 && textPW.length > 0) {
       setIsValid(true);
@@ -42,6 +49,19 @@ const Login = ({ navigation }) => {
       setIsValid(false);
     }
   }, [textPhone, textPW]);
+
+  const handleLogin = async () => {
+    setIsLoading(true);
+    await login(textPhone, textPW)
+      .then(() => {
+        console.log("Login successfully");
+        setIsLoading(false);
+        navigation.navigate("ChatComponent");
+      })
+      .catch((error) => {
+        setIsLoading(false);
+      });
+  };
 
   return (
     <View style={styles.container}>
@@ -81,7 +101,7 @@ const Login = ({ navigation }) => {
           <Text style={styles.showHide}>{showPassword ? "Ẩn" : "Hiện"}</Text>
         </Pressable>
       </View>
-      <Pressable style={styles.forgotPassword}>
+      <Pressable style={styles.forgotPassword} onPress={handleForgetPassword}>
         <Text style={styles.forgotPasswordText}>Lấy lại mật khẩu</Text>
       </Pressable>
       <View style={styles.bottomContainer}>
@@ -93,13 +113,17 @@ const Login = ({ navigation }) => {
             styles.button,
             { backgroundColor: isValid ? "#0091FF" : "#BFD3F8" },
           ]}
-          disabled={!isValid}
-          onPress={() => navigation.navigate("ChatComponent")}
+          disabled={!isValid || isLoading}
+          onPress={handleLogin}
         >
-          <Image
-            style={styles.buttonImage}
-            source={require("../../../assets/arrow.png")}
-          />
+          {isLoading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Image
+              style={styles.buttonImage}
+              source={require("../../../assets/arrow.png")}
+            />
+          )}
         </Pressable>
       </View>
     </View>
