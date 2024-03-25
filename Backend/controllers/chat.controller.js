@@ -27,6 +27,7 @@ exports.sendMessage = async (req, resp) => {
     console.log("req.files: ", req.files);
     console.log("req.body: ", req.body);
     const senderId = req.user.user_id; // Lấy userId của người gửi từ thông tin đăng nhập (đã được đặt trong middleware auth)
+    console.log("senderId: ", senderId);
     const receiverId = req.params.userId;
     let contents = [];
     console.log(contents);
