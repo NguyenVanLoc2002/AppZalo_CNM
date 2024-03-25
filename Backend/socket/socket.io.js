@@ -84,6 +84,20 @@ io.on("connection", async (socket) => {
     );
     io.to(socket.id).emit("online_friends", onlineFriendsId);
   });
+
+
+  // Nhận tin nhắn mới và gửi tới người nhận thông qua socket
+  socket.on("send_message", async({receiverId, message})=>{
+    try {
+      const receiverSocketId = await getReciverSocketId(receiverId);
+      //Send message to receiver through socket
+      io.to(receiverSocketId).emit("new_message",{senderId: userId, message})
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  })
+
+
   socket.on("disconnect", async () => {
     console.log(`User disconnected with id: ${userId}`);
     try {
