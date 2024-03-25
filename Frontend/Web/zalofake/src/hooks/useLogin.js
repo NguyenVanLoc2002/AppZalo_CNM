@@ -1,31 +1,30 @@
 import { useState } from "react";
 import { useAuthContext } from "../contexts/AuthContext";
 import toast from "react-hot-toast";
+import axiosInstance from "../api/axiosInstance";
 
 const useLogin = () => {
   const [loading, setLoading] = useState(false);
-  const { setAuthUser, setAccessToken } = useAuthContext();
+  const { setAuthUser, setAccessToken, setRefreshToken } = useAuthContext();
 
   const login = async (phone, password) => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:3000/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ phone, password }),
+      const response = await axiosInstance.post("/auth/login", {
+        phone,
+        password,
       });
-      const data = await response.json();
-      if (response.ok) {
+
+      const data = response.data;
+      if (response.status === 200) {
         setAuthUser(data.user);
         setAccessToken(data.accessToken);
+        setRefreshToken(data.refreshToken);
       } else {
         toast.error(data.message);
-        // throw new Error(data.message);
       }
     } catch (error) {
-      console.error(error);
+      toast.error("Login failed! Please try again.");
     }
     setLoading(false);
   };
