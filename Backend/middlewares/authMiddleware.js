@@ -18,6 +18,12 @@ exports.protect = async (req, res, next) => {
             .status(401)
             .json({ message: "Not authorized, token failed or expired" });
         }
+        if (user.type === "refresh") {
+          return res
+            .status(401)
+            .json({ message: "Not authorized, token is not valid !" });
+        }
+        req.user = user; 
         const isLogin = await Session.findOne({
           user_id: user.user_id,
           device_id: user.device_id,
