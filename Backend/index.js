@@ -4,7 +4,6 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const { connectDB } = require("./configs/connectDBConfig.config");
 const { app, server } = require("./socket/socket.io");
-const bodyParser = require("body-parser");
 const userRoute = require("./routes/user.routes");
 const authRoute = require("./routes/auth.routes");
 
@@ -15,11 +14,8 @@ app.use(
     credentials: true,
   })
 );
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
 app.use(express.json());
 app.use(CookieParser());
-app.use(express.urlencoded({ extended: true }));
 
 //connect DB
 connectDB();
