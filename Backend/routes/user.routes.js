@@ -2,18 +2,17 @@ const express = require("express");
 
 const router = express.Router();
 const {
-  getUserByPhone,
-  sendOTP,
   uploadAvatar,
   uploadBackground,
   updateUser,
+  getUserByPhoneOrId,
 } = require("../controllers/user.controller");
 const { protect, isRootUser } = require("../middlewares/authMiddleware");
 const { multerUploadImage } = require("../middlewares/multerMiddleware");
 
 //get methods
-router.get("/get/:phone", protect, isRootUser, getUserByPhone);
-router.get("/get/:uid", protect, getUserByPhone);
+router.get("/get/phone/:phone", protect, getUserByPhoneOrId);
+router.get("/get/uid/:uid", protect, getUserByPhoneOrId);
 
 //post methods
 router.post("/update-profile", protect, updateUser);
