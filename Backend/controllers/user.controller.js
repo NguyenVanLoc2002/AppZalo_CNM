@@ -1,30 +1,26 @@
 const cloudinary = require("../configs/Cloudinary.config");
 const User = require("../models/User");
 
-exports.getUserById = async (req, res) => {
+exports.getUserByPhoneOrId = async (req, res) => {
   const uid = req.params.uid;
+  const phone = req.params.phone;
   try {
-    const user = await User.findById(uid);
+    let user;
+    if (!uid) {
+      user = await User.findOne({ phone: phone });
+    } else {
+      user = await User.findById(uid);
+    }
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+
     const returnUser = {
       profile: user.profile,
       email: user.email,
       phone: user.phone,
     };
     return res.status(200).json({ user: returnUser });
-  } catch (error) {
-    console.log(error);
-    res.status(400).json({ message: "Can't not get this user" });
-  }
-};
-
-exports.getUserByPhone = async (req, res) => {
-  try {
-    const user = await User.findOne({ phone: req.params.phone });
-    const { password, _id, ...userWithoutPassword } = user.toObject();
-    res.json(userWithoutPassword);
   } catch (error) {
     console.log(error);
     res.status(400).json({ message: "Can't not get this user" });
@@ -42,7 +38,10 @@ exports.uploadAvatar = async (req, res) => {
     }
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(400).json({ message: "User not found" });
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (!req.file) {
+      return res.status(400).json({ message: "Image is required" });
     }
     if (user.profile.avatar) {
       await cloudinary.uploader.destroy(user.profile.avatar.public_id);
@@ -71,7 +70,10 @@ exports.uploadBackground = async (req, res) => {
     }
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(400).json({ message: "User not found" });
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (!req.file) {
+      return res.status(400).json({ message: "Image is required" });
     }
     if (user.profile.background) {
       await cloudinary.uploader.destroy(user.profile.background.public_id);
@@ -96,18 +98,25 @@ exports.uploadBackground = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
   try {
-    const {userId, name, email, gender, dob } = req.body;
+    const { userId, name, email, gender, dob } = req.body;
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(400).json({ message: "User not found" });
+      return res.status(404).json({ message: "User not found" });
     }
     user.profile.name = name;
     user.email = email;
     user.profile.gender = gender;
     user.profile.dob = new Date(dob);
     await user.save();
-    const { password, _id, friends, groups,create_at,status, ...userWithoutPassword } =
-      user.toObject();
+    const {
+      password,
+      _id,
+      friends,
+      groups,
+      create_at,
+      status,
+      ...userWithoutPassword
+    } = user.toObject();
     return res.status(200).json({
       message: "User updated successfully",
       user: userWithoutPassword,
