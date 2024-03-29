@@ -22,6 +22,7 @@ import Notice from "../components/NewsComponents/Notice";
 import PostStatus from "../components/NewsComponents/PostStatus";
 import PersonalPage from "../components/InfoComponents/PersonalPage";
 import PersonalDetail from "../components/InfoComponents/PersonalDetail";
+import PersonalInfo from "../components/InfoComponents/PersoncalInfo";
 import PersonalPrivacy from "../components/InfoComponents/PersonalPrivacy";
 import AccountVsSecurity from "../components/InfoComponents/AccoutVsSecurity";
 import PersonalSetting from "../components/InfoComponents/PersonalSetting";
@@ -61,6 +62,7 @@ export default function RootComponent() {
       <Stack.Screen name="PersonalPage" component={PersonalPage} />
       <Stack.Screen name="PersonalDetail" component={PersonalDetail} />
       <Stack.Screen name="PersonalPrivacy" component={PersonalPrivacy} />
+      <Stack.Screen name="PersonalInfo" component={PersonalInfo} />
       <Stack.Screen name="AccountVsSecurity" component={AccountVsSecurity} />
       <Stack.Screen name="PersonalSetting" component={PersonalSetting} />
     </Stack.Navigator>
