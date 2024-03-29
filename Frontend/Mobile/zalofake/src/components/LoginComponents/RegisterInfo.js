@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,11 +8,13 @@ import {
   Modal,
   StyleSheet,
   ActivityIndicator,
+  TouchableOpacity
 } from "react-native";
-import { CheckBox } from "react-native-elements";
+import { CheckBox, Input } from "react-native-elements";
 import CountryDropdown from "./CountryDropdown";
 import Toast from "react-native-toast-message";
 import axiosInstance from "../../api/axiosInstance";
+import { FontAwesome5 } from "@expo/vector-icons";
 
 const showToastSuccess = (notice) => {
   Toast.show({
@@ -36,17 +38,99 @@ const RegisterInfo = ({ navigation, route }) => {
   const [isCheckedInter, setIsCheckedInter] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
   const [isModalLoginVisible, setModalLoginVisible] = useState(false);
+  const [isModalAuthCode, setModalAuthCode] = useState(false);
   const [textPhone, setTextPhone] = useState("");
+  const [textEmail, setTextEmail] = useState("");
+  const [maskedEmail, setMaskedEmail] = useState("");
+  const [selectedGender, setSelectedGender] = useState("Nam");
   const [textPW, setTextPW] = useState("");
   const [textRetypePW, setTextRetypePW] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showRetypePassword, setShowRetypePassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [inputs, setInputs] = useState(Array(6).fill(""));
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [isCounting, setIsCounting] = useState(false);
+
+  const inputRefs = useRef([]);
+
 
   const { name } = route.params;
 
+
+  useEffect(() => {
+    let timer;
+
+    // Nếu đang đếm ngược và thời gian còn lại lớn hơn 0
+    if (isCounting && timeLeft > 0) {
+      // Tạo một interval để giảm thời gian còn lại mỗi giây
+      timer = setInterval(() => {
+        // Giảm thời gian còn lại đi 1 giây
+        setTimeLeft((prevTime) => prevTime - 1);
+      }, 1000);
+    } else {
+      // Nếu thời gian còn lại đạt 0 hoặc không đang đếm ngược, xóa interval
+      clearInterval(timer);
+      setIsCounting(false);
+    }
+
+    // Xóa interval khi component bị unmount
+    return () => clearInterval(timer);
+  }, [isCounting, timeLeft]); // Khi trạng thái đếm ngược hoặc thời gian còn lại thay đổi
+
+
+
+
+
+  const SendTime = () => {
+    setIsCounting(true);
+  };
+
+  useEffect(() => {
+    if (timeLeft === 0) {
+      return;
+    }
+  }, [timeLeft]);
+
+
+  const formatTime = (time) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = time % 60;
+    return `${minutes}:${seconds < 10 ? "0" + seconds : seconds}`;
+  };
+
+  const maskEmail = (email) => {
+    if (email.length <= 2) return email;
+    const firstPart = email.substring(0, 2);
+    const lastPart = email.substring(email.length - 12);
+    const maskedMiddle = "*".repeat(email.length - 14);
+    return firstPart + maskedMiddle + lastPart;
+  };
+  const handleGenderSelect = (gender) => {
+    setSelectedGender(gender);
+  };
+  const handleEmailChange = (text) => {
+    setTextEmail(text);
+
+  };
+  const handleInputChange = (text, index) => {
+    const newInputs = [...inputs];
+    newInputs[index] = text;
+
+    // Check if the input is filled and move focus to the next input
+    if (text && index < inputs.length - 1) {
+      inputRefs.current[index + 1].focus();
+    }
+
+    setInputs(newInputs);
+  };
+
+
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
+  };
+  const toggleModalAuthCode = () => {
+    setModalAuthCode(!isModalAuthCode);
   };
   const toggleModalLogin = () => {
     setModalLoginVisible(!isModalLoginVisible);
@@ -65,9 +149,19 @@ const RegisterInfo = ({ navigation, route }) => {
   };
 
   const handlePressablePress = () => {
+
+
     if (!/^[0-9]{8,20}$/.test(textPhone)) {
       showToastError("Số điện thoại phải từ 8 đến 20 chữ số.");
-    } else if (!/^[A-Za-z\d@$!%*?&#]{6,}$/.test(textPW)) {
+    }
+    else if (!textEmail.trim().toLowerCase().endsWith("@gmail.com")) {
+      showToastError("Email phải có định dạng @gmail.com");
+    }
+    else if (textEmail.length < 15) {
+      showToastError("Email phải có ít nhất 15 ký tự");
+
+    }
+    else if (!/^[A-Za-z\d@$!%*?&#]{6,}$/.test(textPW)) {
       showToastError("Mật khẩu phải có ít nhất 6 ký tự");
     } else if (
       !/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{6,}$/.test(
@@ -80,6 +174,8 @@ const RegisterInfo = ({ navigation, route }) => {
     } else if (!isCheckedInter || !isCheckedUse) {
       showToastError("Vui lòng chấp nhận các điều khoản");
     } else {
+      const masked = maskEmail(textEmail);
+      setMaskedEmail(masked);
       toggleModal();
     }
   };
@@ -87,7 +183,7 @@ const RegisterInfo = ({ navigation, route }) => {
   const handleXacNhan = async () => {
     toggleModal();
     setIsLoading(true);
-    await handleSubmit();
+    handlesendAuthCode();
     setIsLoading(false);
   };
 
@@ -112,31 +208,53 @@ const RegisterInfo = ({ navigation, route }) => {
     setTextRetypePW(input);
   };
 
+  const handleCheckAuth = () => {
+    // Kiểm tra xem có ô nào chưa được điền không
+    if (inputs.some((value) => value === "")) {
+      showToastError("Vui lòng nhập đủ mã xác thực");
+    }
+    else {
+      showToastSuccess("Xác thực thành công");
+      toggleModalAuthCode();
+    }
+  }
+
   const handleSubmit = async (e) => {
-    await axiosInstance
-      .post("/auth/register", {
-        phone: textPhone,
-        password: textPW,
-        name: name,
-      })
-      .then((response) => {
-        setIsLoading(true);
-        toggleModalLogin();
-      })
-      .catch((error) => {
-        if (
-          error.response &&
-          (error.response.status === 400 ||
-            error.response.status === 409 ||
-            error.response.status === 500)
-        ) {
-          showToastError(error.response.data.message);
-          setIsLoading(false);
-        } else {
-          setIsLoading(false);
-          showToastError("Lỗi");
-        }
-      });
+    handleCheckAuth()
+
+    // await axiosInstance
+    //   .post("/auth/register", {
+    //     phone: textPhone,
+    //     email:textEmail,
+    //     password: textPW,
+    //     name: name,
+    //     gender: selectedGender
+    //   })
+    //   .then((response) => {
+    //     setIsLoading(true);
+    //     toggleModalLogin();
+    //   })
+    //   .catch((error) => {
+    //     if (
+    //       error.response &&
+    //       (error.response.status === 400 ||
+    //         error.response.status === 409 ||
+    //         error.response.status === 500)
+    //     ) {
+    //       showToastError(error.response.data.message);
+    //       setIsLoading(false);
+    //     } else {
+    //       setIsLoading(false);
+    //       showToastError("Lỗi");
+    //     }
+    //   });
+
+  };
+
+  const handlesendAuthCode = async (e) => {
+    toggleModalAuthCode();
+    SendTime();
+
   };
 
   return (
@@ -159,7 +277,17 @@ const RegisterInfo = ({ navigation, route }) => {
           style={styles.input}
         />
       </View>
+      <View style={styles.inputContainer}>
+        <TextInput
+          id="email"
+          value={textEmail}
+          placeholder="Email"
+          placeholderTextColor={"gray"}
+          style={styles.input}
+          onChangeText={handleEmailChange}
+        />
 
+      </View>
       <View style={styles.inputContainer}>
         <TextInput
           id="pw"
@@ -193,6 +321,20 @@ const RegisterInfo = ({ navigation, route }) => {
           </Text>
         </Pressable>
       </View>
+
+
+      <View style={styles.radioRow}>
+        <Text style={styles.textGender}>Giới tính:</Text>
+        <Pressable onPress={() => handleGenderSelect("Nam")} style={[styles.radioButton, selectedGender === "Nam"]}>
+          <FontAwesome5 name={selectedGender === "Nam" ? "dot-circle" : "circle"} size={20} color="black" style={{ marginRight: 8 }} />
+          <Text style={styles.textGenderOption}>Nam</Text>
+        </Pressable>
+        <Pressable onPress={() => handleGenderSelect("Nữ")} style={[styles.radioButton, selectedGender === "Nữ"]}>
+          <FontAwesome5 name={selectedGender === "Nữ" ? "dot-circle" : "circle"} size={20} color="black" style={{ marginRight: 8 }} />
+          <Text style={styles.textGenderOption}>Nữ</Text>
+        </Pressable>
+      </View>
+
 
       <View style={styles.checkBoxContainer}>
         <CheckBox
@@ -237,10 +379,10 @@ const RegisterInfo = ({ navigation, route }) => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalHeaderText}>
-              Xác nhận số điện thoại (+84){textPhone} ?
+              Xác nhận email: {maskedEmail}?
             </Text>
             <Text style={styles.modalText}>
-              Số điện thoại này sẽ được sử dụng để đăng ký tài khoản
+              Email này sẽ được sử dụng để gửi mã xác thực
             </Text>
             <View style={styles.modalButtonContainer}>
               <Pressable onPress={toggleModal}>
@@ -249,6 +391,93 @@ const RegisterInfo = ({ navigation, route }) => {
               <Pressable onPress={handleXacNhan}>
                 <Text style={styles.modalButton}>XÁC NHẬN</Text>
               </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isModalAuthCode}
+        onRequestClose={toggleModalAuthCode}
+      >
+        <View style={styles.modalContainerAuthCode}>
+          <View style={styles.modalAuthCode}>
+            <View style={{ backgroundColor: "#E5E7EB", padding: 10 }}>
+              <Text style={{ textAlign: "center", color: "#000" }}>
+                Vui lòng không chia sẻ mã xác thực để tránh mất tài khoản
+              </Text>
+            </View>
+            <View style={{ flexDirection: "column", flex: 1 }}>
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  padding: 10,
+                }}
+              >
+                <FontAwesome5 name={"envelope"} size={80} color="black" style={{ marginRight: 8 }} />
+                <Text style={{ fontWeight: "bold", color: "#000", marginTop: 10 }}>
+                  Đang gửi mã xác thực đến email: {maskedEmail}
+                </Text>
+              </View>
+              <View style={{ flex: 1, padding: 10 }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    marginBottom: 10,
+                  }}
+                >
+                  {inputs.map((value, index) => (
+                    <TextInput
+                      key={index}
+                      ref={(ref) => (inputRefs.current[index] = ref)}
+                      style={{
+                        borderBottomWidth: 2,
+                        borderColor: "#ccc",
+                        width: 40,
+                        marginRight: 5,
+                        textAlign: "center",
+                      }}
+                      keyboardType="numeric"
+                      maxLength={1}
+                      value={value}
+                      onChangeText={(text) => handleInputChange(text, index)}
+                    />
+                  ))}
+                </View>
+                <View
+                  style={{
+                    justifyContent: "center",
+                    alignItems: "center",
+                    marginBottom: 20,
+                  }}
+                >
+                  <Text style={{ fontWeight: "bold", color: "#888" }}>
+                    Gửi lại mã <Text style={{ color: "#0091FF" }}>{timeLeft === 0 ? "0:0" : formatTime(timeLeft)}</Text>
+                  </Text>
+                </View>
+                <View style={{ justifyContent: "center", alignItems: "center" }}>
+                  <Pressable
+                    style={{
+                      backgroundColor: "#0091FF",
+                      width: 120,
+                      height: 50,
+                      justifyContent: "center",
+                      alignItems: "center",
+                      borderRadius: 25,
+                    }}
+                    onPress={() => handleSubmit()}
+                  >
+                    <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                      Tiếp tục
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
             </View>
           </View>
         </View>
@@ -297,7 +526,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flexDirection: "row",
-    margin: 20,
+    margin: 10,
     borderBottomWidth: 2,
     borderBottomColor: "#64D6EA",
   },
@@ -366,6 +595,43 @@ const styles = StyleSheet.create({
   },
   toastContainer: {
     zIndex: 99,
+  },
+  radioRow: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    paddingLeft: 20
+  },
+  radioButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    // marginVertical: 8,
+    paddingRight: 20
+  },
+
+  textGender: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginVertical: 8,
+    paddingRight: 20
+  },
+  textGenderOption: {
+    fontSize: 15,
+    fontWeight: "400",
+    marginVertical: 8,
+    paddingRight: 20
+  },
+  modalContainerAuthCode: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalAuthCode: {
+    backgroundColor: "#fff",
+    width: '80%',
+    height: '70%',
+    padding: 10,
+    borderRadius: 10,
   },
 });
 
