@@ -39,11 +39,9 @@ const EnterAuthCode = () => {
             source={require("../../../assets/phone.png")}
           />
           <Text style={{ fontWeight: "bold", color: "#000", marginTop: 10 }}>
-            Đang gọi đến số (+84) 338 030 541
+            Đang gửi sms đến email {}
           </Text>
-          <Text style={{ color: "#000", marginTop: 5 }}>
-            Vui lòng bắt máy để nghe mã
-          </Text>
+          
         </View>
         <View style={{ flex: 1, padding: 10 }}>
           <View
