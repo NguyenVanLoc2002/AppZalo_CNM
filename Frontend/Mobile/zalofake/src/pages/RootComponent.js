@@ -2,7 +2,6 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import RegisterName from "../components/LoginComponents/RegisterName";
 import RegisterInfo from "../components/LoginComponents/RegisterInfo";
-import EnterAuthCode from "../components/LoginComponents/EnterAuthCode";
 import Login from "../components/LoginComponents/Login";
 import { useAuthContext } from "../contexts/AuthContext";
 
@@ -96,17 +95,7 @@ export default function RootComponent() {
           title: "Tạo tài khoản",
         }}
       />
-      <Stack.Screen
-        name="EnterAuthCode"
-        component={EnterAuthCode}
-        options={{
-          headerStyle: {
-            backgroundColor: "#0091FF",
-          },
-          headerTintColor: "#fff",
-          title: "Nhập mã xác thực",
-        }}
-      />
+
       <Stack.Screen
         name="Login"
         component={Login}
