@@ -57,29 +57,21 @@ const RegisterInfo = ({ navigation, route }) => {
 
   const { name } = route.params;
 
-
+  // đếm thời gian giảm dần
   useEffect(() => {
     let timer;
-
-    // Nếu đang đếm ngược và thời gian còn lại lớn hơn 0
     if (isCounting && timeLeft > 0) {
-      // Tạo một interval để giảm thời gian còn lại mỗi giây
       timer = setInterval(() => {
-        // Giảm thời gian còn lại đi 1 giây
         setTimeLeft((prevTime) => prevTime - 1);
       }, 1000);
     } else {
-      // Nếu thời gian còn lại đạt 0 hoặc không đang đếm ngược, xóa interval
       clearInterval(timer);
       setIsCounting(false);
     }
 
     // Xóa interval khi component bị unmount
     return () => clearInterval(timer);
-  }, [isCounting, timeLeft]); // Khi trạng thái đếm ngược hoặc thời gian còn lại thay đổi
-
-
-
+  }, [isCounting, timeLeft]); 
 
 
   const SendTime = () => {
@@ -116,8 +108,6 @@ const RegisterInfo = ({ navigation, route }) => {
   const handleInputChange = (text, index) => {
     const newInputs = [...inputs];
     newInputs[index] = text;
-
-    // Check if the input is filled and move focus to the next input
     if (text && index < inputs.length - 1) {
       inputRefs.current[index + 1].focus();
     }
@@ -209,7 +199,6 @@ const RegisterInfo = ({ navigation, route }) => {
   };
 
   const handleCheckAuth = () => {
-    // Kiểm tra xem có ô nào chưa được điền không
     if (inputs.some((value) => value === "")) {
       showToastError("Vui lòng nhập đủ mã xác thực");
     }
@@ -221,7 +210,6 @@ const RegisterInfo = ({ navigation, route }) => {
 
   const handleSubmit = async (e) => {
     handleCheckAuth()
-
     // await axiosInstance
     //   .post("/auth/register", {
     //     phone: textPhone,
