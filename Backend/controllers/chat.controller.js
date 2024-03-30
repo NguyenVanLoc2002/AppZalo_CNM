@@ -1,5 +1,6 @@
 const cloudinary = require("../configs/Cloudinary.config.js");
 const Chat = require("../models/Chat.js");
+const {io, getReciverSocketId} = require("../socket/socket.io.js")
 
 //Upload media to cloudinary
 const uploadMediaToCloudinary = async (file) => {
@@ -71,6 +72,16 @@ exports.sendMessage = async (req, resp) => {
     // Tạo và lưu tin nhắn mới vào cơ sở dữ liệu
     const message = new Chat({ senderId, receiverId, contents });
     await message.save();
+
+    //Gọi socket và xử lý 
+    try {
+      const receiverSocketId = await getReciverSocketId(receiverId);
+      io.to(receiverSocketId.socket_id).emit("new_message",{senderId,contents})
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+   
+
     // Trả về phản hồi thành công
     resp
       .status(201)
