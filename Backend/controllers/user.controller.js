@@ -54,6 +54,7 @@ exports.uploadAvatar = async (req, res) => {
     await user.save();
     return res.status(200).json({
       message: "Avatar uploaded successfully",
+      
       avatar: user.profile.avatar,
     });
   } catch (error) {

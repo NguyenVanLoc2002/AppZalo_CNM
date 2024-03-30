@@ -42,7 +42,7 @@ const RegisterInfo = ({ navigation, route }) => {
   const [textPhone, setTextPhone] = useState("");
   const [textEmail, setTextEmail] = useState("");
   const [maskedEmail, setMaskedEmail] = useState("");
-  const [selectedGender, setSelectedGender] = useState("Nam");
+  const [selectedGender, setSelectedGender] = useState("male");
   const [textPW, setTextPW] = useState("");
   const [textRetypePW, setTextRetypePW] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -313,13 +313,17 @@ const RegisterInfo = ({ navigation, route }) => {
 
       <View style={styles.radioRow}>
         <Text style={styles.textGender}>Giới tính:</Text>
-        <Pressable onPress={() => handleGenderSelect("Nam")} style={[styles.radioButton, selectedGender === "Nam"]}>
-          <FontAwesome5 name={selectedGender === "Nam" ? "dot-circle" : "circle"} size={20} color="black" style={{ marginRight: 8 }} />
+        <Pressable onPress={() => handleGenderSelect("male")} style={[styles.radioButton, selectedGender === "male"]}>
+          <FontAwesome5 name={selectedGender === "male" ? "dot-circle" : "circle"} size={20} color="black" style={{ marginRight: 8 }} />
           <Text style={styles.textGenderOption}>Nam</Text>
         </Pressable>
-        <Pressable onPress={() => handleGenderSelect("Nữ")} style={[styles.radioButton, selectedGender === "Nữ"]}>
-          <FontAwesome5 name={selectedGender === "Nữ" ? "dot-circle" : "circle"} size={20} color="black" style={{ marginRight: 8 }} />
+        <Pressable onPress={() => handleGenderSelect("female")} style={[styles.radioButton, selectedGender === "female"]}>
+          <FontAwesome5 name={selectedGender === "female" ? "dot-circle" : "circle"} size={20} color="black" style={{ marginRight: 8 }} />
           <Text style={styles.textGenderOption}>Nữ</Text>
+        </Pressable>
+        <Pressable onPress={() => handleGenderSelect("other")} style={[styles.radioButton, selectedGender === "other"]}>
+          <FontAwesome5 name={selectedGender === "other" ? "dot-circle" : "circle"} size={20} color="black" style={{ marginRight: 8 }} />
+          <Text style={styles.textGenderOption}>Khác</Text>
         </Pressable>
       </View>
 
