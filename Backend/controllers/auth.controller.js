@@ -8,6 +8,10 @@ const {
   generateRefreshToken,
 } = require("../utils/generateToken.utils");
 const { io, getReciverSocketId } = require("../socket/socket.io");
+const { generatorTOTP } = require("../utils/generateOTP.utils");
+const sendMail = require("../utils/mailer.utils");
+
+const mail_templete = require("../public/resources/html-templete");
 
 const createOrUpdateSession = async (
   user_id,
@@ -52,8 +56,16 @@ exports.loginUser = async (req, res) => {
       const refreshToken = generateRefreshToken(device_id, user._id, phone);
 
       await createOrUpdateSession(user._id, device_id, app_type, refreshToken);
-      const { password, _id, friends, groups,createdAt,status,lastActive, ...userWithoutPassword } =
-      user.toObject();
+      const {
+        password,
+        _id,
+        friends,
+        groups,
+        createdAt,
+        status,
+        lastActive,
+        ...userWithoutPassword
+      } = user.toObject();
       io.emit("user_connected", user._id);
       res.status(200).json({
         user: userWithoutPassword,
@@ -87,29 +99,68 @@ exports.logoutUser = async (req, res) => {
 };
 
 exports.registerUser = async (req, res) => {
-  const { name, password, phone } = req.body;
+  const { name, password, phone, email, gender, dob } = req.body;
   if (await User.findOne({ phone })) {
     return res.status(409).json({ message: "Phone number already exists" });
+  }
+  if (await User.findOne({ email })) {
+    return res.status(409).json({ message: "Email already exists" });
   }
 
   const hashPassword = async (password) => {
     return bcrypt.hashSync(password, bcrypt.genSaltSync(10));
   };
+
+  const formatDOB = dob && typeof dob === "string" ? new Date(dob) : dob;
   try {
     const user = await User.create({
       phone,
+      email,
       password: await hashPassword(password),
-      profile: { name },
+      profile: { name, gender, dob: formatDOB },
       createdAt: Date.now(),
     });
     return res.status(201).json({
       user: {
         phone: user.phone,
+        email: user.email,
         profile: user.profile,
       },
     });
   } catch (error) {
     return res.status(400).json({ message: error.message });
+  }
+};
+
+exports.sendTOTPToEmail = async (req, res) => {
+  const { email } = req.body;
+  const totp = await generatorTOTP();
+  const subject = "OTP Verification";
+  // introduce the OTP to the user with friendly message
+  const html = mail_templete.replace("{OTP_Value}", totp.otp);
+  try {
+    await sendMail(email, subject, html);
+    res.status(200).json({ totp });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  const { email, newPassword } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    const hashPassword = async (password) => {
+      return bcrypt.hashSync(password, bcrypt.genSaltSync(10));
+    };
+    user.password = await hashPassword(newPassword);
+    await user.save();
+    res.status(200).json({ message: "Password reset successfully" });
+  } catch (error) {
+    res
+      .status(400)
+      .json({ message: "Can't reset password now, please try again !" });
   }
 };
 
