@@ -31,3 +31,22 @@ app.use("/api/auth", authRoute);
 app.use("/api/chats",authMiddleware.protect,chatRouter);
 
 server.listen(process.env.PORT,()=>{console.log(`Server listiening on ${process.env.PORT}`);})
+// get ip address of the server 
+const os = require('os');
+const ifaces = os.networkInterfaces();
+let ipAddress = '';
+Object.keys(ifaces).forEach(function (ifname) {
+    let alias = 0;
+    ifaces[ifname].forEach(function (iface) {
+        if ('IPv4' !== iface.family || iface.internal !== false) {
+            return;
+        }
+        if (alias >= 1) {
+            ipAddress = iface.address;
+        } else {
+            ipAddress = iface.address;
+        }
+        ++alias;
+    });
+});
+console.log(`Server is running on ${ipAddress}:${process.env.PORT}`);
