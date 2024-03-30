@@ -146,7 +146,9 @@ function ModalComponent({ showModal, language, userInfo }) {
               <div className="bg-gray-200">
                 <div className="h-[170px]">
                   <img
-                    src={userInfo.profile.background.url}
+                    src={
+                      userInfo.profile?.background?.url || "public/bg-login.svg"
+                    }
                     className="object-cover h-full w-full"
                   />
                 </div>
@@ -155,7 +157,7 @@ function ModalComponent({ showModal, language, userInfo }) {
                     <div className="relative">
                       <img
                         className="rounded-full h-24 w-24 object-cover border-2 border-white"
-                        src={userInfo.profile.avatar.url}
+                        src={userInfo.profile?.avatar?.url || "public/zalo.svg"}
                         alt="avatar"
                       />
                       <CiCamera
@@ -179,15 +181,20 @@ function ModalComponent({ showModal, language, userInfo }) {
                         {language == "vi" ? "Giới tính" : "Gender"}:
                       </h1>
                       <h1 className="w-2/3">
-                        {usGender == 0
-                          ? language == "vi"
+                        {usGender === undefined
+                          ? language === "vi"
+                            ? "Chưa cập nhật"
+                            : "Not updated"
+                          : usGender === "0"
+                          ? language === "vi"
                             ? "Nữ"
                             : "Female"
-                          : language == "vi"
+                          : language === "vi"
                           ? "Nam"
                           : "Male"}
                       </h1>
                     </div>
+
                     <div className="flex items-center my-3">
                       <h1 className="w-1/3 text-gray-500">
                         {language == "vi" ? "Ngày sinh" : "Birthday"}:
