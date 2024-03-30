@@ -17,7 +17,8 @@ const userSchema = new Schema({
     },
     name: { type: String, required: true },
     gender:{ type: String, enum: ['male', 'female', 'other'] },
-    dob:{type: Date}
+    dob:{type: Date},
+    gmail:{type:String, require: true},
   },
   friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   groups: [{ type: mongoose.Schema.Types.ObjectId, ref: 'groups' }],
