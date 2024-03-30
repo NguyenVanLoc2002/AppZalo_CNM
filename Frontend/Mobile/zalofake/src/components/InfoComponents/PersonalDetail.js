@@ -1,13 +1,16 @@
 import { View, Text, Pressable } from "react-native";
 import React, { useEffect } from "react";
+import { useAuthContext } from "../../contexts/AuthContext";
 
 const PersonalDetail = ({ navigation }) => {
+  const { authUser } = useAuthContext();
+
   useEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Text style={{ color: "white", fontSize: 20, fontWeight: "bold" }}>
-            Min Nguyên
+            {authUser.profile?.name}
           </Text>
         </View>
       ),
