@@ -46,7 +46,6 @@ exports.loginUser = async (req, res) => {
   const app_type = device_id ? "mobile" : "web";
   if (!device_id) {
     device_id = req.connection.remoteAddress;
-    console.log("device_id: ", device_id);
   }
   let user;
 
@@ -71,7 +70,6 @@ exports.loginUser = async (req, res) => {
         lastActive,
         ...userWithoutPassword
       } = user.toObject();
-      io.emit("user_connected", user._id);
       res.status(200).json({
         user: userWithoutPassword,
         accessToken: token,
@@ -81,6 +79,7 @@ exports.loginUser = async (req, res) => {
       res.status(401).json({ message: "Invalid phone or password" });
     }
   } catch (error) {
+    console.log("error: ", error);
     res.status(400).json({ message: error.message });
   }
 };
@@ -96,8 +95,6 @@ exports.logoutUser = async (req, res) => {
       storeRefreshToken.refreshToken = "";
       storeRefreshToken.save();
       res.clearCookie("refreshToken");
-      io.emit("user_disconnected", user.user_id);
-      console.log("Logout successfully");
       return res.status(200).json("Logout successfully");
     });
   } else return res.status(403).json("You're not authenticated !");
@@ -105,8 +102,6 @@ exports.logoutUser = async (req, res) => {
 
 exports.registerUser = async (req, res) => {
   const { name, password, phone, email, gender, dob } = req.body;
-
-  console.log("req.body: ", req.body);
   if (await User.findOne({ phone })) {
     return res.status(409).json({ message: "Phone number already exists" });
   }
@@ -141,10 +136,8 @@ exports.registerUser = async (req, res) => {
 
 exports.sendTOTPToEmail = async (req, res) => {
   const { email } = req.body;
-  console.log("sendTOTPToEmail: ", email);
-  const totp = await generatorTOTP();
+  const totp = await generatorTOTP(email);
   const subject = "OTP Verification";
-  // introduce the OTP to the user with friendly message
   const html = mail_templete.replace("{OTP_Value}", totp.otp);
   try {
     await sendMail(email, subject, html);
