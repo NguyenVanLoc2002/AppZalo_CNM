@@ -105,10 +105,11 @@ function LoginForm() {
                 text-gray-700 focus:outline-none focus:shadow-outline"
               id="phone"
               type="text"
-              placeholder={langue == "vi" ? "Số điện thoại" : "Phone number"}
+              placeholder={langue == "vi" ? "Số điện thoại hoặc email" : "Phone number or email"}
               value={phone}
               onChange={(e) => {
-                setPhone(e.target.value.replace(/\D/g, ""));
+                // setPhone(e.target.value.replace(/\D/g, ""));
+                setPhone(e.target.value);
               }}
             />
           </div>
@@ -170,7 +171,7 @@ function LoginForm() {
             </Link>
             <Link
               className="block hover:underline hover:text-blue-400 text-center text-gray-700"
-              to={"/forgot"}
+              to={"/login/forgot"}
             >
               {langue == "vi" ? "Quên mật khẩu?" : "Forgot password?"}
             </Link>
