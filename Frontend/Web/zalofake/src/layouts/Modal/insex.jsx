@@ -7,6 +7,8 @@ function ModalComponent({ showModal, language, userInfo }) {
   const [usName, setUsName] = useState(userInfo?.profile.name);
   const [usGender, setUsGender] = useState(userInfo?.profile.gender);
   const usDob = new Date(userInfo?.profile.dob);
+  const background = userInfo?.profile.background?.url || "./zalo.svg";
+  const avatar = userInfo?.profile.avatar?.url || "./zalo.svg";
 
   const handleUpdate = () => {
     setShowUpdate(false);
@@ -146,7 +148,7 @@ function ModalComponent({ showModal, language, userInfo }) {
               <div className="bg-gray-200">
                 <div className="h-[170px]">
                   <img
-                    src={userInfo.profile.background.url}
+                    src={background}
                     className="object-cover h-full w-full"
                   />
                 </div>
@@ -155,7 +157,7 @@ function ModalComponent({ showModal, language, userInfo }) {
                     <div className="relative">
                       <img
                         className="rounded-full h-24 w-24 object-cover border-2 border-white"
-                        src={userInfo.profile.avatar.url}
+                        src={avatar}
                         alt="avatar"
                       />
                       <CiCamera
@@ -179,7 +181,7 @@ function ModalComponent({ showModal, language, userInfo }) {
                         {language == "vi" ? "Giới tính" : "Gender"}:
                       </h1>
                       <h1 className="w-2/3">
-                        {usGender == 0
+                        {usGender == "female"
                           ? language == "vi"
                             ? "Nữ"
                             : "Female"
