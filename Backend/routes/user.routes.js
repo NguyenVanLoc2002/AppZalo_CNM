@@ -6,15 +6,19 @@ const {
   uploadBackground,
   updateUser,
   getUserByPhoneOrId,
+  checkUserByEmail,
 } = require("../controllers/user.controller");
-const { protect, isRootUser } = require("../middlewares/authMiddleware");
+const { protect } = require("../middlewares/authMiddleware");
 const { multerUploadImage } = require("../middlewares/multerMiddleware");
 
 //get methods
 router.get("/get/phone/:phone", protect, getUserByPhoneOrId);
 router.get("/get/uid/:uid", protect, getUserByPhoneOrId);
 
+
+
 //post methods
+router.post("/check-email", checkUserByEmail);
 router.post("/update-profile", protect, updateUser);
 
 router.post(
