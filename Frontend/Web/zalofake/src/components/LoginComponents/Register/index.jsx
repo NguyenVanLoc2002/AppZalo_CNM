@@ -68,7 +68,7 @@ function Register() {
       toast.error("Vui lòng nhập xác nhận mật khẩu trùng khớp");
     } else if (!isCheckedInter || !isCheckedUse) {
       toast.error("Vui lòng chấp nhận các điều khoản");
-    } else if(checkDOB(dob)){
+    } else if(!checkDOB(dob)){
       toast.error("Bạn phải trên 16 tuổi để đăng ký tài khoản");
     }
     else {
