@@ -56,7 +56,6 @@ const Login = ({ navigation }) => {
       .then(() => {
         console.log("Login successfully");
         setIsLoading(false);
-        navigation.navigate("ChatComponent");
       })
       .catch((error) => {
         setIsLoading(false);
