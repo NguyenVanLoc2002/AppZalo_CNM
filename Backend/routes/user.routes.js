@@ -9,6 +9,7 @@ const {
   checkUserByEmail,
   sendRequestAddFriend,
   acceptRequestAddFriend,
+  unfriend,
 } = require("../controllers/user.controller");
 const { protect } = require("../middlewares/authMiddleware");
 const { multerUploadImage } = require("../middlewares/multerMiddleware");
@@ -24,6 +25,8 @@ router.post("/check-email", checkUserByEmail);
 router.post("/update-profile", protect, updateUser);
 router.post("/send-add-friend", protect, sendRequestAddFriend);
 router.post("/accept-add-friend", protect, acceptRequestAddFriend);
+router.post("/unfriend", protect, unfriend);
+
 
 router.post(
   "/upload-avatar",
