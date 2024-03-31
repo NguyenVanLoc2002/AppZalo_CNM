@@ -48,9 +48,14 @@ exports.loginUser = async (req, res) => {
     device_id = req.connection.remoteAddress;
     console.log("device_id: ", device_id);
   }
+  let user;
 
   try {
-    const user = await User.findOne({ phone });
+    if (phone.includes("@")) {
+      user = await User.findOne({ email: phone });
+    } else {
+      user = await User.findOne({ phone });
+    }
     if (user && (await user.matchPassword(password))) {
       const token = generateAccessToken(device_id, user._id, phone);
       const refreshToken = generateRefreshToken(device_id, user._id, phone);
@@ -100,6 +105,8 @@ exports.logoutUser = async (req, res) => {
 
 exports.registerUser = async (req, res) => {
   const { name, password, phone, email, gender, dob } = req.body;
+
+  console.log("req.body: ", req.body);
   if (await User.findOne({ phone })) {
     return res.status(409).json({ message: "Phone number already exists" });
   }
@@ -134,12 +141,14 @@ exports.registerUser = async (req, res) => {
 
 exports.sendTOTPToEmail = async (req, res) => {
   const { email } = req.body;
+  console.log("sendTOTPToEmail: ", email);
   const totp = await generatorTOTP();
   const subject = "OTP Verification";
   // introduce the OTP to the user with friendly message
   const html = mail_templete.replace("{OTP_Value}", totp.otp);
   try {
     await sendMail(email, subject, html);
+
     res.status(200).json({ totp });
   } catch (error) {
     res.status(400).json({ message: error.message });
