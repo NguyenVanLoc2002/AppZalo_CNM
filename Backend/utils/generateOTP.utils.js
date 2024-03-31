@@ -16,7 +16,7 @@ exports.generatorOTP = async () => {
 exports.generatorTOTP = async () => {
   const totp = TOTP.generate(process.env.TOTP_SECRET,{
     digits: 6,
-    period: 60
+    period: 180
   });
 
   return totp;

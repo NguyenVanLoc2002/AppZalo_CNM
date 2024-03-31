@@ -24,7 +24,11 @@ const useLogin = () => {
         toast.error(data.message);
       }
     } catch (error) {
-      toast.error("Login failed! Please try again.");
+      if (error.response) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Login failed! Please try again.");
+      }
     }
     setLoading(false);
   };
