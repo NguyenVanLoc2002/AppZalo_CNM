@@ -18,3 +18,8 @@ exports.generateRefreshToken = (device_id, user_id, phone) => {
     }
   );
 };
+
+exports.getUserIdFromToken = (token) => {
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  return decoded.user_id;
+};
