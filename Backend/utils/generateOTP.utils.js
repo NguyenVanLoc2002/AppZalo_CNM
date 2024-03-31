@@ -1,5 +1,6 @@
 const otpGenerator = require("otp-generator");
 const { TOTP } = require("totp-generator");
+const base32 = require("thirty-two");
 require("dotenv").config();
 
 exports.generatorOTP = async () => {
@@ -13,14 +14,13 @@ exports.generatorOTP = async () => {
   return otp;
 };
 
-exports.generatorTOTP = async () => {
-  const totp = TOTP.generate(process.env.TOTP_SECRET,{
+exports.generatorTOTP = async (email) => {
+  const key = base32.encode(email);
+  const secret = key.toString("utf8");
+  const totp = TOTP.generate(secret, {
     digits: 6,
-    period: 180
+    period: 180,
   });
 
   return totp;
 };
-
-
-
