@@ -10,7 +10,6 @@ const sendMail = async (to, subject, html) => {
       subject,
       html,
     });
-
     console.log("Message sent: %s", rs.messageId);
   } catch (error) {
     console.log(error);
