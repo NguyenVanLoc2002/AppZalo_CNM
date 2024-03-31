@@ -43,15 +43,9 @@ export const checkName = (name) => {
 
 // check date of birth : must be a valid date and at least 16 years old
 export const checkDOB = (dob) => {
-  const re = /^\d{4}-\d{2}-\d{2}$/;
-  if (!re.test(dob)) {
-    toast.error("Invalid date of birth format");
-    return false;
-  }
   const dobDate = new Date(dob);
   const currentDate = new Date();
   if (currentDate.getFullYear() - dobDate.getFullYear() < 16) {
-    toast.error("You must be at least 16 years old");
     return false;
   }
   return true;
