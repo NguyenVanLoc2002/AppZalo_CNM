@@ -27,7 +27,24 @@ exports.getUserByPhoneOrId = async (req, res) => {
   }
 };
 
-exports.sendOTP = async (req, res) => {};
+exports.checkUserByEmail = async (req, res) => {
+  const email = req.body.email;
+  console.log(email);
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "Can't found User with this email  !" });
+    }
+    return res.status(200).json({ message: "User found" });
+  } catch (error) {
+    console.log(error);
+    res
+      .status(400)
+      .json({ message: "Some error internal server, please try again !" });
+  }
+};
 
 exports.uploadAvatar = async (req, res) => {
   try {
@@ -54,7 +71,7 @@ exports.uploadAvatar = async (req, res) => {
     await user.save();
     return res.status(200).json({
       message: "Avatar uploaded successfully",
-      
+
       avatar: user.profile.avatar,
     });
   } catch (error) {

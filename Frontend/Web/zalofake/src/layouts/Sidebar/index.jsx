@@ -10,7 +10,7 @@ import { CiCloudOn } from "react-icons/ci";
 function Sidebar({ changeTab, changeMenu }) {
   const [tabSelected, setTabSelected] = useState();
   const [settingClick, setsettingClick] = useState(false);
-  const [avtUrl, setAvtUrl] = useState("public/zalo.svg");
+  const [avtUrl, setAvtUrl] = useState("/zalo.svg");
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("authUser"));
