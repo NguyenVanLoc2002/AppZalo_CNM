@@ -70,7 +70,7 @@ function ChatComponents({ language }) {
         <PeopleChatComponent language={language} />
         {isAddFriend && (
           <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2/5 h-[90%] bg-white rounded-lg shadow-lg ">
-            <div className=" flex items-center justify-between p-4 border-b text-lg font-semibold h-[10%]">
+            <div className=" flex items-center justify-between p-4 border-b text-lg font-semibold h-[10%]" >
               <p>Thêm bạn </p>
               <button
                 onClick={() => {
