@@ -6,6 +6,7 @@ const { Schema } = mongoose;
 const userSchema = new Schema({
   phone: { type: String, unique: true, required: true },
   password: { type: String, required: true }, 
+  email: { type: String, unique: true, required: true},
   profile:{
     avatar: { 
       url: { type: String },
@@ -19,6 +20,8 @@ const userSchema = new Schema({
     gender:{ type: String, enum: ['male', 'female', 'other'] },
     dob:{type: Date}
   },
+  requestReceived : [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  requestSent : [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   groups: [{ type: mongoose.Schema.Types.ObjectId, ref: 'groups' }],
   status: { type: String, default: "active" }, 
