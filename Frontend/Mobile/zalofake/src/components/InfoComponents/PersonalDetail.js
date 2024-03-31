@@ -39,6 +39,9 @@ const PersonalDetail = ({ navigation }) => {
             borderBottomWidth: 1,
             borderBottomColor: "#ccc",
           }}
+          onPress={() => {
+            navigation.navigate("PersonalInfo");
+          }}
         >
           <Text style={{ fontSize: 16 }}>Thông tin</Text>
         </Pressable>
