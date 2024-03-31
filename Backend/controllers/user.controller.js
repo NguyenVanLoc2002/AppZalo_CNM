@@ -1,5 +1,6 @@
 const cloudinary = require("../configs/Cloudinary.config");
 const User = require("../models/User");
+const { getUserIdFromToken } = require("../utils/generateToken.utils");
 
 exports.getUserByPhoneOrId = async (req, res) => {
   const uid = req.params.uid;
@@ -98,15 +99,28 @@ exports.uploadBackground = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
   try {
-    const { userId, name, email, gender, dob } = req.body;
+    const { name, email, gender, dob } = req.body;
+    const token = req.headers.authorization.split(" ")[1];
+    const userId = getUserIdFromToken(token);
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    user.profile.name = name;
-    user.email = email;
-    user.profile.gender = gender;
-    user.profile.dob = new Date(dob);
+    let dateOfBirth;
+    if (dob) {
+      dateOfBirth = typeof dob === "string" ? new Date(dob) : dob;
+      user.profile.dob = dateOfBirth;
+    }
+    if (name) user.profile.name = name;
+    if (gender) user.profile.gender = gender;
+    if (email) {
+      const checkEmail = await User.findOne({ email });
+      if (checkEmail && checkEmail._id.toString() !== userId) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+      user.email = email;
+    }
+
     await user.save();
     const {
       password,
