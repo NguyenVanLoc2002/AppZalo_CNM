@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { BsChatText, BsChatTextFill } from "react-icons/bs";
 import { RiContactsBookLine, RiContactsBookFill } from "react-icons/ri";
@@ -10,8 +10,13 @@ import { CiCloudOn } from "react-icons/ci";
 function Sidebar({ changeTab, changeMenu }) {
   const [tabSelected, setTabSelected] = useState();
   const [settingClick, setsettingClick] = useState(false);
-  const user = localStorage.getItem("authUser");
-  const avtUrl = user ? JSON.parse(user).profile.avatar.url : "public/zalo.svg";
+  const [avtUrl, setAvtUrl] = useState("/zalo.svg");
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("authUser"));
+    const avatarUrl = user?.profile?.avatar?.url ?? "public/zalo.svg";
+    setAvtUrl(avatarUrl);
+  }, [localStorage.getItem("authUser")]);
 
   return (
     <>
