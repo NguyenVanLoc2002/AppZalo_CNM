@@ -185,11 +185,12 @@ function ModalComponent({ showModal, language, userInfo }) {
                           ? language == "vi"
                             ? "Nữ"
                             : "Female"
-                          : language == "vi"
+                          : language === "vi"
                           ? "Nam"
                           : "Male"}
                       </h1>
                     </div>
+
                     <div className="flex items-center my-3">
                       <h1 className="w-1/3 text-gray-500">
                         {language == "vi" ? "Ngày sinh" : "Birthday"}:
