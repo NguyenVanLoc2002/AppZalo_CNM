@@ -8,6 +8,10 @@ const {
   generateRefreshToken,
 } = require("../utils/generateToken.utils");
 const { io, getReciverSocketId } = require("../socket/socket.io");
+const { generatorTOTP } = require("../utils/generateOTP.utils");
+const sendMail = require("../utils/mailer.utils");
+
+const mail_templete = require("../public/resources/html-templete");
 
 const createOrUpdateSession = async (
   user_id,
@@ -42,37 +46,30 @@ exports.loginUser = async (req, res) => {
   const app_type = device_id ? "mobile" : "web";
   if (!device_id) {
     device_id = req.connection.remoteAddress;
-    console.log("device_id: ", device_id);
   }
+  let user;
 
   try {
-    const user = await User.findOne({ phone });
+    if (phone.includes("@")) {
+      user = await User.findOne({ email: phone });
+    } else {
+      user = await User.findOne({ phone });
+    }
     if (user && (await user.matchPassword(password))) {
       const token = generateAccessToken(device_id, user._id, phone);
       const refreshToken = generateRefreshToken(device_id, user._id, phone);
 
       await createOrUpdateSession(user._id, device_id, app_type, refreshToken);
-      const { password, _id, friends, groups, ...userWithoutPassword } =
-        user.toObject();
-
-      // if (app_type === "web") {
-      //   res.cookie("refreshToken", refreshToken, {
-      //     httpOnly: true,
-      //     path: "/",
-      //     sameSite: "strict",
-      //   });
-      //   res.status(200).json({
-      //     user: userWithoutPassword,
-      //     accessToken: token,
-      //   });
-      // } else {
-      //   res.status(200).json({
-      //     user: userWithoutPassword,
-      //     accessToken: token,
-      //     refreshToken,
-      //   });
-      // }
-
+      const {
+        password,
+        _id,
+        friends,
+        groups,
+        createdAt,
+        status,
+        lastActive,
+        ...userWithoutPassword
+      } = user.toObject();
       res.status(200).json({
         user: userWithoutPassword,
         accessToken: token,
@@ -82,6 +79,7 @@ exports.loginUser = async (req, res) => {
       res.status(401).json({ message: "Invalid phone or password" });
     }
   } catch (error) {
+    console.log("error: ", error);
     res.status(400).json({ message: error.message });
   }
 };
@@ -97,32 +95,37 @@ exports.logoutUser = async (req, res) => {
       storeRefreshToken.refreshToken = "";
       storeRefreshToken.save();
       res.clearCookie("refreshToken");
-      io.emit("user_disconnected", user.user_id);
-      console.log("Logout successfully");
       return res.status(200).json("Logout successfully");
     });
   } else return res.status(403).json("You're not authenticated !");
 };
 
 exports.registerUser = async (req, res) => {
-  const { name, password, phone } = req.body;
+  const { name, password, phone, email, gender, dob } = req.body;
   if (await User.findOne({ phone })) {
     return res.status(409).json({ message: "Phone number already exists" });
+  }
+  if (await User.findOne({ email })) {
+    return res.status(409).json({ message: "Email already exists" });
   }
 
   const hashPassword = async (password) => {
     return bcrypt.hashSync(password, bcrypt.genSaltSync(10));
   };
+
+  const formatDOB = dob && typeof dob === "string" ? new Date(dob) : dob;
   try {
     const user = await User.create({
       phone,
+      email,
       password: await hashPassword(password),
-      profile: { name },
+      profile: { name, gender, dob: formatDOB },
       createdAt: Date.now(),
     });
     return res.status(201).json({
       user: {
         phone: user.phone,
+        email: user.email,
         profile: user.profile,
       },
     });
@@ -131,15 +134,44 @@ exports.registerUser = async (req, res) => {
   }
 };
 
+exports.sendTOTPToEmail = async (req, res) => {
+  const { email } = req.body;
+  const totp = await generatorTOTP(email);
+  const subject = "OTP Verification";
+  const html = mail_templete.replace("{OTP_Value}", totp.otp);
+  try {
+    await sendMail(email, subject, html);
+
+    res.status(200).json({ totp });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  const { email, newPassword } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    const hashPassword = async (password) => {
+      return bcrypt.hashSync(password, bcrypt.genSaltSync(10));
+    };
+    user.password = await hashPassword(newPassword);
+    await user.save();
+    res.status(200).json({ message: "Password reset successfully" });
+  } catch (error) {
+    res
+      .status(400)
+      .json({ message: "Can't reset password now, please try again !" });
+  }
+};
+
 exports.refreshToken = async (req, res) => {
   const reToken = req.cookies.refreshToken || req.body.refreshToken;
-  console.log(req.body.refreshToken);
   if (!reToken) return res.status(403).json("You're not authenticated !");
   const storeRefreshToken = await Session.findOne({ refreshToken: reToken });
   if (!storeRefreshToken)
     return res.status(403).json("Refresh Token is not valid !");
-  const user_agent = req.headers["user-agent"];
-  const app_type = user_agent ? "web" : "mobile";
   jwt.verify(reToken, process.env.JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json("Refresh Token is not valid 2!");
     const newAccessToken = generateAccessToken(
