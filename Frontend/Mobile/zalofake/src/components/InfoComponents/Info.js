@@ -11,13 +11,18 @@ import React, { useEffect } from "react";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
 import { ProgressBar } from "react-native-paper";
+import { useAuthContext } from "../../contexts/AuthContext";
 
 const Info = ({ navigation }) => {
+  const { authUser } = useAuthContext();
+  console.log(authUser);
+
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <View style={{ flexDirection: "row", paddingHorizontal: 16 }}>
-          <Pressable style={{ paddingHorizontal: 2 }}
+          <Pressable
+            style={{ paddingHorizontal: 2 }}
             onPress={() => navigation.navigate("PersonalSetting")}
           >
             <Ionicons name="settings-outline" size={24} color="white" />
@@ -71,12 +76,16 @@ const Info = ({ navigation }) => {
         >
           <View style={styles.avatarContainer}>
             <Image
-              source={require("../../../assets/avata-story-3.png")}
+              source={{
+                uri:
+                  authUser?.profile?.avatar?.url ||
+                  "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+              }}
               style={styles.avatar}
             ></Image>
           </View>
           <View style={styles.textContainer}>
-            <Text style={styles.nameText}>Min Nguyên</Text>
+            <Text style={styles.nameText}>{authUser.profile?.name}</Text>
             <Text style={styles.viewProfileText}>Xem trang cá nhân</Text>
           </View>
         </Pressable>
