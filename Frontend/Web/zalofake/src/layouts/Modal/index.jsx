@@ -3,11 +3,10 @@ import { CiEdit, CiCamera } from "react-icons/ci";
 import useUpdate from "../../hooks/useUpdate";
 
 function ModalComponent({ showModal, language, userInfo }) {
-  console.log(userInfo);
   const [showUpdate, setShowUpdate] = useState(false);
   const { updateProfile, loading } = useUpdate();
   const [usName, setUsName] = useState(userInfo?.profile.name);
-  const [usEmail, setUsEmail] = useState(userInfo?.profile.email);
+  const [usEmail, setUsEmail] = useState(userInfo?.email);
   const [usGender, setUsGender] = useState(userInfo?.profile.gender);
   const [usDob, setUsDob] = useState(new Date(userInfo?.profile.dob));
   const background = userInfo?.profile.background?.url || "./zalo.svg";
@@ -285,9 +284,7 @@ function ModalComponent({ showModal, language, userInfo }) {
                     {language === "vi" ? "Hủy" : "Cancel"}
                   </button>
                   <button
-                    className={`my-2 font-semibold text-xl text-white px-3 py-2 rounded bg-${
-                      loading ? "gray" : "[#0068ff]"
-                    } ease-linear transition-all duration-150`}
+                    className={`my-2 font-semibold text-xl text-white px-3 py-2 rounded bg-[#0068ff] ease-linear transition-all duration-150`}
                     type="button"
                     onClick={handleUpdate}
                     disabled={loading}
