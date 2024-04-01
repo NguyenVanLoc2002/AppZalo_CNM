@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+
 import { BsChatText, BsChatTextFill } from "react-icons/bs";
 import { RiContactsBookLine, RiContactsBookFill } from "react-icons/ri";
 import { FaCheckSquare } from "react-icons/fa";
@@ -7,23 +8,15 @@ import { IoSettingsOutline, IoSettingsSharp } from "react-icons/io5";
 import { CiCloudOn } from "react-icons/ci";
 
 function Sidebar({ changeTab, changeMenu }) {
-  const [tabSelected, setTabSelected] = useState(1);
+  const [tabSelected, setTabSelected] = useState();
   const [settingClick, setSettingClick] = useState(false);
-  const [avtUrl, setAvtUrl] = useState("public/zalo.svg"); // Set giá trị mặc định
+  const [avtUrl, setAvtUrl] = useState("/zalo.svg");
 
   useEffect(() => {
-    const user = localStorage.getItem("authUser");
-    if (user) {
-      const userData = JSON.parse(user);
-      if (
-        userData.profile &&
-        userData.profile.avatar &&
-        userData.profile.avatar.url
-      ) {
-        setAvtUrl(userData.profile.avatar.url);
-      }
-    }
-  }, []); // Sử dụng useEffect để lấy dữ liệu từ localStorage khi component được render lần đầu
+    const user = JSON.parse(localStorage.getItem("authUser"));
+    const avatarUrl = user?.profile?.avatar?.url ?? "public/zalo.svg";
+    setAvtUrl(avatarUrl);
+  }, [localStorage.getItem("authUser")]);
 
   return (
     <div className="bg-[#0091ff] h-full flex flex-col items-center justify-between">
