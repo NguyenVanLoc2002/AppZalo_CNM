@@ -50,7 +50,8 @@ exports.checkUserByEmail = async (req, res) => {
 
 exports.uploadAvatar = async (req, res) => {
   try {
-    const userId = req.body.userId;
+    const token = req.headers.authorization.split(" ")[1];
+    const userId = getUserIdFromToken(token);
 
     if (!userId) {
       return res.status(400).json({ message: "userId is required" });
@@ -62,9 +63,10 @@ exports.uploadAvatar = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: "Image is required" });
     }
-    if (user.profile.avatar) {
+    if (user.profile.avatar && user.profile.avatar.public_id) {
       await cloudinary.uploader.destroy(user.profile.avatar.public_id);
     }
+    console.log(req.file);
     // const
     user.profile.avatar = {
       public_id: req.file.filename,
@@ -84,7 +86,9 @@ exports.uploadAvatar = async (req, res) => {
 
 exports.uploadBackground = async (req, res) => {
   try {
-    const userId = req.body.userId;
+    const token = req.headers.authorization.split(" ")[1];
+    const userId = getUserIdFromToken(token);
+
     if (!userId) {
       return res.status(400).json({ message: "userId is required" });
     }
@@ -95,7 +99,7 @@ exports.uploadBackground = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: "Image is required" });
     }
-    if (user.profile.background) {
+    if (user.profile.background && user.profile.background.public_id) {
       await cloudinary.uploader.destroy(user.profile.background.public_id);
     }
     // const
@@ -217,8 +221,8 @@ exports.acceptRequestAddFriend = async (req, res) => {
     }
     user.friends.push(friendId);
     friend.friends.push(userId);
-    user.requestReceived = user.requestReceived.filter((id) => id !== friendId);
-    friend.requestSent = friend.requestSent.filter((id) => id !== userId);
+    user.requestReceived = user.requestReceived.filter((id) => id.toString() !== friendId);
+    friend.requestSent = friend.requestSent.filter((id) => id.toString() !== userId);
     await user.save();
     await friend.save();
     const reciverSocketId = getReciverSocketId(friendId);
@@ -249,8 +253,8 @@ exports.unfriend = async (req, res) => {
     if (!user.friends.includes(friendId)) {
       return res.status(400).json({ message: "You are not friend" });
     }
-    user.friends = user.friends.filter((id) => id !== friendId);
-    friend.friends = friend.friends.filter((id) => id !== userId);
+    user.friends = user.friends.filter((id) => id.toString() !== friendId);
+    friend.friends = friend.friends.filter((id) => id.toString() !== userId);
     await user.save();
     await friend.save();
     const reciverSocketId = getReciverSocketId(friendId);
