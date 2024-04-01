@@ -5,7 +5,7 @@ exports.generateAccessToken = (device_id, user_id, phone) => {
     { device_id, user_id, phone, type: "access" },
     process.env.JWT_SECRET,
     {
-      expiresIn: "600s",
+      expiresIn: "60s",
     }
   );
 };
@@ -18,6 +18,16 @@ exports.generateRefreshToken = (device_id, user_id, phone) => {
     }
   );
 };
+exports.generateTOTPToken = (email) =>{
+  return jwt.sign(
+    {email, type: "totp"},
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "180s",
+    }
+  )
+
+}
 
 exports.getUserIdFromToken = (token) => {
   const decoded = jwt.verify(token, process.env.JWT_SECRET);
