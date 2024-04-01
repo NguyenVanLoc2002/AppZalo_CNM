@@ -6,6 +6,7 @@ const Session = require("../models/Session");
 exports.protect = async (req, res, next) => {
   let token;
   const app_type = req.headers["user-agent"] ? "web" : "mobile";
+
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
@@ -75,4 +76,3 @@ exports.isRootUser = async (req, res, next) => {
     }
   }
 };
-
