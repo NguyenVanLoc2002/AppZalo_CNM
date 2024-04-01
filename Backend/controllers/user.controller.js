@@ -1,6 +1,7 @@
 const cloudinary = require("../configs/Cloudinary.config");
 const User = require("../models/User");
 const { getUserIdFromToken } = require("../utils/generateToken.utils");
+const { io, getReciverSocketId } = require("../socket/socket.io");
 
 exports.getUserByPhoneOrId = async (req, res) => {
   const uid = req.params.uid;
@@ -17,6 +18,7 @@ exports.getUserByPhoneOrId = async (req, res) => {
     }
 
     const returnUser = {
+      userId: user._id,
       profile: user.profile,
       email: user.email,
       phone: user.phone,
@@ -28,11 +30,28 @@ exports.getUserByPhoneOrId = async (req, res) => {
   }
 };
 
-exports.sendOTP = async (req, res) => {};
+exports.checkUserByEmail = async (req, res) => {
+  const email = req.body.email;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "Can't found User with this email  !" });
+    }
+    return res.status(200).json({ message: "User found" });
+  } catch (error) {
+    console.log(error);
+    res
+      .status(400)
+      .json({ message: "Some error internal server, please try again !" });
+  }
+};
 
 exports.uploadAvatar = async (req, res) => {
   try {
-    const userId = req.body.userId;
+    const token = req.headers.authorization.split(" ")[1];
+    const userId = getUserIdFromToken(token);
 
     if (!userId) {
       return res.status(400).json({ message: "userId is required" });
@@ -44,9 +63,10 @@ exports.uploadAvatar = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: "Image is required" });
     }
-    if (user.profile.avatar) {
+    if (user.profile.avatar && user.profile.avatar.public_id) {
       await cloudinary.uploader.destroy(user.profile.avatar.public_id);
     }
+    console.log(req.file);
     // const
     user.profile.avatar = {
       public_id: req.file.filename,
@@ -55,6 +75,7 @@ exports.uploadAvatar = async (req, res) => {
     await user.save();
     return res.status(200).json({
       message: "Avatar uploaded successfully",
+
       avatar: user.profile.avatar,
     });
   } catch (error) {
@@ -65,7 +86,9 @@ exports.uploadAvatar = async (req, res) => {
 
 exports.uploadBackground = async (req, res) => {
   try {
-    const userId = req.body.userId;
+    const token = req.headers.authorization.split(" ")[1];
+    const userId = getUserIdFromToken(token);
+
     if (!userId) {
       return res.status(400).json({ message: "userId is required" });
     }
@@ -76,7 +99,7 @@ exports.uploadBackground = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: "Image is required" });
     }
-    if (user.profile.background) {
+    if (user.profile.background && user.profile.background.public_id) {
       await cloudinary.uploader.destroy(user.profile.background.public_id);
     }
     // const
@@ -106,13 +129,13 @@ exports.updateUser = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+    if (name) user.profile.name = name;
+    if (gender) user.profile.gender = gender;
     let dateOfBirth;
     if (dob) {
       dateOfBirth = typeof dob === "string" ? new Date(dob) : dob;
       user.profile.dob = dateOfBirth;
     }
-    if (name) user.profile.name = name;
-    if (gender) user.profile.gender = gender;
     if (email) {
       const checkEmail = await User.findOne({ email });
       if (checkEmail && checkEmail._id.toString() !== userId) {
@@ -138,5 +161,111 @@ exports.updateUser = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(400).json({ message: "Can't update this user" });
+  }
+};
+
+exports.sendRequestAddFriend = async (req, res) => {
+  try {
+    const { friendId } = req.body;
+    const token = req.headers.authorization.split(" ")[1];
+    const userId = getUserIdFromToken(token);
+    const user = await User.findById(userId);
+    const friend = await User.findById(friendId);
+
+    if (!user || !friend) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (user.friends.includes(friendId)) {
+      return res.status(400).json({ message: "You are already friend" });
+    }
+    if (user.requestSent.includes(friendId)) {
+      return res.status(400).json({ message: "Request already sent" });
+    }
+    if (user.requestReceived.includes(friendId)) {
+      return res.status(400).json({ message: "Request already received" });
+    }
+    user.requestSent.push(friendId);
+    friend.requestReceived.push(userId);
+    await user.save();
+    await friend.save();
+
+    const reciverSocketId = getReciverSocketId(friendId);
+    if (reciverSocketId) {
+      io.to(reciverSocketId).emit("receive-request-add-friend", {
+        sender: userId,
+      });
+    }
+    return res.status(200).json({ message: "Request sent successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({ message: "Can't send request add friend" });
+  }
+};
+
+exports.acceptRequestAddFriend = async (req, res) => {
+  try {
+    const { friendId } = req.body;
+    const token = req.headers.authorization.split(" ")[1];
+    const userId = getUserIdFromToken(token);
+    const user = await User.findById(userId);
+    const friend = await User.findById(friendId);
+
+    if (!user || !friend) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (user.friends.includes(friendId)) {
+      return res.status(400).json({ message: "You are already friend" });
+    }
+    if (!user.requestReceived.includes(friendId)) {
+      return res.status(400).json({ message: "Request not found" });
+    }
+    user.friends.push(friendId);
+    friend.friends.push(userId);
+    user.requestReceived = user.requestReceived.filter((id) => id.toString() !== friendId);
+    friend.requestSent = friend.requestSent.filter((id) => id.toString() !== userId);
+    await user.save();
+    await friend.save();
+    const reciverSocketId = getReciverSocketId(friendId);
+    if (reciverSocketId) {
+      io.to(reciverSocketId).emit("accept-request-add-friend", {
+        sender: userId,
+      });
+    }
+
+    return res.status(200).json({ message: "Request accepted successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({ message: "Can't accept request add friend" });
+  }
+};
+
+exports.unfriend = async (req, res) => {
+  try {
+    const { friendId } = req.body;
+    const token = req.headers.authorization.split(" ")[1];
+    const userId = getUserIdFromToken(token);
+    const user = await User.findById(userId);
+    const friend = await User.findById(friendId);
+
+    if (!user || !friend) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (!user.friends.includes(friendId)) {
+      return res.status(400).json({ message: "You are not friend" });
+    }
+    user.friends = user.friends.filter((id) => id.toString() !== friendId);
+    friend.friends = friend.friends.filter((id) => id.toString() !== userId);
+    await user.save();
+    await friend.save();
+    const reciverSocketId = getReciverSocketId(friendId);
+    if (reciverSocketId) {
+      io.to(reciverSocketId).emit("unfriend", {
+        sender: userId,
+      });
+    }
+    return res.status(200).json({ message: "Unfriend successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({ message: "Can't unfriend" });
   }
 };
