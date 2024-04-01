@@ -8,14 +8,15 @@ import {
   Modal,
   StyleSheet,
   ActivityIndicator,
-  TouchableOpacity
+  TouchableOpacity,
+  ScrollView
 } from "react-native";
-import { CheckBox, Input } from "react-native-elements";
+import { CheckBox } from "react-native-elements";
 import CountryDropdown from "./CountryDropdown";
 import Toast from "react-native-toast-message";
-import axiosInstance from "../../api/axiosInstance";
 import { FontAwesome5 } from "@expo/vector-icons";
-
+import OTPTextView from 'react-native-otp-textinput';
+// import DateTimePicker from "@react-native-community/datetimepicker";
 const showToastSuccess = (notice) => {
   Toast.show({
     text1: notice,
@@ -48,14 +49,64 @@ const RegisterInfo = ({ navigation, route }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showRetypePassword, setShowRetypePassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [inputs, setInputs] = useState(Array(6).fill(""));
   const [timeLeft, setTimeLeft] = useState(60);
   const [isCounting, setIsCounting] = useState(false);
-
-  const inputRefs = useRef([]);
-
-
+  const [otp, setOtp] = useState('');
   const { name } = route.params;
+  // const [dateOfBirth, setDateOfBirth] = useState(new Date() );
+  // const [date, setDate] = useState(new Date());
+  // const [showDate, setShowDate] = useState(false);
+  // const [dateToShow, setDateToShow] = useState(formatTimeDOB(new Date()));
+
+  // const onChange = (event, selectedDate) => {
+  //   if (event.type === "dismissed") {
+  //     hideDatePicker();
+  //     return;
+  //   }
+  //   const currentDate = selectedDate || date;
+  //   setShowDate(false);
+  //   setDate(currentDate);
+  //   setDateOfBirth(currentDate);
+  //   setDateToShow(formatTimeDOB(currentDate));
+  // };
+  // const showDatepicker = () => {
+  //   setShowDate(true);
+  // };
+  // const hideDatePicker = () => {
+  //   setShowDate(false);
+  // };
+
+  // function formatTimeDOB(time) {
+  //   const date = new Date(time);
+  //   const year = date.getFullYear();
+  //   const month = date.getMonth() + 1;
+  //   const day = date.getDate();
+  //   return `${day}/${month}/${year}`;
+  // }
+
+
+
+  // const checkDOB = (dob) => {
+  //   const currentDate = new Date();
+  //   if (currentDate.getFullYear() - dob.getFullYear() < 16) {
+  //     return false;
+  //   }
+  //   return true;
+  // };
+
+
+
+  
+  const handleOTPChange = (enteredOtp) => {
+    setOtp(enteredOtp);
+  };
+  const handleVerifyOTP = () => {
+    if (otp.length === 6) {
+      showToastSuccess("ok" + otp);
+    } else {
+      showToastError("Hãy nhập đủ mã xác thực");
+    }
+  };
 
   // đếm thời gian giảm dần
   useEffect(() => {
@@ -71,7 +122,7 @@ const RegisterInfo = ({ navigation, route }) => {
 
     // Xóa interval khi component bị unmount
     return () => clearInterval(timer);
-  }, [isCounting, timeLeft]); 
+  }, [isCounting, timeLeft]);
 
 
   const SendTime = () => {
@@ -104,15 +155,6 @@ const RegisterInfo = ({ navigation, route }) => {
   const handleEmailChange = (text) => {
     setTextEmail(text);
 
-  };
-  const handleInputChange = (text, index) => {
-    const newInputs = [...inputs];
-    newInputs[index] = text;
-    if (text && index < inputs.length - 1) {
-      inputRefs.current[index + 1].focus();
-    }
-
-    setInputs(newInputs);
   };
 
 
@@ -159,6 +201,9 @@ const RegisterInfo = ({ navigation, route }) => {
       )
     ) {
       showToastError("MK chứa ít nhất 1 chữ,1 số,1 ký tự đặc biệt");
+    }
+    else if (!checkDOB(selectedDate)) {
+      showToastError(selectedDate + "Bạn phải trên 16 tuổi để đăng ký tài khoản");
     } else if (!(textPW === textRetypePW)) {
       showToastError("Vui lòng nhập xác nhận mật khẩu trùng khớp");
     } else if (!isCheckedInter || !isCheckedUse) {
@@ -309,6 +354,27 @@ const RegisterInfo = ({ navigation, route }) => {
           </Text>
         </Pressable>
       </View>
+      <View style={styles.inputContainer}>
+        {/* <Text style={styles.textGender}>Ngày sinh:</Text> */}
+
+        {/* {showDate && (
+              <DateTimePicker
+                value={dateOfBirth}
+                mode={"date"}
+                display="spinner"
+                onChange={onChange}
+              />
+            )}
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Enter your date of birth"
+              value={dateToShow}
+              onChangeText={(text) => setDateOfBirth(text)}
+              onFocus={showDatepicker}
+            /> */}
+
+      </View>
+ 
 
 
       <View style={styles.radioRow}>
@@ -416,30 +482,16 @@ const RegisterInfo = ({ navigation, route }) => {
                 </Text>
               </View>
               <View style={{ flex: 1, padding: 10 }}>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "center",
-                    marginBottom: 10,
-                  }}
-                >
-                  {inputs.map((value, index) => (
-                    <TextInput
-                      key={index}
-                      ref={(ref) => (inputRefs.current[index] = ref)}
-                      style={{
-                        borderBottomWidth: 2,
-                        borderColor: "#ccc",
-                        width: 40,
-                        marginRight: 5,
-                        textAlign: "center",
-                      }}
-                      keyboardType="numeric"
-                      maxLength={1}
-                      value={value}
-                      onChangeText={(text) => handleInputChange(text, index)}
-                    />
-                  ))}
+                <View style={styles.otpContainer}>
+                  <OTPTextView
+                    handleTextChange={handleOTPChange}
+                    inputCount={6}
+                    keyboardType="numeric"
+                    tintColor="#00FF66"
+                    offTintColor="#00FFFF"
+                    containerStyle={styles.otpContainer}
+                    textInputStyle={styles.otpInput}
+                  />
                 </View>
                 <View
                   style={{
@@ -462,7 +514,8 @@ const RegisterInfo = ({ navigation, route }) => {
                       alignItems: "center",
                       borderRadius: 25,
                     }}
-                    onPress={() => handleSubmit()}
+                    //onPress={() => handleSubmit()} // 
+                    onPress={handleVerifyOTP}
                   >
                     <Text style={{ color: "#fff", fontWeight: "bold" }}>
                       Tiếp tục
@@ -625,6 +678,25 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
   },
+  otpContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  otpContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  otpInput: {
+    width: 40,
+    height: 40,
+    borderWidth: 1,
+    borderRadius: 5,
+    borderColor: '#333333',
+    textAlign: 'center',
+    fontSize: 20,
+    marginHorizontal: 5,
+  },
+
 });
 
 export default RegisterInfo;
