@@ -11,8 +11,11 @@ import {
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
+import { useAuthContext } from "../../contexts/AuthContext";
 
 const News = ({ navigation }) => {
+  const { authUser } = useAuthContext();
+
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -69,9 +72,14 @@ const News = ({ navigation }) => {
       <View style={styles.statusContainer}>
         <View style={styles.avatarContainer}>
           <Image
-            source={require("../../../assets/avata-story-3.png")}
+            source={{
+              uri:
+                authUser?.profile?.avatar?.url ||
+                "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+            }}
             style={styles.avatar}
           />
+
           <Pressable
             style={styles.statusTextContainer}
             onPress={() => {
@@ -206,7 +214,12 @@ const News = ({ navigation }) => {
                 <Ionicons name="heart-outline" size={22} color="black" />
                 <Text style={styles.statusButtonText}>Thích</Text>
               </Pressable>
-              <Pressable style={[styles.statusButton, {marginLeft: 20, paddingHorizontal: 10}]}>
+              <Pressable
+                style={[
+                  styles.statusButton,
+                  { marginLeft: 20, paddingHorizontal: 10 },
+                ]}
+              >
                 <Ionicons
                   name="chatbox-ellipses-outline"
                   size={22}
