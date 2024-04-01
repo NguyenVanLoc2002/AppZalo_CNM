@@ -1,24 +1,41 @@
 import React, { useState } from "react";
 import { CiEdit, CiCamera } from "react-icons/ci";
+import useUpdate from "../../hooks/useUpdate";
 
 function ModalComponent({ showModal, language, userInfo }) {
   const [showUpdate, setShowUpdate] = useState(false);
-
+  const { updateProfile, loading } = useUpdate();
   const [usName, setUsName] = useState(userInfo?.profile.name);
+  const [usEmail, setUsEmail] = useState(userInfo?.email);
   const [usGender, setUsGender] = useState(userInfo?.profile.gender);
-  const usDob = new Date(userInfo?.profile.dob);
+  const [usDob, setUsDob] = useState(new Date(userInfo?.profile.dob));
   const background = userInfo?.profile.background?.url || "./zalo.svg";
   const avatar = userInfo?.profile.avatar?.url || "./zalo.svg";
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
+    const selectedDay = document.getElementById("day").value;
+    const selectedMonth = document.getElementById("month").value;
+    const selectedYear = document.getElementById("year").value;
+
+    const selectedDate = new Date(selectedYear, selectedMonth, selectedDay);
+
+    const formattedDob = selectedDate.toISOString().split("T")[0];
+
+    await updateProfile({
+      name: usName,
+      email: usEmail,
+      gender: usGender,
+      dob: formattedDob,
+    });
+
     setShowUpdate(false);
   };
+
   return (
     <>
       <div className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 ">
         <div className="relative w-[440px] h-[560px] my-6 mx-auto">
           {/*content*/}
-
           <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
             <div className="flex items-center justify-between p-3 border-b border-solid border-blueGray-200 rounded-t">
               <h1 className="font-semibold">
@@ -51,6 +68,16 @@ function ModalComponent({ showModal, language, userInfo }) {
                   value={usName}
                   onChange={(e) => setUsName(e.target.value)}
                 />
+                <label htmlFor="usname">
+                  {language == "vi" ? "Email hiển thị" : "Display mail"}
+                </label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 p-2 rounded my-3"
+                  id="usEmail"
+                  value={usEmail}
+                  onChange={(e) => setUsEmail(e.target.value)}
+                />
                 <h1 htmlFor="gender" className="font-semibold text-xl">
                   {language == "vi"
                     ? "Thông tin cá nhân"
@@ -63,7 +90,7 @@ function ModalComponent({ showModal, language, userInfo }) {
                       name="gender"
                       id="male"
                       checked={usGender === "male"}
-                      onClick={() => setUsGender(1)}
+                      onChange={() => setUsGender("male")}
                     />
                     <label htmlFor="male" className="ml-3">
                       {language == "vi" ? "Nam" : "Male"}
@@ -73,9 +100,9 @@ function ModalComponent({ showModal, language, userInfo }) {
                     <input
                       type="radio"
                       name="gender"
-                      id="male"
+                      id="female"
                       checked={usGender === "female"}
-                      onClick={() => setUsGender(0)}
+                      onChange={() => setUsGender("female")}
                     />
                     <label htmlFor="female" className="ml-3">
                       {language == "vi" ? "Nữ" : "Female"}
@@ -87,7 +114,7 @@ function ModalComponent({ showModal, language, userInfo }) {
                       name="gender"
                       id="other"
                       checked={usGender === "other"}
-                      onClick={() => setUsGender(0)}
+                      onChange={() => setUsGender("other")}
                     />
                     <label htmlFor="other" className="ml-3">
                       {language == "vi" ? "Khác" : "Other"}
@@ -102,12 +129,15 @@ function ModalComponent({ showModal, language, userInfo }) {
                       name="day"
                       id="day"
                       className="h-10 max-h-20 w-full overflow-y-auto border rounded px-3"
+                      value={usDob.getDate()}
+                      onChange={(e) => {
+                        const dob = new Date(usDob);
+                        dob.setDate(parseInt(e.target.value));
+                        setUsDob(dob);
+                      }}
                     >
                       {[...Array(31)].map((e, i) => (
-                        <option
-                          value={i + 1}
-                          selected={i + 1 === usDob.getDate()}
-                        >
+                        <option key={i + 1} value={i + 1}>
                           {i + 1}
                         </option>
                       ))}
@@ -115,12 +145,18 @@ function ModalComponent({ showModal, language, userInfo }) {
                   </div>
                   <div className="w-[30%]">
                     <select
-                      name="day"
-                      id="day"
+                      name="month"
+                      id="month"
                       className="h-10 max-h-20 w-full overflow-y-auto border rounded px-3"
+                      value={usDob.getMonth()}
+                      onChange={(e) => {
+                        const dob = new Date(usDob);
+                        dob.setMonth(parseInt(e.target.value));
+                        setUsDob(dob);
+                      }}
                     >
                       {[...Array(12)].map((e, i) => (
-                        <option value={i + 1} selected={i === usDob.getMonth()}>
+                        <option key={i + 1} value={i}>
                           {i + 1}
                         </option>
                       ))}
@@ -131,12 +167,15 @@ function ModalComponent({ showModal, language, userInfo }) {
                       name="year"
                       id="year"
                       className="h-10 max-h-20 w-full overflow-y-auto border rounded px-3"
+                      value={usDob.getFullYear()}
+                      onChange={(e) => {
+                        const dob = new Date(usDob);
+                        dob.setFullYear(parseInt(e.target.value));
+                        setUsDob(dob);
+                      }}
                     >
                       {[...Array(121)].map((e, i) => (
-                        <option
-                          value={i + 1920}
-                          selected={i + 1920 === usDob.getFullYear()}
-                        >
+                        <option key={i + 1920} value={i + 1920}>
                           {i + 1920}
                         </option>
                       ))}
@@ -181,15 +220,24 @@ function ModalComponent({ showModal, language, userInfo }) {
                         {language == "vi" ? "Giới tính" : "Gender"}:
                       </h1>
                       <h1 className="w-2/3">
-                        {usGender == "female"
-                          ? language == "vi"
+                        {usGender === undefined
+                          ? language === "vi"
+                            ? "Chưa cập nhật"
+                            : "Not updated"
+                          : usGender === "female"
+                          ? language === "vi"
                             ? "Nữ"
                             : "Female"
-                          : language == "vi"
+                          : usGender === "other"
+                          ? language === "vi"
+                            ? "Khác"
+                            : "Other"
+                          : language === "vi"
                           ? "Nam"
                           : "Male"}
                       </h1>
                     </div>
+
                     <div className="flex items-center my-3">
                       <h1 className="w-1/3 text-gray-500">
                         {language == "vi" ? "Ngày sinh" : "Birthday"}:
@@ -236,11 +284,16 @@ function ModalComponent({ showModal, language, userInfo }) {
                     {language === "vi" ? "Hủy" : "Cancel"}
                   </button>
                   <button
-                    className="my-2 font-semibold text-xl text-white px-3 py-2 rounded bg-[#0068ff] ease-linear transition-all duration-150"
+                    className={`my-2 font-semibold text-xl text-white px-3 py-2 rounded bg-[#0068ff] ease-linear transition-all duration-150`}
                     type="button"
                     onClick={handleUpdate}
+                    disabled={loading}
                   >
-                    {language === "vi" ? "Cập nhật" : "Update"}
+                    {loading
+                      ? "Loading..."
+                      : language === "vi"
+                      ? "Cập nhật"
+                      : "Update"}
                   </button>
                 </div>
               ) : (
