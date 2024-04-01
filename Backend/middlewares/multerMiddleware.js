@@ -8,7 +8,6 @@ const uploadImage = new CloudinaryStorage({
     folder: "Zalo_Fake_App",
     allowed_formats: ["jpg", "png", "jpeg"],
     public_id: (req, file) => {
-      console.log("test");
       return `zaloFake_${file.fieldname}_${Date.now()}`;
 
     },
