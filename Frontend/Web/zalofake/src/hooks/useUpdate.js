@@ -7,29 +7,21 @@ const useUpdate = () => {
   const [loading, setLoading] = useState(false);
   const { setAuthUser } = useAuthContext();
 
-  const authToken = JSON.parse(localStorage.getItem("accessToken"));
+  // const authToken = JSON.parse(localStorage.getItem("accessToken"));
 
   const updateProfile = async (userData) => {
     setLoading(true);
     try {
-      if (!authToken) {
-        throw new Error("Authentication token not found");
-      }
+      // if (!authToken) {
+      //   throw new Error("Authentication token not found");
+      // }
 
       const response = await axiosInstance.post(
         "/users/update-profile",
-        userData,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
+        userData
       );
 
       const { data, status } = response;
-
-      console.log("Response data:", data); // In ra dữ liệu từ phản hồi
-      console.log("Response status:", status); // In ra mã trạng thái của phản hồi
 
       if (status === 200) {
         const { user } = data;
@@ -45,7 +37,8 @@ const useUpdate = () => {
     } catch (error) {
       console.error(error);
       toast.error(
-        error.message || "Failed to update profile! Please try again."
+        error.response.data.message ||
+          "Failed to update profile! Please try again."
       );
     } finally {
       setLoading(false);
