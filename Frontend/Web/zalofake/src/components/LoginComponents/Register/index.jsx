@@ -7,7 +7,13 @@ import { Link, useOutletContext } from "react-router-dom";
 import { IoEyeOff, IoEye } from "react-icons/io5";
 import { FaCheckCircle } from "react-icons/fa";
 import useRegister from "../../../hooks/useRegister";
-import { checkDOB } from "../../../utils/validation";
+import {
+  checkDOB,
+  checkEmail,
+  checkName,
+  checkPassword,
+  checkPhone,
+} from "../../../utils/validation";
 
 function Register() {
   const [phone, setPhone] = useState("");
@@ -50,28 +56,23 @@ function Register() {
   };
 
   const handlePressablePress = () => {
-    if (!/^[0-9]{8,20}$/.test(phone)) {
-      toast.error("Số điện thoại phải từ 8 đến 20 chữ số.");
-    } else if (!/^([a-zA-Zá-ỹÁ-Ỹ\s]{2,40})$/.test(name)) {
+    if (!checkPhone(phone)) {
+      toast.error("Số điện thoại phải từ 10 đến 11 chữ số.");
+    } else if (!checkName(name)) {
       toast.error("Vui lòng nhập tên là chữ và ít nhất 2 kí tự chữ");
-    } else if (!/^[A-Za-z\d@$!%*?&#]{6,}$/.test(password)) {
+    } else if (!checkPassword(password)) {
       toast.error("Mật khẩu phải có ít nhất 6 ký tự");
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    } else if (!checkEmail(email)) {
       toast.error("Vui lòng nhập email hợp lệ");
-    } else if (
-      !/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{6,}$/.test(
-        password
-      )
-    ) {
+    } else if (!checkPassword(password)) {
       toast.error("MK chứa ít nhất 1 chữ,1 số,1 ký tự đặc biệt");
     } else if (!(password === confirmPassword)) {
       toast.error("Vui lòng nhập xác nhận mật khẩu trùng khớp");
     } else if (!isCheckedInter || !isCheckedUse) {
       toast.error("Vui lòng chấp nhận các điều khoản");
-    } else if(!checkDOB(dob)){
+    } else if (!checkDOB(dob)) {
       toast.error("Bạn phải trên 16 tuổi để đăng ký tài khoản");
-    }
-    else {
+    } else {
       setIsRegister(true);
     }
   };
@@ -430,7 +431,6 @@ function Register() {
                     <p>{hideEmail(email)}</p>
                   </div>
                   <div className="flex items-center justify-center p-4 mt-10 text-base font-semibold  overflow-hidden">
-                    
                     <OtpInput
                       value={otp}
                       onChange={setOtp}
