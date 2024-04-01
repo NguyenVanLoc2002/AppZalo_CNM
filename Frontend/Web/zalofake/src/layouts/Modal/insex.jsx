@@ -3,13 +3,13 @@ import { CiEdit, CiCamera } from "react-icons/ci";
 import useUpdate from "../../hooks/useUpdate";
 
 function ModalComponent({ showModal, language, userInfo }) {
-  console.log(userInfo);
   const [showUpdate, setShowUpdate] = useState(false);
-  const { updateProfile, loading } = useUpdate();
+  const { updateProfile, updateAvatar, loading } = useUpdate();
   const [usName, setUsName] = useState(userInfo?.profile.name);
   const [usEmail, setUsEmail] = useState(userInfo?.profile.email);
   const [usGender, setUsGender] = useState(userInfo?.profile.gender);
   const [usDob, setUsDob] = useState(new Date(userInfo?.profile.dob));
+  const [showImagePickerModal, setShowImagePickerModal] = useState(false);
 
   const handleUpdate = async () => {
     const selectedDay = document.getElementById("day").value;
@@ -28,6 +28,25 @@ function ModalComponent({ showModal, language, userInfo }) {
     });
 
     setShowUpdate(false);
+  };
+
+  const handleImageChange = async (event) => {
+    const file = event.target.files[0];
+    console.log(file);
+    if (!file) {
+      // Nếu không có file được chọn, không làm gì cả
+      return;
+    }
+
+    try {
+      // Gọi hàm updateAvatar để tải ảnh lên
+      await updateAvatar(userInfo.profile.id, file);
+    } catch (error) {
+      console.error(error);
+    }
+
+    // Sau khi xử lý xong, đóng modal chọn ảnh
+    setShowImagePickerModal(false);
   };
 
   return (
@@ -203,6 +222,7 @@ function ModalComponent({ showModal, language, userInfo }) {
                       <CiCamera
                         className="absolute bottom-3 right-0 border-spacing-4 rounded-full border-white bg-gray-300"
                         size={26}
+                        onClick={() => setShowImagePickerModal(true)}
                       />
                     </div>
                     <div className="flex items-center">
@@ -314,6 +334,28 @@ function ModalComponent({ showModal, language, userInfo }) {
         </div>
       </div>
       <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
+      {showImagePickerModal && (
+        <div className="fixed z-50 inset-0 overflow-y-auto flex items-center justify-center">
+          <div className="absolute inset-0 bg-black opacity-75"></div>
+          <div className="z-50 bg-white p-8 rounded-lg max-w-lg overflow-y-auto">
+            <img
+              className="rounded-full h-40 w-40 object-cover border-2 border-white mx-auto"
+              src={userInfo.profile?.avatar?.url || "public/zalo.svg"}
+              alt="avatar"
+            />
+            <h2 className="text-lg font-semibold mb-4">
+              Thay đổi ảnh đại diện
+            </h2>
+            <input type="file" accept="image/*" onChange={handleImageChange} />
+            <button
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg mt-4"
+              onClick={() => setShowImagePickerModal(false)}
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
