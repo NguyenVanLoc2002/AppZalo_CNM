@@ -221,8 +221,12 @@ exports.acceptRequestAddFriend = async (req, res) => {
     }
     user.friends.push(friendId);
     friend.friends.push(userId);
-    user.requestReceived = user.requestReceived.filter((id) => id.toString() !== friendId);
-    friend.requestSent = friend.requestSent.filter((id) => id.toString() !== userId);
+    user.requestReceived = user.requestReceived.filter(
+      (id) => id.toString() !== friendId
+    );
+    friend.requestSent = friend.requestSent.filter(
+      (id) => id.toString() !== userId
+    );
     await user.save();
     await friend.save();
     const reciverSocketId = getReciverSocketId(friendId);
