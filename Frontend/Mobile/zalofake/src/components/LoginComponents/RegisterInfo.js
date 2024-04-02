@@ -8,31 +8,15 @@ import {
   Modal,
   StyleSheet,
   ActivityIndicator,
-  TouchableOpacity,
-  ScrollView
+  TouchableOpacity, FlatList,
 } from "react-native";
 import { CheckBox } from "react-native-elements";
 import CountryDropdown from "./CountryDropdown";
 import Toast from "react-native-toast-message";
 import { FontAwesome5 } from "@expo/vector-icons";
 import OTPTextView from 'react-native-otp-textinput';
-// import DateTimePicker from "@react-native-community/datetimepicker";
-const showToastSuccess = (notice) => {
-  Toast.show({
-    text1: notice,
-    type: "success",
-    topOffset: 0,
-    position: "top",
-  });
-};
-const showToastError = (notice) => {
-  Toast.show({
-    text1: notice,
-    type: "error",
-    topOffset: 0,
-    position: "top",
-  });
-};
+import useRegister from "../../hooks/useRegister";
+
 
 const RegisterInfo = ({ navigation, route }) => {
   const [isCheckedUse, setIsCheckedUse] = useState(false);
@@ -49,60 +33,78 @@ const RegisterInfo = ({ navigation, route }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showRetypePassword, setShowRetypePassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
   const [timeLeft, setTimeLeft] = useState(60);
   const [isCounting, setIsCounting] = useState(false);
   const [otp, setOtp] = useState('');
   const { name } = route.params;
-  // const [dateOfBirth, setDateOfBirth] = useState(new Date() );
-  // const [date, setDate] = useState(new Date());
-  // const [showDate, setShowDate] = useState(false);
-  // const [dateToShow, setDateToShow] = useState(formatTimeDOB(new Date()));
+  const currentDate = new Date();
+  const currentDay = currentDate.getDate();
+  const currentMonth = currentDate.getMonth() + 1;
+  const currentYear = currentDate.getFullYear();
 
-  // const onChange = (event, selectedDate) => {
-  //   if (event.type === "dismissed") {
-  //     hideDatePicker();
-  //     return;
-  //   }
-  //   const currentDate = selectedDate || date;
-  //   setShowDate(false);
-  //   setDate(currentDate);
-  //   setDateOfBirth(currentDate);
-  //   setDateToShow(formatTimeDOB(currentDate));
-  // };
-  // const showDatepicker = () => {
-  //   setShowDate(true);
-  // };
-  // const hideDatePicker = () => {
-  //   setShowDate(false);
-  // };
+  const [showModal, setShowModal] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(currentDay);
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [dob, setDob] = useState(new Date());
 
-  // function formatTimeDOB(time) {
-  //   const date = new Date(time);
-  //   const year = date.getFullYear();
-  //   const month = date.getMonth() + 1;
-  //   const day = date.getDate();
-  //   return `${day}/${month}/${year}`;
-  // }
+  const { showToastError, showToastSuccess, getOTP, verifyEmailAndRegister } =
+    useRegister();
 
+  // tiến hành gửi mã otp, nếu đã gửi sẽ hiển thị modal cho nhập email
+  const pressSendOTP = async (e) => {
+    const systemOTP = await getOTP(textEmail);
+    if (systemOTP) {
+      toggleModal();
+      setIsLoading(false);
+      handlesendAuthCode();
+    }
+  };
+  // tiến hành gửi lại mã otp, nếu đã gửi sẽ hiển thị modal cho nhập email
+  const pressPreSendOTP = async (e) => {
+    const systemOTP = await getOTP(textEmail);
+    if (systemOTP) {
 
+      setIsLoading(false);
+      setTimeLeft(60)
+      SendTime();
+    }
+  };
+  // xác thực email và tiến hành đăng ký
+  const handleSubmitEmail = async (e) => {
+    const response = await verifyEmailAndRegister(
+      textEmail,
+      otp,
+      textPhone,
+      name,
+      dob,
+      selectedGender,
+      textPW
+    );
+    if (response) {
+      toggleModalLogin();
+    }
+  };
+  // button khi nhấn vào xác nhận emai để gửi email
+  const handleXacNhan = async () => {
+    setIsLoading(true);
+    pressSendOTP()
+  };
 
-  // const checkDOB = (dob) => {
-  //   const currentDate = new Date();
-  //   if (currentDate.getFullYear() - dob.getFullYear() < 16) {
-  //     return false;
-  //   }
-  //   return true;
-  // };
+  const handlesendAuthCode = async (e) => {
+    toggleModalAuthCode();
+    setTimeLeft(60)
+    SendTime();
+  };
 
-
-
-  
   const handleOTPChange = (enteredOtp) => {
     setOtp(enteredOtp);
   };
+  // kiểm tra otp có đầy đủ không
   const handleVerifyOTP = () => {
     if (otp.length === 6) {
-      showToastSuccess("ok" + otp);
+      handleSubmitEmail()
     } else {
       showToastError("Hãy nhập đủ mã xác thực");
     }
@@ -202,8 +204,8 @@ const RegisterInfo = ({ navigation, route }) => {
     ) {
       showToastError("MK chứa ít nhất 1 chữ,1 số,1 ký tự đặc biệt");
     }
-    else if (!checkDOB(selectedDate)) {
-      showToastError(selectedDate + "Bạn phải trên 16 tuổi để đăng ký tài khoản");
+    else if (!checkDOB(dob)) {
+      showToastError(dob + "Bạn phải trên 16 tuổi để đăng ký tài khoản");
     } else if (!(textPW === textRetypePW)) {
       showToastError("Vui lòng nhập xác nhận mật khẩu trùng khớp");
     } else if (!isCheckedInter || !isCheckedUse) {
@@ -215,12 +217,8 @@ const RegisterInfo = ({ navigation, route }) => {
     }
   };
 
-  const handleXacNhan = async () => {
-    toggleModal();
-    setIsLoading(true);
-    handlesendAuthCode();
-    setIsLoading(false);
-  };
+
+
 
   const handleXacNhanLogin = () => {
     toggleModalLogin();
@@ -243,51 +241,128 @@ const RegisterInfo = ({ navigation, route }) => {
     setTextRetypePW(input);
   };
 
-  const handleCheckAuth = () => {
-    if (inputs.some((value) => value === "")) {
-      showToastError("Vui lòng nhập đủ mã xác thực");
-    }
-    else {
-      showToastSuccess("Xác thực thành công");
-      toggleModalAuthCode();
-    }
-  }
 
-  const handleSubmit = async (e) => {
-    handleCheckAuth()
-    // await axiosInstance
-    //   .post("/auth/register", {
-    //     phone: textPhone,
-    //     email:textEmail,
-    //     password: textPW,
-    //     name: name,
-    //     gender: selectedGender
-    //   })
-    //   .then((response) => {
-    //     setIsLoading(true);
-    //     toggleModalLogin();
-    //   })
-    //   .catch((error) => {
-    //     if (
-    //       error.response &&
-    //       (error.response.status === 400 ||
-    //         error.response.status === 409 ||
-    //         error.response.status === 500)
-    //     ) {
-    //       showToastError(error.response.data.message);
-    //       setIsLoading(false);
-    //     } else {
-    //       setIsLoading(false);
-    //       showToastError("Lỗi");
-    //     }
-    //   });
 
+
+
+  // date of birth
+  const flatlistRefs = {
+    day: useRef(null),
+    month: useRef(null),
+    year: useRef(null),
   };
 
-  const handlesendAuthCode = async (e) => {
-    toggleModalAuthCode();
-    SendTime();
 
+  const handleDateSelect = () => {
+    const temp = new Date();
+    temp.setDate(selectedDate)
+    temp.setMonth(selectedMonth - 1)
+    temp.setFullYear(selectedYear)
+    setDob(temp)
+    setShowModal(false);
+  };
+
+
+  const getItemLayout = (data, index) => ({
+    length: 40,
+    offset: 40 * index,
+    index,
+  });
+
+  const scrollToIndex = (ref, index) => {
+    if (index >= 0 && index < ref.current.props.data.length) {
+      ref.current.scrollToIndex({ animated: true, index: index });
+    }
+  };
+
+
+
+
+  const renderDatePicker = () => {
+    const days = Array.from({ length: 31 }, (_, i) => i + 1);
+    const months = Array.from({ length: 12 }, (_, i) => i + 1);
+    const years = Array.from({ length: 122 }, (_, i) => 2024 - i); // Cần điều chỉnh năm tối thiểu tùy theo nhu cầu
+
+
+    return (
+      <Modal visible={showModal} transparent={true} animationType="slide">
+        <View style={styles.modalContainer1}>
+          <View style={styles.modalContent1}>
+            <TouchableOpacity style={styles.closeButton} onPress={() => setShowModal(false)}>
+              <Text style={styles.closeButtonText}>Đóng</Text>
+            </TouchableOpacity>
+            <View style={styles.dateContainer}>
+              <FlatList
+                ref={flatlistRefs.day}
+                data={days}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[styles.dateItem, item === selectedDate && styles.selectedItem]}
+                    onPress={() => {
+                      setSelectedDate(item);
+                      scrollToIndex(flatlistRefs.day, item - 1);
+                    }}>
+                    <Text>{item}</Text>
+                  </TouchableOpacity>
+                )}
+                keyExtractor={(item) => item.toString()}
+                numColumns={1} // Chỉ hiển thị một cột
+                contentContainerStyle={styles.flatlistContainer}
+                getItemLayout={getItemLayout}
+              />
+              <FlatList
+                ref={flatlistRefs.month}
+                data={months}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[styles.dateItem, item === selectedMonth && styles.selectedItem]}
+                    onPress={() => {
+                      setSelectedMonth(item);
+                      scrollToIndex(flatlistRefs.month, item - 1);
+                    }}>
+                    <Text>{item}</Text>
+                  </TouchableOpacity>
+                )}
+                keyExtractor={(item) => item.toString()}
+                numColumns={1} // Chỉ hiển thị một cột
+                contentContainerStyle={styles.flatlistContainer}
+                getItemLayout={getItemLayout}
+              />
+              <FlatList
+                ref={flatlistRefs.year}
+                data={years}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[styles.dateItem, item === selectedYear && styles.selectedItem]}
+                    onPress={() => {
+                      setSelectedYear(item);
+                      scrollToIndex(flatlistRefs.year, years.indexOf(item));
+                    }}>
+                    <Text>{item}</Text>
+                  </TouchableOpacity>
+                )}
+                keyExtractor={(item) => item.toString()}
+                numColumns={1} // Chỉ hiển thị một cột
+                contentContainerStyle={styles.flatlistContainer}
+                getItemLayout={getItemLayout}
+              />
+            </View>
+            <TouchableOpacity style={styles.confirmButton} onPress={handleDateSelect}>
+              <Text style={styles.confirmText}>Xác nhận</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+    );
+  };
+
+  const checkDOB = (dob) => {
+    const currentDate = new Date();
+    if (currentDate.getFullYear() - dob.getFullYear() < 16) {
+      return false;
+    }
+    return true;
   };
 
   return (
@@ -355,26 +430,15 @@ const RegisterInfo = ({ navigation, route }) => {
         </Pressable>
       </View>
       <View style={styles.inputContainer}>
-        {/* <Text style={styles.textGender}>Ngày sinh:</Text> */}
 
-        {/* {showDate && (
-              <DateTimePicker
-                value={dateOfBirth}
-                mode={"date"}
-                display="spinner"
-                onChange={onChange}
-              />
-            )}
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Enter your date of birth"
-              value={dateToShow}
-              onChangeText={(text) => setDateOfBirth(text)}
-              onFocus={showDatepicker}
-            /> */}
+        <Text style={styles.textGender}>Ngày sinh:</Text>
+        <TouchableOpacity style={styles.dateButton} onPress={() => setShowModal(true)}>
+          <Text>{selectedDate}/{selectedMonth}/{selectedYear}</Text>
+        </TouchableOpacity>
+        {renderDatePicker()}
 
       </View>
- 
+
 
 
       <View style={styles.radioRow}>
@@ -447,7 +511,12 @@ const RegisterInfo = ({ navigation, route }) => {
                 <Text style={styles.modalButton}>HỦY</Text>
               </Pressable>
               <Pressable onPress={handleXacNhan}>
-                <Text style={styles.modalButton}>XÁC NHẬN</Text>
+
+                {isLoading ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text style={styles.modalButton}>XÁC NHẬN</Text>
+                )}
               </Pressable>
             </View>
           </View>
@@ -480,6 +549,7 @@ const RegisterInfo = ({ navigation, route }) => {
                 <Text style={{ fontWeight: "bold", color: "#000", marginTop: 10 }}>
                   Đang gửi mã xác thực đến email: {maskedEmail}
                 </Text>
+
               </View>
               <View style={{ flex: 1, padding: 10 }}>
                 <View style={styles.otpContainer}>
@@ -500,9 +570,9 @@ const RegisterInfo = ({ navigation, route }) => {
                     marginBottom: 20,
                   }}
                 >
-                  <Text style={{ fontWeight: "bold", color: "#888" }}>
+                  <Pressable onPress={pressPreSendOTP}><Text style={{ fontWeight: "bold", color: "#888" }}>
                     Gửi lại mã <Text style={{ color: "#0091FF" }}>{timeLeft === 0 ? "0:0" : formatTime(timeLeft)}</Text>
-                  </Text>
+                  </Text></Pressable>
                 </View>
                 <View style={{ justifyContent: "center", alignItems: "center" }}>
                   <Pressable
@@ -611,6 +681,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
+
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -620,6 +691,7 @@ const styles = StyleSheet.create({
     width: 300,
     padding: 20,
     borderRadius: 10,
+
   },
   modalHeaderText: {
     fontWeight: "bold",
@@ -695,6 +767,47 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 20,
     marginHorizontal: 5,
+  },
+  dateButton: {
+    borderWidth: 1,
+    padding: 10,
+    borderRadius: 5,
+  },
+  modalContainer1: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Màu nền mờ
+  },
+  modalContent1: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    height: '40%',
+  },
+  closeButton: {
+    padding: 20,
+    alignItems: 'flex-end'
+  },
+  closeButtonText: {
+    color: 'blue',
+    fontSize: 16,
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    height: '40%',
+  },
+  dateItem: {
+    padding: 10,
+    borderWidth: 1,
+    borderRadius: 5,
+    borderColor: '#ccc',
+    marginHorizontal: 5,
+
+  },
+  selectedItem: {
+    backgroundColor: 'lightblue', // Màu nền khi được chọn
   },
 
 });
