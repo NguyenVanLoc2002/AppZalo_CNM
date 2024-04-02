@@ -1,17 +1,18 @@
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
 
 const User = require("../models/User");
 const Session = require("../models/Session");
 const {
   generateAccessToken,
   generateRefreshToken,
+  getUserIdFromToken,
 } = require("../utils/generateToken.utils");
 const { io, getReciverSocketId } = require("../socket/socket.io");
 const { generatorTOTP } = require("../utils/generateOTP.utils");
 const sendMail = require("../utils/mailer.utils");
 
 const mail_templete = require("../public/resources/html-templete");
+const hashPassword = require("../utils/hashPassword.utils");
 
 const createOrUpdateSession = async (
   user_id,
@@ -109,10 +110,6 @@ exports.registerUser = async (req, res) => {
     return res.status(409).json({ message: "Email already exists" });
   }
 
-  const hashPassword = async (password) => {
-    return bcrypt.hashSync(password, bcrypt.genSaltSync(10));
-  };
-
   const formatDOB = dob && typeof dob === "string" ? new Date(dob) : dob;
   try {
     const user = await User.create({
@@ -153,9 +150,6 @@ exports.resetPassword = async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found" });
-    const hashPassword = async (password) => {
-      return bcrypt.hashSync(password, bcrypt.genSaltSync(10));
-    };
     user.password = await hashPassword(newPassword);
     await user.save();
     res.status(200).json({ message: "Password reset successfully" });
@@ -163,6 +157,28 @@ exports.resetPassword = async (req, res) => {
     res
       .status(400)
       .json({ message: "Can't reset password now, please try again !" });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  const token = req.headers.authorization.split(" ")[1];
+  const userId = getUserIdFromToken(token);
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (await user.matchPassword(oldPassword)) {
+      user.password = await hashPassword(newPassword);
+      await user.save();
+      res.status(200).json({ message: "Password changed successfully" });
+    } else {
+      res.status(401).json({ message: "Invalid old password" });
+    }
+  } catch (error) {
+    res
+      .status(400)
+      .json({ message: "Can't change password now, please try again !" });
   }
 };
 
@@ -179,7 +195,6 @@ exports.refreshToken = async (req, res) => {
       user.user_id,
       user.phone
     );
-    console.log("token is refreshed!");
     return res.status(200).json({
       newAccessToken,
     });
