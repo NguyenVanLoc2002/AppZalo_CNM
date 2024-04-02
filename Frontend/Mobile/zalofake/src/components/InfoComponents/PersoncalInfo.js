@@ -182,7 +182,7 @@ const PersonalInfo = ({ navigation }) => {
               <Text style={{ color: 'white', marginBottom: 15, fontSize: 20, fontWeight: 'bold' }}>Chỉnh sửa thông tin</Text>
             </View>
             <View style={{ display: 'flex', padding: 20, flexDirection: 'row', height: '25%'}}>
-              <Pressable onPress={() => setModalVisible(true)} >
+              <Pressable>
                 <Image
                   source={{
                     uri: authUser?.profile?.avatar?.url,
