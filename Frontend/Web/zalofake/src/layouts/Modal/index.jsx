@@ -3,18 +3,19 @@ import { CiEdit, CiCamera } from "react-icons/ci";
 import useUpdate from "../../hooks/useUpdate";
 
 function ModalComponent({ showModal, language, userInfo }) {
+  const [loadingImage, setLoadingImage] = useState(false);
+
   const [showUpdate, setShowUpdate] = useState(false);
   const { updateProfile, updateAvatar, loading } = useUpdate();
   const [usName, setUsName] = useState(userInfo?.profile.name);
   const [usEmail, setUsEmail] = useState(userInfo?.email);
   const [usGender, setUsGender] = useState(userInfo?.profile.gender);
   const [usDob, setUsDob] = useState(new Date(userInfo?.profile.dob));
-<<<<<<< HEAD:Frontend/Web/zalofake/src/layouts/Modal/insex.jsx
   const [showImagePickerModal, setShowImagePickerModal] = useState(false);
-=======
   const background = userInfo?.profile.background?.url || "./zalo.svg";
-  const avatar = userInfo?.profile.avatar?.url || "./zalo.svg";
->>>>>>> 6dacaca926d2a7327893bb50b693a7870b430608:Frontend/Web/zalofake/src/layouts/Modal/index.jsx
+  const [avatar, setAvatar] = useState(
+    userInfo?.profile.avatar?.url || "./zalo.svg"
+  );
 
   const handleUpdate = async () => {
     const selectedDay = document.getElementById("day").value;
@@ -35,23 +36,27 @@ function ModalComponent({ showModal, language, userInfo }) {
     setShowUpdate(false);
   };
 
-  const handleImageChange = async (event) => {
-    const file = event.target.files[0];
-    console.log(file);
-    if (!file) {
-      // Nếu không có file được chọn, không làm gì cả
-      return;
-    }
+  const accessToken = localStorage.getItem("accessToken");
 
+  const handleImageChange = async (event) => {
     try {
-      // Gọi hàm updateAvatar để tải ảnh lên
-      await updateAvatar(userInfo.profile.id, file);
+      setLoadingImage(true);
+      const file = event.target.files[0];
+      if (!file) return;
+
+      await updateAvatar(file, accessToken);
+
+      const avatarURL = URL.createObjectURL(file);
+      setAvatar(avatarURL);
+
+      await updateProfile(userInfo);
+      setShowImagePickerModal(false);
     } catch (error) {
       console.error(error);
+      // Xử lý lỗi nếu có
+      // Hiển thị thông báo lỗi cho người dùng
     }
-
-    // Sau khi xử lý xong, đóng modal chọn ảnh
-    setShowImagePickerModal(false);
+    setLoadingImage(false);
   };
 
   return (
@@ -341,7 +346,7 @@ function ModalComponent({ showModal, language, userInfo }) {
           <div className="z-50 bg-white p-8 rounded-lg max-w-lg overflow-y-auto">
             <img
               className="rounded-full h-40 w-40 object-cover border-2 border-white mx-auto"
-              src={userInfo.profile?.avatar?.url || "public/zalo.svg"}
+              src={avatar}
               alt="avatar"
             />
             <h2 className="text-lg font-semibold mb-4">
@@ -351,8 +356,9 @@ function ModalComponent({ showModal, language, userInfo }) {
             <button
               className="bg-blue-500 text-white px-4 py-2 rounded-lg mt-4"
               onClick={() => setShowImagePickerModal(false)}
+              disabled={loadingImage}
             >
-              Đóng
+              {loadingImage ? "Đang tải..." : "Đóng"}
             </button>
           </div>
         </div>
