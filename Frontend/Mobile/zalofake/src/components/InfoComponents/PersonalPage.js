@@ -1,14 +1,24 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Image, Pressable, TextInput, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  Pressable,
+  TextInput,
+  ScrollView,
+} from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
+import { useAuthContext } from "../../contexts/AuthContext";
 
 const PersonalPage = ({ navigation }) => {
+  const { authUser } = useAuthContext();
+
   const [status, setStatus] = useState("");
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <View style={{ flexDirection: "row", paddingHorizontal:5 }}>
+        <View style={{ flexDirection: "row", paddingHorizontal: 5 }}>
           <Pressable style={{ paddingHorizontal: 8 }}>
             <Ionicons name="sync-circle-outline" size={24} color="white" />
           </Pressable>
@@ -44,17 +54,25 @@ const PersonalPage = ({ navigation }) => {
     <ScrollView style={{ backgroundColor: "#f1f2f6", flex: 1 }}>
       <View style={{ alignItems: "center" }}>
         <Image
-          source={require("../../../assets/cover-image.png")}
+          source={{
+            uri:
+              authUser?.profile?.avatar?.url ||
+              "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+          }}
           style={{ width: "100%", height: 160 }}
         />
         <Image
-          source={require("../../../assets/avata-story-3.png")}
+          source={{
+            uri:
+              authUser?.profile?.avatar?.url ||
+              "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+          }}
           style={{ width: 96, height: 96, marginTop: -48, borderRadius: 48 }}
         />
       </View>
       <View style={{ alignItems: "center" }}>
         <Text style={{ fontWeight: "bold", fontSize: 24, marginBottom: 8 }}>
-          Min Nguyên
+          {authUser.profile?.name}
         </Text>
         <Pressable
           style={{
@@ -247,7 +265,7 @@ const PersonalPage = ({ navigation }) => {
             </View>
           </View>
         </View>
-        
+
         {/* Code cho status thứ hai */}
       </View>
     </ScrollView>
