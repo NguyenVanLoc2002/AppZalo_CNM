@@ -2,7 +2,7 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 
-import Chat from "../components/ChatComponents/chat/Chat";
+import Chat from "../components/ChatComponents/Chat/Chat";
 import News from "../components/NewsComponents/News";
 import DirectoryComponents from "../components/DirectoryComponents/DirectoryComponents";
 import Info from "../components/InfoComponents/Info";
