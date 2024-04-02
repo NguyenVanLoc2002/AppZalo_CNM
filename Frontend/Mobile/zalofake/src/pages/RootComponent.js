@@ -2,26 +2,26 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import RegisterName from "../components/LoginComponents/RegisterName";
 import RegisterInfo from "../components/LoginComponents/RegisterInfo";
-import EnterAuthCode from "../components/LoginComponents/EnterAuthCode";
 import Login from "../components/LoginComponents/Login";
 import { useAuthContext } from "../contexts/AuthContext";
 
-import SearchFriends from "../components/ChatComponents/searchFriends/SearchFriends";
-import Message from "../components/ChatComponents/message/Message";
-import FriendProfileSettings from "../components/ChatComponents/friendProfile/FriendProfileSettings";
-import MessageSettings from "../components/ChatComponents/message/MessageSettings";
-import FriendProfile from "../components/ChatComponents/friendProfile/FriendProfile";
+import SearchFriends from "../components/ChatComponents/SearchFriends/SearchFriends";
+import Message from "../components/ChatComponents/Message/Message";
+import FriendProfileSettings from "../components/ChatComponents/FriendProfile/FriendProfileSettings";
+import MessageSettings from "../components/ChatComponents/Message/MessageSettings";
+import FriendProfile from "../components/ChatComponents/FriendProfile/FriendProfile";
 import AddFriends from "../components/ChatComponents/AddFriends";
 import CreateGroup from "../components/ChatComponents/CreateGroup";
 import LoginMain from "../components/LoginComponents/LoginMain";
 import MainComponent from "../pages/MainComponent";
-import Chat from "../components/ChatComponents/chat/Chat";
+import Chat from "../components/ChatComponents/Chat/Chat";
 import Info from "../components/InfoComponents/Info";
 import News from "../components/NewsComponents/News";
 import Notice from "../components/NewsComponents/Notice";
 import PostStatus from "../components/NewsComponents/PostStatus";
 import PersonalPage from "../components/InfoComponents/PersonalPage";
 import PersonalDetail from "../components/InfoComponents/PersonalDetail";
+import PersonalInfo from "../components/InfoComponents/PersoncalInfo";
 import PersonalPrivacy from "../components/InfoComponents/PersonalPrivacy";
 import AccountVsSecurity from "../components/InfoComponents/AccoutVsSecurity";
 import PersonalSetting from "../components/InfoComponents/PersonalSetting";
@@ -61,6 +61,7 @@ export default function RootComponent() {
       <Stack.Screen name="PersonalPage" component={PersonalPage} />
       <Stack.Screen name="PersonalDetail" component={PersonalDetail} />
       <Stack.Screen name="PersonalPrivacy" component={PersonalPrivacy} />
+      <Stack.Screen name="PersonalInfo" component={PersonalInfo} />
       <Stack.Screen name="AccountVsSecurity" component={AccountVsSecurity} />
       <Stack.Screen name="PersonalSetting" component={PersonalSetting} />
     </Stack.Navigator>
@@ -94,17 +95,7 @@ export default function RootComponent() {
           title: "Tạo tài khoản",
         }}
       />
-      <Stack.Screen
-        name="EnterAuthCode"
-        component={EnterAuthCode}
-        options={{
-          headerStyle: {
-            backgroundColor: "#0091FF",
-          },
-          headerTintColor: "#fff",
-          title: "Nhập mã xác thực",
-        }}
-      />
+
       <Stack.Screen
         name="Login"
         component={Login}
