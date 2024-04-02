@@ -4,9 +4,8 @@ import { useAuthContext } from "./contexts/AuthContext";
 import Login from "./page/Login";
 import LoginForm from "./components/LoginComponents/LoginForm";
 import Register from "./components/LoginComponents/Register";
-import FogotPassword from "./components/LoginComponents/FogotPassword";
+import ForgotPassword from "./components/LoginComponents/ForgotPassword";
 import MainLayout from "./page/MainLayout";
-import { Toaster } from "react-hot-toast";
 
 const App = () => {
   const { authUser } = useAuthContext();
@@ -23,10 +22,9 @@ const App = () => {
         >
           <Route index element={<LoginForm />} />
           <Route path="register" element={<Register />} />
-          <Route path="forgot" element={<FogotPassword />} />
+          <Route path="forgot" element={<ForgotPassword />} />
         </Route>
       </Routes>
-      <Toaster />
     </>
   );
 };
