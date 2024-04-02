@@ -6,6 +6,7 @@ const { Schema } = mongoose;
 const userSchema = new Schema({
   phone: { type: String, unique: true, required: true },
   password: { type: String, required: true }, 
+  email: { type: String, unique: true, required: true},
   profile:{
     avatar: { 
       url: { type: String },
@@ -17,7 +18,7 @@ const userSchema = new Schema({
     },
     name: { type: String, required: true },
     gender:{ type: String, enum: ['male', 'female', 'other'] },
-    dob:{type: Date},
+    dob:{type: Date}
   },
   gmail:{type:String, require: true},
   friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'users' }],
