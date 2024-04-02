@@ -6,6 +6,8 @@ import { CiFilter } from "react-icons/ci";
 import { faker } from "@faker-js/faker";
 import { IoIosMore } from "react-icons/io";
 
+import axiosInstance from "../../../api/axiosInstance";
+
 function FriendListComponent({ language }) {
   const [friendList, setFriendList] = useState([]);
   const [sortDirection, setSortDirection] = useState("asc");
@@ -13,14 +15,29 @@ function FriendListComponent({ language }) {
   var newFriendList = [];
 
   useEffect(() => {
-    for (let i = 0; i < 20; i++) {
-      newFriendList.push({
-        id: faker.string.uuid(),
-        name: faker.internet.userName(),
-        avatar: faker.image.avatar(),
-      });
-    }
-    setFriendList(newFriendList);
+    // for (let i = 0; i < 20; i++) {
+    //   newFriendList.push({
+    //     id: faker.string.uuid(),
+    //     name: faker.internet.userName(),
+    //     avatar: faker.image.avatar(),
+    //   });
+    // }
+
+    const getFriends = async () => {
+      try {
+        const response = await axiosInstance.get("users/get/friends");
+        const newFriendList = response.data.friends.map((friend) => ({
+          id: friend.userId,
+          name: friend.profile.name,
+          avatar: friend.profile.avatar.url ?? "/zalo.svg",
+          unread: faker.datatype.boolean(),
+        }));
+        setFriendList(newFriendList);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    getFriends();
   }, []);
   return (
     <>
