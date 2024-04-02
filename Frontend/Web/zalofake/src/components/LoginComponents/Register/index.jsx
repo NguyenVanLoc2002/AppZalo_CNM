@@ -2,14 +2,23 @@ import { MdEmail, MdPhoneIphone } from "react-icons/md";
 import { toast, Toaster } from "react-hot-toast";
 
 import { useState } from "react";
+import OtpInput from "react-otp-input";
 import { Link, useOutletContext } from "react-router-dom";
 import { IoEyeOff, IoEye } from "react-icons/io5";
-import axiosInstance from "../../../api/axiosInstance";
+import { FaCheckCircle } from "react-icons/fa";
+import useRegister from "../../../hooks/useRegister";
+import {
+  checkDOB,
+  checkEmail,
+  checkName,
+  checkPassword,
+  checkPhone,
+} from "../../../utils/validation";
 
 function Register() {
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
-  const [gmail, setGmail] = useState("");
+  const [email, setEmail] = useState("");
   const [gender, setGender] = useState("male");
   const [dob, setDob] = useState(new Date());
   const langue = useOutletContext();
@@ -21,16 +30,11 @@ function Register() {
   const [isCheckedInter, setIsCheckedInter] = useState(false);
 
   const [showModal, setShowModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [isRegister, setIsRegister] = useState(false);
   const [isSendOTP, setIsSendOTP] = useState(false);
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-
-  const handleOtpChange = (index, value) => {
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
-  };
+  const [otp, setOtp] = useState("");
+  const { isLoading, getOTP, verifyEmailAndRegister, isOTPVerified } =
+    useRegister();
 
   const openModal = () => {
     setShowModal(true);
@@ -52,55 +56,49 @@ function Register() {
   };
 
   const handlePressablePress = () => {
-    if (!/^[0-9]{8,20}$/.test(phone)) {
-      toast.error("Số điện thoại phải từ 8 đến 20 chữ số.");
-    } else if (!/^([a-zA-Zá-ỹÁ-Ỹ\s]{2,40})$/.test(name)) {
+    if (!checkPhone(phone)) {
+      toast.error("Số điện thoại phải từ 10 đến 11 chữ số.");
+    } else if (!checkName(name)) {
       toast.error("Vui lòng nhập tên là chữ và ít nhất 2 kí tự chữ");
-    } else if (!/^[A-Za-z\d@$!%*?&#]{6,}$/.test(password)) {
+    } else if (!checkPassword(password)) {
       toast.error("Mật khẩu phải có ít nhất 6 ký tự");
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(gmail)) {
-      toast.error("Vui lòng nhập gmail hợp lệ");
-    } else if (
-      !/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{6,}$/.test(
-        password
-      )
-    ) {
+    } else if (!checkEmail(email)) {
+      toast.error("Vui lòng nhập email hợp lệ");
+    } else if (!checkPassword(password)) {
       toast.error("MK chứa ít nhất 1 chữ,1 số,1 ký tự đặc biệt");
     } else if (!(password === confirmPassword)) {
       toast.error("Vui lòng nhập xác nhận mật khẩu trùng khớp");
     } else if (!isCheckedInter || !isCheckedUse) {
       toast.error("Vui lòng chấp nhận các điều khoản");
+    } else if (!checkDOB(dob)) {
+      toast.error("Bạn phải trên 16 tuổi để đăng ký tài khoản");
     } else {
       setIsRegister(true);
     }
   };
 
+  const pressSendOTP = async (e) => {
+    e.preventDefault();
+    const systemOTP = await getOTP(email);
+    if (systemOTP) {
+      setIsRegister(false);
+      setIsSendOTP(true);
+    }
+  };
+
   const handleSubmit = async (e) => {
-    setIsLoading(true);
-    try {
-      const response = await axiosInstance.post("/auth/register", {
-        phone: phone,
-        password: password,
-        name: name,
-        gender: gender,
-        dob: dob,
-        gmail: gmail,
-      });
+    e.preventDefault();
+    const response = await verifyEmailAndRegister(
+      email,
+      otp,
+      phone,
+      name,
+      dob,
+      gender,
+      password
+    );
+    if (response) {
       openModal();
-      setIsLoading(false);
-    } catch (error) {
-      if (
-        error.response &&
-        (error.response.status === 400 ||
-          error.response.status === 409 ||
-          error.response.status === 500)
-      ) {
-        toast.error(error.response.data.message);
-        setIsLoading(false);
-      } else {
-        toast.error("Đã xảy ra lỗi");
-        setIsLoading(false);
-      }
     }
   };
 
@@ -122,8 +120,6 @@ function Register() {
     const visiblePart = firstPart.substring(0, 2);
     return visiblePart + hiddenPart + email.substring(atIndex);
   };
-
-  console.log(isSendOTP);
 
   return (
     <>
@@ -173,14 +169,8 @@ function Register() {
               <span>
                 <MdPhoneIphone size={16} color="#555555" />
               </span>
-              <select className="select focus:border-none focus:outline-none">
-                <option defaultValue={""}>+84</option>
-                <option>+1</option>
-                <option>+2</option>
-                <option>+3</option>
-                <option>+4</option>
-                <option>+5</option>
-              </select>
+
+              <span className="ml-3">+84</span>
               <input
                 className="rounded w-full py-1 px-3 border-none
                 text-gray-700 focus:outline-none focus:shadow-outline"
@@ -264,17 +254,17 @@ function Register() {
               )}
             </div>
 
-            {/* gmail */}
+            {/* email */}
             <div className="my-6 flex items-center border-b">
               <input
                 className=" ml-3 rounded w-full py-1 px-3 border-none
                 text-gray-700 focus:outline-none focus:shadow-outline"
-                id="gmail"
+                id="email"
                 type="text"
-                placeholder={langue == "vi" ? "Gmail" : "Gmail"}
-                value={gmail}
+                placeholder={langue == "vi" ? "email" : "email"}
+                value={email}
                 onChange={(e) => {
-                  setGmail(e.target.value);
+                  setEmail(e.target.value);
                 }}
               />
             </div>
@@ -381,7 +371,7 @@ function Register() {
                   password.length === 0 ||
                   name.length === 0 ||
                   confirmPassword === 0 ||
-                  gmail.length === 0 ||
+                  email.length === 0 ||
                   gender.length === 0 ||
                   dob.length === 0 ||
                   !isCheckedInter ||
@@ -399,75 +389,103 @@ function Register() {
                 ) : (
                   "Register"
                 )}
-              
               </button>
               {isRegister && (
-                  <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2/5 h-[60%] bg-white rounded-lg shadow-lg text-black text-center">
-                    <div className="flex-row items-center justify-center p-4 mt-10 text-base font-semibold h-[10%] ">
-                      <p>Xác nhận email:</p>
-                      <p>{hideEmail(gmail)}</p>
+                <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2/5 h-[60%] bg-white rounded-lg shadow-lg text-black text-center">
+                  <div className="flex-row items-center justify-center p-4 mt-10 text-base font-semibold h-[10%] ">
+                    <p>Xác nhận email:</p>
+                    <p>{hideEmail(email)}</p>
+                  </div>
+                  <div className="flex-col flex items-center justify-center p-4 mt-10 text-base  h-[20%] ">
+                    <p>Email này sẽ được dùng để gửi mã xác thực</p>
+                    <div>
+                      {isLoading && (
+                        <span className="loading loading-spinner "></span>
+                      )}
                     </div>
-                    <div className="flex items-center justify-center p-4 mt-10 text-base  h-[20%] ">
-                      <p>Email này sẽ được dùng để gửi mã xác thực</p>
+                  </div>
+                  <div className="flex items-center justify-end p-4 mt-10 text-base absolute inset-x-0 bottom-0 h-16 ">
+                    <button
+                      className=" font-semibold text-cyan-500 mr-10"
+                      onClick={() => setIsRegister(false)}
+                    >
+                      {langue == "vi" ? "Hủy" : "Cancel"}
+                    </button>
+                    <button
+                      className="font-semibold text-cyan-500 mr-2"
+                      onClick={pressSendOTP}
+                    >
+                      {langue == "vi" ? "Gửi OTP" : "Send OTP"}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {isSendOTP && (
+                <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2/5 h-[60%] bg-white rounded-lg shadow-lg text-black text-center">
+                  <div className="flex items-center justify-center p-4 mt-10 text-base font-semibold h-[10%] ">
+                    <MdEmail fontSize="100" />
+                  </div>
+
+                  <div className="flex-row items-center justify-center p-4 mt-10 text-base font-semibold h-[10%] ">
+                    <p>Đang gửi mã xác thực đến email:</p>
+                    <p>{hideEmail(email)}</p>
+                  </div>
+                  <div className="flex items-center justify-center p-4 mt-10 text-base font-semibold  overflow-hidden">
+                    <OtpInput
+                      value={otp}
+                      onChange={setOtp}
+                      numInputs={6}
+                      renderSeparator={<span>-</span>}
+                      renderInput={(props) => <input {...props} />}
+                      inputStyle={{
+                        width: "40px",
+                        height: "40px",
+                        margin: "0 5px",
+                        fontSize: "20px",
+                        borderRadius: "5px",
+                        border: "1px solid #ccc",
+                        textAlign: "center",
+                      }}
+                    />
+                  </div>
+                  {isOTPVerified ? (
+                    <div className="flex items-center justify-center p-4 mt-10 text-base font-semibold h-[10%] ">
+                      <FaCheckCircle size={20} color="#08bc08" />
+                      <p className="ml-5">
+                        {langue == "vi"
+                          ? "Đã Xác thực mã OTP, đang xử lý đăng ký"
+                          : "OTP verified, processing registration"}
+                      </p>
                     </div>
-                    <div className="flex items-center justify-end p-4 mt-10 text-base absolute inset-x-0 bottom-0 h-16 ">
-                      <button
-                        className=" font-semibold text-cyan-500 mr-10"
-                        value={isRegister}
-                        onClick={() => setIsRegister(false)}
-                      >
-                        {langue == "vi" ? "Hủy" : "Cancel"}
-                      </button>
+                  ) : (
+                    <div className="flex items-center justify-center p-4 mt-10 text-base font-semibold h-[10%] ">
                       <button
                         className="font-semibold text-cyan-500 mr-2"
-                        value={isSendOTP}
-                        onClick={() => {
-                          setIsRegister(false);
-                          setIsSendOTP(true);
-                        }}
+                        onClick={pressSendOTP}
                       >
-                        {langue == "vi" ? "Xác nhận" : "Submit"}
+                        {langue == "vi" ? "Gửi lại OTP" : "Resend OTP"}
                       </button>
                     </div>
+                  )}
+                  <div className="flex items-center justify-end p-4 mt-10 text-base absolute inset-x-0 bottom-0 h-16 ">
+                    <button
+                      className=" font-semibold text-cyan-500 mr-10"
+                      // value={isSendOTP}
+                      onClick={() => {
+                        setIsSendOTP(false), setOtp("");
+                      }}
+                    >
+                      {langue == "vi" ? "Hủy" : "Cancel"}
+                    </button>
+                    <button
+                      className="font-semibold text-cyan-500 mr-2"
+                      onClick={handleSubmit}
+                    >
+                      {langue == "vi" ? "Xác nhận" : "Submit"}
+                    </button>
                   </div>
-                )}
-                {isSendOTP && (
-                  <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2/5 h-[60%] bg-white rounded-lg shadow-lg text-black text-center">
-                    <div className="flex items-center justify-center p-4 mt-10 text-base font-semibold h-[10%] ">
-                      <MdEmail fontSize="100" />
-                    </div>
-
-                    <div className="flex-row items-center justify-center p-4 mt-10 text-base font-semibold h-[10%] ">
-                      <p>Đang gửi mã xác thực đến email:</p>
-                      <p>{hideEmail(gmail)}</p>
-                    </div>
-                    <div className="flex items-center justify-center p-4 mt-10 text-base font-semibold  ">
-                      {otp.map((digit, index) => (
-                        <input
-                          key={index}
-                          value={digit}
-                          maxLength={1}
-                          className="w-10 h-10 border-2 rounded border-black mr-2 text-center"
-                          onChange={(e) =>
-                            handleOtpChange(index, e.target.value)
-                          }
-                        />
-                      ))}
-                    </div>
-                    <div className="flex items-center justify-end p-4 mt-10 text-base absolute inset-x-0 bottom-0 h-16 ">
-                      <button
-                        className=" font-semibold text-cyan-500 mr-10"
-                        value={isSendOTP}
-                        onClick={() => setIsSendOTP(false)}
-                      >
-                        {langue == "vi" ? "Hủy" : "Cancel"}
-                      </button>
-                      <button className="font-semibold text-cyan-500 mr-2">
-                        {langue == "vi" ? "Xác nhận" : "Submit"}
-                      </button>
-                    </div>
-                  </div>
-                )}
+                </div>
+              )}
               <Link
                 className="block hover:underline hover:text-blue-400 text-gray-700 my-3"
                 to={"/"}
