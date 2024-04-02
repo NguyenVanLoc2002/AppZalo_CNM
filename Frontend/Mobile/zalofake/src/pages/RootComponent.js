@@ -26,6 +26,7 @@ import PersonalPrivacy from "../components/InfoComponents/PersonalPrivacy";
 import AccountVsSecurity from "../components/InfoComponents/AccoutVsSecurity";
 import PersonalSetting from "../components/InfoComponents/PersonalSetting";
 import ChangePassword from "../components/InfoComponents/ChangePassword";
+import ForgotPassword from "../components/LoginComponents/ForgotPassword";
 
 const Stack = createNativeStackNavigator();
 
@@ -66,6 +67,7 @@ export default function RootComponent() {
       <Stack.Screen name="AccountVsSecurity" component={AccountVsSecurity} />
       <Stack.Screen name="PersonalSetting" component={PersonalSetting} />
       <Stack.Screen name="ChangePassword" component={ChangePassword} />
+      
     </Stack.Navigator>
   ) : (
     <Stack.Navigator initialRouteName="LoginMain">
@@ -109,6 +111,17 @@ export default function RootComponent() {
           title: "Đăng nhập",
         }}
       />
+       <Stack.Screen 
+       name="ForgotPassword" 
+       component={ForgotPassword}
+       options={{
+        headerStyle: {
+          backgroundColor: "#0091FF",
+        },
+        headerTintColor: "#fff",
+        title: "Lấy lại mật khẩu", 
+        }} />
+       
     </Stack.Navigator>
   );
 }

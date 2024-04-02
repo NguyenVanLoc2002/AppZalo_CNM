@@ -39,7 +39,7 @@ const Login = ({ navigation }) => {
   };
 
   const handleForgetPassword = () => {
-    console.log("Forget password");
+    navigation.navigate("ForgotPassword")
   };
 
   useEffect(() => {
