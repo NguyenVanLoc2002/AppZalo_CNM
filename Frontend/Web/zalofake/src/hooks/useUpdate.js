@@ -7,10 +7,7 @@ const useUpdate = () => {
   const [loading, setLoading] = useState(false);
   const { setAuthUser } = useAuthContext();
 
-  // const authToken = JSON.parse(localStorage.getItem("accessToken"));
-
-  const updateAvatar = async (file) => {
-    // console.log(userId);
+  const updateAvatar = async (file, authToken) => {
     setLoading(true);
     try {
       if (!authToken) {
@@ -18,7 +15,6 @@ const useUpdate = () => {
       }
 
       const formData = new FormData();
-      // formData.append("userId", userId);
       formData.append("avatar", file);
 
       const response = await axiosInstance.post(
@@ -34,15 +30,9 @@ const useUpdate = () => {
 
       const { data, status } = response;
 
-      console.log("Response data:", data); // In ra dữ liệu từ phản hồi
-      console.log("Response status:", status); // In ra mã trạng thái của phản hồi
-
       if (status === 200) {
         const { avatar } = data;
         if (avatar) {
-          // Cập nhật thông tin người dùng với URL mới của avatar
-          // Cụ thể, bạn có thể cập nhật trường profile.avatar trong user object
-          // setAuthUser(user); // Thực hiện cập nhật thông tin người dùng sau khi cập nhật avatar thành công
           toast.success("Avatar updated successfully");
         } else {
           throw new Error("Failed to update avatar");
