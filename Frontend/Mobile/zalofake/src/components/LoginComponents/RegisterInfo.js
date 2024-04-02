@@ -13,7 +13,6 @@ import {
 import { CheckBox, Input } from "react-native-elements";
 import CountryDropdown from "./CountryDropdown";
 import Toast from "react-native-toast-message";
-import axiosInstance from "../../api/axiosInstance";
 import { FontAwesome5 } from "@expo/vector-icons";
 
 const showToastSuccess = (notice) => {
