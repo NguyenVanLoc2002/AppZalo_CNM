@@ -19,13 +19,11 @@ function ModalComponent({ showModal, language, userInfo }) {
 
     const selectedDate = new Date(selectedYear, selectedMonth, selectedDay);
 
-    const formattedDob = selectedDate.toISOString().split("T")[0];
-
     await updateProfile({
       name: usName,
       email: usEmail,
       gender: usGender,
-      dob: formattedDob,
+      dob: selectedDate,
     });
 
     setShowUpdate(false);
