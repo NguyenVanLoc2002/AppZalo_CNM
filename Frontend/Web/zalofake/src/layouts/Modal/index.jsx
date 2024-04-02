@@ -3,16 +3,21 @@ import { CiEdit, CiCamera } from "react-icons/ci";
 import useUpdate from "../../hooks/useUpdate";
 
 function ModalComponent({ showModal, language, userInfo }) {
+  const [showCoverPhotoModal, setShowCoverPhotoModal] = useState(false);
+  const [loadingBackground, setLoadingBackground] = useState(false);
+  const [background, setBackground] = useState(
+    userInfo?.profile.background?.url || "./zalo.svg"
+  );
   const [loadingImage, setLoadingImage] = useState(false);
 
   const [showUpdate, setShowUpdate] = useState(false);
-  const { updateProfile, updateAvatar, loading } = useUpdate();
+  const { updateProfile, updateAvatar, updateBackground, loading } =
+    useUpdate();
   const [usName, setUsName] = useState(userInfo?.profile.name);
   const [usEmail, setUsEmail] = useState(userInfo?.email);
   const [usGender, setUsGender] = useState(userInfo?.profile.gender);
   const [usDob, setUsDob] = useState(new Date(userInfo?.profile.dob));
   const [showImagePickerModal, setShowImagePickerModal] = useState(false);
-  const background = userInfo?.profile.background?.url || "./zalo.svg";
   const [avatar, setAvatar] = useState(
     userInfo?.profile.avatar?.url || "./zalo.svg"
   );
@@ -53,10 +58,26 @@ function ModalComponent({ showModal, language, userInfo }) {
       setShowImagePickerModal(false);
     } catch (error) {
       console.error(error);
-      // Xử lý lỗi nếu có
-      // Hiển thị thông báo lỗi cho người dùng
     }
     setLoadingImage(false);
+  };
+
+  const handleBackgroundChange = async (event) => {
+    try {
+      setLoadingBackground(true);
+      const file = event.target.files[0];
+      if (!file) return;
+
+      await updateBackground(file, accessToken);
+      const backgroundURL = URL.createObjectURL(file);
+      setBackground(backgroundURL);
+      await updateProfile(userInfo);
+      setShowCoverPhotoModal(false);
+    } catch (error) {
+      console.error(error);
+    }
+    setLoadingBackground(false);
+    return;
   };
 
   return (
@@ -217,6 +238,7 @@ function ModalComponent({ showModal, language, userInfo }) {
                   <img
                     src={background}
                     className="object-cover h-full w-full"
+                    onClick={() => setShowCoverPhotoModal(true)}
                   />
                 </div>
                 <div className="-mt-6 ">
@@ -359,6 +381,31 @@ function ModalComponent({ showModal, language, userInfo }) {
               disabled={loadingImage}
             >
               {loadingImage ? "Đang tải..." : "Đóng"}
+            </button>
+          </div>
+        </div>
+      )}
+      {showCoverPhotoModal && (
+        <div className="fixed z-50 inset-0 overflow-y-auto flex items-center justify-center">
+          <div className="absolute inset-0 bg-black opacity-75"></div>
+          <div className="z-50 bg-white p-8 rounded-lg max-w-lg overflow-y-auto">
+            <img
+              className="rounded-lg h-64 w-full object-cover border-2 border-white mx-auto"
+              src={background}
+              alt="background"
+            />
+            <h2 className="text-lg font-semibold mb-4">Thay đổi ảnh bìa</h2>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleBackgroundChange}
+            />
+            <button
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg mt-4"
+              onClick={() => setShowCoverPhotoModal(false)}
+              disabled={loadingBackground}
+            >
+              {loadingBackground ? "Đang tải..." : "Đóng"}
             </button>
           </div>
         </div>
