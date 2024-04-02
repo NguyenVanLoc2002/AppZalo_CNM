@@ -14,6 +14,7 @@ import {
   checkPassword,
   checkPhone,
 } from "../../../utils/validation";
+import apiConfig from "../../../api/config";
 
 function Register() {
   const [phone, setPhone] = useState("");
@@ -340,8 +341,8 @@ function Register() {
               />
               <span>
                 {langue == "vi"
-                  ? "Tôi đồng ý với các điều khoản sử dụng Zalo"
-                  : "I agree to the terms of use of Zalo"}
+                  ? "Tôi đồng ý với các điều khoản sử dụng Zola"
+                  : "I agree to the terms of use of Zola"}
               </span>
             </div>
 
@@ -356,9 +357,21 @@ function Register() {
               />
               <span>
                 {langue == "vi"
-                  ? "Tôi đồng ý với các điều khoản Mạng xã hội của Zalo"
-                  : "I agree to Zalo's Social Network terms"}
+                  ? "Tôi đồng ý với các điều khoản Mạng xã hội của Zola"
+                  : "I agree to Zola's Social Network terms"}
               </span>
+            </div>
+            <div className="my-6 flex items-center">
+              {/* link to terms page */}
+              <a
+                className="italic hover:underline hover:text-blue-400 text-gray-500"
+                href={apiConfig.baseURL + "/terms_of_service"}
+                target="_blank"
+              >
+                {langue == "vi"
+                  ? "Điều khoản sử dụng Zola ?"
+                  : "Zola's terms of use ?"}
+              </a>
             </div>
 
             <div>

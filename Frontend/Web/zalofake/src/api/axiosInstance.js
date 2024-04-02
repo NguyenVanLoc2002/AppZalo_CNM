@@ -50,7 +50,6 @@ axiosInstance.interceptors.response.use(
         console.error("Refresh token failed:", refreshError);
         toast.error("Your session has expired. Please login again.");
         localStorage.clear();
-        // window.location.href = "/login";
         return Promise.reject(refreshError);
       }
     }
