@@ -5,6 +5,7 @@ import { PiChatCircleText } from "react-icons/pi";
 
 function FriendRequestComponent({ language }) {
   const [friendRequests, setFriendRequests] = useState([]);
+  const [friendRecieved, setFriendRecieved] = useState([]);
 
   var newList = [];
 
