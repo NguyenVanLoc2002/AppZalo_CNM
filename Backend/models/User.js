@@ -20,7 +20,7 @@ const userSchema = new Schema({
     dob:{type: Date},
   },
   gmail:{type:String, require: true},
-  friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'users' }],
   groups: [{ type: mongoose.Schema.Types.ObjectId, ref: 'groups' }],
   status: { type: String, default: "active" }, 
   lastActive: { type: Date, default: Date.now },
@@ -33,6 +33,6 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 
 
 //create user model
-const User = mongoose.model("User", userSchema);
+const User = mongoose.model("users", userSchema);
 
 module.exports = User;
