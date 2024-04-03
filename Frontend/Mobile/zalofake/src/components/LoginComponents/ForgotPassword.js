@@ -8,12 +8,13 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
-  ActivityIndicator
+  ActivityIndicator,
+  ScrollView
 } from "react-native";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import useForgot from "../../hooks/useForgot";
 import OTPTextView from 'react-native-otp-textinput';
-
+import Toast from "react-native-toast-message";
 
 
 const ForgotPassword = ({ navigation }) => {
@@ -22,6 +23,7 @@ const ForgotPassword = ({ navigation }) => {
   const [modalOTP, setModalOTP] = useState(false);
   const [modelSuccess, setModalSuccess] = useState(false)
   const [modalCreatePw, setModalCreatePw] = useState(false)
+  const [modalResetSuccess, setModalResetSuccess] = useState(false)
   const [timeLeft, setTimeLeft] = useState(60);
   const [isCounting, setIsCounting] = useState(false);
   const [newPassword, setNewPassword] = useState(null);
@@ -30,7 +32,8 @@ const ForgotPassword = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { getOTP, showToastError, resetPassword, check_mail, handleOTP } = useForgot();
+  const [isHidden, setIsHidden] = useState(false);
+  const { getOTP, showToastError, showToastSuccess, resetPassword, check_mail, handleOTP } = useForgot();
 
 
   const togglePasswordVisibility = () => {
@@ -68,9 +71,9 @@ const ForgotPassword = ({ navigation }) => {
         showToastError("Invalid email")
         return;
       }
-      // setModalCreatePw(!modalCreatePw)
-
-      setModalXacNhan(!modalXacNhan);
+      setIsHidden(!isHidden);
+      setModalXacNhan(!modalXacNhan)
+      // setModalOTP(!modalOTP)
     }
   }
 
@@ -141,49 +144,64 @@ const ForgotPassword = ({ navigation }) => {
 
   const handleResetPassword = async () => {
     if (!newPassword) {
-      alert("Vui lòng nhập mật khẩu mới")
+      showToastSuccess("Vui lòng nhập mật khẩu mới")
     }
     else if (!/^[A-Za-z\d@$!%*?&#]{6,}$/.test(newPassword)) {
-      alert("Mật khẩu phải có ít nhất 6 ký tự,chứa ít nhất 1 chữ,1 số,1 ký tự đặc biệt");
+      showToastSuccess("Mật khẩu phải có ít nhất 6 ký tự,chứa ít nhất 1 chữ,1 số,1 ký tự đặc biệt");
     } else if (
       !/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{6,}$/.test(
         newPassword
       )
     ) {
-      alert("MK chứa ít nhất 1 chữ,1 số,1 ký tự đặc biệt");
+      showToastSuccess("MK chứa ít nhất 1 chữ,1 số,1 ký tự đặc biệt");
     }
     else if (!(newPassword === newPassword2)) {
-      alert("Vui lòng nhập lại mật khẩu trùng khớp");
+      showToastSuccess("Vui lòng nhập lại mật khẩu trùng khớp");
     }
     else {
       const rs = await resetPassword(textEmail, newPassword);
       if (rs) {
-        alert("Success")
+        setModalCreatePw(!modalCreatePw)
+        setModalResetSuccess(!modalResetSuccess)
+        
       }
     }
   }
 
+  const handleLogin = () => {
+    navigation.navigate("Login")
+  }
+
+
   return (
     <View style={styles.container}>
-      <View style={styles.viewText}>
-        <Text style={{ fontSize: 16 }}>Nhập gmail để lấy lại mật khẩu</Text>
+      <View style={styles.toastContainer}>
+        <Toast />
       </View>
-      <View style={styles.viewTextInput}>
-        <TextInput
-          value={textEmail}
-          onChangeText={setTextEmail}
-          placeholder="Nhập gmail"
-          style={[styles.styleText, { width: '90%' }]}
-        >
-        </TextInput>
-        <Pressable style={styles.styleIcon} onPress={() => setTextEmail(null)}>
-          <Ionicons name="close" size={22} color="gray" />
-        </Pressable>
-      </View>
-      <Pressable style={styles.styleButton} onPress={handleNext}>
-        <Text style={[styles.styleText, { color: 'white', fontWeight: 'bold' }]}>Tiếp tục</Text>
-      </Pressable>
-
+      <ScrollView>
+        {isHidden ? null : (<View style={{ paddingTop: 15, justifyContent: 'center', alignItems: 'center' }}>
+          <View style={styles.viewText}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Nhập gmail để lấy lại mật khẩu</Text>
+          </View>
+          <View style={styles.viewTextInput}>
+            <TextInput
+              value={textEmail}
+              onChangeText={setTextEmail}
+              placeholder="Nhập gmail"
+              style={[styles.styleText, { width: '90%' }]}
+            >
+            </TextInput>
+            <Pressable style={styles.styleIcon} onPress={() => setTextEmail(null)}>
+              <Ionicons name="close" size={22} color="gray" />
+            </Pressable>
+          </View>
+          <Pressable style={styles.styleButton} 
+          onPress={handleNext}
+          >
+            <Text style={[styles.styleText, { color: 'white', fontWeight: 'bold' }]}>Tiếp tục</Text>
+          </Pressable>
+        </View> )}
+      </ScrollView >
       <View>
         {/* Modal xác nhận gmail */}
         <Modal
@@ -199,7 +217,7 @@ const ForgotPassword = ({ navigation }) => {
               <Text style={[{ fontWeight: 'bold', textAlign: 'center' }, styles.styleText]}>Xác nhận {textEmail} gmail ?</Text>
               <Text style={{ textAlign: 'center' }}>Gmail này sẽ được sử dụng để nhận mã xác thực</Text>
               <View style={{ flexDirection: 'row', width: '100%' }}>
-                <Pressable style={[styles.pressCancel, { borderRightWidth: 2, borderRightColor: '#e0e3e5' }]} onPress={() => { setModalXacNhan(!modalXacNhan) }}>
+                <Pressable style={[styles.pressCancel, { borderRightWidth: 2, borderRightColor: '#e0e3e5' }]} onPress={() => {setModalXacNhan(!modalXacNhan)}}>
                   <Text style={styles.textCancel}>Huỷ</Text>
                 </Pressable>
                 <Pressable style={styles.pressCancel} onPress={handleXacNhan} >
@@ -214,15 +232,16 @@ const ForgotPassword = ({ navigation }) => {
           </View>
         </Modal>
       </View>
-      {/* Modal nhập mã OTP */}
+     
+
       <Modal
         animationType="slide"
-        transparent={false}
+        transparent={true}
         visible={modalOTP}
         onRequestClose={() => { setModalOTP(!modalOTP) }}
       >
-        <View style={styles.modalContainerAuthCode}>
-          <View style={styles.modalAuthCode}>
+        <View style={styles.modalContainerPw}>
+          <View style={styles.modalCreatePw}>
             <View style={{ backgroundColor: "#E5E7EB", padding: 10 }}>
               <Text style={{ textAlign: "center", color: "#000" }}>
                 Vui lòng không chia sẻ mã xác thực để tránh mất tài khoản
@@ -243,7 +262,7 @@ const ForgotPassword = ({ navigation }) => {
                 </Text>
               </View>
               <View style={{ flex: 1, padding: 10 }}>
-                
+
                 <View style={styles.otpContainer}>
                   <OTPTextView
                     handleTextChange={handleOTPChange}
@@ -263,15 +282,16 @@ const ForgotPassword = ({ navigation }) => {
                     marginBottom: 20,
                   }}
                 >
-                  <Pressable style={{flexDirection: 'row', width: '45%', justifyContent: 'space-between', height: 30, alignItems: 'center' }}>
-                    <Pressable onPress={pressPreSendOTP} style={{backgroundColor: '#8a57b6',borderRadius: 10, width: '65%', height: '90%', alignItems: 'center', justifyContent: 'center'}}>
-                      <Text style={{  color: 'white', fontWeight: 'bold' }}>Gửi lại mã </Text>
+                  <Pressable style={{ flexDirection: 'row', width: '45%', justifyContent: 'space-between', height: 30, alignItems: 'center' }}>
+                    <Pressable onPress={pressPreSendOTP} style={{ backgroundColor: '#8a57b6', borderRadius: 10, width: '65%', height: '90%', alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ color: 'white', fontWeight: 'bold' }}>Gửi lại mã </Text>
                     </Pressable>
                     <Text style={{ color: "#0091FF", fontWeight: 'bold' }}>{timeLeft === 0 ? "0:0" : formatTime(timeLeft)}</Text>
                   </Pressable>
                 </View>
                 <View style={{ justifyContent: "space-evenly", alignItems: "center", flexDirection: 'row' }}>
-                  <Pressable
+
+                <Pressable
                     style={{
                       backgroundColor: "#0091FF",
                       width: 120,
@@ -280,10 +300,10 @@ const ForgotPassword = ({ navigation }) => {
                       alignItems: "center",
                       borderRadius: 25,
                     }}
-                    onPress={() => (setModalOTP(!modalOTP))}
+                    onPress={() => { setModalOTP(!modalOTP); setIsHidden(!isHidden) }}
                   >
                     <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                      Trở về
+                      Huỷ
                     </Text>
                   </Pressable>
 
@@ -308,7 +328,7 @@ const ForgotPassword = ({ navigation }) => {
             </View>
           </View>
         </View>
-      </Modal>
+      </Modal >
 
       {/* Modal Success */}
       <Modal
@@ -317,26 +337,24 @@ const ForgotPassword = ({ navigation }) => {
         visible={modelSuccess}
         onRequestClose={() => { setModalSuccess(!modelSuccess) }}
       >
-        <View style={{ flex: 1, justifyContent: 'flex-start' }}>
-          <View style={{ backgroundColor: '#0091FF', width: '100%', height: 90, justifyContent: 'flex-end' }}>
-            <Text style={{ fontSize: 16, padding: 10, color: 'white', fontWeight: 'bold' }}>Tạo mật khẩu mới</Text>
-          </View>
-          <View style={{ alignItems: 'center', paddingHorizontal: 20 }}>
-            <View>
-              <Ionicons name={"checkmark-circle-sharp"} size={80} color="#00ce3a" style={{ marginRight: 8 }} />
-            </View>
-            <Text style={styles.modalHeaderText}>Đăng nhập thành công!</Text>
-            <Text style={styles.modalText}>
-              Bây giờ bạn có thể tạo lại mật khẩu mới. Tài khoản và mật khẩu này dùng để đăng nhập trên bất kỳ thiết bị nào.
-            </Text>
+        <View style={styles.modalContainerAuthCode}>
+          <View style={styles.modalSuccess}>
+            <View style={{ flex: 1, justifyContent: 'center' }}>
+              <View style={{ alignItems: 'center', paddingHorizontal: 20 }}>
+                <View>
+                  <Ionicons name={"checkmark-circle-sharp"} size={80} color="#00ce3a" style={{ marginRight: 8 }} />
+                </View>
+                <Text style={styles.modalHeaderText}>Đăng nhập thành công!</Text>
+                <Text style={styles.modalText}>
+                  Bây giờ bạn có thể tạo lại mật khẩu mới. Tài khoản và mật khẩu này dùng để đăng nhập trên bất kỳ thiết bị nào.
+                </Text>
 
-            <View style={styles.modalButtonContainer}>
-              <Pressable style={styles.buttonCreatePass} onPress={() => { setModalSuccess(!modelSuccess); setModalCreatePw(!modalCreatePw) }}>
-                <Text style={styles.modalButton}>Tạo mật khẩu</Text>
-              </Pressable>
-              <Pressable style={styles.buttonCreatePass} onPress={() => { setModalSuccess(!modelSuccess) }}>
-                <Text style={styles.modalButton}>Back</Text>
-              </Pressable>
+                <View style={styles.modalButtonContainer}>
+                  <Pressable style={styles.buttonCreatePass} onPress={() => { setModalSuccess(!modelSuccess); setModalCreatePw(!modalCreatePw) }}>
+                    <Text style={styles.modalButton}>Tạo mật khẩu</Text>
+                  </Pressable>
+                </View>
+              </View>
             </View>
           </View>
         </View>
@@ -345,60 +363,89 @@ const ForgotPassword = ({ navigation }) => {
       {/* Modal Create Password */}
       <Modal
         animationType="slide"
-        transparent={false}
+        transparent={true}
         visible={modalCreatePw}
         onRequestClose={() => { setModalCreatePw(!modalCreatePw) }}
       >
-        <View style={{ flex: 1, justifyContent: 'flex-start' }}>
-          <View style={{ backgroundColor: '#0091FF', width: '100%', height: 90, justifyContent: 'flex-end' }}>
-            <Text style={{ fontSize: 16, paddingHorizontal: 20, paddingVertical: 10, color: 'white', fontWeight: 'bold' }}>Tạo mật khẩu mới</Text>
+        <View style={styles.modalContainerPw}>
+          <View style={styles.modalCreatePw}>
+            <View style={{ height: 40, justifyContent: 'center',backgroundColor: '#67bed9', width: '50%',borderRadius:10, }}>
+              <Text style={{color: 'white',  fontSize: 16, paddingHorizontal: 20, paddingVertical: 10, fontWeight: 'bold' }}>Tạo mật khẩu mới</Text>
+            </View>
+            <View style={{ alignItems: 'center', paddingHorizontal: 20, height: '60%', justifyContent: 'space-evenly' }}>
+              <View style={styles.viewTextPwNew}>
+                <Text style={[styles.styleText, styles.textBlue]}>Mật khẩu mới
+                </Text>
+                <TouchableOpacity onPress={togglePasswordVisibility}>
+                  <View>
+                    <Text style={[styles.styleText, styles.textGray]}>{buttonText}</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.styleViewGray}>
+                <TextInput style={[styles.styleText, styles.textInput, { width: '90%' }]}
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  placeholder="Nhập mật khẩu mới"
+                  placeholderTextColor="gray"
+                  secureTextEntry={!showPassword}
+                ></TextInput>
+                {newPassword ? (
+                  <Pressable style={styles.styleIcon} onPress={() => setNewPassword(null)}>
+                    <Ionicons name="close" size={22} color="gray" />
+                  </Pressable>
+                ) : null}
+              </View>
+              <View style={styles.styleViewGray}>
+                <TextInput style={[styles.styleText, styles.textInput, { width: '90%' }]}
+                  value={newPassword2}
+                  onChangeText={setNewPassword2}
+                  placeholder="Nhập lại mật khẩu mới"
+                  placeholderTextColor="gray"
+                  secureTextEntry={!showPassword}
+                ></TextInput>
+                {newPassword2 ? (
+                  <Pressable style={styles.styleIcon} onPress={() => setNewPassword2(null)}>
+                    <Ionicons name="close" size={22} color="gray" />
+                  </Pressable>
+                ) : null}
+              </View>
+              <Pressable style={[styles.styleButton, styles.styleCenter, { margin: 30 }]}
+                onPress={handleResetPassword}
+              >
+                <Text style={[styles.styleText, { color: 'white', fontWeight: 'bold' }]}>Cập nhật</Text>
+              </Pressable>
+            </View>
           </View>
-          <View style={{ alignItems: 'center', paddingHorizontal: 20, backgroundColor: 'white' }}>
-            <View style={styles.viewTextPwNew}>
-              <Text style={[styles.styleText, styles.textBlue]}>Mật khẩu mới
-              </Text>
-              <TouchableOpacity onPress={togglePasswordVisibility}>
+        </View>
+      </Modal >
+
+      {/* Modal reset thành công*/}
+      < Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalResetSuccess}
+        onRequestClose={() => { setModalResetSuccess(!modalResetSuccess) }}
+      >
+        <View style={styles.modalContainerAuthCode}>
+          <View style={styles.modalSuccess}>
+            <View style={{ flex: 1, justifyContent: 'center' }}>
+              <View style={{ alignItems: 'center', paddingHorizontal: 20 }}>
                 <View>
-                  <Text style={[styles.styleText, styles.textGray]}>{buttonText}</Text>
+                  <Ionicons name={"checkmark-circle-sharp"} size={80} color="#00ce3a" style={{ marginRight: 8 }} />
                 </View>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.styleViewGray}>
-              <TextInput style={[styles.styleText, styles.styleColorGray, { width: '90%' }]}
-                value={newPassword}
-                onChangeText={setNewPassword}
-                placeholder="Nhập mật khẩu mới"
-                placeholderTextColor="gray"
-                secureTextEntry={!showPassword}
-              ></TextInput>
-              {newPassword ? (
-                <Pressable style={styles.styleIcon} onPress={() => setNewPassword(null)}>
-                  <Ionicons name="close" size={22} color="gray" />
-                </Pressable>
-              ) : null}
-            </View>
-            <View style={styles.styleViewGray}>
-              <TextInput style={[styles.styleText, styles.styleColorGray, { width: '90%' }]}
-                value={newPassword2}
-                onChangeText={setNewPassword2}
-                placeholder="Nhập lại mật khẩu mới"
-                placeholderTextColor="gray"
-                secureTextEntry={!showPassword}
-              ></TextInput>
-              {newPassword2 ? (
-                <Pressable style={styles.styleIcon} onPress={() => setNewPassword2(null)}>
-                  <Ionicons name="close" size={22} color="gray" />
-                </Pressable>
-              ) : null}
-            </View>
-            <Pressable style={[styles.styleButton, styles.styleCenter, { margin: 30 }]} onPress={handleResetPassword}>
-              <Text style={[styles.styleText, { color: 'white', fontWeight: 'bold' }]}>Cập nhật</Text>
-            </Pressable>
+                <Text style={styles.modalHeaderText}>Đổi mật khẩu thành công!</Text>
+                <Text style={styles.modalText}>
+                  Bây giờ bạn có thể quay lại trang đăng nhập để nhập mật khẩu mới.
+                </Text>
 
-            <Pressable style={styles.buttonCreatePass} onPress={() => { setModalCreatePw(!modalCreatePw) }}>
-              <Text style={styles.modalButton}>Back</Text>
-            </Pressable>
-
+                <View style={styles.modalButtonContainer}>
+                  <Pressable style={[styles.buttonCreatePass, { margin: 20 }]} onPress={handleLogin}>
+                    <Text style={styles.modalButton}>Back</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
           </View>
         </View>
       </Modal >
@@ -411,7 +458,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    alignItems: 'center'
+    alignItems: 'center',
   },
   otpContainer: {
     flexDirection: 'row',
@@ -492,6 +539,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,0.5)",
   },
+  modalContainerPw: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   modalAuthCode: {
     backgroundColor: "#fff",
     width: '80%',
@@ -499,6 +551,21 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     paddingBottom: 45
+  },
+  modalSuccess: {
+    backgroundColor: "#fff",
+    width: '80%',
+    height: '40%',
+    borderRadius: 10,
+  },
+  modalCreatePw: {
+    backgroundColor: "#fff",
+    width: '90%',
+    borderRadius: 10,
+    height: '65%',
+    // borderWidth: 1,
+    // borderColor: 'gray'
+
   },
   modalHeaderText: {
     fontWeight: "bold",
@@ -570,10 +637,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center'
   },
-  styleColorGray: {
-    color: 'gray',
+  textInput: {
     fontWeight: '600',
     backgroundColor: 'white'
+  },
+  toastContainer: {
+    zIndex: 99,
   },
 });
 
