@@ -106,7 +106,6 @@ const useUpdate = () => {
         "/users/update-profile",
         userData
       );
-      console.log(response);
 
       const { data, status } = response;
       console.log(data);
