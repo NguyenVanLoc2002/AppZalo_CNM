@@ -5,7 +5,7 @@ exports.generateAccessToken = (device_id, user_id, phone) => {
     { device_id, user_id, phone, type: "access" },
     process.env.JWT_SECRET,
     {
-      expiresIn: "60s",
+      expiresIn: "600s",
     }
   );
 };
