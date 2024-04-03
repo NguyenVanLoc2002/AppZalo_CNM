@@ -85,9 +85,6 @@ io.on("connection", async (socket) => {
     io.to(socket.id).emit("online_friends", onlineFriendsId);
   });
 
-
-
-
   socket.on("disconnect", async () => {
     console.log(`User disconnected with id: ${userId}`);
     try {
