@@ -1,4 +1,3 @@
-import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import config from "./config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -11,9 +10,13 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   async (config) => {
     try {
-      const token = await AsyncStorage.getItem("accessToken");
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+      config.headers["User-Agent"] = "Mobile";
+      if (!config.url.includes("/auth/login")) {
+        const token = JSON.parse(await AsyncStorage.getItem("accessToken"));
+        // console.log(token);
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
       }
       return config;
     } catch (error) {
@@ -31,10 +34,14 @@ axiosInstance.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-
-    if (error.response.status === 401) {
+    if (
+      error.response.status === 401 &&
+      !originalRequest.url.includes("auth/login")
+    ) {
       try {
-        const refreshToken = await AsyncStorage.getItem("refreshToken");
+        const refreshToken = JSON.parse(
+          await AsyncStorage.getItem("refreshToken")
+        );
         if (!refreshToken) {
           showErrorToast("Your session has expired. Please login again.");
           throw new Error("No refresh token available.");
@@ -47,7 +54,7 @@ axiosInstance.interceptors.response.use(
           }
         );
         const newAccessToken = refreshedTokenResponse.data.newAccessToken;
-        await AsyncStorage.setItem("accessToken", newAccessToken);
+        AsyncStorage.setItem("accessToken", JSON.stringify(newAccessToken));
 
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return axiosInstance(originalRequest);
@@ -55,9 +62,6 @@ axiosInstance.interceptors.response.use(
         console.error("Refresh token failed:", refreshError);
         showErrorToast("Your session has expired. Please login again.");
         await AsyncStorage.clear();
-        // Chuyển hướng người dùng về trang đăng nhập
-        const navigation = useNavigation();
-        navigation.navigate("Login"); // Đảm bảo rằng tên màn hình đăng nhập là 'Login'
         return Promise.reject(refreshError);
       }
     }
