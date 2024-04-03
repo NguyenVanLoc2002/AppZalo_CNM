@@ -4,8 +4,9 @@ import { AiOutlineUserAdd, AiOutlineUsergroupAdd } from "react-icons/ai";
 import { CiSearch } from "react-icons/ci";
 import { FaSortDown } from "react-icons/fa";
 import { IoIosMore } from "react-icons/io";
+import axiosInstance from "../../../api/axiosInstance";
 
-function ListChatComponent({ language, isAddFriend, isAddGroup }) {
+function ListChatComponent({ language, isAddFriend, isAddGroup, userChat }) {
   const [valueSearch, setValueSearch] = useState("");
   const [isHovered, setIsHovered] = useState(false);
   const [friendList, setFriendList] = useState([]);
@@ -13,19 +14,37 @@ function ListChatComponent({ language, isAddFriend, isAddGroup }) {
   const [showUnread, setShowUnread] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [originalFriendList, setOriginalFriendList] = useState([]);
-
+  const [listChatCurrent, setListChatCurrent] = useState([]);
+  const [isChatSelected, setIsChatSelected] = useState("");
   useEffect(() => {
-    const newFriendList = [];
-    for (let i = 0; i < 20; i++) {
-      newFriendList.push({
-        id: faker.string.uuid(),
-        name: faker.internet.userName(),
-        avatar: faker.image.avatar(),
-        unread: faker.datatype.boolean(),
-      });
-    }
-    setFriendList(newFriendList);
-    setOriginalFriendList(newFriendList);
+    // const newFriendList = [];
+    // for (let i = 0; i < 20; i++) {
+    //   newFriendList.push({
+    //     id: faker.string.uuid(),
+    //     name: faker.internet.userName(),
+    //     avatar: faker.image.avatar(),
+    //     unread: faker.datatype.boolean(),
+    //   });
+    // }
+    // setFriendList(newFriendList);
+    // setOriginalFriendList(newFriendList);
+    const getFriends = async () => {
+      try {
+        const response = await axiosInstance.get("users/get/friends");
+        const newFriendList = response.data.friends.map((friend) => ({
+          id: friend.userId,
+          name: friend.profile.name,
+          avatar: friend.profile.avatar.url ?? "/zalo.svg",
+          background: friend.profile.background.url ?? "/zalo.svg",
+          unread: faker.datatype.boolean(),
+        }));
+        setFriendList(newFriendList);
+        setOriginalFriendList(newFriendList);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    getFriends();
   }, []);
 
   const changeTab = (tab) => {
@@ -147,12 +166,27 @@ function ListChatComponent({ language, isAddFriend, isAddGroup }) {
         {isInputFocused ? (
           <>
             {friendList.map((friend) => (
-              // eslint-disable-next-line react/jsx-key
               <div
                 key={friend.id}
                 className="flex items-center justify-between hover:bg-gray-200 transition-colors duration-300 ease-in-out p-2"
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
+                onClick={() => {
+                  userChat(friend);
+                  setListChatCurrent((prev) => {
+                    const newList = [...prev];
+                    const index = newList.findIndex(
+                      (item) => item.id === friend.id
+                    );
+                    if (index !== -1) {
+                      newList.splice(index, 1);
+                    }
+                    newList.unshift(friend);
+                    return newList;
+                  });
+                  setIsInputFocused(false);
+                  setIsChatSelected(friend.id);
+                }}
               >
                 <div className="bg-blue w-14 ">
                   <img
@@ -172,7 +206,6 @@ function ListChatComponent({ language, isAddFriend, isAddGroup }) {
             <div className="h-full w-full max-h-full">
               {activeTab === "all" ? (
                 <>
-                  {" "}
                   <div
                     className="flex justify-between p-2 hover:bg-gray-200 transition-colors duration-300 ease-in-out"
                     onMouseEnter={() => setIsHovered(true)}
@@ -214,13 +247,18 @@ function ListChatComponent({ language, isAddFriend, isAddGroup }) {
                 <></>
               )}
 
-              {friendList.map((friend) => (
-                // eslint-disable-next-line react/jsx-key
+              {listChatCurrent.map((friend) => (
                 <div
                   key={friend.id}
-                  className="flex justify-between hover:bg-gray-200 transition-colors duration-300 ease-in-out p-2"
+                  className={`flex justify-between hover:bg-gray-200 transition-colors duration-300 ease-in-out p-2 ${
+                    isChatSelected === friend.id ? "bg-gray-200" : ""
+                  }`}
                   onMouseEnter={() => setIsHovered(true)}
                   onMouseLeave={() => setIsHovered(false)}
+                  onClick={() => {
+                    userChat(friend);
+                    setIsChatSelected(friend.id);
+                  }}
                 >
                   <div className="bg-blue w-14 ">
                     <img
