@@ -55,7 +55,9 @@ function LoginForm() {
       <div className="w-[400px] text-sm h-full">
         <div className="w-full p-1 bg-white flex justify-around">
           <p className="text-center text-sm font-bold uppercase py-3 mb-[-5px] border-b border-black">
-            {langue == "vi" ? "Đăng nhập với số điện thoại" : "Login with phone number"}
+            {langue == "vi"
+              ? "Đăng nhập với số điện thoại"
+              : "Login with phone number"}
           </p>
         </div>
         <hr />
@@ -105,7 +107,11 @@ function LoginForm() {
                 text-gray-700 focus:outline-none focus:shadow-outline"
               id="phone"
               type="text"
-              placeholder={langue == "vi" ? "Số điện thoại hoặc email" : "Phone number or email"}
+              placeholder={
+                langue == "vi"
+                  ? "Số điện thoại hoặc email"
+                  : "Phone number or email"
+              }
               value={phone}
               onChange={(e) => {
                 // setPhone(e.target.value.replace(/\D/g, ""));
