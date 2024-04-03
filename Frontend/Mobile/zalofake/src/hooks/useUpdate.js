@@ -99,16 +99,18 @@ const useUpdate = () => {
   //   }
   // };
 
-  const updateProfile = async (userData) => {
+  const updateProfile = async (name, email, gender, dob) => {
     setLoading(true);
     try {
-      const response = await axiosInstance.post(
-        "/users/update-profile",
-        userData
-      );
+      console.log(name, email, gender, dob);
+      const response = await axiosInstance.post("/users/update-profile", {
+        name,
+        email,
+        gender,
+        dob,
+      });
 
       const { data, status } = response;
-      console.log(data);
 
       if (status === 200) {
         const { user } = data;
@@ -123,7 +125,7 @@ const useUpdate = () => {
         throw new Error(data.message || "Failed to update profile");
       }
     } catch (error) {
-      console.error(error);
+      console.error("error: ", error);
       Alert.alert(
         "Error",
         error.response?.data?.message ||
