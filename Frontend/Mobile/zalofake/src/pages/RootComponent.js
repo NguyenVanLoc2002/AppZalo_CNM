@@ -26,7 +26,7 @@ import PersonalPrivacy from "../components/InfoComponents/PersonalPrivacy";
 import AccountVsSecurity from "../components/InfoComponents/AccoutVsSecurity";
 import PersonalSetting from "../components/InfoComponents/PersonalSetting";
 import ChangePassword from "../components/InfoComponents/ChangePassword";
-import ForgotPassword from "../components/LoginComponents/ForgotPassword";
+import ResetPassword from "../components/LoginComponents/ResetPassword";
 
 const Stack = createNativeStackNavigator();
 
@@ -112,8 +112,8 @@ export default function RootComponent() {
         }}
       />
        <Stack.Screen 
-       name="ForgotPassword" 
-       component={ForgotPassword}
+       name="ResetPassword" 
+       component={ResetPassword}
        options={{
         headerStyle: {
           backgroundColor: "#0091FF",
