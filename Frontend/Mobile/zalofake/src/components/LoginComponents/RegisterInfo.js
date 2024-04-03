@@ -8,7 +8,7 @@ import {
   Modal,
   StyleSheet,
   ActivityIndicator,
-  TouchableOpacity
+  TouchableOpacity,
 } from "react-native";
 import { CheckBox, Input } from "react-native-elements";
 import CountryDropdown from "./CountryDropdown";
@@ -54,7 +54,6 @@ const RegisterInfo = ({ navigation, route }) => {
 
   const inputRefs = useRef([]);
 
-
   const { name } = route.params;
 
   // đếm thời gian giảm dần
@@ -71,8 +70,7 @@ const RegisterInfo = ({ navigation, route }) => {
 
     // Xóa interval khi component bị unmount
     return () => clearInterval(timer);
-  }, [isCounting, timeLeft]); 
-
+  }, [isCounting, timeLeft]);
 
   const SendTime = () => {
     setIsCounting(true);
@@ -83,7 +81,6 @@ const RegisterInfo = ({ navigation, route }) => {
       return;
     }
   }, [timeLeft]);
-
 
   const formatTime = (time) => {
     const minutes = Math.floor(time / 60);
@@ -103,7 +100,6 @@ const RegisterInfo = ({ navigation, route }) => {
   };
   const handleEmailChange = (text) => {
     setTextEmail(text);
-
   };
   const handleInputChange = (text, index) => {
     const newInputs = [...inputs];
@@ -114,7 +110,6 @@ const RegisterInfo = ({ navigation, route }) => {
 
     setInputs(newInputs);
   };
-
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
@@ -139,19 +134,13 @@ const RegisterInfo = ({ navigation, route }) => {
   };
 
   const handlePressablePress = () => {
-
-
     if (!/^[0-9]{8,20}$/.test(textPhone)) {
       showToastError("Số điện thoại phải từ 8 đến 20 chữ số.");
-    }
-    else if (!textEmail.trim().toLowerCase().endsWith("@gmail.com")) {
+    } else if (!textEmail.trim().toLowerCase().endsWith("@gmail.com")) {
       showToastError("Email phải có định dạng @gmail.com");
-    }
-    else if (textEmail.length < 15) {
+    } else if (textEmail.length < 15) {
       showToastError("Email phải có ít nhất 15 ký tự");
-
-    }
-    else if (!/^[A-Za-z\d@$!%*?&#]{6,}$/.test(textPW)) {
+    } else if (!/^[A-Za-z\d@$!%*?&#]{6,}$/.test(textPW)) {
       showToastError("Mật khẩu phải có ít nhất 6 ký tự");
     } else if (
       !/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{6,}$/.test(
@@ -201,15 +190,14 @@ const RegisterInfo = ({ navigation, route }) => {
   const handleCheckAuth = () => {
     if (inputs.some((value) => value === "")) {
       showToastError("Vui lòng nhập đủ mã xác thực");
-    }
-    else {
+    } else {
       showToastSuccess("Xác thực thành công");
       toggleModalAuthCode();
     }
-  }
+  };
 
   const handleSubmit = async (e) => {
-    handleCheckAuth()
+    handleCheckAuth();
     // await axiosInstance
     //   .post("/auth/register", {
     //     phone: textPhone,
@@ -236,13 +224,11 @@ const RegisterInfo = ({ navigation, route }) => {
     //       showToastError("Lỗi");
     //     }
     //   });
-
   };
 
   const handlesendAuthCode = async (e) => {
     toggleModalAuthCode();
     SendTime();
-
   };
 
   return (
@@ -274,7 +260,6 @@ const RegisterInfo = ({ navigation, route }) => {
           style={styles.input}
           onChangeText={handleEmailChange}
         />
-
       </View>
       <View style={styles.inputContainer}>
         <TextInput
@@ -310,23 +295,45 @@ const RegisterInfo = ({ navigation, route }) => {
         </Pressable>
       </View>
 
-
       <View style={styles.radioRow}>
         <Text style={styles.textGender}>Giới tính:</Text>
-        <Pressable onPress={() => handleGenderSelect("male")} style={[styles.radioButton, selectedGender === "male"]}>
-          <FontAwesome5 name={selectedGender === "male" ? "dot-circle" : "circle"} size={20} color="black" style={{ marginRight: 8 }} />
+        <Pressable
+          onPress={() => handleGenderSelect("male")}
+          style={[styles.radioButton, selectedGender === "male"]}
+        >
+          <FontAwesome5
+            name={selectedGender === "male" ? "dot-circle" : "circle"}
+            size={20}
+            color="black"
+            style={{ marginRight: 8 }}
+          />
           <Text style={styles.textGenderOption}>Nam</Text>
         </Pressable>
-        <Pressable onPress={() => handleGenderSelect("female")} style={[styles.radioButton, selectedGender === "female"]}>
-          <FontAwesome5 name={selectedGender === "female" ? "dot-circle" : "circle"} size={20} color="black" style={{ marginRight: 8 }} />
+        <Pressable
+          onPress={() => handleGenderSelect("female")}
+          style={[styles.radioButton, selectedGender === "female"]}
+        >
+          <FontAwesome5
+            name={selectedGender === "female" ? "dot-circle" : "circle"}
+            size={20}
+            color="black"
+            style={{ marginRight: 8 }}
+          />
           <Text style={styles.textGenderOption}>Nữ</Text>
         </Pressable>
-        <Pressable onPress={() => handleGenderSelect("other")} style={[styles.radioButton, selectedGender === "other"]}>
-          <FontAwesome5 name={selectedGender === "other" ? "dot-circle" : "circle"} size={20} color="black" style={{ marginRight: 8 }} />
+        <Pressable
+          onPress={() => handleGenderSelect("other")}
+          style={[styles.radioButton, selectedGender === "other"]}
+        >
+          <FontAwesome5
+            name={selectedGender === "other" ? "dot-circle" : "circle"}
+            size={20}
+            color="black"
+            style={{ marginRight: 8 }}
+          />
           <Text style={styles.textGenderOption}>Khác</Text>
         </Pressable>
       </View>
-
 
       <View style={styles.checkBoxContainer}>
         <CheckBox
@@ -410,8 +417,15 @@ const RegisterInfo = ({ navigation, route }) => {
                   padding: 10,
                 }}
               >
-                <FontAwesome5 name={"envelope"} size={80} color="black" style={{ marginRight: 8 }} />
-                <Text style={{ fontWeight: "bold", color: "#000", marginTop: 10 }}>
+                <FontAwesome5
+                  name={"envelope"}
+                  size={80}
+                  color="black"
+                  style={{ marginRight: 8 }}
+                />
+                <Text
+                  style={{ fontWeight: "bold", color: "#000", marginTop: 10 }}
+                >
                   Đang gửi mã xác thực đến email: {maskedEmail}
                 </Text>
               </View>
@@ -449,10 +463,15 @@ const RegisterInfo = ({ navigation, route }) => {
                   }}
                 >
                   <Text style={{ fontWeight: "bold", color: "#888" }}>
-                    Gửi lại mã <Text style={{ color: "#0091FF" }}>{timeLeft === 0 ? "0:0" : formatTime(timeLeft)}</Text>
+                    Gửi lại mã{" "}
+                    <Text style={{ color: "#0091FF" }}>
+                      {timeLeft === 0 ? "0:0" : formatTime(timeLeft)}
+                    </Text>
                   </Text>
                 </View>
-                <View style={{ justifyContent: "center", alignItems: "center" }}>
+                <View
+                  style={{ justifyContent: "center", alignItems: "center" }}
+                >
                   <Pressable
                     style={{
                       backgroundColor: "#0091FF",
@@ -591,26 +610,26 @@ const styles = StyleSheet.create({
   radioRow: {
     flexDirection: "row",
     justifyContent: "flex-start",
-    paddingLeft: 20
+    paddingLeft: 20,
   },
   radioButton: {
     flexDirection: "row",
     alignItems: "center",
     // marginVertical: 8,
-    paddingRight: 20
+    paddingRight: 20,
   },
 
   textGender: {
     fontSize: 16,
     fontWeight: "500",
     marginVertical: 8,
-    paddingRight: 20
+    paddingRight: 20,
   },
   textGenderOption: {
     fontSize: 15,
     fontWeight: "400",
     marginVertical: 8,
-    paddingRight: 20
+    paddingRight: 20,
   },
   modalContainerAuthCode: {
     flex: 1,
@@ -620,8 +639,8 @@ const styles = StyleSheet.create({
   },
   modalAuthCode: {
     backgroundColor: "#fff",
-    width: '80%',
-    height: '70%',
+    width: "80%",
+    height: "70%",
     padding: 10,
     borderRadius: 10,
   },
