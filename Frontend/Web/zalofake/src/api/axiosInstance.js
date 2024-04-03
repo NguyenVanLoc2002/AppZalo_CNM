@@ -27,8 +27,9 @@ axiosInstance.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
+    const reqURL = originalRequest.url;
 
-    if (error.response.status === 401 ) {
+    if (error.response.status === 401 && !reqURL.includes("/auth/login")) {
       try {
         const refreshToken = JSON.parse(localStorage.getItem("refreshToken"));
         if (!refreshToken) {
@@ -49,7 +50,6 @@ axiosInstance.interceptors.response.use(
         console.error("Refresh token failed:", refreshError);
         toast.error("Your session has expired. Please login again.");
         localStorage.clear();
-        window.location.href = "/login";
         return Promise.reject(refreshError);
       }
     }
