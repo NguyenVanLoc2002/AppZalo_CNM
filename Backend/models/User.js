@@ -20,7 +20,9 @@ const userSchema = new Schema({
     gender:{ type: String, enum: ['male', 'female', 'other'] },
     dob:{type: Date}
   },
-  gmail:{type:String, require: true},
+  email:{type:String, require: true,unique: true},
+  requestReceived : [{ type: mongoose.Schema.Types.ObjectId, ref: 'users' }],
+  requestSent : [{ type: mongoose.Schema.Types.ObjectId, ref: 'users' }],
   friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'users' }],
   groups: [{ type: mongoose.Schema.Types.ObjectId, ref: 'groups' }],
   status: { type: String, default: "active" }, 
