@@ -66,8 +66,6 @@ exports.uploadAvatar = async (req, res) => {
     if (user.profile.avatar && user.profile.avatar.public_id) {
       await cloudinary.uploader.destroy(user.profile.avatar.public_id);
     }
-    console.log(req.file);
-    // const
     user.profile.avatar = {
       public_id: req.file.filename,
       url: req.file.path,
@@ -102,7 +100,6 @@ exports.uploadBackground = async (req, res) => {
     if (user.profile.background && user.profile.background.public_id) {
       await cloudinary.uploader.destroy(user.profile.background.public_id);
     }
-    // const
     user.profile.background = {
       public_id: req.file.filename,
       url: req.file.path,

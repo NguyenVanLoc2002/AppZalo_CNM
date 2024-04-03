@@ -18,7 +18,7 @@ const { multerUploadImage } = require("../middlewares/multerMiddleware");
 //get methods
 router.get("/get/phone/:phone", protect, getUserByPhoneOrId);
 router.get("/get/uid/:uid", protect, getUserByPhoneOrId);
-router.get("/get/friends", getFriends);
+router.get("/get/friends", protect, getFriends);
 
 //post methods
 router.post("/check-email", checkUserByEmail);
