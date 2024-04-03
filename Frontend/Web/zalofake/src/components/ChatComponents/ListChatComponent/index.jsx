@@ -173,7 +173,17 @@ function ListChatComponent({ language, isAddFriend, isAddGroup, userChat }) {
                 onMouseLeave={() => setIsHovered(false)}
                 onClick={() => {
                   userChat(friend);
-                  setListChatCurrent([friend, ...listChatCurrent]);
+                  setListChatCurrent((prev) => {
+                    const newList = [...prev];
+                    const index = newList.findIndex(
+                      (item) => item.id === friend.id
+                    );
+                    if (index !== -1) {
+                      newList.splice(index, 1);
+                    }
+                    newList.unshift(friend);
+                    return newList;
+                  });
                   setIsInputFocused(false);
                   setIsChatSelected(friend.id);
                 }}

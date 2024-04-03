@@ -18,17 +18,19 @@ dotenv.config();
 app.use(cors());
 app.use(express.json());
 app.use(CookieParser());
+app.use(express.static("public"));
 
 //connect DB
 connectDB();
-
+app.get("/api/terms_of_service", (req, res) => {
+  res.sendFile(__dirname + "/public/resources/terms_of_services.html");
+});
 //routes
 app.use("/api/users", userRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/chats", authMiddleware.protect, chatRouter);
 
 server.listen(process.env.PORT, () => {
-
   const os = require("os");
   const ifaces = os.networkInterfaces();
   let ipAddress = "";
