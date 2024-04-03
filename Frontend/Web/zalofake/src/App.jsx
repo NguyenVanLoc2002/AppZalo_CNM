@@ -6,7 +6,6 @@ import LoginForm from "./components/LoginComponents/LoginForm";
 import Register from "./components/LoginComponents/Register";
 import ForgotPassword from "./components/LoginComponents/ForgotPassword";
 import MainLayout from "./page/MainLayout";
-import { Toaster } from "react-hot-toast";
 
 const App = () => {
   const { authUser } = useAuthContext();
@@ -26,7 +25,6 @@ const App = () => {
           <Route path="forgot" element={<ForgotPassword />} />
         </Route>
       </Routes>
-      <Toaster />
     </>
   );
 };
