@@ -1,7 +1,8 @@
+import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import config from "./config";
-import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Toast from "react-native-toast-message";
 
 const axiosInstance = axios.create({
   baseURL: config.baseURL,
@@ -35,7 +36,7 @@ axiosInstance.interceptors.response.use(
       try {
         const refreshToken = await AsyncStorage.getItem("refreshToken");
         if (!refreshToken) {
-          Toast.error("Your session has expired. Please login again.");
+          showErrorToast("Your session has expired. Please login again.");
           throw new Error("No refresh token available.");
         }
 
@@ -52,13 +53,27 @@ axiosInstance.interceptors.response.use(
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         console.error("Refresh token failed:", refreshError);
-        Toast.error("Your session has expired. Please login again.");
+        showErrorToast("Your session has expired. Please login again.");
         await AsyncStorage.clear();
+        // Chuyển hướng người dùng về trang đăng nhập
+        const navigation = useNavigation();
+        navigation.navigate("Login"); // Đảm bảo rằng tên màn hình đăng nhập là 'Login'
         return Promise.reject(refreshError);
       }
     }
     return Promise.reject(error);
   }
 );
+
+const showErrorToast = (message) => {
+  Toast.show({
+    type: "error",
+    text1: "Error",
+    text2: message,
+    position: "bottom",
+    visibilityTime: 4000,
+    autoHide: true,
+  });
+};
 
 export default axiosInstance;
