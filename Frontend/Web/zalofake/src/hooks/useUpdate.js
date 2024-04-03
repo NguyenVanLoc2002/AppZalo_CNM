@@ -6,6 +6,7 @@ import axiosInstance from "../api/axiosInstance";
 const useUpdate = () => {
   const [loading, setLoading] = useState(false);
   const { setAuthUser } = useAuthContext();
+  console.log(setAuthUser);
 
   const updateAvatar = async (file, authToken) => {
     setLoading(true);
@@ -102,6 +103,7 @@ const useUpdate = () => {
         "/users/update-profile",
         userData
       );
+      console.log(userData);
 
       const { data, status } = response;
 
