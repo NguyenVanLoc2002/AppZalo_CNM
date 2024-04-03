@@ -4,11 +4,12 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
 import { TextInput } from "react-native-paper";
 import { useAuthContext } from "../../contexts/AuthContext";
-
-// CSS styles
+import useChangePw from "../../hooks/useChangePw";
+import Toast from "react-native-toast-message";
 
 const ChangePassword = ({ navigation, route }) => {
     const { authUser } = useAuthContext();
+    const { showToastSuccess, showToastError, changePassword } = useChangePw();
 
     useEffect(() => {
         navigation.setOptions({
@@ -42,15 +43,43 @@ const ChangePassword = ({ navigation, route }) => {
         setButtonText(showPassword ? 'Hiện' : 'Ẩn');
     };
 
-    handleUpdatePassword = () => {
-       
+    const handleUpdatePassword = async () => {
+        if (!oldPassword) {
+            showToastError("Vui lòng nhập mật khẩu hiện tại")
+        }
+        else if (!newPassword) {
+            showToastError("Vui lòng nhập mật khẩu mới")
+        }
+        else if (!/^[A-Za-z\d@$!%*?&#]{6,}$/.test(newPassword)) {
+            showToastError("Mật khẩu không hợp lệ");
+        } else if (
+            !/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{6,}$/.test(
+                newPassword
+            )
+        ) {
+            showToastError("MK chứa ít nhất 1 chữ,1 số,1 ký tự đặc biệt");
+        }
+        else if (!(newPassword === newPassword2)) {
+            showToastError("Vui lòng nhập lại mật khẩu trùng khớp");
+        }
+        else {
+            const rs = await changePassword(oldPassword, newPassword);
+            if (rs) {
+                showToastSuccess("Success")
+            }
+
+        }
     }
+
 
     return (
         <View style={{ backgroundColor: 'white', height: '100%', alignItems: 'center' }}>
+            <View style={styles.toastContainer}>
+                <Toast />
+            </View>
             <View style={{ width: '90%' }}>
                 <View style={[{ height: 75 }, styles.styleCenter]}>
-                    <Text style={{ fontSize: 16 }}>Mật khẩu phải gồm chữ, số hoặc ký tự đặc biệt; không được chứa năm sinh và tên Zalo của bạn.</Text>
+                    <Text style={{ fontSize: 16, fontWeight: '600', textAlign: 'center' }}>Mật khẩu phải gồm 6 kí tự bao gồm chữ, số hoặc ký tự đặc biệt.</Text>
                 </View>
                 <View style={styles.styleViewBlue}>
                     <Text style={[styles.styleText, styles.styleColorBlue]}>Mật khẩu hiện tại
@@ -106,7 +135,7 @@ const ChangePassword = ({ navigation, route }) => {
                 </View>
             </View>
             <Pressable style={[styles.styleButton, styles.styleCenter, { margin: 30 }]} onPress={handleUpdatePassword}>
-                <Text style={[styles.styleText, { color: 'white',fontWeight: 'bold' }]}>Cập nhật</Text>
+                <Text style={[styles.styleText, { color: 'white', fontWeight: 'bold' }]}>Cập nhật</Text>
             </Pressable>
         </View>
 
@@ -125,7 +154,7 @@ const styles = {
     },
     styleColorGray: {
         color: 'gray',
-        fontWeight: '600',
+        fontWeight: '500',
         backgroundColor: 'white'
     },
     styleCenter: {
@@ -159,6 +188,9 @@ const styles = {
         width: '10%',
         alignItems: 'center',
         justifyContent: 'center'
-    }
+    },
+    toastContainer: {
+        zIndex: 99,
+    },
 
 };
