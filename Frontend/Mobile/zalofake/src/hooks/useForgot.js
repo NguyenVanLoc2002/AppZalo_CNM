@@ -40,7 +40,7 @@ const useForgot = () => {
         return data.totp;
     };
 
-    const check_mail = async (email, otp) => {
+    const check_mail = async (email) => {
         try {
             setIsLoading(true);
             const response = await axiosInstance.post("/users/check-email", {
@@ -114,20 +114,20 @@ const useForgot = () => {
         }
     }
 
-    const resetPassword = async ( textEmail, newPassword) => {
+    const resetPassword = async ( email, newPassword) => {
         try {
             setIsLoading(true);
             const response = await axiosInstance.post("/auth/reset-password", {
-                textEmail,
+                email,
                 newPassword,
             });
 
             if (response.status === 200) {
-                alert("Change Password Successfully");
+                showToastSuccess("Change Password Successfully");
                 setIsLoading(false);
                 return true;
             } else {
-                alert("Failed to reset password")
+                showToastError("Failed to reset password")
                 setIsLoading(false);
                 return false;
             }
@@ -136,7 +136,7 @@ const useForgot = () => {
             console.log(error);
             setIsOTPVerified(true);
             setIsLoading(false);
-            alert(error.response.data.message);
+            showToastError(error.response.data.message);
             return false;
         }
     }
