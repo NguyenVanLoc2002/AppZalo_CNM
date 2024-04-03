@@ -33,7 +33,6 @@ function PeopleChatComponent({ language, userChat }) {
   const [content, setContent] = useState("");
   const chats = [];
   const [isSidebarVisible, setSidebarVisible] = useState(false);
-  console.log(userChat);
 
   const toggleSidebar = () => {
     setSidebarVisible(!isSidebarVisible);
@@ -96,7 +95,7 @@ function PeopleChatComponent({ language, userChat }) {
   return (
     <>
       {userChat && (
-        <div className=" bg-white h-screen sm:w-[calc(100%-24rem)] w-0 border-r relative z-0">
+        <div className=" bg-white h-screen sm:w-[calc(100%-24rem)] w-0 border-r overflow-auto">
           <div className="h-[10vh] bg-white flex justify-between items-center border-b">
             <div className="flex items-center w-14 h-14 mr-3 ">
               <img
