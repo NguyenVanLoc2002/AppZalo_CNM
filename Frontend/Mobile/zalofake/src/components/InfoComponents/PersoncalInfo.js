@@ -40,12 +40,7 @@ const PersonalInfo = ({ navigation }) => {
 
       const selectedDate = new Date(selectedYear, selectedMonth, selectedDay);
 
-      await updateProfile({
-        name: usName,
-        email: usEmail,
-        gender: usGender,
-        dob: selectedDate,
-      });
+      await updateProfile(usName, usEmail, usGender, selectedDate);
 
       setModalVisible(false);
     } catch (error) {
