@@ -10,6 +10,7 @@ const {
   sendRequestAddFriend,
   acceptRequestAddFriend,
   unfriend,
+  getFriends,
 } = require("../controllers/user.controller");
 const { protect } = require("../middlewares/authMiddleware");
 const { multerUploadImage } = require("../middlewares/multerMiddleware");
@@ -17,6 +18,7 @@ const { multerUploadImage } = require("../middlewares/multerMiddleware");
 //get methods
 router.get("/get/phone/:phone", protect, getUserByPhoneOrId);
 router.get("/get/uid/:uid", protect, getUserByPhoneOrId);
+router.get("/get/friends", getFriends);
 
 //post methods
 router.post("/check-email", checkUserByEmail);
