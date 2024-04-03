@@ -56,7 +56,7 @@ const PersonalPage = ({ navigation }) => {
         <Image
           source={{
             uri:
-              authUser?.profile?.avatar?.url ||
+              authUser?.profile?.background?.url ||
               "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
           }}
           style={{ width: "100%", height: 160 }}
