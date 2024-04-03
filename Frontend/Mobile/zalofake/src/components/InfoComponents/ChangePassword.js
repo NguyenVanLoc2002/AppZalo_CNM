@@ -2,11 +2,14 @@ import { View, Text, Pressable, TouchableOpacity } from "react-native";
 import React, { useEffect, useState } from "react";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
-import { Switch, TextInput } from "react-native-paper";
+import { TextInput } from "react-native-paper";
+import { useAuthContext } from "../../contexts/AuthContext";
 
 // CSS styles
 
-const ChangePassword = ({ navigation }) => {
+const ChangePassword = ({ navigation, route }) => {
+    const { authUser } = useAuthContext();
+
     useEffect(() => {
         navigation.setOptions({
             headerTitle: () => (
@@ -38,6 +41,10 @@ const ChangePassword = ({ navigation }) => {
         setShowPassword(!showPassword);
         setButtonText(showPassword ? 'Hiện' : 'Ẩn');
     };
+
+    handleUpdatePassword = () => {
+       
+    }
 
     return (
         <View style={{ backgroundColor: 'white', height: '100%', alignItems: 'center' }}>
@@ -98,8 +105,8 @@ const ChangePassword = ({ navigation }) => {
                     ) : null}
                 </View>
             </View>
-            <Pressable style={[styles.styleButton, styles.styleCenter, { margin: 30 }]}>
-                <Text style={[styles.styleText, { color: 'white' }]}>Cập nhật</Text>
+            <Pressable style={[styles.styleButton, styles.styleCenter, { margin: 30 }]} onPress={handleUpdatePassword}>
+                <Text style={[styles.styleText, { color: 'white',fontWeight: 'bold' }]}>Cập nhật</Text>
             </Pressable>
         </View>
 
@@ -142,7 +149,7 @@ const styles = {
         alignItems: 'center',
     },
     styleButton: {
-        backgroundColor: '#c0d4e3',
+        backgroundColor: '#0091FF',
         height: 45,
         width: '50%',
         borderRadius: 25
