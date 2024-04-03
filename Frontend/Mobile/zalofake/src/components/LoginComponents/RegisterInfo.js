@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -39,7 +40,11 @@ const RegisterInfo = ({ navigation, route }) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [isModalLoginVisible, setModalLoginVisible] = useState(false);
   const [isModalAuthCode, setModalAuthCode] = useState(false);
+  const [isModalAuthCode, setModalAuthCode] = useState(false);
   const [textPhone, setTextPhone] = useState("");
+  const [textEmail, setTextEmail] = useState("");
+  const [maskedEmail, setMaskedEmail] = useState("");
+  const [selectedGender, setSelectedGender] = useState("male");
   const [textEmail, setTextEmail] = useState("");
   const [maskedEmail, setMaskedEmail] = useState("");
   const [selectedGender, setSelectedGender] = useState("male");
@@ -54,6 +59,9 @@ const RegisterInfo = ({ navigation, route }) => {
 
   const inputRefs = useRef([]);
 
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [isCounting, setIsCounting] = useState(false);
+  const [otp, setOtp] = useState("");
   const { name } = route.params;
 
   // đếm thời gian giảm dần
@@ -117,6 +125,9 @@ const RegisterInfo = ({ navigation, route }) => {
   const toggleModalAuthCode = () => {
     setModalAuthCode(!isModalAuthCode);
   };
+  const toggleModalAuthCode = () => {
+    setModalAuthCode(!isModalAuthCode);
+  };
   const toggleModalLogin = () => {
     setModalLoginVisible(!isModalLoginVisible);
   };
@@ -140,6 +151,10 @@ const RegisterInfo = ({ navigation, route }) => {
       showToastError("Email phải có định dạng @gmail.com");
     } else if (textEmail.length < 15) {
       showToastError("Email phải có ít nhất 15 ký tự");
+    } else if (!textEmail.trim().toLowerCase().endsWith("@gmail.com")) {
+      showToastError("Email phải có định dạng @gmail.com");
+    } else if (textEmail.length < 15) {
+      showToastError("Email phải có ít nhất 15 ký tự");
     } else if (!/^[A-Za-z\d@$!%*?&#]{6,}$/.test(textPW)) {
       showToastError("Mật khẩu phải có ít nhất 6 ký tự");
     } else if (
@@ -148,11 +163,15 @@ const RegisterInfo = ({ navigation, route }) => {
       )
     ) {
       showToastError("MK chứa ít nhất 1 chữ,1 số,1 ký tự đặc biệt");
+    } else if (!checkDOB(dob)) {
+      showToastError("Bạn phải trên 16 tuổi để đăng ký tài khoản");
     } else if (!(textPW === textRetypePW)) {
       showToastError("Vui lòng nhập xác nhận mật khẩu trùng khớp");
     } else if (!isCheckedInter || !isCheckedUse) {
       showToastError("Vui lòng chấp nhận các điều khoản");
     } else {
+      const masked = maskEmail(textEmail);
+      setMaskedEmail(masked);
       const masked = maskEmail(textEmail);
       setMaskedEmail(masked);
       toggleModal();
@@ -263,6 +282,16 @@ const RegisterInfo = ({ navigation, route }) => {
       </View>
       <View style={styles.inputContainer}>
         <TextInput
+          id="email"
+          value={textEmail}
+          placeholder="Email"
+          placeholderTextColor={"gray"}
+          style={styles.input}
+          onChangeText={handleEmailChange}
+        />
+      </View>
+      <View style={styles.inputContainer}>
+        <TextInput
           id="pw"
           secureTextEntry={!showPassword}
           onChangeText={handleTextPWChange}
@@ -339,17 +368,27 @@ const RegisterInfo = ({ navigation, route }) => {
         <CheckBox
           checked={isCheckedUse}
           onPress={handleCheckUse}
-          title="Tôi đồng ý với các điều khoản sử dụng Zalo"
+          title="Tôi đồng ý với các điều khoản sử dụng Zola"
           containerStyle={styles.checkBox}
           textStyle={styles.checkBoxText}
         />
         <CheckBox
           checked={isCheckedInter}
           onPress={handleCheckInter}
-          title="Tôi đồng ý với các điều khoản Mạng xã hội của Zalo"
+          title="Tôi đồng ý với các điều khoản Mạng xã hội của Zola"
           containerStyle={styles.checkBox}
           textStyle={styles.checkBoxText}
         />
+
+        <Pressable
+          onPress={() =>
+            Linking.openURL(apiConfig.baseURL + "/terms_of_service")
+          }
+        >
+          <Text style={{ color: "#0091FF", margin: 20 }}>
+            Điều khoản sử dụng Zola ?
+          </Text>
+        </Pressable>
       </View>
       <Pressable
         style={[
@@ -378,17 +417,22 @@ const RegisterInfo = ({ navigation, route }) => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalHeaderText}>
-              Xác nhận email: {maskedEmail}?
+              Xác nhận email: {maskedEmail}? Xác nhận email: {maskedEmail}?
             </Text>
             <Text style={styles.modalText}>
-              Email này sẽ được sử dụng để gửi mã xác thực
+              Email này sẽ được sử dụng để gửi mã xác thực Email này sẽ được sử
+              dụng để gửi mã xác thực
             </Text>
             <View style={styles.modalButtonContainer}>
               <Pressable onPress={toggleModal}>
                 <Text style={styles.modalButton}>HỦY</Text>
               </Pressable>
               <Pressable onPress={handleXacNhan}>
-                <Text style={styles.modalButton}>XÁC NHẬN</Text>
+                {isLoading ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text style={styles.modalButton}>XÁC NHẬN</Text>
+                )}
               </Pressable>
             </View>
           </View>
@@ -538,6 +582,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     margin: 10,
+    margin: 10,
     borderBottomWidth: 2,
     borderBottomColor: "#64D6EA",
   },
@@ -577,6 +622,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
+
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,0.5)",
