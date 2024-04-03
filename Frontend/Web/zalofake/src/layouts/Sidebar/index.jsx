@@ -14,7 +14,7 @@ function Sidebar({ changeTab, changeMenu }) {
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("authUser"));
-    const avatarUrl = user?.profile?.avatar?.url ?? "public/zalo.svg";
+    const avatarUrl = user?.profile?.avatar?.url ?? "/zalo.svg";
     setAvtUrl(avatarUrl);
   }, [localStorage.getItem("authUser")]);
 
