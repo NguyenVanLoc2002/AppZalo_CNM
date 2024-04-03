@@ -21,7 +21,7 @@ const useLogin = () => {
       });
 
       const data = response.data;
-      if (response.status === 200) {
+      if (response && response?.status === 200) {
         setAuthUser(data.user);
         setAccessToken(data.accessToken);
         setRefreshToken(data.refreshToken);
@@ -29,6 +29,7 @@ const useLogin = () => {
         showMesg("Error during login", "error");
       }
     } catch (error) {
+      console.log("LOGIN ER: ", error);
       if (error.request) {
         showMesg("Error server, please try again !", "error");
         throw error;
