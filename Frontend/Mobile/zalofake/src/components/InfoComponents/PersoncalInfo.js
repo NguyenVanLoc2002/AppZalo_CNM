@@ -17,12 +17,12 @@ import RadioButton from "react-native-radio-buttons-group";
 import useUpdate from "../../hooks/useUpdate";
 
 const PersonalInfo = ({ navigation }) => {
-  const { updateProfile } = useUpdate();
   const { authUser } = useAuthContext();
   const [usDob, setUsDob] = useState(new Date(authUser?.profile.dob));
   const [usGender, setUsGender] = useState(authUser?.profile.gender);
   const [usName, setUsName] = useState(authUser?.profile?.name);
   const [usEmail, setUsEmail] = useState(authUser?.email);
+  const { updateProfile, loading } = useUpdate();
 
   const handleNameChange = (text) => {
     setUsName(text);
@@ -39,8 +39,6 @@ const PersonalInfo = ({ navigation }) => {
       const selectedYear = usDob.getFullYear();
 
       const selectedDate = new Date(selectedYear, selectedMonth, selectedDay);
-
-      console.log(selectedDate);
 
       await updateProfile({
         name: usName,
@@ -136,7 +134,6 @@ const PersonalInfo = ({ navigation }) => {
               flexDirection: "row",
               marginTop: -100,
               alignItems: "left",
-              marginBottom: 100, // Fixing the typo here
               paddingBottom: 10,
               paddingLeft: 10,
             }}
@@ -185,7 +182,7 @@ const PersonalInfo = ({ navigation }) => {
               >
                 <TextInput
                   style={{ fontSize: 18 }}
-                  defaultValue={usName} // Using defaultValue instead of value
+                  defaultValue={usName}
                   onChangeText={handleNameChange}
                 />
               </View>
@@ -203,7 +200,7 @@ const PersonalInfo = ({ navigation }) => {
               >
                 <TextInput
                   style={{ fontSize: 18 }}
-                  defaultValue={usEmail} // Using defaultValue instead of value
+                  defaultValue={usEmail}
                   onChangeText={handleEmailChange}
                 />
               </View>
@@ -268,18 +265,18 @@ const PersonalInfo = ({ navigation }) => {
                         (itemValue % 4 === 0 && itemValue % 100 !== 0) ||
                         itemValue % 400 === 0;
                       const daysInMonth = [
-                        31, // January
-                        isLeapYear ? 29 : 28, // February
-                        31, // March
-                        30, // April
-                        31, // May
-                        30, // June
-                        31, // July
-                        31, // August
-                        30, // September
-                        31, // October
-                        30, // November
-                        31, // December
+                        31,
+                        isLeapYear ? 29 : 28,
+                        31,
+                        30,
+                        31,
+                        30,
+                        31,
+                        31,
+                        30,
+                        31,
+                        30,
+                        31,
                       ];
 
                       const newDay =
@@ -313,18 +310,18 @@ const PersonalInfo = ({ navigation }) => {
                           usDob.getFullYear() % 100 !== 0) ||
                         usDob.getFullYear() % 400 === 0;
                       const daysInMonth = [
-                        31, // January
-                        isLeapYear ? 29 : 28, // February
-                        31, // March
-                        30, // April
-                        31, // May
-                        30, // June
-                        31, // July
-                        31, // August
-                        30, // September
-                        31, // October
-                        30, // November
-                        31, // December
+                        31,
+                        isLeapYear ? 29 : 28,
+                        31,
+                        30,
+                        31,
+                        30,
+                        31,
+                        31,
+                        30,
+                        31,
+                        30,
+                        31,
                       ];
 
                       const newDay =
