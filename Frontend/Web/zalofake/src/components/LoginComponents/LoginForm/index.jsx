@@ -17,26 +17,26 @@ function LoginForm() {
 
   const { loading, login } = useLogin();
 
-  useEffect(() => {
-    const getPhoneId = async () => {
-      const res = await fetch("https://restcountries.com/v3.1/all");
-      const data = await res.json();
-      data.forEach((item) => {
-        if (item.cca2) {
-          setPhoneId((phoneId) => [
-            ...phoneId.filter((phone) => phone.id !== item.cca2),
-            {
-              id: item.cca2,
-              name: item.name.common,
-              flag: item.flags.png,
-              phone: item.idd.root + item.idd.suffixes?.[0],
-            },
-          ]);
-        }
-      });
-    };
-    getPhoneId();
-  }, []);
+  // useEffect(() => {
+  //   const getPhoneId = async () => {
+  //     const res = await fetch("https://restcountries.com/v3.1/all");
+  //     const data = await res.json();
+  //     data.forEach((item) => {
+  //       if (item.cca2) {
+  //         setPhoneId((phoneId) => [
+  //           ...phoneId.filter((phone) => phone.id !== item.cca2),
+  //           {
+  //             id: item.cca2,
+  //             name: item.name.common,
+  //             flag: item.flags.png,
+  //             phone: item.idd.root + item.idd.suffixes?.[0],
+  //           },
+  //         ]);
+  //       }
+  //     });
+  //   };
+  //   getPhoneId();
+  // }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
