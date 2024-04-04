@@ -121,9 +121,13 @@ const useForgotPw = () => {
                 email,
                 newPassword,
             });
-
-            if (response.status === 200) {
-                showToastSuccess("Change Password Successfully");
+            if(response.status === 404){
+                return false;
+            }
+            else if(response.status === 400){
+                return false;
+            }
+            else if (response.status === 200) {
                 setIsLoading(false);
                 return true;
             } else {
