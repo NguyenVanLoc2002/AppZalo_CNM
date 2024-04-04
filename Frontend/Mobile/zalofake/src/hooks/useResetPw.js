@@ -36,7 +36,7 @@ const useForgotPw = () => {
         const response = await axiosInstance.post("/auth/send-otp", {
             email,
         });
-        const data = response.data;
+        const data = response?.data;
         return data.totp;
     };
 
@@ -47,11 +47,11 @@ const useForgotPw = () => {
                 email,
             });
           
-            if(response.status === 404) {
+            if(response?.status === 404) {
                 showToastError(response.data.message);
                 return false;
             }
-            else if (response.status === 200) {
+            else if (response?.status === 200) {
                 setIsLoading(false);
                 return true;
             }
@@ -123,13 +123,13 @@ const useForgotPw = () => {
                 email,
                 newPassword,
             });
-            if(response.status === 404){
+            if(response?.status === 404){
                 return false;
             }
-            else if(response.status === 400){
+            else if(response?.status === 400){
                 return false;
             }
-            else if (response.status === 200) {
+            else if (response?.status === 200) {
                 setIsLoading(false);
                 return true;
             } else {
