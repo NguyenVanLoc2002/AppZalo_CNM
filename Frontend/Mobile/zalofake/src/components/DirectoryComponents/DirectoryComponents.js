@@ -6,7 +6,6 @@ import { Ionicons } from "@expo/vector-icons";
 import FriendDirectory from "./FriendDirectory";
 import GroupDirectory from "./GroupDirectory";
 
-
 const Tab = createMaterialTopTabNavigator();
 
 const DirectoryComponents = ({ navigation }) => {
@@ -68,7 +67,6 @@ const DirectoryComponents = ({ navigation }) => {
     <Tab.Navigator initialRouteName="Bạn bè" tabBarPosition="top">
       <Tab.Screen name="Bạn bè" component={FriendDirectory} />
       <Tab.Screen name="Nhóm" component={GroupDirectory} />
-     
     </Tab.Navigator>
   );
 };
@@ -81,7 +79,6 @@ const styles = StyleSheet.create({
   },
   headerIcon: {
     marginRight: 20,
-
   },
   headerTitleContainer: {
     flexDirection: "row",
