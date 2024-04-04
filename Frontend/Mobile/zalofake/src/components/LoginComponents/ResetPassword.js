@@ -68,7 +68,7 @@ const ForgotPassword = ({ navigation }) => {
     } else {
       const sendEmail = await check_mail(textEmail);
       if (!sendEmail) {
-        showToastError("Invalid email")
+        showToastError("Không tìm thấy tài khoản")
         return;
       }
       setIsHidden(!isHidden);
@@ -214,10 +214,10 @@ const ForgotPassword = ({ navigation }) => {
         >
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
-              <Text style={[{ fontWeight: 'bold', textAlign: 'center' }, styles.styleText]}>Xác nhận {textEmail} gmail ?</Text>
+              <Text style={[{ fontWeight: 'bold', textAlign: 'center' }, styles.styleText]}>Xác nhận gmail: {textEmail} ?</Text>
               <Text style={{ textAlign: 'center' }}>Gmail này sẽ được sử dụng để nhận mã xác thực</Text>
               <View style={{ flexDirection: 'row', width: '100%' }}>
-                <Pressable style={[styles.pressCancel, { borderRightWidth: 2, borderRightColor: '#e0e3e5' }]} onPress={() => {setModalXacNhan(!modalXacNhan)}}>
+                <Pressable style={[styles.pressCancel, { borderRightWidth: 2, borderRightColor: '#e0e3e5' }]} onPress={() => {setModalXacNhan(!modalXacNhan);setIsHidden(!isHidden)}}>
                   <Text style={styles.textCancel}>Huỷ</Text>
                 </Pressable>
                 <Pressable style={styles.pressCancel} onPress={handleXacNhan} >

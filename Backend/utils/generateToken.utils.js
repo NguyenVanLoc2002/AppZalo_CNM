@@ -18,16 +18,11 @@ exports.generateRefreshToken = (device_id, user_id, phone) => {
     }
   );
 };
-exports.generateTOTPToken = (email) =>{
-  return jwt.sign(
-    {email, type: "totp"},
-    process.env.JWT_SECRET,
-    {
-      expiresIn: "180s",
-    }
-  )
-
-}
+exports.generateTOTPToken = (email) => {
+  return jwt.sign({ email, type: "totp" }, process.env.JWT_SECRET, {
+    expiresIn: "180s",
+  });
+};
 
 exports.getUserIdFromToken = (token) => {
   const decoded = jwt.verify(token, process.env.JWT_SECRET);

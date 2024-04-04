@@ -20,15 +20,12 @@ router.get("/get/phone/:phone", protect, getUserByPhoneOrId);
 router.get("/get/uid/:uid", protect, getUserByPhoneOrId);
 router.get("/get/friends", protect, getFriends);
 
-
-
 //post methods
 router.post("/check-email", checkUserByEmail);
 router.post("/update-profile", protect, updateUser);
 router.post("/send-add-friend", protect, sendRequestAddFriend);
 router.post("/accept-add-friend", protect, acceptRequestAddFriend);
 router.post("/unfriend", protect, unfriend);
-
 
 router.post(
   "/upload-avatar",
