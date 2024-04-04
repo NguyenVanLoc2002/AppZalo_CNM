@@ -11,10 +11,7 @@ const ChangePassword = ({ navigation, route }) => {
     const { showToastSuccess, showToastError, changePassword } = useChangePw();
     const logout = useLogout();
     const [modalSuccess, setModalSuccess] = useState(false);
-    const [checkScreen, setCheckScreen] = useState("check")
     const [isLoading, setIsLoading] = useState(false)
-
-    console.log("change", checkScreen)
 
     useEffect(() => {
         navigation.setOptions({
@@ -159,7 +156,7 @@ const ChangePassword = ({ navigation, route }) => {
                         </View>
 
                         <Pressable style={[{ margin: 10, backgroundColor: '#67bed9', width: '50%', borderRadius: 20, height: 40 }, styles.styleCenter]}
-                            onPress={() => navigation.navigate('ResetPassword', { checkScreen: checkScreen })}
+                            onPress={() => navigation.navigate('ForgotPassword')}
                         >
                             <Text style={[styles.styleText, { color: 'white', fontWeight: 'bold' }]}>Quên mật khẩu?</Text>
                         </Pressable>
