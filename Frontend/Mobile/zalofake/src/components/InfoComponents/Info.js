@@ -15,7 +15,6 @@ import { useAuthContext } from "../../contexts/AuthContext";
 
 const Info = ({ navigation }) => {
   const { authUser } = useAuthContext();
-  console.log(authUser);
 
   useEffect(() => {
     navigation.setOptions({
