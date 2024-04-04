@@ -74,6 +74,20 @@ export const AuthContextProvider = ({ children }) => {
       },
     }));
   };
+  // Hàm cập nhật bìa mới
+  const updateBia = async (backgroundUrl, publicId) => {
+    setAuthUser((prevUser) => ({
+      ...prevUser,
+      profile: {
+        ...prevUser.profile,
+        background: {
+          ...prevUser.profile.background,
+          url: backgroundUrl,
+          public_id:publicId
+        },
+      },
+    }));
+  };
   return (
     <AuthContext.Provider
       value={{
@@ -83,7 +97,8 @@ export const AuthContextProvider = ({ children }) => {
         setAccessToken,
         refreshToken,
         setRefreshToken,
-        updateAvatar
+        updateAvatar,
+        updateBia
       }}
     >
       {children}
