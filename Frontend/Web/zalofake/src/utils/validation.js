@@ -34,20 +34,30 @@ export const checkName = (name) => {
   return true;
 };
 
-// check date of birth : must be a valid date and at least 16 years old
 export const checkDOB = (dob) => {
   const dobDate = new Date(dob);
   const currentDate = new Date();
+
+  if (dobDate >= currentDate) {
+    return false;
+  }
+
+  if (
+    dobDate.getMonth() === 1 &&
+    dobDate.getDate() === 29 &&
+    !isLeapYear(dobDate.getFullYear())
+  ) {
+    return false;
+  }
+
   if (currentDate.getFullYear() - dobDate.getFullYear() < 16) {
     return false;
   }
+
   return true;
 };
 
-
-
-
-
-
-
-
+// Hàm kiểm tra năm nhuận
+const isLeapYear = (year) => {
+  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+};
