@@ -15,8 +15,6 @@ import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import useForgot from "../../hooks/useResetPw";
 import OTPTextView from 'react-native-otp-textinput';
 import Toast from "react-native-toast-message";
-import useLogout from "../../hooks/useLogout";
-
 
 const ResetPassword = ({ navigation, route }) => {
   const [textEmail, setTextEmail] = useState(null);
@@ -37,14 +35,10 @@ const ResetPassword = ({ navigation, route }) => {
   const { getOTP, showToastError, showToastSuccess, resetPassword, check_mail, handleOTP } = useForgot();
   const [isPreSendCode, setIsPreSendCode] = useState(false);
   const { email = "" } = route.params || {};
-  const { checkScreen } = route.params || {};
-
-  const logout = useLogout();
 
   useEffect(() => {
     if (email.trim().toLowerCase().endsWith("@gmail.com")) {
       setTextEmail(email)
-
     }
   }, [])
 
@@ -204,18 +198,7 @@ const ResetPassword = ({ navigation, route }) => {
 
   const handleLogin = async () => {
     setModalResetSuccess(!modalResetSuccess)
-    setIsHidden(!isHidden)
-    if (checkScreen === 'check') {
-      try {
-        await logout();
-      } catch (error) {
-        console.log(error);
-        showToastError("Lỗi ! Vui lòng thử lại sau");
-      }
-    }
-    else {
-      navigation.navigate("Login")
-    }
+    navigation.navigate("Login")
   }
 
 
