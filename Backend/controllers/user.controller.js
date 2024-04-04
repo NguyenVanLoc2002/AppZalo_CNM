@@ -49,7 +49,6 @@ exports.checkUserByEmail = async (req, res) => {
 };
 
 exports.uploadAvatar = async (req, res) => {
-  console.log("em");
   try {
     const token = req.headers.authorization.split(" ")[1];
     const userId = getUserIdFromToken(token);
