@@ -70,6 +70,7 @@ const RegisterName = ({ navigation }) => {
             value={textPhone}
             placeholder="Nhập số điện thoại"
             style={styles.input}
+            keyboardType="numeric"
           />
         </View>
         <View style={styles.inputContainer}>
