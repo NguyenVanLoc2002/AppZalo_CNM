@@ -50,7 +50,7 @@ const Login = ({ navigation }) => {
   };
 
   const handleForgetPassword = () => {
-    console.log("Forget password");
+    navigation.navigate("ResetPassword");
   };
 
   useEffect(() => {
@@ -93,6 +93,7 @@ const Login = ({ navigation }) => {
           placeholder="Số điện thoại"
           placeholderTextColor={"gray"}
           style={styles.input}
+          keyboardType="numeric"
         />
       </View>
       <View
@@ -149,7 +150,7 @@ const Login = ({ navigation }) => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalHeaderText}>Bạn đã nhập sai mật khẩu 5 lần!</Text>
+            <Text style={styles.modalHeaderText}>Bạn đã nhập sai mật khẩu quá 5 lần!</Text>
             <Text style={styles.modalText}>
               Bạn muốn lấy lại mật khẩu không ?
             </Text>
