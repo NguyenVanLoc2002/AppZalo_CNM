@@ -11,11 +11,14 @@ function LoginForm() {
   const location = useLocation();
   const emailForgot = location.state?.email;
   const passwordForgot = location.state?.password;
+  const emailFromChangePassword = location.state?.emailFromChangePassword;
 
   const newEmail = location.state?.newEmail;
   const newPassword = location.state?.newPassword;
 
-  const [phone, setPhone] = useState(emailForgot || newEmail || "");
+  const [phone, setPhone] = useState(
+    emailForgot || newEmail || emailFromChangePassword || ""
+  );
   const [password, setPassword] = useState(passwordForgot || newPassword || "");
   const [showPass, setShowPass] = useState(false);
   const { langue, setEmailForgot } = useOutletContext();
@@ -119,7 +122,6 @@ function LoginForm() {
                   ? "Số điện thoại hoặc email"
                   : "Phone number or email"
               }
-              
               value={phone}
               onChange={(e) => {
                 // setPhone(e.target.value.replace(/\D/g, ""));
