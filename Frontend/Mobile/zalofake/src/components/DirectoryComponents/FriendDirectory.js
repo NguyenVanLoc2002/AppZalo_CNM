@@ -42,7 +42,6 @@ const FriendDirectory = ({ navigation }) => {
         <Pressable style={styles.roundedButton}>
           <Text style={styles.whiteText}>Tất cả 470</Text>
         </Pressable>
-        
       </View>
       {/* List danh bạ bạn thân nhe nè */}
       <View style={styles.friendList}>
