@@ -133,7 +133,7 @@ function PeopleChatComponent({ language, userChat }) {
 
           {/*Content Chat */}
           {messages.length === 0 ? (
-            <div className="flex flex-col justify-center items-center bg-slate-50 h-[75vh] bg-slate-300 overflow-y-auto">
+            <div className="flex flex-col justify-center items-center  h-[75vh] bg-slate-300 overflow-y-auto">
               <p className="text-lg text-center">
                 {language === "vi" ? (
                   <span>
@@ -164,7 +164,7 @@ function PeopleChatComponent({ language, userChat }) {
             </div>
           ) : (
             <div
-              className="flex flex-col p-2 bg-slate-50 h-[75vh] bg-slate-300 overflow-y-auto"
+              className="flex flex-col p-2 h-[75vh] bg-slate-300 overflow-y-auto"
               ref={scrollRef}
             >
               {messages
