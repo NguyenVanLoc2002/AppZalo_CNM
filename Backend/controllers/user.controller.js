@@ -272,8 +272,10 @@ exports.unfriend = async (req, res) => {
 };
 
 exports.getFriends = async (req, res) => {
+  console.log('hihi')
   try {
     const token = req.headers.authorization.split(" ")[1];
+    console.log(token)
     const userId = getUserIdFromToken(token);
     const user = await User.findById(userId);
     if (!user) {
