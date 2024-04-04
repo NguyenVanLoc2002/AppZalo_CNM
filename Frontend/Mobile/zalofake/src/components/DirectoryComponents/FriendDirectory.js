@@ -61,7 +61,7 @@ const FriendDirectory = ({ navigation }) => {
         </Pressable>
 
       </View>
-     
+
       {/* List danh bạ nè */}
       <View style={styles.friendList}>
         <View style={styles.friendListHeader}>
