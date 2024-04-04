@@ -9,7 +9,6 @@ const uploadImage = new CloudinaryStorage({
     allowed_formats: ["jpg", "png", "jpeg"],
     public_id: (req, file) => {
       return `zaloFake_${file.fieldname}_${Date.now()}`;
-
     },
   },
 });
