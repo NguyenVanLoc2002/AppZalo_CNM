@@ -31,6 +31,7 @@ const useLogin = () => {
     } catch (error) {
       if (error.request) {
         showMesg("Error server, please try again !", "error");
+        console.log(error)
         throw error;
       } else {
         showMesg("Error during login", "error");
