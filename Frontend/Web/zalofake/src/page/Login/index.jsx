@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 
 const Login = () => {
   const [langue, setLangue] = useState("vi"); // [vi, en]
+  const [emailForgot, setEmailForgot] = useState("");
 
   
   return (
@@ -18,7 +19,7 @@ const Login = () => {
         </p>
       </div>
       <div className="flex justify-center items-center">
-        <Outlet context={langue}/>
+        <Outlet context={{langue, setEmailForgot, emailForgot}}/>
         
       </div>
       <div className="flex justify-center mt-20 mb-40 text-sm">

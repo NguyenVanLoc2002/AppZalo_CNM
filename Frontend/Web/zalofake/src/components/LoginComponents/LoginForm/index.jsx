@@ -11,7 +11,7 @@ function LoginForm() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
-  const langue = useOutletContext();
+  const {langue, setEmailForgot} = useOutletContext();
   const [code, setCode] = useState("+84");
   const [phoneId, setPhoneId] = useState([]);
 
@@ -55,7 +55,7 @@ function LoginForm() {
       <div className="w-[400px] text-sm h-full">
         <div className="w-full p-1 bg-white flex justify-around">
           <p className="text-center text-sm font-bold uppercase py-3 mb-[-5px] border-b border-black">
-            {langue == "vi" ? "Đăng nhập với số điện thoại" : "Login with phone number"}
+            {langue == "vi" ? "Đăng nhập với số điện thoại hoặc email" : "Login with phone number or email"}
           </p>
         </div>
         <hr />
@@ -110,6 +110,7 @@ function LoginForm() {
               onChange={(e) => {
                 // setPhone(e.target.value.replace(/\D/g, ""));
                 setPhone(e.target.value);
+                setEmailForgot(e.target.value);
               }}
             />
           </div>
