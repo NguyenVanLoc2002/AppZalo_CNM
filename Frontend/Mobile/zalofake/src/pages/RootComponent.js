@@ -27,7 +27,6 @@ import PersonalPrivacy from "../components/InfoComponents/PersonalPrivacy";
 import AccountVsSecurity from "../components/InfoComponents/AccoutVsSecurity";
 import PersonalSetting from "../components/InfoComponents/PersonalSetting";
 import ChangePassword from "../components/InfoComponents/ChangePassword";
-import ResetPassword from "../components/LoginComponents/ResetPassword";
 
 const Stack = createNativeStackNavigator();
 
