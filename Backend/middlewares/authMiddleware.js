@@ -5,7 +5,6 @@ const Session = require("../models/Session");
 
 exports.protect = async (req, res, next) => {
   let token;
-  console.log(req.headers);
   const app_type = req.headers["user-agent"].includes("Mobile")
     ? "mobile"
     : "web";
@@ -37,6 +36,8 @@ exports.protect = async (req, res, next) => {
         if (!isLogin) {
           return res.status(401).json({ message: "Not authorized" });
         }
+        // Thêm thông tin người dùng vào req.user
+        req.user = user;
         next();
       });
     } catch (error) {
