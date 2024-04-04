@@ -7,16 +7,17 @@ import { checkEmail, checkPassword } from "../../../utils/validation";
 import useForgot from "../../../hooks/useForgot";
 
 function ForgotPassword() {
-  const [email, setEmail] = useState("");
-  const langue = useOutletContext();
+  const { langue, emailForgot } = useOutletContext();
+  const [email, setEmail] = useState(
+    emailForgot.includes("@") ? emailForgot : ""
+  );
   const [isInputEmail, setIsInputEmail] = useState(true);
   const [isInputCode, setIsInputCode] = useState(false);
   const [isInputPassword, setIsInputPassword] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const { getOTP, isLoading, verifyOTP, resetPassword } =
-    useForgot();
+  const { getOTP, isLoading, verifyOTP, resetPassword } = useForgot();
 
   const handleResetPassword = async () => {
     if (checkPassword(newPassword)) {
@@ -49,10 +50,18 @@ function ForgotPassword() {
       {isInputEmail && (
         <div className="w-[450px] text-sm">
           <div className="w-full text-base pt-5 pb-3 bg-white">
-            <p className="text-center mt-10 ">
-              {langue == "vi"
-                ? "Nhập địa chỉ email đã liên kết với tài khoản của bạn"
-                : "Enter the email address associated with your account"}
+            <p className="text-center mt-10 whitespace-normal break-words px-3">
+              {
+                emailForgot.includes("@") ? (
+                  langue == "vi"
+                    ? "Email bên dưới của bạn sẽ nhận được mã OTP để đặt lại mật khẩu"
+                    : "The email below will receive the OTP to reset the password"
+                ) : (
+                  langue == "vi"
+                    ? "Nhập email đã liên kết với tài khoản của bạn để lấy mã xác nhận"
+                    : "Enter the email associated with your account to get the confirmation code"
+                )
+              }
             </p>
           </div>
           <form className="bg-white shadow-lg rounded px-10 pt-4 pb-5 mb-4">
@@ -60,12 +69,13 @@ function ForgotPassword() {
               <CiMail className="text-2xl mr-3" />
               <input
                 className="rounded w-full py-1 px-3 border-none
-                text-gray-700 focus:outline-none focus:shadow-outline"
+                text-gray-700 focus:outline-none focus:shadow-outline "
                 id="email"
                 type="email"
                 placeholder={langue == "vi" ? "Nhập email" : "Enter your email"}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                readOnly={emailForgot.includes("@")}
               />
             </div>
             <div>
