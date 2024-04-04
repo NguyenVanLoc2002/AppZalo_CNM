@@ -10,19 +10,46 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import useUpdate from "../../hooks/useUpdate";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
 import { useAuthContext } from "../../contexts/AuthContext";
 import axiosInstance from "../../api/axiosInstance";
 const PersonalPage = ({ navigation }) => {
-  const { updateAvatar } = useUpdate();
+  // const { updateAvatar } = useUpdate();
 
   const { authUser } = useAuthContext();
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImage, setSelectedImage] = useState();
+  const [selectedImageAvt, setSelectedImageAvt] = useState(authUser?.profile?.avatar?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png");
 
   const [status, setStatus] = useState("");
+
+  // useEffect(() => {
+  //   const loadData = async () => {
+  //     try {
+  //       const AuthUser = await AsyncStorage.getItem("authUser");
+  //       const AccessToken = await AsyncStorage.getItem("accessToken");
+  //       const RefreshToken = await AsyncStorage.getItem("refreshToken");
+  //       if (AuthUser) {
+  //         setAuthUser(JSON.parse(AuthUser));
+  //       }
+  //       if (AccessToken) {
+  //         setAccessToken(JSON.parse(AccessToken));
+  //       }
+  //       if (RefreshToken) {
+  //         setRefreshToken(JSON.parse(RefreshToken));
+  //       }
+  //     } catch (error) {
+  //       throw new Error("Error loading data from AsyncStorage:", error);
+  //     }
+  //   };
+
+  //   loadData();
+  // }, []);
+
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -62,7 +89,7 @@ const PersonalPage = ({ navigation }) => {
     const permissionResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      alert("Permission to access camera roll is required!");
+      console.log("Permission to access camera roll is required!");
       return;
     }
 
@@ -75,8 +102,9 @@ const PersonalPage = ({ navigation }) => {
 
     if (!pickerResult.canceled) {
       setSelectedImage(pickerResult.assets[0].uri);
-      // console.log(pickerResult);
-      // console.log(pickerResult.assets[0].uri);
+      console.log(pickerResult);
+      console.log(pickerResult.assets[0].uri);
+      console.log(pickerResult.uri);
     } else {
       console.log("No image selected");
     }
@@ -90,31 +118,43 @@ const PersonalPage = ({ navigation }) => {
         type: "image/jpeg",
         name: "avatar.jpg",
       });
-      console.log("1");
+      console.log(formData);
       // formData.append("avatar", file);
       const response = await axiosInstance.post(
-        "/users/upload-avatar"
-        // formData
-        // {
-        //   headers: {
-        //     Authorization: `Bearer ${authToken}`,
-        //     "Content-Type": "multipart/form-data",
-        //   },
-        // }
+        "/users/upload-avatar",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
-      console.log("hihi");
+      //   console.log("hihi");
+      //   console.log(response);
+      const responseJson = response.request._response;
+
+      // // Phân tích chuỗi JSON thành đối tượng JavaScript
+      const responseUrl = JSON.parse(responseJson);
+
+      // Lấy URL của avatar từ đối tượng phân tích
+      const avatarUrl = responseUrl.avatar.url;
+      console.log("Avatar URL:", avatarUrl);
+      // console.log(responseJava);
       // const response = await updateAvatar(formData);
 
-      if (response.avatar) {
-        await AsyncStorage.setItem("avatar", response.avatar.url);
-        setSelectedImage(response.avatar.url);
-        Alert.alert("Success", "Avatar updated successfully");
+      if (avatarUrl) {
+        // await AsyncStorage.setItem("avatar", avatarUrl);
+        await AsyncStorage.setItem("authUser", JSON.stringify(authUser));
+        setSelectedImage(avatarUrl);
+        setSelectedImageAvt(avatarUrl);
+        // updateAvatar(avatarUrl);
+        console.log("Success", "Avatar updated successfully");
       } else {
         throw new Error("Failed to update avatar");
       }
     } catch (error) {
       console.error(error);
-      Alert.alert("Error", error.message || "Failed to update avatar");
+      console.log("Error", error.message || "Failed to update avatar");
     } finally {
       closeModal();
     }
@@ -133,16 +173,16 @@ const PersonalPage = ({ navigation }) => {
       <View style={{ alignItems: "center" }}>
         <Image
           source={{
-            uri:
-              authUser?.profile?.background?.url ||
+            uri: authUser?.profile?.background?.url ||
               "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+
           }}
           style={{ width: "100%", height: 160 }}
         />
         <Pressable onPress={openModal}>
           <Image
             source={{
-              uri:
+              uri: selectedImageAvt ||
                 authUser?.profile?.avatar?.url ||
                 "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
             }}
@@ -368,10 +408,11 @@ const PersonalPage = ({ navigation }) => {
           >
             <Image
               source={{
-                uri:
-                  selectedImage ||
+
+                uri: selectedImageAvt ||
                   authUser?.profile?.avatar?.url ||
                   "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+
               }}
               style={{ width: 200, height: 200, borderRadius: 100 }}
             />
