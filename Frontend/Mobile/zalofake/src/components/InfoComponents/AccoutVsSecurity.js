@@ -106,7 +106,7 @@ const AccountVsSecurity = ({ navigation }) => {
             <Text style={styles.listItemText}>Thiết bị đăng nhập</Text>
             <Ionicons name="arrow-forward" size={22} color="#a5a9aa"></Ionicons>
           </Pressable>
-          <Pressable style={styles.listItemContainer}>
+          <Pressable style={styles.listItemContainer} onPress={() => {navigation.navigate("ChangePassword")}}>
             <Ionicons
               name="lock-closed-outline"
               size={26}
