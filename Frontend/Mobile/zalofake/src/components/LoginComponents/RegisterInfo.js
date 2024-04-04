@@ -55,7 +55,7 @@ const RegisterInfo = ({ navigation, route }) => {
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
   const years = Array.from({ length: 122 }, (_, i) => 2024 - i);
-  const { showToastError, showToastSuccess, getOTP, verifyEmailAndRegister } =
+  const {showToastError, showToastSuccess, getOTP, verifyEmailAndRegister } =
     useRegister();
 
   // tiến hành gửi mã otp, nếu đã gửi sẽ hiển thị modal cho nhập email
@@ -65,17 +65,22 @@ const RegisterInfo = ({ navigation, route }) => {
       toggleModal();
       setIsLoading(false);
       handlesendAuthCode();
-
+    }else{
+      toggleModal();
+      setIsLoading(false);
     }
+    
   };
   // tiến hành gửi lại mã otp, nếu đã gửi sẽ hiển thị modal cho nhập email
   const pressPreSendOTP = async (e) => {
+    setIsLoading(true);
     const systemOTP = await getOTP(textEmail);
     if (systemOTP) {
       setIsLoading(false);
       setTimeLeft(60);
       SendTime();
-      setOtp("")
+      setIsPreSendCode(false)
+      setIsCounting(true)
     }
   };
   // xác thực email và tiến hành đăng ký
@@ -294,7 +299,7 @@ const RegisterInfo = ({ navigation, route }) => {
                     onPress={() => {
                       setSelectedMonth(item);
                       // handleSetDate()
-                      dob.setMonth(item)
+                      dob.setMonth(item - 1)
                       scrollToFirstPosition(flatlistRefs.month, item - 1);
                     }}
                   >
@@ -554,6 +559,11 @@ const RegisterInfo = ({ navigation, route }) => {
                 >
                   Đang gửi mã xác thực đến email: {textEmail}
                 </Text>
+                {isLoading ? (
+                  <ActivityIndicator color="blue"/>
+                ) : (
+                  <Text></Text>
+                )}
               </View>
               <View style={{ flex: 1, padding: 10 }}>
                 <View style={styles.otpContainer}>
@@ -576,8 +586,8 @@ const RegisterInfo = ({ navigation, route }) => {
                   }}
                 >
                   <Pressable
-                    style={{ flexDirection: 'row', width: '45%', justifyContent: 'space-between', height: 30, alignItems: 'center' }}
-                    onPress={isPreSendCode ? pressPreSendOTP : null} // Kiểm tra isPreSendCode trước khi gọi hàm pressPreSendOTP
+                    style={{ flexDirection: 'row', width: '45%', justifyContent: 'space-between', height: 40, alignItems: 'center' }}
+
                   >
                     <Pressable
                       style={{
@@ -588,9 +598,13 @@ const RegisterInfo = ({ navigation, route }) => {
                         alignItems: 'center',
                         justifyContent: 'center'
                       }}
+                      onPress={isPreSendCode ? pressPreSendOTP : null} // Kiểm tra isPreSendCode trước khi gọi hàm pressPreSendOTP
                       disabled={!isPreSendCode} // Vô hiệu hóa nút khi isPreSendCode là false
                     >
+
                       <Text style={{ color: 'white', fontWeight: 'bold' }}>Gửi lại mã</Text>
+
+
                     </Pressable>
                     <Text style={{ color: "#0091FF", fontWeight: 'bold' }}>{timeLeft === 0 ? "0:0" : formatTime(timeLeft)}</Text>
                   </Pressable>
@@ -624,9 +638,12 @@ const RegisterInfo = ({ navigation, route }) => {
                     }}
                     onPress={handleVerifyOTP}
                   >
+
                     <Text style={{ color: "#fff", fontWeight: "bold" }}>
                       Tiếp tục
                     </Text>
+
+
                   </Pressable>
                 </View>
               </View>
