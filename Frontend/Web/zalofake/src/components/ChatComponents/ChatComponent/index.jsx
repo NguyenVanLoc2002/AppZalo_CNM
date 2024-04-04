@@ -58,6 +58,8 @@ function ChatComponents({ language }) {
     "Trả lời sau",
     "Đồng nghiệp",
   ];
+
+  // console.log(userChat);
   return (
     <>
       <div className="relative bg-gray-100 h-screen w-full flex">
