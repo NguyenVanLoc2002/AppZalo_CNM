@@ -7,41 +7,42 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const useUpdate = () => {
   const [loading, setLoading] = useState(false);
   const { setAuthUser } = useAuthContext();
-  const updateAvatar = async (file, authToken) => {
+  const updateAvatar = async (formData) => {
     setLoading(true);
+    console.log(formData);
     try {
-      if (!authToken) {
-        throw new Error("Authentication token not found");
-      }
+      // if (!authToken) {
+      //   throw new Error("Authentication token not found");
+      // }
 
       const formData = new FormData();
       formData.append("avatar", file);
 
       const response = await axiosInstance.post(
         "/users/upload-avatar",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        formData
+        // {
+        //   headers: {
+        //     Authorization: `Bearer ${authToken}`,
+        //     "Content-Type": "multipart/form-data",
+        //   },
+        // }
       );
+      console.log(response);
+      // const { data, status } = response;
 
-      const { data, status } = response;
-
-      if (status === 200) {
-        const { avatar } = data;
-        if (avatar) {
-          // Lưu trữ thông tin avatar vào AsyncStorage
-          await AsyncStorage.setItem("avatar", avatar);
-          Alert.alert("Success", "Avatar updated successfully"); // Sửa: Sử dụng Alert thay vì toast
-        } else {
-          throw new Error("Failed to update avatar");
-        }
-      } else {
-        throw new Error(data.message || "Failed to update avatar");
-      }
+      // if (status === 200) {
+      //   const { avatar } = data;
+      //   if (avatar) {
+      //     // Lưu trữ thông tin avatar vào AsyncStorage
+      //     await AsyncStorage.setItem("avatar", avatar);
+      //     Alert.alert("Success", "Avatar updated successfully"); // Sửa: Sử dụng Alert thay vì toast
+      //   } else {
+      //     throw new Error("Failed to update avatar");
+      //   }
+      // } else {
+      //   throw new Error(data.message || "Failed to update avatar");
+      // }
     } catch (error) {
       console.error(error);
       Alert.alert(
@@ -136,7 +137,7 @@ const useUpdate = () => {
     }
   };
 
-  return { updateProfile, loading };
+  return { updateProfile, updateAvatar, loading };
 };
 
 export default useUpdate;
