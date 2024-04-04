@@ -120,7 +120,6 @@ exports.uploadBackground = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const { name, email, gender, dob } = req.body;
-    console.log("dob", dob);
     const token = req.headers.authorization.split(" ")[1];
     const userId = getUserIdFromToken(token);
     const user = await User.findById(userId);
