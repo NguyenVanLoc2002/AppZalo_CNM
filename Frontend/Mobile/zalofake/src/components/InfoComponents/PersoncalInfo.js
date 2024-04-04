@@ -81,7 +81,10 @@ const PersonalInfo = ({ navigation }) => {
             <View style={{ height: 100, paddingTop: 15, display: "flex", flexDirection: 'row' }}>
               <Text style={{ width: '30%', fontSize: 16, fontWeight: "400" }}>Điện thoại</Text>
               <View style={{  width: '67%',display: "flex", flexDirection: 'column' }}>
-                <Text style={{ fontSize: 16, fontWeight: "400" }}>{authUser?.phone}</Text>
+
+    
+
+                <Text style={{ fontSize: 16, fontWeight: "400" }}>+84 {authUser?.phone.substring(1)}</Text>
                 <Text style={{ fontSize: 14, fontWeight: "400", color: "gray" }}>Số điện thoại này chỉ hiển thị với người có lưu số bạn trong danh bạ máy</Text>
               </View >
             </View>
