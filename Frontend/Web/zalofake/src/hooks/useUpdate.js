@@ -9,6 +9,95 @@ const useUpdate = () => {
   const [systemOTP, setSystemOTP] = useState(null);
 
   const { setAuthUser } = useAuthContext();
+
+  const updateAvatar = async (file, authToken) => {
+    setLoading(true);
+    try {
+      if (!authToken) {
+        throw new Error("Authentication token not found");
+      }
+
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      const response = await axiosInstance.post(
+        "/users/upload-avatar",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      const { data, status } = response;
+
+      if (status === 200) {
+        const { avatar } = data;
+        if (avatar) {
+          // toast.success("Avatar updated successfully");
+        } else {
+          throw new Error("Failed to update avatar");
+        }
+      } else {
+        throw new Error(data.message || "Failed to update avatar");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        error.message || "Failed to update avatar! Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateBackground = async (file, authToken) => {
+    setLoading(true);
+    try {
+      if (!authToken) {
+        throw new Error("Authentication token not found");
+      }
+
+      const formData = new FormData();
+      formData.append("background", file);
+
+      const response = await axiosInstance.post(
+        "/users/upload-background",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      const { data, status } = response;
+
+      if (status === 200) {
+        const { background } = data;
+        if (background) {
+          // Cập nhật ảnh bìa thành công
+          // Thực hiện các thao tác cần thiết sau khi cập nhật ảnh bìa
+          // Ví dụ: hiển thị thông báo, cập nhật state, v.v.
+        } else {
+          throw new Error("Failed to update background");
+        }
+      } else {
+        throw new Error(data.message || "Failed to update background");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        error.message || "Failed to update background! Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const updateProfile = async (userData) => {
     setLoading(true);
     try {
@@ -16,7 +105,6 @@ const useUpdate = () => {
         "/users/update-profile",
         userData
       );
-
       const { data, status } = response;
 
       if (status === 200) {
@@ -35,54 +123,15 @@ const useUpdate = () => {
       toast.error(
         error.response.data.message ||
           "Failed to update profile! Please try again."
+        error.response.data.message ||
+          "Failed to update profile! Please try again."
       );
     } finally {
       setLoading(false);
     }
   };
 
-  const getOTP = async (email) => {
-    try {
-      setLoading(true);
-      const check_mail = await axiosInstance.post("/users/check-email", {
-        email,
-      });
-      console.log(check_mail);
-
-      if (check_mail.status === 200) {
-        toast.error("Email already exists! Please try another email");
-        setLoading(false);
-        return false;
-      }
-    } catch (error) {
-      if (error.response) {
-        const otp = await VerifyOTPModule.sendOTP(email);
-        toast.success("OTP sent to your email");
-        setLoading(false);
-        setSystemOTP(otp);
-        return true;
-      } else {
-        toast.error("Failed to send OTP");
-      }
-      setLoading(false);
-      return false;
-    }
-  };
-
-  const verifyOTP = async (userOTP) => {
-    setLoading(true);
-    const verified = await VerifyOTPModule.verifyOTP(userOTP, systemOTP);
-    if (verified) {
-      setLoading(false);
-      return true;
-    } else {
-      toast.error("OTP is incorrect");
-      setLoading(false);
-      return false;
-    }
-  };
-
-  return { updateProfile, loading, getOTP, verifyOTP };
+  return { updateAvatar, updateBackground, updateProfile, loading };
 };
 
 export default useUpdate;
