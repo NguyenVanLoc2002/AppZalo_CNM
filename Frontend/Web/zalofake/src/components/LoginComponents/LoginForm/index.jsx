@@ -119,11 +119,7 @@ function LoginForm() {
                   ? "Số điện thoại hoặc email"
                   : "Phone number or email"
               }
-              placeholder={
-                langue == "vi"
-                  ? "Số điện thoại hoặc email"
-                  : "Phone number or email"
-              }
+              
               value={phone}
               onChange={(e) => {
                 // setPhone(e.target.value.replace(/\D/g, ""));
