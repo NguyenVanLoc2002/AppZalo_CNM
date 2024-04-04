@@ -168,6 +168,7 @@ const RegisterInfo = ({ navigation, route }) => {
     setModalVisible(!isModalVisible);
     setIsLoading(false)
   };
+
   const toggleModalAuthCode = () => {
     setModalAuthCode(!isModalAuthCode);
   };
@@ -508,7 +509,8 @@ const RegisterInfo = ({ navigation, route }) => {
               Xác nhận email: {textEmail}?
             </Text>
             <Text style={styles.modalText}>
-              Email này sẽ được sử dụng để gửi mã xác thực
+              Email này sẽ được sử dụng để gửi mã xác thực Email này sẽ được sử
+              dụng để gửi mã xác thực
             </Text>
             <View style={styles.modalButtonContainer}>
               <Pressable onPress={toggleModal}>
@@ -697,6 +699,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flexDirection: "row",
+    margin: 10,
     margin: 10,
     borderBottomWidth: 2,
     borderBottomColor: "#64D6EA",
