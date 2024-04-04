@@ -5,7 +5,10 @@ const Session = require("../models/Session");
 
 exports.protect = async (req, res, next) => {
   let token;
-  const app_type = req.headers["user-agent"] ? "web" : "mobile";
+  console.log(req.headers);
+  const app_type = req.headers["user-agent"].includes("Mobile")
+    ? "mobile"
+    : "web";
 
   if (
     req.headers.authorization &&
@@ -30,6 +33,7 @@ exports.protect = async (req, res, next) => {
           app_type,
           is_logged_in: true,
         });
+
         if (!isLogin) {
           return res.status(401).json({ message: "Not authorized" });
         }

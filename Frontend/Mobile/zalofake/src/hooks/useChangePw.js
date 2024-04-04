@@ -25,13 +25,17 @@ const useChangePw = () => {
     const changePassword = async (oldPassword, newPassword) => {
         try {
             setIsLoading(true);
-          
+            console.log(oldPassword, newPassword)
             const response = await axiosInstance.post("/auth/change-password", {
                 oldPassword, newPassword,
             });
-           
-            if (response.status === 200) {
-                showToastSuccess("Change Password Successfully")
+            if (response.status === 403) {
+                return false;
+            }
+            else if(response.status === 400){
+                return false;
+            }
+            else if (response.status === 200) {
                 setIsLoading(false);
                 return true;
             } else {
