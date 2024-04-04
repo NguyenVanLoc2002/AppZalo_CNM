@@ -11,6 +11,7 @@ const useLogin = () => {
   const { setAuthUser, setAccessToken, setRefreshToken } = useAuthContext();
 
   const login = async (phone, password) => {
+
     setLoading(true);
     try {
       const device_id = Device.osBuildId;
@@ -21,16 +22,23 @@ const useLogin = () => {
       });
 
       const data = response.data;
+
       if (response && response?.status === 200) {
         setAuthUser(data.user);
         setAccessToken(data.accessToken);
         setRefreshToken(data.refreshToken);
-      } else {
+        // Nếu đăng nhập thành công, reset errorCount về 0
+        setErrorCount(0);
+      }
+      else {
         showMesg("Error during login", "error");
       }
     } catch (error) {
       console.log("LOGIN ER: ", error);
-      if (error.request) {
+      if (error.response.status === 401) {
+        showMesg("Invalid phone or password !", "error");
+      }
+      else if (error.request) {
         showMesg("Error server, please try again !", "error");
         throw error;
       } else {
