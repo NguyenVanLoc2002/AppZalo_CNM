@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const sessionSchema = new mongoose.Schema({
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    ref: "users",
     required: true,
   },
   device_id: {

@@ -5,13 +5,14 @@ import ModalComponent from "../../layouts/Modal/index";
 import ContactComponent from "../../components/ContactComponents/ContactComponent";
 import ChatComponents from "../../components/ChatComponents/ChatComponent";
 import { useSocketContext } from "../../contexts/SocketContext";
+import { useAuthContext } from "../../contexts/AuthContext";
 
 function MainLayout() {
   const [showModal, setShowModal] = useState(false);
   const [curentTab, setCurentTab] = useState(1);
   const [currentMenu, setCurrentMenu] = useState();
   const [language, setLanguage] = useState("vi");
-  const userInfo = JSON.parse(localStorage.getItem("authUser"));
+  const {authUser} = useAuthContext();
 
   const showModalProfile = () => {
     setShowModal(!showModal);
@@ -149,7 +150,7 @@ function MainLayout() {
             <ModalComponent
               showModal={showModalProfile}
               language={language}
-              userInfo={userInfo}
+              userInfo={authUser}
             />
           ) : (
             <> </>
@@ -161,7 +162,7 @@ function MainLayout() {
         <ModalComponent
           showModal={showModalProfile}
           language={language}
-          userInfo={userInfo}
+          userInfo={authUser}
         />
       ) : (
         <> </>

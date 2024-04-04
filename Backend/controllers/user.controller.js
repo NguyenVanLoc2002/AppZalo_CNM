@@ -120,6 +120,7 @@ exports.uploadBackground = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const { name, email, gender, dob } = req.body;
+    console.log("dob", dob);
     const token = req.headers.authorization.split(" ")[1];
     const userId = getUserIdFromToken(token);
     const user = await User.findById(userId);
@@ -163,30 +164,30 @@ exports.updateUser = async (req, res) => {
 
 exports.sendRequestAddFriend = async (req, res) => {
   try {
-    const { friendId } = req.body;
+    const { phone } = req.body;
     const token = req.headers.authorization.split(" ")[1];
     const userId = getUserIdFromToken(token);
     const user = await User.findById(userId);
-    const friend = await User.findById(friendId);
+    const friend = await User.findOne(phone);
 
     if (!user || !friend) {
       return res.status(404).json({ message: "User not found" });
     }
-    if (user.friends.includes(friendId)) {
+    if (user.friends.includes(friend._id)) {
       return res.status(400).json({ message: "You are already friend" });
     }
-    if (user.requestSent.includes(friendId)) {
+    if (user.requestSent.includes(friend._id)) {
       return res.status(400).json({ message: "Request already sent" });
     }
-    if (user.requestReceived.includes(friendId)) {
+    if (user.requestReceived.includes(friend._id)) {
       return res.status(400).json({ message: "Request already received" });
     }
-    user.requestSent.push(friendId);
+    user.requestSent.push(friend._id);
     friend.requestReceived.push(userId);
     await user.save();
     await friend.save();
 
-    const reciverSocketId = getReciverSocketId(friendId);
+    const reciverSocketId = getReciverSocketId(friend._id);
     if (reciverSocketId) {
       io.to(reciverSocketId).emit("receive-request-add-friend", {
         sender: userId,
@@ -201,32 +202,32 @@ exports.sendRequestAddFriend = async (req, res) => {
 
 exports.acceptRequestAddFriend = async (req, res) => {
   try {
-    const { friendId } = req.body;
+    const { phone } = req.body;
     const token = req.headers.authorization.split(" ")[1];
     const userId = getUserIdFromToken(token);
     const user = await User.findById(userId);
-    const friend = await User.findById(friendId);
+    const friend = await User.findOne(phone);
 
     if (!user || !friend) {
       return res.status(404).json({ message: "User not found" });
     }
-    if (user.friends.includes(friendId)) {
+    if (user.friends.includes(friend._id)) {
       return res.status(400).json({ message: "You are already friend" });
     }
-    if (!user.requestReceived.includes(friendId)) {
+    if (!user.requestReceived.includes(friend._id)) {
       return res.status(400).json({ message: "Request not found" });
     }
-    user.friends.push(friendId);
+    user.friends.push(friend._id);
     friend.friends.push(userId);
     user.requestReceived = user.requestReceived.filter(
-      (id) => id.toString() !== friendId
+      (id) => id.toString() !== friend._id
     );
     friend.requestSent = friend.requestSent.filter(
       (id) => id.toString() !== userId
     );
     await user.save();
     await friend.save();
-    const reciverSocketId = getReciverSocketId(friendId);
+    const reciverSocketId = getReciverSocketId(friend._id);
     if (reciverSocketId) {
       io.to(reciverSocketId).emit("accept-request-add-friend", {
         sender: userId,
@@ -242,23 +243,23 @@ exports.acceptRequestAddFriend = async (req, res) => {
 
 exports.unfriend = async (req, res) => {
   try {
-    const { friendId } = req.body;
+    const { phone } = req.body;
     const token = req.headers.authorization.split(" ")[1];
     const userId = getUserIdFromToken(token);
     const user = await User.findById(userId);
-    const friend = await User.findById(friendId);
+    const friend = await User.findOne(phone);
 
     if (!user || !friend) {
       return res.status(404).json({ message: "User not found" });
     }
-    if (!user.friends.includes(friendId)) {
+    if (!user.friends.includes(friend._id)) {
       return res.status(400).json({ message: "You are not friend" });
     }
-    user.friends = user.friends.filter((id) => id.toString() !== friendId);
+    user.friends = user.friends.filter((id) => id.toString() !== friend._id);
     friend.friends = friend.friends.filter((id) => id.toString() !== userId);
     await user.save();
     await friend.save();
-    const reciverSocketId = getReciverSocketId(friendId);
+    const reciverSocketId = getReciverSocketId(friend._id);
     if (reciverSocketId) {
       io.to(reciverSocketId).emit("unfriend", {
         sender: userId,
@@ -266,7 +267,6 @@ exports.unfriend = async (req, res) => {
     }
     return res.status(200).json({ message: "Unfriend successfully" });
   } catch (error) {
-    console.log(error);
     res.status(400).json({ message: "Can't unfriend" });
   }
 };
