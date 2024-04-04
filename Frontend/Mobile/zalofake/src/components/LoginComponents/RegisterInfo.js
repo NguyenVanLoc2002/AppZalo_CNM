@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -40,11 +39,7 @@ const RegisterInfo = ({ navigation, route }) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [isModalLoginVisible, setModalLoginVisible] = useState(false);
   const [isModalAuthCode, setModalAuthCode] = useState(false);
-  const [isModalAuthCode, setModalAuthCode] = useState(false);
   const [textPhone, setTextPhone] = useState("");
-  const [textEmail, setTextEmail] = useState("");
-  const [maskedEmail, setMaskedEmail] = useState("");
-  const [selectedGender, setSelectedGender] = useState("male");
   const [textEmail, setTextEmail] = useState("");
   const [maskedEmail, setMaskedEmail] = useState("");
   const [selectedGender, setSelectedGender] = useState("male");
@@ -54,12 +49,9 @@ const RegisterInfo = ({ navigation, route }) => {
   const [showRetypePassword, setShowRetypePassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [inputs, setInputs] = useState(Array(6).fill(""));
-  const [timeLeft, setTimeLeft] = useState(60);
-  const [isCounting, setIsCounting] = useState(false);
 
   const inputRefs = useRef([]);
 
-  const [timeLeft, setTimeLeft] = useState(60);
   const [isCounting, setIsCounting] = useState(false);
   const [otp, setOtp] = useState("");
   const { name } = route.params;
@@ -122,9 +114,7 @@ const RegisterInfo = ({ navigation, route }) => {
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
   };
-  const toggleModalAuthCode = () => {
-    setModalAuthCode(!isModalAuthCode);
-  };
+
   const toggleModalAuthCode = () => {
     setModalAuthCode(!isModalAuthCode);
   };
@@ -170,8 +160,6 @@ const RegisterInfo = ({ navigation, route }) => {
     } else if (!isCheckedInter || !isCheckedUse) {
       showToastError("Vui lòng chấp nhận các điều khoản");
     } else {
-      const masked = maskEmail(textEmail);
-      setMaskedEmail(masked);
       const masked = maskEmail(textEmail);
       setMaskedEmail(masked);
       toggleModal();
