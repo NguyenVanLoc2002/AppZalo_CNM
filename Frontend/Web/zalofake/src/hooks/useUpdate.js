@@ -2,20 +2,16 @@ import { useState } from "react";
 import { useAuthContext } from "../contexts/AuthContext";
 import toast from "react-hot-toast";
 import axiosInstance from "../api/axiosInstance";
+import VerifyOTPModule from "../utils/verifyOTP";
 
 const useUpdate = () => {
   const [loading, setLoading] = useState(false);
+  const [systemOTP, setSystemOTP] = useState(null);
+
   const { setAuthUser } = useAuthContext();
-
-  // const authToken = JSON.parse(localStorage.getItem("accessToken"));
-
   const updateProfile = async (userData) => {
     setLoading(true);
     try {
-      // if (!authToken) {
-      //   throw new Error("Authentication token not found");
-      // }
-
       const response = await axiosInstance.post(
         "/users/update-profile",
         userData
@@ -45,7 +41,48 @@ const useUpdate = () => {
     }
   };
 
-  return { updateProfile, loading };
+  const getOTP = async (email) => {
+    try {
+      setLoading(true);
+      const check_mail = await axiosInstance.post("/users/check-email", {
+        email,
+      });
+      console.log(check_mail);
+
+      if (check_mail.status === 200) {
+        toast.error("Email already exists! Please try another email");
+        setLoading(false);
+        return false;
+      }
+    } catch (error) {
+      if (error.response) {
+        const otp = await VerifyOTPModule.sendOTP(email);
+        toast.success("OTP sent to your email");
+        setLoading(false);
+        setSystemOTP(otp);
+        return true;
+      } else {
+        toast.error("Failed to send OTP");
+      }
+      setLoading(false);
+      return false;
+    }
+  };
+
+  const verifyOTP = async (userOTP) => {
+    setLoading(true);
+    const verified = await VerifyOTPModule.verifyOTP(userOTP, systemOTP);
+    if (verified) {
+      setLoading(false);
+      return true;
+    } else {
+      toast.error("OTP is incorrect");
+      setLoading(false);
+      return false;
+    }
+  };
+
+  return { updateProfile, loading, getOTP, verifyOTP };
 };
 
 export default useUpdate;
