@@ -93,7 +93,7 @@ const Login = ({ navigation }) => {
           placeholder="Số điện thoại"
           placeholderTextColor={"gray"}
           style={styles.input}
-          keyboardType="numeric"
+
         />
       </View>
       <View
