@@ -3,7 +3,7 @@ import { toast, Toaster } from "react-hot-toast";
 
 import { useState } from "react";
 import OtpInput from "react-otp-input";
-import { Link, useOutletContext } from "react-router-dom";
+import { Link, useOutletContext, useNavigate } from "react-router-dom";
 import { IoEyeOff, IoEye } from "react-icons/io5";
 import { FaCheckCircle } from "react-icons/fa";
 import useRegister from "../../../hooks/useRegister";
@@ -22,12 +22,12 @@ function Register() {
   const [email, setEmail] = useState("");
   const [gender, setGender] = useState("male");
   const [dob, setDob] = useState(new Date());
-  const langue = useOutletContext();
+  const {langue} = useOutletContext();
+  const navigate = useNavigate();
   const [password, setPwssword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [confirmPassword, setConfirmPwssword] = useState("");
   const [showConfirmPass, setConfirmShowPass] = useState(false);
-  const [isCheckedUse, setIsCheckedUse] = useState(false);
   const [isCheckedInter, setIsCheckedInter] = useState(false);
 
   const [showModal, setShowModal] = useState(false);
@@ -48,9 +48,6 @@ function Register() {
   const handleRegister = () => {
     handlePressablePress();
   };
-  const handleCheckUse = () => {
-    setIsCheckedUse(!isCheckedUse);
-  };
 
   const handleCheckInter = () => {
     setIsCheckedInter(!isCheckedInter);
@@ -69,7 +66,7 @@ function Register() {
       toast.error("MK chứa ít nhất 1 chữ,1 số,1 ký tự đặc biệt");
     } else if (!(password === confirmPassword)) {
       toast.error("Vui lòng nhập xác nhận mật khẩu trùng khớp");
-    } else if (!isCheckedInter || !isCheckedUse) {
+    } else if (!isCheckedInter) {
       toast.error("Vui lòng chấp nhận các điều khoản");
     } else if (!checkDOB(dob)) {
       toast.error("Bạn phải trên 16 tuổi để đăng ký tài khoản");
@@ -105,7 +102,7 @@ function Register() {
 
   const handleXacNhan = () => {
     closeModal();
-    window.location.href = "/login";
+    navigate("/login", {state: {newEmail: email, newPassword: password}});
   };
 
   const handleTuChoi = () => {
@@ -128,7 +125,6 @@ function Register() {
         <Toaster />
       </div>
       <div className=" flex justify-center items-center">
-        {/* Modal xác nhận khi đăng ký thành công */}
         {showModal && (
           <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 z-50">
             <div className="bg-white p-8 rounded-lg shadow-lg">
@@ -334,22 +330,6 @@ function Register() {
               <input
                 className="rounded ml-6 mr-3 py-1 px-3 border-none
                 text-gray-700 focus:outline-none focus:shadow-outline"
-                id="checkedUse"
-                type="checkbox"
-                checked={isCheckedUse}
-                onChange={handleCheckUse}
-              />
-              <span>
-                {langue == "vi"
-                  ? "Tôi đồng ý với các điều khoản sử dụng Zola"
-                  : "I agree to the terms of use of Zola"}
-              </span>
-            </div>
-
-            <div className="my-6 flex items-center">
-              <input
-                className="rounded ml-6 mr-3 py-1 px-3 border-none
-                text-gray-700 focus:outline-none focus:shadow-outline"
                 id="checkedInter"
                 type="checkbox"
                 checked={isCheckedInter}
@@ -387,8 +367,7 @@ function Register() {
                   email.length === 0 ||
                   gender.length === 0 ||
                   dob.length === 0 ||
-                  !isCheckedInter ||
-                  !isCheckedUse
+                  !isCheckedInter
                 }
                 onClick={(e) => {
                   e.preventDefault();
