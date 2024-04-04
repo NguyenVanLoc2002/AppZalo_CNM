@@ -2,8 +2,6 @@ import axios from 'axios';
 import config from './config';
 // import AsyncStorage from '@react-native-async-storage/async-storage';
 
-let isRefreshing = false;
-let refreshSubscribers = [];
 
 const axiosInstance = axios.create({
   baseURL: config.baseURL

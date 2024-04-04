@@ -12,7 +12,7 @@ const useForgot = () => {
     try {
       setIsLoading(true);
       setIsOTPVerified(false);
-      const check_mail = await axiosInstance.post("/users/check-email", {
+      await axiosInstance.post("/users/check-email", {
         email,
       });
       const otp = await VerifyOTPModule.sendOTP(email);
