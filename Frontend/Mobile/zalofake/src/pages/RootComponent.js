@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import RegisterName from "../components/LoginComponents/RegisterName";
 import RegisterInfo from "../components/LoginComponents/RegisterInfo";
+import ResetPassword from "../components/LoginComponents/ResetPassword";
 import Login from "../components/LoginComponents/Login";
 import { useAuthContext } from "../contexts/AuthContext";
 
@@ -107,6 +108,16 @@ export default function RootComponent() {
           title: "Đăng nhập",
         }}
       />
+      <Stack.Screen
+        name="ResetPassword"
+        component={ResetPassword}
+        options={{
+          headerStyle: {
+            backgroundColor: "#0091FF",
+          },
+          headerTintColor: "#fff",
+          title: "Lấy lại mật khẩu",
+        }} />
     </Stack.Navigator>
   );
 }
