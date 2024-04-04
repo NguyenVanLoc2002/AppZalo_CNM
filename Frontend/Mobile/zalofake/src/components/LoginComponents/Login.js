@@ -50,7 +50,7 @@ const Login = ({ navigation }) => {
   };
 
   const handleForgetPassword = () => {
-    navigation.navigate("ResetPassword");
+      navigation.navigate("ResetPassword", {email : textPhone})
   };
 
   useEffect(() => {
@@ -70,7 +70,6 @@ const Login = ({ navigation }) => {
 
     await login(textPhone, textPW)
       .then(() => {
-        console.log("Login successfully");
         setIsLoading(false);
       })
       .catch((error) => {
