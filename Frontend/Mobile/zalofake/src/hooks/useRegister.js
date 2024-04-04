@@ -1,17 +1,12 @@
-
 import { useState } from "react";
 import Toast from "react-native-toast-message";
-import OTPTextView from 'react-native-otp-textinput';
+import OTPTextView from "react-native-otp-textinput";
 import axiosInstance from "../api/axiosInstance";
 
-
-
 const useRegister = () => {
-
-
-    const [isLoading, setIsLoading] = useState(false);
-    const [systemOTP, setSystemOTP] = useState(null);
-    const [isOTPVerified, setIsOTPVerified] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [systemOTP, setSystemOTP] = useState(null);
+  const [isOTPVerified, setIsOTPVerified] = useState(false);
 
     const showToastSuccess = (notice) => {
         Toast.show({
@@ -30,22 +25,21 @@ const useRegister = () => {
         });
     };
 
+  const verifyOTP = async (userOTP, systemOTP) => {
+    if (userOTP === systemOTP.otp && systemOTP.expires >= Date.now()) {
+      return true;
+    } else {
+      return false;
+    }
+  };
 
-    const verifyOTP = async (userOTP, systemOTP) => {
-        if (userOTP === systemOTP.otp && systemOTP.expires >= Date.now()) {
-            return true;
-        } else {
-            return false;
-        }
-    };
-
-    const sendOTP = async (email) => {
-        const response = await axiosInstance.post("/auth/send-otp", {
-            email,
-        });
-        const data = response.data;
-        return data.totp;
-    };
+  const sendOTP = async (email) => {
+    const response = await axiosInstance.post("/auth/send-otp", {
+      email,
+    });
+    const data = response.data;
+    return data.totp;
+  };
 
     const getOTP = async (email) => {
         const checkEmai = await check_mail(email);
@@ -79,55 +73,55 @@ const useRegister = () => {
         }
     };
 
-    const verifyEmailAndRegister = async (
-        textEmail,
-        otp,
-        textPhone,
-        name,
-        dob,
-        selectedGender,
-        textPW
-    ) => {
-        const verified = await verifyOTP(otp, systemOTP);
-        setIsOTPVerified(verified);
-        try {
-            setIsLoading(true);
-            if (verified) {
-                const response = await axiosInstance.post("/auth/register", {
-                    phone: textPhone,
-                    email: textEmail,
-                    password: textPW,
-                    name: name,
-                    dob: dob,
-                    gender: selectedGender.toString(),
-                    userOTP: otp
-                });
-                setIsOTPVerified(true);
-                const data = response.data;
-                console.log(data);
+  const verifyEmailAndRegister = async (
+    textEmail,
+    otp,
+    textPhone,
+    name,
+    dob,
+    selectedGender,
+    textPW
+  ) => {
+    const verified = await verifyOTP(otp, systemOTP);
+    setIsOTPVerified(verified);
+    try {
+      setIsLoading(true);
+      if (verified) {
+        const response = await axiosInstance.post("/auth/register", {
+          phone: textPhone,
+          email: textEmail,
+          password: textPW,
+          name: name,
+          dob: dob,
+          gender: selectedGender.toString(),
+          userOTP: otp,
+        });
+        setIsOTPVerified(true);
+        const data = response.data;
+        console.log(data);
 
-                if (response.status === 201) {
-                    setIsLoading(false);
-                    showToastSuccess("Account created successfully");
-                    return true;
-                } else {
-                    setIsLoading(false);
-                    showToastError(data.response.message);
-                    return false;
-                }
-            } else {
-                showToastError("Invalid OTP");
-                setIsLoading(false);
-                return false;
-            }
-        } catch (error) {
-            console.log(error);
-            setIsOTPVerified(true);
-            setIsLoading(false);
-            showToastError(error.response.data.message);
-            return false;
+        if (response.status === 201) {
+          setIsLoading(false);
+          showToastSuccess("Account created successfully");
+          return true;
+        } else {
+          setIsLoading(false);
+          showToastError(data.response.message);
+          return false;
         }
-    };
+      } else {
+        showToastError("Invalid OTP");
+        setIsLoading(false);
+        return false;
+      }
+    } catch (error) {
+      console.log(error);
+      setIsOTPVerified(true);
+      setIsLoading(false);
+      showToastError(error.response.data.message);
+      return false;
+    }
+  };
 
     const check_mail = async (email) => {
         try {
@@ -153,6 +147,5 @@ const useRegister = () => {
 
     return { isOTPVerified, getOTP, verifyEmailAndRegister, showToastError, showToastSuccess };
 };
-
 
 export default useRegister;
