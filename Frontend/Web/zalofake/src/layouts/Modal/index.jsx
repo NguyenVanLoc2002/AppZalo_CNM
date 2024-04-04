@@ -50,6 +50,7 @@ function ModalComponent({ showModal, language, userInfo }) {
       email: usEmail,
       gender: usGender,
       dob: selectedDate,
+      dob: selectedDate,
     });
 
     handleCancel();
