@@ -17,9 +17,11 @@ import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
 import { useAuthContext } from "../../contexts/AuthContext";
 import axiosInstance from "../../api/axiosInstance";
 const PersonalPage = ({ navigation }) => {
-  const { authUser,updateAvatar } = useAuthContext();
+  const { authUser, updateAvatar, updateBia } = useAuthContext();
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState();
+  const [modalVisibleBia, setModalVisibleBia] = useState(false);
+  const [selectedImageBia, setSelectedImageBia] = useState();
   const [status, setStatus] = useState("");
 
 
@@ -75,9 +77,8 @@ const PersonalPage = ({ navigation }) => {
 
     if (!pickerResult.canceled) {
       setSelectedImage(pickerResult.assets[0].uri);
-      console.log(pickerResult);
-      console.log(pickerResult.assets[0].uri);
-      console.log(pickerResult.uri);
+      setSelectedImageBia(pickerResult.assets[0].uri)
+
     } else {
       console.log("No image selected");
     }
@@ -109,7 +110,6 @@ const PersonalPage = ({ navigation }) => {
       const avatarUrl = responseUrl.avatar.url;
 
       if (avatarUrl) {
-        await AsyncStorage.setItem("authUser", JSON.stringify(authUser));
         setSelectedImage(avatarUrl);
         updateAvatar(avatarUrl, responseUrl.avatar.public_id);
         console.log("Success", "Avatar updated successfully");
@@ -132,21 +132,71 @@ const PersonalPage = ({ navigation }) => {
     setModalVisible(false);
   };
 
+  const openModalBia = () => {
+    setModalVisibleBia(true);
+  };
+
+  const closeModalBia = () => {
+    setModalVisibleBia(false);
+  };
+
+  const handleUpdateBia = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("background", {
+        uri: selectedImageBia,
+        type: "image/jpeg",
+        name: "background.jpg",
+      });
+      console.log(formData);
+      const response = await axiosInstance.post(
+        "/users/upload-background",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      const responseJson = response.request._response;
+
+      // // Phân tích chuỗi JSON thành đối tượng JavaScript
+      const responseUrl = JSON.parse(responseJson);
+      // Lấy URL của avatar từ đối tượng phân tích
+      const backgroundUrl = responseUrl.background.url;
+
+      if (backgroundUrl) {
+        setSelectedImage(backgroundUrl);
+        updateBia(backgroundUrl, responseUrl.background.public_id);
+        console.log("Success", "background updated successfully");
+      } else {
+        throw new Error("Failed to update background");
+      }
+    } catch (error) {
+      console.error(error);
+      console.log("Error", error.message || "Failed to update background");
+    } finally {
+      closeModalBia();
+    }
+  };
+
   return (
     <ScrollView style={{ backgroundColor: "#f1f2f6", flex: 1 }}>
       <View style={{ alignItems: "center" }}>
-        <Image
-          source={{
-            uri: authUser?.profile?.background?.url ||
-              "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
-
-          }}
-          style={{ width: "100%", height: 160 }}
-        />
+        <Pressable onPress={openModalBia} style={{ width: '100%', height: 200 }}>
+          
+            <Image
+              source={{
+                uri: authUser?.profile?.background?.url ||
+                  "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+              }}
+              style={{ width: '100%', height: 200 }}
+            />
+        </Pressable>
         <Pressable onPress={openModal}>
           <Image
             source={{
-              uri: 
+              uri:
                 authUser?.profile?.avatar?.url ||
                 "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
             }}
@@ -411,6 +461,67 @@ const PersonalPage = ({ navigation }) => {
           </View>
         </View>
       </Modal>
+      {/* cập nhật ảnh bìa */}
+      {/* Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisibleBia}
+        onRequestClose={closeModalBia}
+      >
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "rgba(0,0,0,0.5)",
+          }}
+        >
+          <View
+            style={{ backgroundColor: "white", padding: 20, borderRadius: 10 }}
+          >
+            <Image
+              source={{
+
+                uri: selectedImageBia || authUser?.profile?.background?.url ||
+                  "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+
+              }}
+
+              style={{ width: 200, height: 200, borderRadius: 20 }}
+            />
+            <Pressable onPress={openImagePicker}>
+              <Text
+                style={{
+                  color: "#0091FF",
+                  textAlign: "center",
+                  paddingVertical: 20,
+                }}
+              >
+                Chọn ảnh
+              </Text>
+            </Pressable>
+            <Pressable onPress={handleUpdateBia}>
+              <Text
+                style={{
+                  color: "#0091FF",
+                  textAlign: "center",
+                  paddingVertical: 20,
+                }}
+              >
+                cập nhật
+              </Text>
+            </Pressable>
+
+            <Pressable onPress={closeModalBia}>
+              <Text style={{ color: "#0091FF", textAlign: "center" }}>
+                Đóng
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
     </ScrollView>
   );
 };
