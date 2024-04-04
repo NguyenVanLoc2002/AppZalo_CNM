@@ -1,14 +1,25 @@
 import React, { useState } from "react";
 import { CiEdit, CiCamera } from "react-icons/ci";
+import OtpInput from "react-otp-input";
 import useUpdate from "../../hooks/useUpdate";
+import { checkDOB, checkEmail, checkName } from "../../utils/validation";
+import toast from "react-hot-toast";
 
 function ModalComponent({ showModal, language, userInfo }) {
   const [showUpdate, setShowUpdate] = useState(false);
-  const { updateProfile, loading } = useUpdate();
+  const { updateProfile, loading, getOTP, verifyOTP } = useUpdate();
+
   const [usName, setUsName] = useState(userInfo?.profile.name);
   const [usEmail, setUsEmail] = useState(userInfo?.email);
   const [usGender, setUsGender] = useState(userInfo?.profile.gender);
   const [usDob, setUsDob] = useState(new Date(userInfo?.profile.dob));
+
+  const [isUpdateEmail, setIsUpdateEmail] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [isValidate, setIsValidate] = useState(false);
+  const [isSendOTP, setIsSendOTP] = useState(false);
+  const [isVerifyOTP, setIsVerifyOTP] = useState(false);
+
   const background = userInfo?.profile.background?.url || "./zalo.svg";
   const avatar = userInfo?.profile.avatar?.url || "./zalo.svg";
 
@@ -16,8 +27,23 @@ function ModalComponent({ showModal, language, userInfo }) {
     const selectedDay = document.getElementById("day").value;
     const selectedMonth = document.getElementById("month").value;
     const selectedYear = document.getElementById("year").value;
-
     const selectedDate = new Date(selectedYear, selectedMonth, selectedDay);
+
+    if (!checkDOB(selectedDate)) {
+      toast.error(
+        language === "vi"
+          ? "Bạn phải trên 16 tuổi"
+          : "You must be over 16 years old"
+      );
+      return;
+    } else if (!isVerifyOTP && isUpdateEmail) {
+      toast.error(
+        language === "vi"
+          ? "Vui lòng xác nhận email"
+          : "Please confirm your email"
+      );
+      return;
+    }
 
     await updateProfile({
       name: usName,
@@ -26,7 +52,74 @@ function ModalComponent({ showModal, language, userInfo }) {
       dob: selectedDate,
     });
 
+    handleCancel();
+  };
+
+  const handleCancel = () => {
     setShowUpdate(false);
+    setIsUpdateEmail(false);
+    setIsSendOTP(false);
+    setIsVerifyOTP(false);
+    setIsValidate(false);
+
+    setUsEmail(userInfo.email);
+    setUsName(userInfo.profile.name);
+    setUsGender(userInfo.profile.gender);
+    setUsDob(new Date(userInfo.profile.dob));
+    setOtp("");
+  };
+
+  const handleGetOTP = async () => {
+    if (checkEmail(usEmail)) {
+      const sendEmail = await getOTP(usEmail);
+      setIsSendOTP(sendEmail);
+      setOtp("");
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    const checkOTP = await verifyOTP(otp);
+    setIsVerifyOTP(checkOTP);
+    if (checkOTP) {
+      setIsValidate(true);
+    }
+  };
+
+  const checkusName = () => {
+    if (usName !== userInfo.profile.name) {
+      if (checkName(usName)) {
+        if (isUpdateEmail) {
+          setIsValidate(true);
+        }
+      } else {
+        toast.error(language === "vi" ? "Tên không hợp lệ" : "Invalid name");
+        setIsValidate(false);
+      }
+      setIsValidate(true);
+    } else {
+      toast.success(
+        language === "vi" ? "Tên không thay đổi" : "Name not change"
+      );
+      setIsValidate(false);
+    }
+  };
+  const checkUsEmail = () => {
+    if (usEmail !== userInfo.email) {
+      if (checkEmail(usEmail)) {
+        setIsValidate(true);
+        setIsUpdateEmail(true);
+      } else {
+        toast.error(language === "vi" ? "Email không hợp lệ" : "Invalid email");
+        setIsValidate(false);
+        setIsUpdateEmail(false);
+      }
+    } else {
+      toast.success(
+        language === "vi" ? "Email không thay đổi" : "Email not change"
+      );
+      setIsValidate(false);
+      setIsUpdateEmail(false);
+    }
   };
 
   return (
@@ -52,10 +145,8 @@ function ModalComponent({ showModal, language, userInfo }) {
                 <span className="block">x</span>
               </button>
             </div>
-
-            {/*body*/}
             {showUpdate ? (
-              <div className="my-3 px-5 h-96">
+              <div className="my-3 px-5 h-[425px]">
                 <label htmlFor="usname">
                   {language == "vi" ? "Tên hiển thị" : "Display name"}
                 </label>
@@ -65,17 +156,26 @@ function ModalComponent({ showModal, language, userInfo }) {
                   id="usname"
                   value={usName}
                   onChange={(e) => setUsName(e.target.value)}
+                  onBlur={checkusName}
                 />
                 <label htmlFor="usname">
                   {language == "vi" ? "Email hiển thị" : "Display mail"}
                 </label>
                 <input
-                  type="text"
-                  className="w-full border border-gray-300 p-2 rounded my-3"
+                  type="email"
+                  className={`w-full border border-gray-300 p-2 rounded my-3 ${
+                    isUpdateEmail
+                      ? isVerifyOTP
+                        ? "border-green-500"
+                        : "border-yellow-400"
+                      : ""
+                  } `}
                   id="usEmail"
                   value={usEmail}
                   onChange={(e) => setUsEmail(e.target.value)}
+                  onBlur={checkUsEmail}
                 />
+                {}
                 <h1 htmlFor="gender" className="font-semibold text-xl">
                   {language == "vi"
                     ? "Thông tin cá nhân"
@@ -120,7 +220,9 @@ function ModalComponent({ showModal, language, userInfo }) {
                   </div>
                 </div>
 
-                <h1>{language == "vi" ? "Ngày sinh" : "Birthday"}</h1>
+                <h1 className="mt-5">
+                  {language == "vi" ? "Ngày sinh" : "Birthday"}
+                </h1>
                 <div className="flex my-5 w-full justify-between items-center">
                   <div className="w-[30%]">
                     <select
@@ -132,6 +234,7 @@ function ModalComponent({ showModal, language, userInfo }) {
                         const dob = new Date(usDob);
                         dob.setDate(parseInt(e.target.value));
                         setUsDob(dob);
+                        setIsValidate(checkDOB(dob));
                       }}
                     >
                       {[...Array(31)].map((e, i) => (
@@ -151,6 +254,7 @@ function ModalComponent({ showModal, language, userInfo }) {
                         const dob = new Date(usDob);
                         dob.setMonth(parseInt(e.target.value));
                         setUsDob(dob);
+                        setIsValidate(checkDOB(dob));
                       }}
                     >
                       {[...Array(12)].map((e, i) => (
@@ -170,6 +274,7 @@ function ModalComponent({ showModal, language, userInfo }) {
                         const dob = new Date(usDob);
                         dob.setFullYear(parseInt(e.target.value));
                         setUsDob(dob);
+                        setIsValidate(checkDOB(dob));
                       }}
                     >
                       {[...Array(121)].map((e, i) => (
@@ -204,7 +309,6 @@ function ModalComponent({ showModal, language, userInfo }) {
                     </div>
                     <div className="flex items-center">
                       <h1 className="text-xl font-semibold mx-3">{usName}</h1>
-                      <CiEdit className="inline-block" size={20} />
                     </div>
                   </div>
                   <div className="mt-1 px-5 bg-white">
@@ -258,18 +362,117 @@ function ModalComponent({ showModal, language, userInfo }) {
                       </h1>
                       <h1 className="w-2/3">{userInfo.phone}</h1>
                     </div>
-                    <div className="flex items-center py-3">
-                      <p className="text-gray-500 text-sm">
-                        {language == "vi"
-                          ? "Chỉ có bạn bè có lưu số của bạn trong danh bạ máy mới xem được số này"
-                          : "Only friends who have saved your number in their phone address book can see this number"}
-                        :
-                      </p>
+                    <div className="flex items-center pb-3">
+                      <h1 className="w-1/3 text-gray-500">Email :</h1>
+                      <h1 className="w-2/3">{userInfo.email}</h1>
                     </div>
                   </div>
                 </div>
               </div>
             )}
+
+            <div
+              className={`border ${
+                isUpdateEmail
+                  ? isVerifyOTP
+                    ? "border-green-500"
+                    : "border-yellow-400"
+                  : ""
+              } relative flex flex-col w-full bg-white outline-none focus:outline-none`}
+            >
+              {isUpdateEmail && !isVerifyOTP && (
+                <form className="bg-white px-10 pt-4 pb-5 mb-4">
+                  <h1 className="text-xl font-semibold text-center">
+                    {language == "vi" ? "Xác nhận email" : "Confirm your email"}
+                  </h1>
+                  <p className="text-gray-500 text-sm text-center">
+                    {language == "vi"
+                      ? "Chúng tôi sẽ gửi mã xác nhận đến email của bạn"
+                      : "We will send a confirmation code to your email"}
+                  </p>
+
+                  {isSendOTP && (
+                    <p
+                      className="text-center text-primary italic hover:underline mt-1"
+                      onClick={() => {
+                        setOtp("");
+                        handleGetOTP();
+                      }}
+                    >
+                      {language == "vi" ? "Gửi lại mã xác nhận" : "Resend OTP"}
+                    </p>
+                  )}
+
+                  <div className="mb-6 flex items-center border-b">
+                    <div className="flex items-center justify-center p-4 mt-3 text-base font-semibold  overflow-hidden">
+                      <OtpInput
+                        value={otp}
+                        onChange={setOtp}
+                        numInputs={6}
+                        renderSeparator={<span>-</span>}
+                        renderInput={(props) => <input {...props} />}
+                        inputStyle={{
+                          width: "40px",
+                          height: "40px",
+                          margin: "0 5px",
+                          fontSize: "20px",
+                          borderRadius: "5px",
+                          border: "1px solid #ccc",
+                          textAlign: "center",
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    {isSendOTP ? (
+                      <button
+                        className="bg-primary hover:bg-primaryHover text-white 
+                    rounded focus:outline-none focus:shadow-outline block w-full disabled:opacity-50 py-3"
+                        type="button"
+                        disabled={otp.length !== 6}
+                        onClick={handleVerifyOTP}
+                      >
+                        {loading ? (
+                          <span className="loading loading-spinner"></span>
+                        ) : language == "vi" ? (
+                          "Xác Nhận"
+                        ) : (
+                          "Confirm"
+                        )}
+                      </button>
+                    ) : (
+                      <button
+                        className="bg-primary hover:bg-primaryHover text-white 
+                    rounded focus:outline-none focus:shadow-outline block w-full disabled:opacity-50 py-3"
+                        type="button"
+                        onClick={handleGetOTP}
+                      >
+                        {loading ? (
+                          <span className="loading loading-spinner"></span>
+                        ) : language == "vi" ? (
+                          "Lấy mã xác nhận"
+                        ) : (
+                          "Get OTP"
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </form>
+              )}
+              {isUpdateEmail && isVerifyOTP && (
+                <div className="bg-white shadow-lg rounded px-10 pt-4 pb-5 mb-4">
+                  <h1 className="text-xl font-semibold text-center">
+                    {language == "vi" ? "Xác nhận email" : "Confirm your email"}
+                  </h1>
+                  <p className="text-green-500 text-sm text-center">
+                    {language == "vi"
+                      ? "Email đã được xác nhận"
+                      : "Email has been confirmed"}
+                  </p>
+                </div>
+              )}
+            </div>
+
             {/*footer*/}
             <div className="py-1 px-3 border-t border-solid border-blueGray-200 rounded-b">
               {showUpdate ? (
@@ -277,21 +480,23 @@ function ModalComponent({ showModal, language, userInfo }) {
                   <button
                     className="my-2 mr-3 font-semibold text-xl  px-3 py-2 rounded bg-gray-200 ease-linear transition-all duration-150"
                     type="button"
-                    onClick={() => setShowUpdate(false)}
+                    onClick={handleCancel}
                   >
                     {language === "vi" ? "Hủy" : "Cancel"}
                   </button>
                   <button
-                    className={`my-2 font-semibold text-xl text-white px-3 py-2 rounded bg-[#0068ff] ease-linear transition-all duration-150`}
+                    className={`my-2 font-semibold text-xl text-white px-3 py-2 rounded bg-[#0068ff] disabled:opacity-50 ease-linear transition-all duration-150`}
                     type="button"
                     onClick={handleUpdate}
-                    disabled={loading}
+                    disabled={!isValidate}
                   >
-                    {loading
-                      ? "Loading..."
-                      : language === "vi"
-                      ? "Cập nhật"
-                      : "Update"}
+                    {loading ? (
+                      <span className="loading loading-spinner "></span>
+                    ) : language === "vi" ? (
+                      "Cập nhật"
+                    ) : (
+                      "Update"
+                    )}
                   </button>
                 </div>
               ) : (
@@ -308,6 +513,7 @@ function ModalComponent({ showModal, language, userInfo }) {
           </div>
         </div>
       </div>
+
       <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
     </>
   );
