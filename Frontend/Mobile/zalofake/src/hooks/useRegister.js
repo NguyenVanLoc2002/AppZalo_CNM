@@ -15,20 +15,20 @@ const useRegister = () => {
 
     const showToastSuccess = (notice) => {
         Toast.show({
-          text1: notice,
-          type: "success",
-          topOffset: 0,
-          position: "top",
+            text1: notice,
+            type: "success",
+            topOffset: 0,
+            position: "top",
         });
-      };
-      const showToastError = (notice) => {
+    };
+    const showToastError = (notice) => {
         Toast.show({
-          text1: notice,
-          type: "error",
-          topOffset: 0,
-          position: "top",
+            text1: notice,
+            type: "error",
+            topOffset: 0,
+            position: "top",
         });
-      };
+    };
 
 
     const verifyOTP = async (userOTP, systemOTP) => {
@@ -48,26 +48,34 @@ const useRegister = () => {
     };
 
     const getOTP = async (email) => {
-        try {
-            setIsLoading(true);
-            setIsOTPVerified(false);
-            const otp = await sendOTP(email);
+        const checkEmai = await check_mail(email);
+        if (checkEmai) {
+             showToastError("Email already exists");
+             setIsLoading(false);
+             return false;
+        }
+        else {
+            try {
+                setIsLoading(true);
+                setIsOTPVerified(false);
+                const otp = await sendOTP(email);
 
-            if (otp) {
-                showToastSuccess("OTP sent to your email");
-                setIsLoading(false);
-                setSystemOTP(otp);
-                return true;
-            } else {
+                if (otp) {
+                    showToastSuccess("OTP sent to your email");
+                    setIsLoading(false);
+                    setSystemOTP(otp);
+                    return true;
+                } else {
+                    showToastError("Failed to send OTP");
+                    setIsLoading(false);
+                    return false;
+                }
+            } catch (error) {
+                console.log(error);
                 showToastError("Failed to send OTP");
                 setIsLoading(false);
                 return false;
             }
-        } catch (error) {
-            console.log(error);
-            showToastError("Failed to send OTP");
-            setIsLoading(false);
-            return false;
         }
     };
 
@@ -121,9 +129,29 @@ const useRegister = () => {
         }
     };
 
-   
+    const check_mail = async (email) => {
+        try {
+            const response = await axiosInstance.post("/users/check-email", {
+                email,
+            });
+            if (response.status === 404) {
+                return false;
+            }
+            else if (response.status === 200) {
+                return true;
+            }
+            else {
+               
+                return false;
+            }
+        } catch (error) {
+        
+            return false;
+        }
+    }
 
-    return { isLoading, isOTPVerified, getOTP, verifyEmailAndRegister, showToastError,showToastSuccess };
+
+    return { isOTPVerified, getOTP, verifyEmailAndRegister, showToastError, showToastSuccess };
 };
 
 
