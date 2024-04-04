@@ -61,18 +61,19 @@ export const AuthContextProvider = ({ children }) => {
     saveData();
   }, [authUser, accessToken, refreshToken]);
   // Hàm cập nhật avatar mới
-  // const updateAvatar = async (newAvatarUrl) => {
-  //   setAuthUser((prevUser) => ({
-  //     ...prevUser,
-  //     profile: {
-  //       ...prevUser.profile,
-  //       avatar: {
-  //         ...prevUser.profile.avatar,
-  //         url: newAvatarUrl,
-  //       },
-  //     },
-  //   }));
-  // };
+  const updateAvatar = async (newAvatarUrl, publicId) => {
+    setAuthUser((prevUser) => ({
+      ...prevUser,
+      profile: {
+        ...prevUser.profile,
+        avatar: {
+          ...prevUser.profile.avatar,
+          url: newAvatarUrl,
+          public_id:publicId
+        },
+      },
+    }));
+  };
   return (
     <AuthContext.Provider
       value={{
@@ -82,7 +83,7 @@ export const AuthContextProvider = ({ children }) => {
         setAccessToken,
         refreshToken,
         setRefreshToken,
-        // updateAvatar
+        updateAvatar
       }}
     >
       {children}

@@ -9,7 +9,6 @@ import {
   Modal,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import useUpdate from "../../hooks/useUpdate";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
@@ -18,37 +17,11 @@ import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
 import { useAuthContext } from "../../contexts/AuthContext";
 import axiosInstance from "../../api/axiosInstance";
 const PersonalPage = ({ navigation }) => {
-  // const { updateAvatar } = useUpdate();
-
-  const { authUser } = useAuthContext();
+  const { authUser,updateAvatar } = useAuthContext();
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState();
-  const [selectedImageAvt, setSelectedImageAvt] = useState(authUser?.profile?.avatar?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png");
-
   const [status, setStatus] = useState("");
 
-  // useEffect(() => {
-  //   const loadData = async () => {
-  //     try {
-  //       const AuthUser = await AsyncStorage.getItem("authUser");
-  //       const AccessToken = await AsyncStorage.getItem("accessToken");
-  //       const RefreshToken = await AsyncStorage.getItem("refreshToken");
-  //       if (AuthUser) {
-  //         setAuthUser(JSON.parse(AuthUser));
-  //       }
-  //       if (AccessToken) {
-  //         setAccessToken(JSON.parse(AccessToken));
-  //       }
-  //       if (RefreshToken) {
-  //         setRefreshToken(JSON.parse(RefreshToken));
-  //       }
-  //     } catch (error) {
-  //       throw new Error("Error loading data from AsyncStorage:", error);
-  //     }
-  //   };
-
-  //   loadData();
-  // }, []);
 
   useEffect(() => {
     navigation.setOptions({
@@ -119,7 +92,6 @@ const PersonalPage = ({ navigation }) => {
         name: "avatar.jpg",
       });
       console.log(formData);
-      // formData.append("avatar", file);
       const response = await axiosInstance.post(
         "/users/upload-avatar",
         formData,
@@ -129,25 +101,17 @@ const PersonalPage = ({ navigation }) => {
           },
         }
       );
-      //   console.log("hihi");
-      //   console.log(response);
       const responseJson = response.request._response;
 
       // // Phân tích chuỗi JSON thành đối tượng JavaScript
       const responseUrl = JSON.parse(responseJson);
-
       // Lấy URL của avatar từ đối tượng phân tích
       const avatarUrl = responseUrl.avatar.url;
-      console.log("Avatar URL:", avatarUrl);
-      // console.log(responseJava);
-      // const response = await updateAvatar(formData);
 
       if (avatarUrl) {
-        // await AsyncStorage.setItem("avatar", avatarUrl);
         await AsyncStorage.setItem("authUser", JSON.stringify(authUser));
         setSelectedImage(avatarUrl);
-        setSelectedImageAvt(avatarUrl);
-        // updateAvatar(avatarUrl);
+        updateAvatar(avatarUrl, responseUrl.avatar.public_id);
         console.log("Success", "Avatar updated successfully");
       } else {
         throw new Error("Failed to update avatar");
@@ -182,7 +146,7 @@ const PersonalPage = ({ navigation }) => {
         <Pressable onPress={openModal}>
           <Image
             source={{
-              uri: selectedImageAvt ||
+              uri: 
                 authUser?.profile?.avatar?.url ||
                 "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
             }}
@@ -409,7 +373,7 @@ const PersonalPage = ({ navigation }) => {
             <Image
               source={{
 
-                uri: selectedImageAvt ||
+                uri: selectedImage ||
                   authUser?.profile?.avatar?.url ||
                   "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
 
