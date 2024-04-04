@@ -3,12 +3,12 @@ const mongoose = require("mongoose");
 const chatSchema = new mongoose.Schema({
   senderId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    ref: "users",
     required: true,
   },
   receiverId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    ref: "users",
     required: true,
   },
   contents: [
@@ -22,6 +22,7 @@ const chatSchema = new mongoose.Schema({
     },
   ],
   timestamp: { type: Date, default: Date.now },
+  read:{type: Boolean, default: false},
 });
 
 const Chats = mongoose.model("chats", chatSchema);

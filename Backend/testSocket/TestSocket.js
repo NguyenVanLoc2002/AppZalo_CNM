@@ -37,10 +37,13 @@ rl.question("Enter user ID: ", (userId) => {
     console.log("Online friends: ", onlineFriends);
   });
 
-  // Nhận tin nhắn mới và hiển thị trên giao diện người dùng
-  socket.on("new_message", ({ senderId, contents }) => {
-    console.log(`New message received from ${senderId}: ${contents}`);
-  });
+// Nhận tin nhắn mới và hiển thị trên giao diện người dùng
+  socket.on("new_message",({senderId, contents,read})=>{
+    console.log(`New message received from ${senderId}: ${contents} status is ${read}`);
+  })
+
+  
+  
 
   rl.close();
 });
