@@ -34,6 +34,7 @@ const ForgotPassword = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const { getOTP, showToastError, showToastSuccess, resetPassword, check_mail, handleOTP } = useForgot();
+  const [isPreSendCode, setIsPreSendCode] = useState(false);
 
 
   const togglePasswordVisibility = () => {
@@ -65,10 +66,12 @@ const ForgotPassword = ({ navigation }) => {
   const handleNext = async () => {
     if (!textEmail) {
       showToastError("Vui lòng nhập gmail")
-    } else {
+    } else if (!textEmail.trim().toLowerCase().endsWith("@gmail.com")) {
+      showToastError("Email phải có định dạng @gmail.com");
+    }
+    else {
       const sendEmail = await check_mail(textEmail);
       if (!sendEmail) {
-        showToastError("Không tìm thấy tài khoản")
         return;
       }
       setIsHidden(!isHidden);
@@ -85,6 +88,7 @@ const ForgotPassword = ({ navigation }) => {
   const handlesendAuthCode = async (e) => {
     setTimeLeft(60)
     SendTime();
+    setIsPreSendCode(false);
   };
 
   const handleOTPChange = (enteredOtp) => {
@@ -107,6 +111,7 @@ const ForgotPassword = ({ navigation }) => {
         setTimeLeft((prevTime) => prevTime - 1);
       }, 1000);
     } else {
+      setIsPreSendCode(true);
       clearInterval(timer);
       setIsCounting(false);
     }
@@ -163,7 +168,7 @@ const ForgotPassword = ({ navigation }) => {
       if (rs) {
         setModalCreatePw(!modalCreatePw)
         setModalResetSuccess(!modalResetSuccess)
-        
+
       }
     }
   }
@@ -195,12 +200,12 @@ const ForgotPassword = ({ navigation }) => {
               <Ionicons name="close" size={22} color="gray" />
             </Pressable>
           </View>
-          <Pressable style={styles.styleButton} 
-          onPress={handleNext}
+          <Pressable style={styles.styleButton}
+            onPress={handleNext}
           >
             <Text style={[styles.styleText, { color: 'white', fontWeight: 'bold' }]}>Tiếp tục</Text>
           </Pressable>
-        </View> )}
+        </View>)}
       </ScrollView >
       <View>
         {/* Modal xác nhận gmail */}
@@ -217,7 +222,7 @@ const ForgotPassword = ({ navigation }) => {
               <Text style={[{ fontWeight: 'bold', textAlign: 'center' }, styles.styleText]}>Xác nhận gmail: {textEmail} ?</Text>
               <Text style={{ textAlign: 'center' }}>Gmail này sẽ được sử dụng để nhận mã xác thực</Text>
               <View style={{ flexDirection: 'row', width: '100%' }}>
-                <Pressable style={[styles.pressCancel, { borderRightWidth: 2, borderRightColor: '#e0e3e5' }]} onPress={() => {setModalXacNhan(!modalXacNhan);setIsHidden(!isHidden)}}>
+                <Pressable style={[styles.pressCancel, { borderRightWidth: 2, borderRightColor: '#e0e3e5' }]} onPress={() => { setModalXacNhan(!modalXacNhan); setIsHidden(!isHidden) }}>
                   <Text style={styles.textCancel}>Huỷ</Text>
                 </Pressable>
                 <Pressable style={styles.pressCancel} onPress={handleXacNhan} >
@@ -232,7 +237,7 @@ const ForgotPassword = ({ navigation }) => {
           </View>
         </Modal>
       </View>
-     
+
 
       <Modal
         animationType="slide"
@@ -275,23 +280,36 @@ const ForgotPassword = ({ navigation }) => {
                   />
 
                 </View>
-               <View
+                <View
                   style={{
                     justifyContent: "center",
                     alignItems: "center",
                     marginBottom: 20,
                   }}
                 >
-                  <Pressable style={{ flexDirection: 'row', width: '45%', justifyContent: 'space-between', height: 30, alignItems: 'center' }}>
-                    <Pressable onPress={pressPreSendOTP} style={{ backgroundColor: '#8a57b6', borderRadius: 10, width: '65%', height: '90%', alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ color: 'white', fontWeight: 'bold' }}>Gửi lại mã </Text>
+                  <Pressable
+                    style={{ flexDirection: 'row', width: '45%', justifyContent: 'space-between', height: 30, alignItems: 'center' }}
+                    onPress={isPreSendCode ? pressPreSendOTP : null} // Kiểm tra isPreSendCode trước khi gọi hàm pressPreSendOTP
+                  >
+                    <Pressable
+                      style={{
+                        backgroundColor: isPreSendCode ? '#8a57b6' : 'gray', // Đổi màu nút tùy thuộc vào giá trị của isPreSendCode
+                        borderRadius: 10,
+                        width: '65%',
+                        height: '90%',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      disabled={!isPreSendCode} // Vô hiệu hóa nút khi isPreSendCode là false
+                    >
+                      <Text style={{ color: 'white', fontWeight: 'bold' }}>Gửi lại mã</Text>
                     </Pressable>
                     <Text style={{ color: "#0091FF", fontWeight: 'bold' }}>{timeLeft === 0 ? "0:0" : formatTime(timeLeft)}</Text>
                   </Pressable>
                 </View>
                 <View style={{ justifyContent: "space-evenly", alignItems: "center", flexDirection: 'row' }}>
 
-                <Pressable
+                  <Pressable
                     style={{
                       backgroundColor: "#0091FF",
                       width: 120,
@@ -369,8 +387,8 @@ const ForgotPassword = ({ navigation }) => {
       >
         <View style={styles.modalContainerPw}>
           <View style={styles.modalCreatePw}>
-            <View style={{ height: 40, justifyContent: 'center',backgroundColor: '#67bed9', width: '50%',borderRadius:10, }}>
-              <Text style={{color: 'white',  fontSize: 16, paddingHorizontal: 20, paddingVertical: 10, fontWeight: 'bold' }}>Tạo mật khẩu mới</Text>
+            <View style={{ height: 40, justifyContent: 'center', backgroundColor: '#67bed9', width: '50%', borderRadius: 10, }}>
+              <Text style={{ color: 'white', fontSize: 16, paddingHorizontal: 20, paddingVertical: 10, fontWeight: 'bold' }}>Tạo mật khẩu mới</Text>
             </View>
             <View style={{ alignItems: 'center', paddingHorizontal: 20, height: '60%', justifyContent: 'space-evenly' }}>
               <View style={styles.viewTextPwNew}>
