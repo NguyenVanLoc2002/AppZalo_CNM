@@ -3,7 +3,6 @@ import Toast from "react-native-toast-message";
 import axiosInstance from "../api/axiosInstance";
 
 const useChangePw = () => {
-    const [isLoading, setIsLoading] = useState(false);
 
     const showToastSuccess = (notice) => {
         Toast.show({
@@ -24,7 +23,6 @@ const useChangePw = () => {
     
     const changePassword = async (oldPassword, newPassword) => {
         try {
-            setIsLoading(true);
             console.log(oldPassword, newPassword)
             const response = await axiosInstance.post("/auth/change-password", {
                 oldPassword, newPassword,
@@ -36,17 +34,14 @@ const useChangePw = () => {
                 return false;
             }
             else if (response.status === 200) {
-                setIsLoading(false);
                 return true;
             } else {
                 showToastError("Failed to change password")
-                setIsLoading(false);
                 return false;
             }
 
         } catch (error) {
             console.log(error);
-            setIsLoading(false);
             showToastError(error.response.data.message);
             return false;
         }
