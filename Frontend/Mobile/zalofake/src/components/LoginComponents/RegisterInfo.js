@@ -156,7 +156,6 @@ const RegisterInfo = ({ navigation, route }) => {
 
   const handleGenderSelect = (gender) => {
     setSelectedGender(gender);
-    showToastError("" + dob);
   };
 
 
