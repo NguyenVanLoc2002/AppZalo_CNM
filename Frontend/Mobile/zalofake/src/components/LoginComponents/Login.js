@@ -7,17 +7,28 @@ import {
   TextInput,
   StyleSheet,
   ActivityIndicator,
+  Modal
 } from "react-native";
 import useLogin from "../../hooks/useLogin";
 
 const Login = ({ navigation }) => {
-  const { login } = useLogin();
+  const { login , loginCount,setLoginCount} = useLogin();
   const [textPhone, setTextPhone] = useState("");
   const [textPW, setTextPW] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [isValid, setIsValid] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isModalReSetPWVisible, setModalReSetPWVisible] = useState(false);
+  const handleLayLaiMatKhau = () => {
+    toggleModalLayLaiMatKhau();
+    navigation.navigate("ResetPassword");
+  };
+  const toggleModalLayLaiMatKhau = () => {
+    setModalReSetPWVisible(!isModalReSetPWVisible);
+  };
+
+
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
   };
@@ -52,6 +63,11 @@ const Login = ({ navigation }) => {
 
   const handleLogin = async () => {
     setIsLoading(true);
+    console.log(loginCount);
+    if(loginCount===5){
+      toggleModalLayLaiMatKhau()
+    }
+
     await login(textPhone, textPW)
       .then(() => {
         console.log("Login successfully");
@@ -125,6 +141,31 @@ const Login = ({ navigation }) => {
           )}
         </Pressable>
       </View>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isModalReSetPWVisible}
+        onRequestClose={toggleModalLayLaiMatKhau}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalHeaderText}>Bạn đã nhập sai mật khẩu 5 lần!</Text>
+            <Text style={styles.modalText}>
+              Bạn muốn lấy lại mật khẩu không ?
+            </Text>
+
+            <View style={styles.modalButtonContainer}>
+              <Pressable onPress={handleLayLaiMatKhau}>
+                <Text style={styles.modalButton}>Có</Text>
+              </Pressable>
+              <Pressable onPress={toggleModalLayLaiMatKhau}>
+                <Text style={styles.modalButton}>Không</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 };
@@ -204,6 +245,36 @@ const styles = StyleSheet.create({
   buttonImage: {
     width: 50,
     height: 50,
+  },
+  modalContainer: {
+    flex: 1,
+
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    width: 300,
+    padding: 20,
+    borderRadius: 10,
+  },
+  modalHeaderText: {
+    fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  modalText: {
+    marginBottom: 20,
+  },
+  modalButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+  },
+  modalButton: {
+    fontWeight: "bold",
+    marginHorizontal: 10,
+    color: "#0091FF",
   },
 });
 
