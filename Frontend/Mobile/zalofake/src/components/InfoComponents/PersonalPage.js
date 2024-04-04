@@ -6,13 +6,21 @@ import {
   Pressable,
   TextInput,
   ScrollView,
+  Modal,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import useUpdate from "../../hooks/useUpdate";
+
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
 import { useAuthContext } from "../../contexts/AuthContext";
-
+import axiosInstance from "../../api/axiosInstance";
 const PersonalPage = ({ navigation }) => {
+  const { updateAvatar } = useUpdate();
+
   const { authUser } = useAuthContext();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const [status, setStatus] = useState("");
   useEffect(() => {
@@ -50,25 +58,97 @@ const PersonalPage = ({ navigation }) => {
     });
   }, [navigation]);
 
+  const openImagePicker = async () => {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      alert("Permission to access camera roll is required!");
+      return;
+    }
+
+    const pickerResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!pickerResult.canceled) {
+      setSelectedImage(pickerResult.assets[0].uri);
+      // console.log(pickerResult);
+      // console.log(pickerResult.assets[0].uri);
+    } else {
+      console.log("No image selected");
+    }
+  };
+
+  const handleUpdateAvatar = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("avatar", {
+        uri: selectedImage,
+        type: "image/jpeg",
+        name: "avatar.jpg",
+      });
+      console.log("1");
+      // formData.append("avatar", file);
+      const response = await axiosInstance.post(
+        "/users/upload-avatar"
+        // formData
+        // {
+        //   headers: {
+        //     Authorization: `Bearer ${authToken}`,
+        //     "Content-Type": "multipart/form-data",
+        //   },
+        // }
+      );
+      console.log("hihi");
+      // const response = await updateAvatar(formData);
+
+      if (response.avatar) {
+        await AsyncStorage.setItem("avatar", response.avatar.url);
+        setSelectedImage(response.avatar.url);
+        Alert.alert("Success", "Avatar updated successfully");
+      } else {
+        throw new Error("Failed to update avatar");
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", error.message || "Failed to update avatar");
+    } finally {
+      closeModal();
+    }
+  };
+
+  const openModal = () => {
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+  };
+
   return (
     <ScrollView style={{ backgroundColor: "#f1f2f6", flex: 1 }}>
       <View style={{ alignItems: "center" }}>
         <Image
           source={{
             uri:
-              authUser?.profile?.avatar?.url ||
+              authUser?.profile?.background?.url ||
               "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
           }}
           style={{ width: "100%", height: 160 }}
         />
-        <Image
-          source={{
-            uri:
-              authUser?.profile?.avatar?.url ||
-              "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
-          }}
-          style={{ width: 96, height: 96, marginTop: -48, borderRadius: 48 }}
-        />
+        <Pressable onPress={openModal}>
+          <Image
+            source={{
+              uri:
+                authUser?.profile?.avatar?.url ||
+                "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+            }}
+            style={{ width: 96, height: 96, marginTop: -48, borderRadius: 48 }}
+          />
+        </Pressable>
       </View>
       <View style={{ alignItems: "center" }}>
         <Text style={{ fontWeight: "bold", fontSize: 24, marginBottom: 8 }}>
@@ -268,6 +348,64 @@ const PersonalPage = ({ navigation }) => {
 
         {/* Code cho status thứ hai */}
       </View>
+      {/* Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={closeModal}
+      >
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "rgba(0,0,0,0.5)",
+          }}
+        >
+          <View
+            style={{ backgroundColor: "white", padding: 20, borderRadius: 10 }}
+          >
+            <Image
+              source={{
+                uri:
+                  selectedImage ||
+                  authUser?.profile?.avatar?.url ||
+                  "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+              }}
+              style={{ width: 200, height: 200, borderRadius: 100 }}
+            />
+            <Pressable onPress={openImagePicker}>
+              <Text
+                style={{
+                  color: "#0091FF",
+                  textAlign: "center",
+                  paddingVertical: 20,
+                }}
+              >
+                Chọn ảnh
+              </Text>
+            </Pressable>
+            <Pressable onPress={handleUpdateAvatar}>
+              <Text
+                style={{
+                  color: "#0091FF",
+                  textAlign: "center",
+                  paddingVertical: 20,
+                }}
+              >
+                cập nhật
+              </Text>
+            </Pressable>
+
+            <Pressable onPress={closeModal}>
+              <Text style={{ color: "#0091FF", textAlign: "center" }}>
+                Đóng
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
