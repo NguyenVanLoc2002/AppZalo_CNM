@@ -5,7 +5,9 @@ const Session = require("../models/Session");
 
 exports.protect = async (req, res, next) => {
   let token;
-  const app_type = req.headers["user-agent"] ? "web" : "mobile";
+  const app_type = req.headers["user-agent"].includes("Mobile")
+    ? "mobile"
+    : "web";
 
   if (
     req.headers.authorization &&

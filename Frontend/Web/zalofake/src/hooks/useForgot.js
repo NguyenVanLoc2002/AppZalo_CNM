@@ -15,14 +15,12 @@ const useForgot = () => {
       const check_mail = await axiosInstance.post("/users/check-email", {
         email,
       });
-      console.log(check_mail.data);
       const otp = await VerifyOTPModule.sendOTP(email);
       toast.success("OTP sent to your email");
       setIsLoading(false);
       setSystemOTP(otp);
       return true;
     } catch (error) {
-      console.log(error);
       if (error.response) {
         toast.error(error.response.data.message);
       } else {
