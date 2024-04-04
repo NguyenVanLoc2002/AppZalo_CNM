@@ -173,7 +173,7 @@ exports.changePassword = async (req, res) => {
       await user.save();
       res.status(200).json({ message: "Password changed successfully" });
     } else {
-      res.status(401).json({ message: "Invalid old password" });
+      res.status(403).json({ message: "Invalid old password" });
     }
   } catch (error) {
     res
