@@ -49,6 +49,7 @@ exports.checkUserByEmail = async (req, res) => {
 };
 
 exports.uploadAvatar = async (req, res) => {
+  console.log("em");
   try {
     const token = req.headers.authorization.split(" ")[1];
     const userId = getUserIdFromToken(token);
@@ -73,7 +74,6 @@ exports.uploadAvatar = async (req, res) => {
     await user.save();
     return res.status(200).json({
       message: "Avatar uploaded successfully",
-
       avatar: user.profile.avatar,
     });
   } catch (error) {
