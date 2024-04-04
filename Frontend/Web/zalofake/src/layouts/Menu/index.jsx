@@ -12,6 +12,13 @@ function MenuComponent({ language, setLanguage, typeMenu, showModal }) {
   const [tabSelected, setTabSelected] = useState("");
   const logout = useLogout();
   const user = JSON.parse(localStorage.getItem("authUser"));
+  const [isOpenSetup, setIsOpenSetup] = useState(false);
+
+  const toggleModal = () => {
+    setIsOpenSetup(!isOpenSetup);
+  };
+
+  console.log('isOpenSetup: ',isOpenSetup);
 
   const handleLogout = async () => {
     await logout();
@@ -30,11 +37,12 @@ function MenuComponent({ language, setLanguage, typeMenu, showModal }) {
               {language == "vi" ? "Thông tin tài khoản" : "Account infomation"}
             </p>
           </div>
-          <div className="p-3 w-full flex items-center hover:bg-gray-200">
+          <div className="p-3 w-full flex items-center hover:bg-gray-200" >
             <IoSettingsOutline size={18} color="#555555" />
-            <p className="text-sm ml-6">
+            <p className="text-sm ml-6" >
               {language == "vi" ? "Cài đặt" : "Setting"}
             </p>
+           
           </div>
           <hr />
         </div>
@@ -197,10 +205,15 @@ function MenuComponent({ language, setLanguage, typeMenu, showModal }) {
               {language == "vi" ? "Hồ sơ của bạn" : "Profile"}
             </p>
           </div>
-          <div className="px-3 py-[10px]  w-full flex items-center hover:bg-gray-200 justify-between relative">
+          <div className="px-3 py-[10px]  w-full flex items-center hover:bg-gray-200 justify-between relative" onClick={toggleModal}>
             <p className="text-sm w-full ml-2">
               {language == "vi" ? "Cài đặt" : "Setting"}
             </p>
+            {isOpenSetup &&(
+             <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2/5 h-[90%] bg-white rounded-lg shadow-lg ">
+                  <span>sssss</span>
+              </div>
+            )}
           </div>
           <hr />
         </div>
