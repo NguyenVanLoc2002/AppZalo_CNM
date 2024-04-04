@@ -1,4 +1,4 @@
-import { View, Text, Pressable, TouchableOpacity, ScrollView, Modal } from "react-native";
+import { View, Text, Pressable, TouchableOpacity, ScrollView, Modal, ActivityIndicator } from "react-native";
 import React, { useEffect, useState } from "react";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
@@ -11,7 +11,10 @@ const ChangePassword = ({ navigation, route }) => {
     const { showToastSuccess, showToastError, changePassword } = useChangePw();
     const logout = useLogout();
     const [modalSuccess, setModalSuccess] = useState(false);
+    const [checkScreen, setCheckScreen] = useState("check")
+    const [isLoading, setIsLoading] = useState(false)
 
+    console.log("change", checkScreen)
 
     useEffect(() => {
         navigation.setOptions({
@@ -46,29 +49,37 @@ const ChangePassword = ({ navigation, route }) => {
     };
 
     const handleUpdatePassword = async () => {
+        setIsLoading(true)
         if (!oldPassword) {
             showToastError("Vui lòng nhập mật khẩu hiện tại")
+            setIsLoading(false)
         }
         else if (!newPassword) {
             showToastError("Vui lòng nhập mật khẩu mới")
+            setIsLoading(false)
         }
         else if (!/^[A-Za-z\d@$!%*?&#]{6,}$/.test(newPassword)) {
             showToastError("Mật khẩu không hợp lệ");
+            setIsLoading(false)
         } else if (
             !/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{6,}$/.test(
                 newPassword
             )
         ) {
             showToastError("MK chứa ít nhất 1 chữ,1 số,1 ký tự đặc biệt");
+            setIsLoading(false)
         }
         else if (!(newPassword === newPassword2)) {
             showToastError("Vui lòng nhập lại mật khẩu trùng khớp");
+            setIsLoading(false)
         }
         else {
             const rs = await changePassword(oldPassword, newPassword);
             if (rs) {
+                setIsLoading(false)
                 setModalSuccess(!modalSuccess)
             }
+            setIsLoading(false)
         }
     }
     const handleLogout = async () => {
@@ -146,15 +157,19 @@ const ChangePassword = ({ navigation, route }) => {
                                 </Pressable>
                             ) : null}
                         </View>
-                        
-                        <Pressable style={[{margin: 10 ,backgroundColor: '#67bed9',width: '50%', borderRadius: 20,height: 40},styles.styleCenter]} 
-                        onPress={() => navigation.navigate('ResetPassword')}
+
+                        <Pressable style={[{ margin: 10, backgroundColor: '#67bed9', width: '50%', borderRadius: 20, height: 40 }, styles.styleCenter]}
+                            onPress={() => navigation.navigate('ResetPassword', { checkScreen: checkScreen })}
                         >
-                            <Text style={[styles.styleText,{color: 'white', fontWeight: 'bold'}]}>Quên mật khẩu?</Text>
+                            <Text style={[styles.styleText, { color: 'white', fontWeight: 'bold' }]}>Quên mật khẩu?</Text>
                         </Pressable>
                     </View>
                     <Pressable style={[styles.styleButton, styles.styleCenter, { margin: 30 }]} onPress={handleUpdatePassword}>
-                        <Text style={[styles.styleText, { color: 'white', fontWeight: 'bold' }]}>Cập nhật</Text>
+                        {isLoading ? (
+                            <ActivityIndicator color="white" />
+                        ) : (
+                            <Text style={[styles.styleText, { color: 'white', fontWeight: 'bold' }]}>Cập nhật</Text>
+                        )}
                     </Pressable>
                 </View>
             </ScrollView>

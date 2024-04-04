@@ -15,6 +15,7 @@ import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import useForgot from "../../hooks/useResetPw";
 import OTPTextView from 'react-native-otp-textinput';
 import Toast from "react-native-toast-message";
+import useLogout from "../../hooks/useLogout";
 
 
 const ResetPassword = ({ navigation, route }) => {
@@ -36,6 +37,9 @@ const ResetPassword = ({ navigation, route }) => {
   const { getOTP, showToastError, showToastSuccess, resetPassword, check_mail, handleOTP } = useForgot();
   const [isPreSendCode, setIsPreSendCode] = useState(false);
   const { email = "" } = route.params || {};
+  const { checkScreen } = route.params || {};
+
+  const logout = useLogout();
 
   useEffect(() => {
     if (email.trim().toLowerCase().endsWith("@gmail.com")) {
@@ -64,7 +68,7 @@ const ResetPassword = ({ navigation, route }) => {
     const systemOTP = await getOTP(textEmail);
     if (systemOTP) {
 
-      setIsLoading(false);
+      isLoading(false);
       setTimeLeft(60)
       SendTime();
       setIsPreSendCode(false)
@@ -74,16 +78,22 @@ const ResetPassword = ({ navigation, route }) => {
   };
 
   const handleNext = async () => {
+    setIsLoading(true)
     if (!textEmail) {
       showToastError("Vui lòng nhập gmail")
+      setIsLoading(false)
+
     } else if (!textEmail.trim().toLowerCase().endsWith("@gmail.com")) {
       showToastError("Email phải có định dạng @gmail.com");
+      setIsLoading(false)
     }
     else {
       const sendEmail = await check_mail(textEmail);
       if (!sendEmail) {
+        setIsLoading(false)
         return;
       }
+      setIsLoading(false)
       setIsHidden(!isHidden);
       setModalXacNhan(!modalXacNhan)
       // setModalOTP(!modalOTP)
@@ -106,10 +116,12 @@ const ResetPassword = ({ navigation, route }) => {
   };
   // kiểm tra otp có đầy đủ không
   const handleVerifyOTP = () => {
+    setIsLoading(true)
     if (otp.length === 6) {
       handleSubmit()
     } else {
       showToastError("Hãy nhập đủ mã xác thực");
+      setIsLoading(false)
     }
   };
 
@@ -149,6 +161,7 @@ const ResetPassword = ({ navigation, route }) => {
   };
 
   const handleSubmit = async (e) => {
+    setIsLoading(false)
     const response = await handleOTP(otp);
     if (response) {
       setModalOTP(!modalOTP)
@@ -158,24 +171,30 @@ const ResetPassword = ({ navigation, route }) => {
   };
 
   const handleResetPassword = async () => {
+    setIsLoading(true)
     if (!newPassword) {
       showToastError("Vui lòng nhập mật khẩu mới")
+      setIsLoading(false)
     }
     else if (!/^[A-Za-z\d@$!%*?&#]{6,}$/.test(newPassword)) {
       showToastError("Mật khẩu phải có ít nhất 6 ký tự,chứa ít nhất 1 chữ,1 số,1 ký tự đặc biệt");
+      setIsLoading(false)
     } else if (
       !/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{6,}$/.test(
         newPassword
       )
     ) {
       showToastError("MK chứa ít nhất 1 chữ,1 số,1 ký tự đặc biệt");
+      setIsLoading(false)
     }
     else if (!(newPassword === newPassword2)) {
       showToastError("Vui lòng nhập lại mật khẩu trùng khớp");
+      setIsLoading(false)
     }
     else {
       const rs = await resetPassword(textEmail, newPassword);
       if (rs) {
+        setIsLoading(false)
         setModalCreatePw(!modalCreatePw)
         setModalResetSuccess(!modalResetSuccess)
 
@@ -183,8 +202,20 @@ const ResetPassword = ({ navigation, route }) => {
     }
   }
 
-  const handleLogin = () => {
-    navigation.navigate("Login")
+  const handleLogin = async () => {
+    setModalResetSuccess(!modalResetSuccess)
+    setIsHidden(!isHidden)
+    if (checkScreen === 'check') {
+      try {
+        await logout();
+      } catch (error) {
+        console.log(error);
+        showToastError("Lỗi ! Vui lòng thử lại sau");
+      }
+    }
+    else {
+      navigation.navigate("Login")
+    }
   }
 
 
@@ -210,10 +241,15 @@ const ResetPassword = ({ navigation, route }) => {
               <Ionicons name="close" size={22} color="gray" />
             </Pressable>
           </View>
+
           <Pressable style={styles.styleButton}
             onPress={handleNext}
           >
-            <Text style={[styles.styleText, { color: 'white', fontWeight: 'bold' }]}>Tiếp tục</Text>
+            {isLoading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={[styles.styleText, { color: 'white', fontWeight: 'bold' }]}>Tiếp tục</Text>
+            )}
           </Pressable>
         </View>)}
       </ScrollView >
@@ -237,7 +273,7 @@ const ResetPassword = ({ navigation, route }) => {
                 </Pressable>
                 <Pressable style={styles.pressCancel} onPress={handleXacNhan} >
                   {isLoading ? (
-                    <ActivityIndicator color="white" />
+                    <ActivityIndicator color="black" />
                   ) : (
                     <Text style={styles.textCancel}>Xác nhận</Text>
                   )}
@@ -256,7 +292,7 @@ const ResetPassword = ({ navigation, route }) => {
         onRequestClose={() => { setModalOTP(!modalOTP) }}
       >
         <View style={styles.modalContainerPw}>
-          <View style={styles.modalCreatePw}>
+          <View style={styles.modalOTP}>
             <View style={{ backgroundColor: "#E5E7EB", padding: 10 }}>
               <Text style={{ textAlign: "center", color: "#000" }}>
                 Vui lòng không chia sẻ mã xác thực để tránh mất tài khoản
@@ -269,6 +305,7 @@ const ResetPassword = ({ navigation, route }) => {
                   justifyContent: "center",
                   alignItems: "center",
                   padding: 10,
+
                 }}
               >
                 <FontAwesome5 name={"envelope"} size={80} color="black" style={{ marginRight: 8 }} />
@@ -339,7 +376,6 @@ const ResetPassword = ({ navigation, route }) => {
                       Huỷ
                     </Text>
                   </Pressable>
-
                   <Pressable
                     style={{
                       backgroundColor: "#0091FF",
@@ -351,14 +387,15 @@ const ResetPassword = ({ navigation, route }) => {
                     }}
                     onPress={handleVerifyOTP}
                   >
-
-                    <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                      Tiếp tục
-                    </Text>
-
+                    {isLoading ? (
+                      <ActivityIndicator color="white" />
+                    ) : (
+                      <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                        Tiếp tục
+                      </Text>
+                    )}
 
                   </Pressable>
-
                 </View>
               </View>
             </View>
@@ -405,7 +442,7 @@ const ResetPassword = ({ navigation, route }) => {
       >
         <View style={styles.modalContainerPw}>
           <View style={styles.modalCreatePw}>
-            <View style={{ height: 40, justifyContent: 'center', backgroundColor: '#67bed9', width: '50%', borderRadius: 10, }}>
+            <View style={{ height: 40, justifyContent: 'center', backgroundColor: '#67bed9', width: '50' }}>
               <Text style={{ color: 'white', fontSize: 16, paddingHorizontal: 20, paddingVertical: 10, fontWeight: 'bold' }}>Tạo mật khẩu mới</Text>
             </View>
             <View style={{ alignItems: 'center', paddingHorizontal: 20, height: '60%', justifyContent: 'space-evenly' }}>
@@ -449,7 +486,11 @@ const ResetPassword = ({ navigation, route }) => {
               <Pressable style={[styles.styleButton, styles.styleCenter, { margin: 30 }]}
                 onPress={handleResetPassword}
               >
-                <Text style={[styles.styleText, { color: 'white', fontWeight: 'bold' }]}>Cập nhật</Text>
+                {isLoading ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text style={[styles.styleText, { color: 'white', fontWeight: 'bold' }]}>Cập nhật</Text>
+                )}
               </Pressable>
             </View>
           </View>
@@ -476,9 +517,13 @@ const ResetPassword = ({ navigation, route }) => {
                 </Text>
 
                 <View style={styles.modalButtonContainer}>
-                  <Pressable style={[styles.buttonCreatePass, { margin: 20 }]} onPress={handleLogin}>
-                    <Text style={styles.modalButton}>Back</Text>
-                  </Pressable>
+                  {isLoading ? (
+                    <ActivityIndicator color="white" />
+                  ) : (
+                    <Pressable style={[styles.buttonCreatePass, { margin: 20 }]} onPress={handleLogin}>
+                      <Text style={styles.modalButton}>Trở về</Text>
+                    </Pressable>
+                  )}
                 </View>
               </View>
             </View>
@@ -594,13 +639,18 @@ const styles = StyleSheet.create({
     height: '40%',
     borderRadius: 10,
   },
+  modalOTP: {
+    backgroundColor: "#fff",
+    width: '90%',
+    height: '65%',
+    alignItems: 'center',
+    paddingBottom: 50
+  },
   modalCreatePw: {
     backgroundColor: "#fff",
     width: '90%',
-    borderRadius: 10,
     height: '65%',
-    // borderWidth: 1,
-    // borderColor: 'gray'
+    paddingBottom: 50
 
   },
   modalHeaderText: {
