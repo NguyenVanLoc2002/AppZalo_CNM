@@ -17,7 +17,7 @@ import OTPTextView from 'react-native-otp-textinput';
 import Toast from "react-native-toast-message";
 
 
-const ForgotPassword = ({ navigation }) => {
+const ResetPassword = ({ navigation, route }) => {
   const [textEmail, setTextEmail] = useState(null);
   const [modalXacNhan, setModalXacNhan] = useState(false);
   const [modalOTP, setModalOTP] = useState(false);
@@ -35,7 +35,14 @@ const ForgotPassword = ({ navigation }) => {
   const [isHidden, setIsHidden] = useState(false);
   const { getOTP, showToastError, showToastSuccess, resetPassword, check_mail, handleOTP } = useForgot();
   const [isPreSendCode, setIsPreSendCode] = useState(false);
+  const { email = "" } = route.params || {};
 
+  useEffect(() => {
+    if (email.trim().toLowerCase().endsWith("@gmail.com")) {
+      setTextEmail(email)
+
+    }
+  }, [])
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -60,6 +67,9 @@ const ForgotPassword = ({ navigation }) => {
       setIsLoading(false);
       setTimeLeft(60)
       SendTime();
+      setIsPreSendCode(false)
+      setIsCounting(true)
+
     }
   };
 
@@ -288,8 +298,8 @@ const ForgotPassword = ({ navigation }) => {
                   }}
                 >
                   <Pressable
-                    style={{ flexDirection: 'row', width: '45%', justifyContent: 'space-between', height: 30, alignItems: 'center' }}
-                    onPress={isPreSendCode ? pressPreSendOTP : null} // Kiểm tra isPreSendCode trước khi gọi hàm pressPreSendOTP
+                    style={{ flexDirection: 'row', width: '45%', justifyContent: 'space-between', height: 40, alignItems: 'center' }}
+
                   >
                     <Pressable
                       style={{
@@ -300,9 +310,13 @@ const ForgotPassword = ({ navigation }) => {
                         alignItems: 'center',
                         justifyContent: 'center'
                       }}
+                      onPress={isPreSendCode ? pressPreSendOTP : null} // Kiểm tra isPreSendCode trước khi gọi hàm pressPreSendOTP
                       disabled={!isPreSendCode} // Vô hiệu hóa nút khi isPreSendCode là false
                     >
+
                       <Text style={{ color: 'white', fontWeight: 'bold' }}>Gửi lại mã</Text>
+
+
                     </Pressable>
                     <Text style={{ color: "#0091FF", fontWeight: 'bold' }}>{timeLeft === 0 ? "0:0" : formatTime(timeLeft)}</Text>
                   </Pressable>
@@ -319,6 +333,7 @@ const ForgotPassword = ({ navigation }) => {
                       borderRadius: 25,
                     }}
                     onPress={() => { setModalOTP(!modalOTP); setIsHidden(!isHidden) }}
+
                   >
                     <Text style={{ color: "#fff", fontWeight: "bold" }}>
                       Huỷ
@@ -336,9 +351,12 @@ const ForgotPassword = ({ navigation }) => {
                     }}
                     onPress={handleVerifyOTP}
                   >
+
                     <Text style={{ color: "#fff", fontWeight: "bold" }}>
                       Tiếp tục
                     </Text>
+
+
                   </Pressable>
 
                 </View>
@@ -664,4 +682,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ForgotPassword;
+export default ResetPassword;
