@@ -82,7 +82,7 @@ const useRegister = () => {
     }
   };
 
-  return { isLoading, isOTPVerified, getOTP, verifyEmailAndRegister };
+  return { isLoading,isOTPVerified, getOTP, verifyEmailAndRegister };
 };
 
 export default useRegister;
