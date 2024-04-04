@@ -123,8 +123,6 @@ const useUpdate = () => {
       toast.error(
         error.response.data.message ||
           "Failed to update profile! Please try again."
-        error.response.data.message ||
-          "Failed to update profile! Please try again."
       );
     } finally {
       setLoading(false);
