@@ -146,6 +146,12 @@ const ChangePassword = ({ navigation, route }) => {
                                 </Pressable>
                             ) : null}
                         </View>
+                        
+                        <Pressable style={[{margin: 10 ,backgroundColor: '#67bed9',width: '50%', borderRadius: 20,height: 40},styles.styleCenter]} 
+                        onPress={() => navigation.navigate('ResetPassword')}
+                        >
+                            <Text style={[styles.styleText,{color: 'white', fontWeight: 'bold'}]}>Quên mật khẩu?</Text>
+                        </Pressable>
                     </View>
                     <Pressable style={[styles.styleButton, styles.styleCenter, { margin: 30 }]} onPress={handleUpdatePassword}>
                         <Text style={[styles.styleText, { color: 'white', fontWeight: 'bold' }]}>Cập nhật</Text>

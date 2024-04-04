@@ -67,7 +67,8 @@ export default function RootComponent() {
       <Stack.Screen name="AccountVsSecurity" component={AccountVsSecurity} />
       <Stack.Screen name="PersonalSetting" component={PersonalSetting} />
       <Stack.Screen name="ChangePassword" component={ChangePassword} />
-      
+      <Stack.Screen name="ResetPassword" component={ResetPassword} />
+
     </Stack.Navigator>
   ) : (
     <Stack.Navigator initialRouteName="LoginMain">

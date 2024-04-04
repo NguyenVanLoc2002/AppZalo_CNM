@@ -46,10 +46,12 @@ const useForgotPw = () => {
             const response = await axiosInstance.post("/users/check-email", {
                 email,
             });
-            const data = response.data;
-            console.log(data);
-
-            if (response.status === 200) {
+          
+            if(response.status === 404) {
+                showToastError(response.data.message);
+                return false;
+            }
+            else if (response.status === 200) {
                 setIsLoading(false);
                 return true;
             }
@@ -61,7 +63,7 @@ const useForgotPw = () => {
         } catch (error) {
             console.log(error);
             setIsLoading(false);
-            // toast.error(error.response.data.message);
+            showToastError(error.response.data.message);
             return false;
         }
     }

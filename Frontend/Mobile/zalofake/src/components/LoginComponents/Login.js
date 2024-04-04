@@ -11,7 +11,7 @@ import {
 import useLogin from "../../hooks/useLogin";
 
 const Login = ({ navigation }) => {
-  const { login } = useLogin();
+  const { login  } = useLogin();
   const [textPhone, setTextPhone] = useState("");
   const [textPW, setTextPW] = useState("");
   const [isFocused, setIsFocused] = useState(false);
@@ -54,7 +54,6 @@ const Login = ({ navigation }) => {
     setIsLoading(true);
     await login(textPhone, textPW)
       .then(() => {
-        console.log("Login successfully");
         setIsLoading(false);
       })
       .catch((error) => {
