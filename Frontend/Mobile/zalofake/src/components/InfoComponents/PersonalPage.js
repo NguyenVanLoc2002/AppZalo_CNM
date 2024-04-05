@@ -125,6 +125,8 @@ const PersonalPage = ({ navigation }) => {
   };
 
   const openModal = () => {
+    setSelectedImage(authUser?.profile?.avatar?.url ||
+      "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",)
     setModalVisible(true);
   };
 
@@ -133,6 +135,8 @@ const PersonalPage = ({ navigation }) => {
   };
 
   const openModalBia = () => {
+    setModalVisibleBia(authUser?.profile?.background?.url ||
+      "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",)
     setModalVisibleBia(true);
   };
 
