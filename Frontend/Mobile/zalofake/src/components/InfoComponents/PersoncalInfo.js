@@ -325,7 +325,8 @@ const PersonalInfo = ({ navigation }) => {
         <View>
           <Image
             source={{
-              uri: authUser?.profile?.background?.url,
+              uri: authUser?.profile?.background?.url ||
+              "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
             }}
             style={{ width: "100%", height: 250 }}
           />
@@ -342,7 +343,8 @@ const PersonalInfo = ({ navigation }) => {
             <Pressable onPress={() => setModalVisible(true)}>
               <Image
                 source={{
-                  uri: authUser?.profile?.avatar?.url,
+                  uri: authUser?.profile?.avatar?.url ||
+                  "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
                 }}
                 style={{ width: 75, height: 75, borderRadius: 48 }}
               />
@@ -635,7 +637,7 @@ const PersonalInfo = ({ navigation }) => {
         </View>
       </ScrollView>
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Modal
+        {/* <Modal
           animationType="slide"
           transparent={true}
           visible={modalVisible}
@@ -665,6 +667,7 @@ const PersonalInfo = ({ navigation }) => {
                   alignItems: "center",
                   height: 30,
                   justifyContent: "flex-start",
+                  backgroundColor:'red'
                 }}
                 onPress={() => setIsModalVisible(!modalVisible)}
               >
@@ -746,7 +749,7 @@ const PersonalInfo = ({ navigation }) => {
               </View>
             </View>
           </View>
-        </Modal>
+        </Modal> */}
         <Modal
           animationType="slide"
           transparent={true}
