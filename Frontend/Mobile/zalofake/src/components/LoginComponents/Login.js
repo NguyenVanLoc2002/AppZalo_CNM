@@ -63,7 +63,6 @@ const Login = ({ navigation }) => {
 
   const handleLogin = async () => {
     setIsLoading(true);
-    console.log(loginCount);
     if(loginCount===5){
       toggleModalLayLaiMatKhau()
     }
