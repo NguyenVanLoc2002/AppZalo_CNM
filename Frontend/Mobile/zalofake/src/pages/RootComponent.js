@@ -27,6 +27,7 @@ import PersonalPrivacy from "../components/InfoComponents/PersonalPrivacy";
 import AccountVsSecurity from "../components/InfoComponents/AccoutVsSecurity";
 import PersonalSetting from "../components/InfoComponents/PersonalSetting";
 import ChangePassword from "../components/InfoComponents/ChangePassword";
+import ForgotPassword from "../components/InfoComponents/ForgotPassword";
 
 const Stack = createNativeStackNavigator();
 
@@ -67,7 +68,7 @@ export default function RootComponent() {
       <Stack.Screen name="AccountVsSecurity" component={AccountVsSecurity} />
       <Stack.Screen name="PersonalSetting" component={PersonalSetting} />
       <Stack.Screen name="ChangePassword" component={ChangePassword} />
-      <Stack.Screen name="ResetPassword" component={ResetPassword} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
 
     </Stack.Navigator>
   ) : (
