@@ -119,7 +119,6 @@ exports.uploadBackground = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const { name, email, gender, dob } = req.body;
-    console.log("dob", dob);
     const token = req.headers.authorization.split(" ")[1];
     const userId = getUserIdFromToken(token);
     const user = await User.findById(userId);
@@ -271,10 +270,8 @@ exports.unfriend = async (req, res) => {
 };
 
 exports.getFriends = async (req, res) => {
-  console.log('hihi')
   try {
     const token = req.headers.authorization.split(" ")[1];
-    console.log(token)
     const userId = getUserIdFromToken(token);
     const user = await User.findById(userId);
     if (!user) {
