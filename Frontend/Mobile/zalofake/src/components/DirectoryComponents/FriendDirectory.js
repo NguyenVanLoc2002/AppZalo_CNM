@@ -8,11 +8,28 @@ import {
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-
-const listFriend = ["Boo", "Anh Yêu", "Trần Thị Yến Nhi", "Lê Ngọc Hân"];
-
+import axiosInstance from "../../api/axiosInstance";
+import { useAuthContext } from "../../contexts/AuthContext";
 const FriendDirectory = ({ navigation }) => {
   const [friend, setFriend] = useState("");
+  const [friends, setFriends] = useState([]);
+  const { authUser } = useAuthContext();
+  const [totalFriends, setTotalFriends] = useState("");
+  console.log(authUser);
+  useEffect(() => {
+    const fetchFriends = async () => {
+      try {
+        const response = await axiosInstance.get('/users/get/friends');
+        setFriends(response.data.friends);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchFriends();
+  }, []);
+  useEffect(() => {
+    setTotalFriends(friends.length)
+  }, [friends]);
 
   return (
     <ScrollView style={styles.container}>
@@ -40,60 +57,27 @@ const FriendDirectory = ({ navigation }) => {
       </View>
       <View style={styles.buttonBar}>
         <Pressable style={styles.roundedButton}>
-          <Text style={styles.whiteText}>Tất cả 470</Text>
+          <Text style={styles.whiteText}>Tất cả {totalFriends}</Text>
         </Pressable>
+
       </View>
-      {/* List danh bạ bạn thân nhe nè */}
-      <View style={styles.friendList}>
-        <View style={styles.friendListHeader}>
-          <View style={styles.titleRow}>
-            <Ionicons name={"star"} size={25} color={"#FCC914"} />
-            <Text style={styles.titleText}>Bạn thân</Text>
-          </View>
-          <Pressable style={styles.titleRow}>
-            <Text style={styles.addText}>+ Thêm</Text>
-          </Pressable>
-        </View>
-        {listFriend.map((friend, index) => (
-          <View key={index} style={styles.friendRow}>
-            <Pressable style={styles.friendItem}>
-              <View style={styles.friendInfo}>
-                <Image
-                  style={styles.friendAvatar}
-                  source={require("../../../assets/meomeo.jpg")}
-                />
-                <Text style={styles.friendName}>{friend}</Text>
-              </View>
-              <View style={styles.friendActions}>
-                <View style={styles.actionIcon}>
-                  <Ionicons name={"call-outline"} size={25} color={"black"} />
-                </View>
-                <View style={styles.actionIcon}>
-                  <Ionicons
-                    name={"videocam-outline"}
-                    size={25}
-                    color={"black"}
-                  />
-                </View>
-              </View>
-            </Pressable>
-          </View>
-        ))}
-      </View>
+
       {/* List danh bạ nè */}
       <View style={styles.friendList}>
         <View style={styles.friendListHeader}>
           <Text style={styles.sectionTitle}>#</Text>
         </View>
-        {listFriend.map((friend, index) => (
+        {friends.map((friend, index) => (
           <View key={index} style={styles.friendRow}>
             <Pressable style={styles.friendItem}>
               <View style={styles.friendInfo}>
                 <Image
+                  source={{
+                    uri: friend?.profile?.avatar?.url,
+                  }}
                   style={styles.friendAvatar}
-                  source={require("../../../assets/meomeo.jpg")}
                 />
-                <Text style={styles.friendName}>{friend}</Text>
+                <Text style={styles.friendName}>{friend.profile.name}</Text>
               </View>
               <View style={styles.friendActions}>
                 <View style={styles.actionIcon}>
@@ -147,7 +131,7 @@ const styles = StyleSheet.create({
   },
   roundedButton: {
     borderRadius: 50,
-    backgroundColor: "#e5e5e5",
+    backgroundColor: "#bebebe",
     paddingHorizontal: 20,
     paddingVertical: 5,
     marginRight: 10,
