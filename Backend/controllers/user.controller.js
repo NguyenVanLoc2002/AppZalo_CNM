@@ -73,7 +73,6 @@ exports.uploadAvatar = async (req, res) => {
     await user.save();
     return res.status(200).json({
       message: "Avatar uploaded successfully",
-
       avatar: user.profile.avatar,
     });
   } catch (error) {
@@ -272,8 +271,10 @@ exports.unfriend = async (req, res) => {
 };
 
 exports.getFriends = async (req, res) => {
+  console.log('hihi')
   try {
     const token = req.headers.authorization.split(" ")[1];
+    console.log(token)
     const userId = getUserIdFromToken(token);
     const user = await User.findById(userId);
     if (!user) {
