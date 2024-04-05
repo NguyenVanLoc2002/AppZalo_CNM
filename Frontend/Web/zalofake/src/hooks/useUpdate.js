@@ -128,8 +128,47 @@ const useUpdate = () => {
       setLoading(false);
     }
   };
+  const getOTP = async (email) => {
+    try {
+      setLoading(true);
+      await axiosInstance.post("/users/check-email", {
+        email,
+      });
+      const otp = await VerifyOTPModule.sendOTP(email);
+      toast.success("OTP sent to your email");
+      setLoading(false);
+      setSystemOTP(otp);
+      return true;
+    } catch (error) {
+      if (error.response.status === 404) {
+        const otp = await VerifyOTPModule.sendOTP(email);
+        toast.success("OTP sent to your email");
+        setLoading(false);
+        setSystemOTP(otp);
 
-  return { updateAvatar, updateBackground, updateProfile, loading };
+        return true;
+      } else {
+        toast.error("Failed to send OTP");
+      }
+      setLoading(false);
+      return false;
+    }
+  };
+
+  const verifyOTP = async (userOTP) => {
+    setLoading(true);
+    const verified = await VerifyOTPModule.verifyOTP(userOTP, systemOTP);
+    if (verified) {
+      setLoading(false);
+      return true;
+    } else {
+      toast.error("OTP is incorrect");
+      setLoading(false);
+      return false;
+    }
+  };
+
+  return { updateAvatar, updateBackground, updateProfile, loading, getOTP, verifyOTP};
 };
 
 export default useUpdate;
