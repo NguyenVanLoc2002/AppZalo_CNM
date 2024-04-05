@@ -65,15 +65,17 @@ function PeopleChatComponent({ language, userChat }) {
     }
   }, [userChat]); //Mỗi lần thay đổi người chat thì sẽ được gọi lại để lấy lịch sử của người dùng đó
 
-  useEffect(() => {
+  const scrollToBottom = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  };
 
-  // // Sử dụng map để trích xuất nội dung từ mỗi tin nhắn
-  // const contentsArray = messages.map((message) => message.contents);
+  useEffect(scrollToBottom, []); // Chạy khi component được hiển thị
+  useEffect(scrollToBottom, [messages]); // Chạy lại useEffect khi messages thay đổi
 
+  // Đảo ngược mảng tin nhắn và lưu vào biến mới
+  const reversedMessages = [...messages].reverse();
   const isoStringToTime = (isoString) => {
     const date = new Date(isoString);
     return format(date, "HH:mm");
@@ -167,72 +169,84 @@ function PeopleChatComponent({ language, userChat }) {
               className="flex flex-col p-2 bg-slate-50 h-[75vh] bg-slate-300 overflow-y-auto"
               ref={scrollRef}
             >
-              {messages
-                .slice(0)
-                .reverse()
-                .map((message, index) => (
-                  <div
-                    key={index}
-                    className={
-                      userChat.id === message.senderId
-                        ? "chat chat-start"
-                        : "chat chat-end"
-                    }
-                  >
-                    {userChat.id === message.senderId && (
-                      <div className="chat-image avatar">
-                        <div className="w-10 rounded-full">
-                          <img alt="avatar" src={userChat.avatar} />
-                        </div>
+              {reversedMessages.map((message, index) => (
+                <div
+                  key={index}
+                  className={
+                    userChat.id === message.senderId
+                      ? "chat chat-start"
+                      : "chat chat-end"
+                  }
+                >
+                  {userChat.id === message.senderId && (
+                    <div className="chat-image avatar">
+                      <div className="w-10 rounded-full">
+                        <img alt="avatar" src={userChat.avatar} />
                       </div>
-                    )}
-
-                    <div className="flex chat-bubble bg-white ">
-                      {message.contents.map((content, contentIndex) => {
-                        const maxImagesPerRow = 3;
-                        const imagesCount = message.contents.filter(
-                          (c) => c.type === "image"
-                        ).length;
-                        const imagesPerRow = Math.min(
-                          imagesCount,
-                          maxImagesPerRow
-                        );
-                        const imageWidth = `calc(100% / ${imagesPerRow})`;
-                        const imageHeight = "auto";
-
-                        return content.type === "text" ? (
-                          <div key={contentIndex} className="flex flex-col">
-                            <span className="text-base text-black">
-                              {content.data}
-                            </span>
-                            <time className="text-xs opacity-50 text-stone-500">
-                              {isoStringToTime(message.timestamp)}
-                            </time>
-                          </div>
-                        ) : (
-                          <img
-                            key={contentIndex}
-                            src={content.data}
-                            alt="image"
-                            className="pr-2 pb-2"
-                            style={{ width: imageWidth, height: imageHeight }}
-                          />
-                        );
-                      })}
                     </div>
-                    <div className="chat-footer opacity-50">
-                      {message.status}
-                    </div>
+                  )}
 
-                    <div className="chat-footer opacity-50">
-                      {message.status}
-                    </div>
+                  <div className="flex chat-bubble bg-white ">
+                    {message.contents.map((content, contentIndex) => {
+                      const maxImagesPerRow = 3;
+                      const imagesCount = message.contents.filter(
+                        (c) => c.type === "image"
+                      ).length;
+                      const imagesPerRow = Math.min(
+                        imagesCount,
+                        maxImagesPerRow
+                      );
+                      const imageWidth = `calc(100% / ${imagesPerRow})`;
+                      const imageHeight = "auto";
 
-                    <div className="chat-footer opacity-50">
-                      {message.status}
-                    </div>
+                      return content.type === "text" ? (
+                        <div key={contentIndex} className="flex flex-col">
+                          <span className="text-base text-black">
+                            {content.data}
+                          </span>
+                          <time className="text-xs opacity-50 text-stone-500">
+                            {isoStringToTime(message.timestamp)}
+                          </time>
+                        </div>
+                      ) : content.type === "image" ? (
+                        <img
+                          key={contentIndex}
+                          src={content.data}
+                          alt="image"
+                          className="pr-2 pb-2"
+                          style={{ width: imageWidth, height: imageHeight }}
+                        />
+                      ) : (
+                       <div  key={contentIndex}>
+                         <video
+                         
+                          controls
+                          className="pr-2 pb-2"
+                          style={{ width: imageWidth, height: imageHeight }}
+                        >
+                          <source src={content.data} type="video/mp4" />
+                          <source src={content.data} type="video/webm" />
+                          <source src={content.data} type="video/ogg" />
+                          <source src={content.data} type="video/x-matroska" />
+                          <source src={content.data} type="video/x-msvideo" />
+                          <source src={content.data} type="video/quicktime" />
+                          Your browser does not support the video tag.
+                        </video> 
+                        <time className="text-xs opacity-50 text-stone-500">
+                            {isoStringToTime(message.timestamp)}
+                          </time>
+                       </div>
+                       
+                      );
+                    })}
                   </div>
-                ))}
+                  <div className="chat-footer opacity-50">{message.status}</div>
+
+                  <div className="chat-footer opacity-50">{message.status}</div>
+
+                  <div className="chat-footer opacity-50">{message.status}</div>
+                </div>
+              ))}
             </div>
           )}
 
