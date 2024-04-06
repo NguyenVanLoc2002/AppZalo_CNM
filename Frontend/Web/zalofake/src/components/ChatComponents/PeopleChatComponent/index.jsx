@@ -33,11 +33,13 @@ import { format } from "date-fns";
 
 function PeopleChatComponent({ language, userChat }) {
   const [content, setContent] = useState("");
-  //  const chats = [];
   const [isSidebarVisible, setSidebarVisible] = useState(false);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef(null);
+
+  // Đảo ngược mảng tin nhắn và lưu vào biến mới
+  const reversedMessages = [...messages].reverse();
 
   useEffect(() => {
     const fetchMessageHistory = async (userId) => {
@@ -70,12 +72,36 @@ function PeopleChatComponent({ language, userChat }) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   };
-
   useEffect(scrollToBottom, []); // Chạy khi component được hiển thị
   useEffect(scrollToBottom, [messages]); // Chạy lại useEffect khi messages thay đổi
 
-  // Đảo ngược mảng tin nhắn và lưu vào biến mới
-  const reversedMessages = [...messages].reverse();
+  const sendMessage = async () => {
+    try {
+      if (content.trim() === "") {
+        return;
+      }
+      if (userChat && userChat.id) {
+        const response = await axiosInstance.post(
+          `chats/${userChat.id}/sendMessage`,
+          {
+            data: content,
+          }
+        );
+    
+        setContent("");
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+  console.log('messages: ',messages);
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      sendMessage();
+    }
+  };
+
   const isoStringToTime = (isoString) => {
     const date = new Date(isoString);
     return format(date, "HH:mm");
@@ -217,34 +243,30 @@ function PeopleChatComponent({ language, userChat }) {
                           style={{ width: imageWidth, height: imageHeight }}
                         />
                       ) : (
-                       <div  key={contentIndex}>
-                         <video
-                         
-                          controls
-                          className="pr-2 pb-2"
-                          style={{ width: imageWidth, height: imageHeight }}
-                        >
-                          <source src={content.data} type="video/mp4" />
-                          <source src={content.data} type="video/webm" />
-                          <source src={content.data} type="video/ogg" />
-                          <source src={content.data} type="video/x-matroska" />
-                          <source src={content.data} type="video/x-msvideo" />
-                          <source src={content.data} type="video/quicktime" />
-                          Your browser does not support the video tag.
-                        </video> 
-                        <time className="text-xs opacity-50 text-stone-500">
+                        <div key={contentIndex}>
+                          <video
+                            controls
+                            className="pr-2 pb-2"
+                            style={{ width: "auto", height: "250px" }}
+                          >
+                            <source src={content.data} type="video/mp4" />
+                            <source src={content.data} type="video/webm" />
+                            <source src={content.data} type="video/ogg" />
+                            <source
+                              src={content.data}
+                              type="video/x-matroska"
+                            />
+                            <source src={content.data} type="video/x-msvideo" />
+                            <source src={content.data} type="video/quicktime" />
+                            Your browser does not support the video tag.
+                          </video>
+                          <time className="text-xs opacity-50 text-stone-500">
                             {isoStringToTime(message.timestamp)}
                           </time>
-                       </div>
-                       
+                        </div>
                       );
                     })}
                   </div>
-                  <div className="chat-footer opacity-50">{message.status}</div>
-
-                  <div className="chat-footer opacity-50">{message.status}</div>
-
-                  <div className="chat-footer opacity-50">{message.status}</div>
                 </div>
               ))}
             </div>
@@ -291,6 +313,7 @@ function PeopleChatComponent({ language, userChat }) {
                 className="w-full outline-none p-3"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
+                onKeyPress={handleKeyPress}
               />
               <div className="flex items-center mr-2">
                 <button className="hover:bg-gray-300 p-2 rounded">
