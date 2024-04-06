@@ -4,39 +4,49 @@ import { IoEyeOff, IoEye } from "react-icons/io5";
 import { IoMdArrowDropdown } from "react-icons/io";
 
 import { useState, useEffect } from "react";
-import { Link, useOutletContext } from "react-router-dom";
+import { Link, useOutletContext, useLocation } from "react-router-dom";
 import useLogin from "../../../hooks/useLogin";
 
 function LoginForm() {
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
+  const location = useLocation();
+  const emailForgot = location.state?.email;
+  const passwordForgot = location.state?.password;
+  const emailFromChangePassword = location.state?.emailFromChangePassword;
+
+  const newEmail = location.state?.newEmail;
+  const newPassword = location.state?.newPassword;
+
+  const [phone, setPhone] = useState(
+    emailForgot || newEmail || emailFromChangePassword || ""
+  );
+  const [password, setPassword] = useState(passwordForgot || newPassword || "");
   const [showPass, setShowPass] = useState(false);
-  const langue = useOutletContext();
+  const { langue, setEmailForgot } = useOutletContext();
   const [code, setCode] = useState("+84");
   const [phoneId, setPhoneId] = useState([]);
 
   const { loading, login } = useLogin();
 
-  useEffect(() => {
-    const getPhoneId = async () => {
-      const res = await fetch("https://restcountries.com/v3.1/all");
-      const data = await res.json();
-      data.forEach((item) => {
-        if (item.cca2) {
-          setPhoneId((phoneId) => [
-            ...phoneId.filter((phone) => phone.id !== item.cca2),
-            {
-              id: item.cca2,
-              name: item.name.common,
-              flag: item.flags.png,
-              phone: item.idd.root + item.idd.suffixes?.[0],
-            },
-          ]);
-        }
-      });
-    };
-    getPhoneId();
-  }, []);
+  // useEffect(() => {
+  //   const getPhoneId = async () => {
+  //     const res = await fetch("https://restcountries.com/v3.1/all");
+  //     const data = await res.json();
+  //     data.forEach((item) => {
+  //       if (item.cca2) {
+  //         setPhoneId((phoneId) => [
+  //           ...phoneId.filter((phone) => phone.id !== item.cca2),
+  //           {
+  //             id: item.cca2,
+  //             name: item.name.common,
+  //             flag: item.flags.png,
+  //             phone: item.idd.root + item.idd.suffixes?.[0],
+  //           },
+  //         ]);
+  //       }
+  //     });
+  //   };
+  //   getPhoneId();
+  // }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -55,7 +65,9 @@ function LoginForm() {
       <div className="w-[400px] text-sm h-full">
         <div className="w-full p-1 bg-white flex justify-around">
           <p className="text-center text-sm font-bold uppercase py-3 mb-[-5px] border-b border-black">
-            {langue == "vi" ? "Đăng nhập với số điện thoại" : "Login with phone number"}
+            {langue == "vi"
+              ? "Đăng nhập với số điện thoại hoặc email"
+              : "Login with phone number or email"}
           </p>
         </div>
         <hr />
@@ -105,10 +117,16 @@ function LoginForm() {
                 text-gray-700 focus:outline-none focus:shadow-outline"
               id="phone"
               type="text"
-              placeholder={langue == "vi" ? "Số điện thoại" : "Phone number"}
+              placeholder={
+                langue == "vi"
+                  ? "Số điện thoại hoặc email"
+                  : "Phone number or email"
+              }
               value={phone}
               onChange={(e) => {
-                setPhone(e.target.value.replace(/\D/g, ""));
+                // setPhone(e.target.value.replace(/\D/g, ""));
+                setPhone(e.target.value);
+                setEmailForgot(e.target.value);
               }}
             />
           </div>
@@ -170,7 +188,7 @@ function LoginForm() {
             </Link>
             <Link
               className="block hover:underline hover:text-blue-400 text-center text-gray-700"
-              to={"/forgot"}
+              to={"/login/forgot"}
             >
               {langue == "vi" ? "Quên mật khẩu?" : "Forgot password?"}
             </Link>

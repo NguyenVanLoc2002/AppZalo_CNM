@@ -24,43 +24,7 @@ const GroupDirectory = ({ navigation }) => {
           <Text style={styles.itemText}>Tạo nhóm mới</Text>
         </Pressable>
       </View>
-      <View style={styles.section}>
-        <Text style={styles.sectionText}>Tính năng nổi bật</Text>
-        <View style={styles.featureContainer}>
-          <Pressable style={styles.featureItem}>
-            <View style={styles.iconCircle}>
-              <Ionicons
-                name={"ios-calendar-sharp"}
-                size={40}
-                color={"#0091FF"}
-              />
-            </View>
-            <Text style={styles.featureText}>Lịch</Text>
-          </Pressable>
-          <Pressable style={styles.featureItem}>
-            <View style={styles.iconCircle}>
-              <Ionicons name={"alarm-sharp"} size={40} color={"#FF1133"} />
-            </View>
-            <Text style={styles.featureText}>Nhắc hẹn</Text>
-          </Pressable>
-          <Pressable style={styles.featureItem}>
-            <View style={styles.iconCircle}>
-              <Image
-                style={styles.iconImage}
-                resizeMode="contain"
-                source={require("../../../assets/radar.png")}
-              />
-            </View>
-            <Text style={styles.featureText}>Nhóm offline</Text>
-          </Pressable>
-          <Pressable style={styles.featureItem}>
-            <View style={styles.iconCircle}>
-              <Ionicons name={"image-outline"} size={40} color={"#F6904C"} />
-            </View>
-            <Text style={styles.featureText}>Chia sẻ ảnh</Text>
-          </Pressable>
-        </View>
-      </View>
+
       <View style={styles.section}>
         <View style={styles.groupHeader}>
           <Text style={styles.groupHeaderText}>Nhóm đang tham gia (176)</Text>
@@ -144,7 +108,6 @@ const styles = StyleSheet.create({
   featureText: {
     marginTop: 5,
     fontSize: 14,
-    // fontWeight: "bold",
   },
   groupHeader: {
     flexDirection: "row",

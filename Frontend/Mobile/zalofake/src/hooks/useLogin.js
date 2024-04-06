@@ -7,10 +7,10 @@ import axiosInstance from "../api/axiosInstance";
 
 const useLogin = () => {
   const [loading, setLoading] = useState(false);
-
+  const [loginCount, setLoginCount] = useState(1);
   const { setAuthUser, setAccessToken, setRefreshToken } = useAuthContext();
-
   const login = async (phone, password) => {
+
     setLoading(true);
     try {
       const device_id = Device.osBuildId;
@@ -21,15 +21,28 @@ const useLogin = () => {
       });
 
       const data = response.data;
-      if (response.status === 200) {
+
+      if (response && response?.status === 200) {
         setAuthUser(data.user);
         setAccessToken(data.accessToken);
         setRefreshToken(data.refreshToken);
-      } else {
+        // Nếu đăng nhập thành công, reset errorCount về 0
+        setErrorCount(0);
+      }
+      else {
         showMesg("Error during login", "error");
       }
     } catch (error) {
-      if (error.request) {
+      console.log("LOGIN ER: ", error);
+      if (error.response.status === 401) {
+        console.log(loginCount)
+        setLoginCount(loginCount+1)
+        if(loginCount===5){
+          setLoginCount(1)
+        }
+        showMesg("Invalid phone or password !", "error");
+      }
+      else if (error.request) {
         showMesg("Error server, please try again !", "error");
         throw error;
       } else {
@@ -40,7 +53,7 @@ const useLogin = () => {
     setLoading(false);
   };
 
-  return { login, loading };
+  return { login,setLoginCount, loading, loginCount };
 };
 
 const showMesg = (mesg, type) => {

@@ -2,7 +2,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import RegisterName from "../components/LoginComponents/RegisterName";
 import RegisterInfo from "../components/LoginComponents/RegisterInfo";
-import EnterAuthCode from "../components/LoginComponents/EnterAuthCode";
+import ResetPassword from "../components/LoginComponents/ResetPassword";
 import Login from "../components/LoginComponents/Login";
 import { useAuthContext } from "../contexts/AuthContext";
 
@@ -22,9 +22,12 @@ import Notice from "../components/NewsComponents/Notice";
 import PostStatus from "../components/NewsComponents/PostStatus";
 import PersonalPage from "../components/InfoComponents/PersonalPage";
 import PersonalDetail from "../components/InfoComponents/PersonalDetail";
+import PersonalInfo from "../components/InfoComponents/PersoncalInfo";
 import PersonalPrivacy from "../components/InfoComponents/PersonalPrivacy";
 import AccountVsSecurity from "../components/InfoComponents/AccoutVsSecurity";
 import PersonalSetting from "../components/InfoComponents/PersonalSetting";
+import ChangePassword from "../components/InfoComponents/ChangePassword";
+import ForgotPassword from "../components/InfoComponents/ForgotPassword";
 
 const Stack = createNativeStackNavigator();
 
@@ -61,8 +64,12 @@ export default function RootComponent() {
       <Stack.Screen name="PersonalPage" component={PersonalPage} />
       <Stack.Screen name="PersonalDetail" component={PersonalDetail} />
       <Stack.Screen name="PersonalPrivacy" component={PersonalPrivacy} />
+      <Stack.Screen name="PersonalInfo" component={PersonalInfo} />
       <Stack.Screen name="AccountVsSecurity" component={AccountVsSecurity} />
       <Stack.Screen name="PersonalSetting" component={PersonalSetting} />
+      <Stack.Screen name="ChangePassword" component={ChangePassword} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+
     </Stack.Navigator>
   ) : (
     <Stack.Navigator initialRouteName="LoginMain">
@@ -94,17 +101,7 @@ export default function RootComponent() {
           title: "Tạo tài khoản",
         }}
       />
-      <Stack.Screen
-        name="EnterAuthCode"
-        component={EnterAuthCode}
-        options={{
-          headerStyle: {
-            backgroundColor: "#0091FF",
-          },
-          headerTintColor: "#fff",
-          title: "Nhập mã xác thực",
-        }}
-      />
+
       <Stack.Screen
         name="Login"
         component={Login}
@@ -116,6 +113,17 @@ export default function RootComponent() {
           title: "Đăng nhập",
         }}
       />
+       <Stack.Screen 
+       name="ResetPassword" 
+       component={ResetPassword}
+       options={{
+        headerStyle: {
+          backgroundColor: "#0091FF",
+        },
+        headerTintColor: "#fff",
+        title: "Lấy lại mật khẩu", 
+        }} />
+       
     </Stack.Navigator>
   );
 }

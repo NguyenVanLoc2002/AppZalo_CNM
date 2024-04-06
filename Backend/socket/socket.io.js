@@ -4,6 +4,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const UserSocketMaping = require("../models/UserSocketMaping");
 const User = require("../models/User");
+const { getUserIdFromToken } = require("../utils/generateToken.utils");
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -29,7 +30,7 @@ const getOnlineFriends = async (userId) => {
     {
       $lookup: {
         from: "usersocketmapings",
-        localField: "friendList",
+        localField: "friends",
         foreignField: "user_id",
         as: "online_friends",
       },
@@ -49,7 +50,18 @@ const getOnlineFriends = async (userId) => {
 };
 
 io.on("connection", async (socket) => {
-  const userId = socket.handshake.query.userId;
+  const refreshToken = socket.handshake.query.token;
+  if (!refreshToken) {
+    console.log("No token provided");
+    return;
+  }
+  let userId;
+  try {
+    userId = getUserIdFromToken(refreshToken);
+  } catch (err) {
+    console.log(err);
+    return;
+  }
   console.log(`User connected with id: ${userId}`);
 
   const userSocketMaping = await UserSocketMaping.findOne({
@@ -84,6 +96,7 @@ io.on("connection", async (socket) => {
     );
     io.to(socket.id).emit("online_friends", onlineFriendsId);
   });
+
   socket.on("disconnect", async () => {
     console.log(`User disconnected with id: ${userId}`);
     try {

@@ -1,14 +1,34 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Image, Pressable, TextInput, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  Pressable,
+  TextInput,
+  ScrollView,
+  Modal,
+} from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
-
+import { useAuthContext } from "../../contexts/AuthContext";
+import axiosInstance from "../../api/axiosInstance";
 const PersonalPage = ({ navigation }) => {
+  const { authUser, updateAvatar, updateBia } = useAuthContext();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState();
+  const [modalVisibleBia, setModalVisibleBia] = useState(false);
+  const [selectedImageBia, setSelectedImageBia] = useState();
   const [status, setStatus] = useState("");
+
+
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <View style={{ flexDirection: "row", paddingHorizontal:5 }}>
+        <View style={{ flexDirection: "row", paddingHorizontal: 5 }}>
           <Pressable style={{ paddingHorizontal: 8 }}>
             <Ionicons name="sync-circle-outline" size={24} color="white" />
           </Pressable>
@@ -40,21 +60,157 @@ const PersonalPage = ({ navigation }) => {
     });
   }, [navigation]);
 
+  const openImagePicker = async () => {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      console.log("Permission to access camera roll is required!");
+      return;
+    }
+
+    const pickerResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!pickerResult.canceled) {
+      setSelectedImage(pickerResult.assets[0].uri);
+      setSelectedImageBia(pickerResult.assets[0].uri)
+
+    } else {
+      console.log("No image selected");
+    }
+  };
+
+  const handleUpdateAvatar = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("avatar", {
+        uri: selectedImage,
+        type: "image/jpeg",
+        name: "avatar.jpg",
+      });
+      console.log(formData);
+      const response = await axiosInstance.post(
+        "/users/upload-avatar",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      const responseJson = response.request._response;
+
+      // // Phân tích chuỗi JSON thành đối tượng JavaScript
+      const responseUrl = JSON.parse(responseJson);
+      // Lấy URL của avatar từ đối tượng phân tích
+      const avatarUrl = responseUrl.avatar.url;
+
+      if (avatarUrl) {
+        setSelectedImage(avatarUrl);
+        updateAvatar(avatarUrl, responseUrl.avatar.public_id);
+        console.log("Success", "Avatar updated successfully");
+      } else {
+        throw new Error("Failed to update avatar");
+      }
+    } catch (error) {
+      console.error(error);
+      console.log("Error", error.message || "Failed to update avatar");
+    } finally {
+      closeModal();
+    }
+  };
+
+  const openModal = () => {
+    setSelectedImage(authUser?.profile?.avatar?.url ||
+      "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",)
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+  };
+
+  const openModalBia = () => {
+    setModalVisibleBia(authUser?.profile?.background?.url ||
+      "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",)
+    setModalVisibleBia(true);
+  };
+
+  const closeModalBia = () => {
+    setModalVisibleBia(false);
+  };
+
+  const handleUpdateBia = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("background", {
+        uri: selectedImageBia,
+        type: "image/jpeg",
+        name: "background.jpg",
+      });
+      console.log(formData);
+      const response = await axiosInstance.post(
+        "/users/upload-background",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      const responseJson = response.request._response;
+
+      // // Phân tích chuỗi JSON thành đối tượng JavaScript
+      const responseUrl = JSON.parse(responseJson);
+      // Lấy URL của avatar từ đối tượng phân tích
+      const backgroundUrl = responseUrl.background.url;
+
+      if (backgroundUrl) {
+        setSelectedImage(backgroundUrl);
+        updateBia(backgroundUrl, responseUrl.background.public_id);
+        console.log("Success", "background updated successfully");
+      } else {
+        throw new Error("Failed to update background");
+      }
+    } catch (error) {
+      console.error(error);
+      console.log("Error", error.message || "Failed to update background");
+    } finally {
+      closeModalBia();
+    }
+  };
+
   return (
     <ScrollView style={{ backgroundColor: "#f1f2f6", flex: 1 }}>
       <View style={{ alignItems: "center" }}>
-        <Image
-          source={require("../../../assets/cover-image.png")}
-          style={{ width: "100%", height: 160 }}
-        />
-        <Image
-          source={require("../../../assets/avata-story-3.png")}
-          style={{ width: 96, height: 96, marginTop: -48, borderRadius: 48 }}
-        />
+        <Pressable onPress={openModalBia} style={{ width: '100%', height: 200 }}>
+          
+            <Image
+              source={{
+                uri: authUser?.profile?.background?.url ||
+                  "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+              }}
+              style={{ width: '100%', height: 200 }}
+            />
+        </Pressable>
+        <Pressable onPress={openModal}>
+          <Image
+            source={{
+              uri:
+                authUser?.profile?.avatar?.url ||
+                "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+            }}
+            style={{ width: 96, height: 96, marginTop: -48, borderRadius: 48 }}
+          />
+        </Pressable>
       </View>
       <View style={{ alignItems: "center" }}>
         <Text style={{ fontWeight: "bold", fontSize: 24, marginBottom: 8 }}>
-          Min Nguyên
+          {authUser.profile?.name}
         </Text>
         <Pressable
           style={{
@@ -247,9 +403,129 @@ const PersonalPage = ({ navigation }) => {
             </View>
           </View>
         </View>
-        
+
         {/* Code cho status thứ hai */}
       </View>
+      {/* Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={closeModal}
+      >
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "rgba(0,0,0,0.5)",
+          }}
+        >
+          <View
+            style={{ backgroundColor: "white", padding: 20, borderRadius: 10 }}
+          >
+            <Image
+              source={{
+
+                uri: selectedImage ||
+                  authUser?.profile?.avatar?.url ||
+                  "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+
+              }}
+              style={{ width: 200, height: 200, borderRadius: 100 }}
+            />
+            <Pressable onPress={openImagePicker}>
+              <Text
+                style={{
+                  color: "#0091FF",
+                  textAlign: "center",
+                  paddingVertical: 20,
+                }}
+              >
+                Chọn ảnh
+              </Text>
+            </Pressable>
+            <Pressable onPress={handleUpdateAvatar}>
+              <Text
+                style={{
+                  color: "#0091FF",
+                  textAlign: "center",
+                  paddingVertical: 20,
+                }}
+              >
+                cập nhật
+              </Text>
+            </Pressable>
+
+            <Pressable onPress={closeModal}>
+              <Text style={{ color: "#0091FF", textAlign: "center" }}>
+                Đóng
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+      {/* cập nhật ảnh bìa */}
+      {/* Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisibleBia}
+        onRequestClose={closeModalBia}
+      >
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "rgba(0,0,0,0.5)",
+          }}
+        >
+          <View
+            style={{ backgroundColor: "white", padding: 20, borderRadius: 10 }}
+          >
+            <Image
+              source={{
+
+                uri: selectedImageBia || authUser?.profile?.background?.url ||
+                  "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+
+              }}
+
+              style={{ width: 200, height: 200, borderRadius: 20 }}
+            />
+            <Pressable onPress={openImagePicker}>
+              <Text
+                style={{
+                  color: "#0091FF",
+                  textAlign: "center",
+                  paddingVertical: 20,
+                }}
+              >
+                Chọn ảnh
+              </Text>
+            </Pressable>
+            <Pressable onPress={handleUpdateBia}>
+              <Text
+                style={{
+                  color: "#0091FF",
+                  textAlign: "center",
+                  paddingVertical: 20,
+                }}
+              >
+                cập nhật
+              </Text>
+            </Pressable>
+
+            <Pressable onPress={closeModalBia}>
+              <Text style={{ color: "#0091FF", textAlign: "center" }}>
+                Đóng
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
     </ScrollView>
   );
 };

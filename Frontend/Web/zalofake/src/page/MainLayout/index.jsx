@@ -1,19 +1,23 @@
 import Sidebar from "../../layouts/Sidebar";
 import { useState } from "react";
 import MenuComponent from "../../layouts/Menu";
-import ModalComponent from "../../layouts/Modal/insex";
+import ModalComponent from "../../layouts/Modal/index";
 import ContactComponent from "../../components/ContactComponents/ContactComponent";
 import ChatComponents from "../../components/ChatComponents/ChatComponent";
+import { useSocketContext } from "../../contexts/SocketContext";
+import { useAuthContext } from "../../contexts/AuthContext";
 
 function MainLayout() {
   const [showModal, setShowModal] = useState(false);
+  const [typeModal, setTypeModal] = useState("");
   const [curentTab, setCurentTab] = useState(1);
   const [currentMenu, setCurrentMenu] = useState();
   const [language, setLanguage] = useState("vi");
-  const userInfo = JSON.parse(localStorage.getItem("authUser"));
+  const { authUser } = useAuthContext();
 
   const showModalProfile = () => {
     setShowModal(!showModal);
+
     setCurrentMenu();
   };
 
@@ -27,6 +31,9 @@ function MainLayout() {
     } else {
       setCurrentMenu(menu);
     }
+  };
+  const changeTypeModal = (type) => {
+    setTypeModal(type);
   };
 
   return (
@@ -50,6 +57,7 @@ function MainLayout() {
                   setLanguage={setLanguage}
                   typeMenu={"profile"}
                   showModal={showModalProfile}
+                  typeModal={changeTypeModal}
                 />
               ) : currentMenu == 2 ? (
                 <MenuComponent
@@ -57,6 +65,7 @@ function MainLayout() {
                   setLanguage={setLanguage}
                   typeMenu={"setting"}
                   showModal={showModalProfile}
+                  typeModal={changeTypeModal}
                 />
               ) : (
                 <> </>
@@ -71,6 +80,7 @@ function MainLayout() {
                   setLanguage={setLanguage}
                   typeMenu={"profile"}
                   showModal={showModalProfile}
+                  typeModal={changeTypeModal}
                 />
               ) : currentMenu == 2 ? (
                 <MenuComponent
@@ -78,6 +88,7 @@ function MainLayout() {
                   setLanguage={setLanguage}
                   typeMenu={"setting"}
                   showModal={showModalProfile}
+                  typeModal={changeTypeModal}
                 />
               ) : (
                 <> </>
@@ -91,6 +102,7 @@ function MainLayout() {
                   setLanguage={setLanguage}
                   typeMenu={"profile"}
                   showModal={showModalProfile}
+                  typeModal={changeTypeModal}
                 />
               ) : currentMenu == 2 ? (
                 <MenuComponent
@@ -98,6 +110,7 @@ function MainLayout() {
                   setLanguage={setLanguage}
                   typeMenu={"setting"}
                   showModal={showModalProfile}
+                  typeModal={changeTypeModal}
                 />
               ) : (
                 <> </>
@@ -111,6 +124,7 @@ function MainLayout() {
                   setLanguage={setLanguage}
                   typeMenu={"profile"}
                   showModal={showModalProfile}
+                  typeModal={changeTypeModal}
                 />
               ) : currentMenu == 2 ? (
                 <MenuComponent
@@ -118,6 +132,7 @@ function MainLayout() {
                   setLanguage={setLanguage}
                   typeMenu={"setting"}
                   showModal={showModalProfile}
+                  typeModal={changeTypeModal}
                 />
               ) : (
                 <> </>
@@ -131,6 +146,7 @@ function MainLayout() {
                   setLanguage={setLanguage}
                   typeMenu={"profile"}
                   showModal={showModalProfile}
+                  typeModal={changeTypeModal}
                 />
               ) : currentMenu == 2 ? (
                 <MenuComponent
@@ -138,32 +154,36 @@ function MainLayout() {
                   setLanguage={setLanguage}
                   typeMenu={"setting"}
                   showModal={showModalProfile}
+                  typeModal={changeTypeModal}
                 />
               ) : (
                 <> </>
               )}
             </>
           )}
-          {showModal ? (
-            <ModalComponent
-              showModal={showModalProfile}
-              language={language}
-              userInfo={userInfo}
-            />
-          ) : (
-            <> </>
-          )}
         </div>
       </div>
 
-      {showModal ? (
-        <ModalComponent
-          showModal={showModalProfile}
-          language={language}
-          userInfo={userInfo}
-        />
-      ) : (
-        <> </>
+      {showModal && (
+        <>
+          {typeModal == "profile" ? (
+            <ModalComponent
+              typeModal={typeModal}
+              showModal={showModalProfile}
+              language={language}
+              userInfo={authUser}
+            />
+          ) : typeModal == "setting" ? (
+            <ModalComponent
+              typeModal={typeModal}
+              showModal={showModalProfile}
+              language={language}
+              userInfo={authUser}
+            />
+          ) : (
+            <></>
+          )}
+        </>
       )}
     </>
   );

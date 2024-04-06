@@ -14,7 +14,6 @@ rl.question("Enter user ID: ", (userId) => {
     },
   });
 
-
   //  get online friends when this user connected
   socket.on("connect", () => {
     console.log("Connected to server!");
@@ -37,6 +36,14 @@ rl.question("Enter user ID: ", (userId) => {
   socket.on("online_friends", (onlineFriends) => {
     console.log("Online friends: ", onlineFriends);
   });
+
+// Nhận tin nhắn mới và hiển thị trên giao diện người dùng
+  socket.on("new_message",({senderId, contents,read})=>{
+    console.log(`New message received from ${senderId}: ${contents} status is ${read}`);
+  })
+
+  
+  
 
   rl.close();
 });

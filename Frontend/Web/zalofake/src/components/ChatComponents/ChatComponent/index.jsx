@@ -10,6 +10,7 @@ import { HiMagnifyingGlass } from "react-icons/hi2";
 function ChatComponents({ language }) {
   const [isAddFriend, setIsAddFriend] = useState(false);
   const [isAddGroup, setIsAddGroup] = useState(false);
+  const [userChat, setUserChat] = useState(null);
 
   const [phone, setPhone] = useState("");
   const [nameGroup, setNameGroup] = useState("");
@@ -57,6 +58,8 @@ function ChatComponents({ language }) {
     "Trả lời sau",
     "Đồng nghiệp",
   ];
+
+  // console.log(userChat);
   return (
     <>
       <div className="relative bg-gray-100 h-screen w-full flex">
@@ -65,9 +68,10 @@ function ChatComponents({ language }) {
             language={language}
             isAddFriend={setIsAddFriend}
             isAddGroup={setIsAddGroup}
+            userChat={setUserChat}
           />
         </div>
-        <PeopleChatComponent language={language} />
+        <PeopleChatComponent language={language} userChat={userChat} />
         {isAddFriend && (
           <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2/5 h-[90%] bg-white rounded-lg shadow-lg ">
             <div className=" flex items-center justify-between p-4 border-b text-lg font-semibold h-[10%]">
