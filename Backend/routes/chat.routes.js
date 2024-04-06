@@ -25,10 +25,8 @@ router.post(
 // Gửi video mới cho một người dùng cụ thể
 router.post(
   "/:userId/sendVideo",
-
   multerUploadVideo.array("data"),
   formatBodyData,
-
   sendMessage
 );
 

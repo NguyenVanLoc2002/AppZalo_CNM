@@ -79,9 +79,7 @@ exports.sendMessage = async (req, resp) => {
       console.log("receiverSocketId: ", receiverSocketId);
       if (receiverSocketId) {
         io.to(receiverSocketId.socket_id).emit("new_message", {
-          senderId,
-          contents,
-          read: false,
+          message
         });
       }
     } catch (error) {
@@ -120,7 +118,7 @@ exports.getHistoryMessage = async (req, resp) => {
     //Lấy 20% tin nhắn khi vượt quá 100 tin nhắn
     if (totalMessageHistory >= 100) {
       if (lastTimestamp) {
-        queryCondition.timestamp = { $lt: new Date(parseInt(lastTimestamp)) };
+        queryCondition.timestamp = { $lt: lastTimestamp};
       }
       messagesHistory = await Chat.find(queryCondition)
         .sort({
