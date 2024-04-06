@@ -14,7 +14,6 @@ rl.question("Enter user ID: ", (token) => {
     },
   });
 
-
   //  get online friends when this user connected
   socket.on("connect", () => {
     console.log("Connected to server!");

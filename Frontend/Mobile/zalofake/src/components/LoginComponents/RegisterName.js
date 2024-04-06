@@ -85,9 +85,6 @@ const RegisterName = ({ navigation }) => {
         </View>
         <Text style={styles.note_title}>Lưu ý khi đặt tên:</Text>
         <Text style={styles.note}>
-          Không vi phạm Quy định đặt tên trên Zalo
-        </Text>
-        <Text style={styles.note}>
           Nên sử dụng tên thật để giúp bạn bè dễ nhận ra bạn
         </Text>
       </View>
@@ -135,17 +132,20 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingLeft: 10,
     fontSize: 16,
+    marginVertical: 10,
   },
   note_title: {
     fontWeight: "bold",
     fontSize: 18,
     color: "#000",
+    paddingLeft: 20,
+    marginVertical: 15,
   },
   note: {
     paddingHorizontal: 20,
     fontSize: 16,
     color: "#000",
-    marginVertical: 10,
+    marginVertical: 15,
   },
   buttonContainer: {
     flex: 1,

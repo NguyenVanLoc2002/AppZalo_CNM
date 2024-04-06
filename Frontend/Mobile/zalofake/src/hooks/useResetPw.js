@@ -3,7 +3,6 @@ import Toast from "react-native-toast-message";
 import axiosInstance from "../api/axiosInstance";
 
 const useForgotPw = () => {
-    const [isLoading, setIsLoading] = useState(false);
     const [systemOTP, setSystemOTP] = useState(null);
     const [isOTPVerified, setIsOTPVerified] = useState(false);
 
@@ -36,57 +35,49 @@ const useForgotPw = () => {
         const response = await axiosInstance.post("/auth/send-otp", {
             email,
         });
-        const data = response.data;
+        const data = response?.data;
         return data.totp;
     };
 
     const check_mail = async (email) => {
         try {
-            setIsLoading(true);
             const response = await axiosInstance.post("/users/check-email", {
                 email,
             });
           
-            if(response.status === 404) {
+            if(response?.status === 404) {
                 showToastError(response.data.message);
                 return false;
             }
             else if (response.status === 200) {
-                setIsLoading(false);
                 return true;
             }
             else {
-                setIsLoading(false);
                 // toast.error(data.response.message);
                 return false;
             }
         } catch (error) {
             console.log(error);
-            setIsLoading(false);
             showToastError(error.response.data.message);
             return false;
         }
     }
     const getOTP = async (email) => {
         try {
-            setIsLoading(true);
             setIsOTPVerified(false);
             const otp = await sendOTP(email);
 
             if (otp) {
                 showToastSuccess("OTP sent to your email");
-                setIsLoading(false);
                 setSystemOTP(otp);
                 return true;
             } else {
                 showToastError("Failed to send OTP");
-                setIsLoading(false);
                 return false;
             }
         } catch (error) {
             console.log(error);
             showToastError("Failed to send OTP");
-            setIsLoading(false);
             return false;
         }
     };
@@ -95,22 +86,18 @@ const useForgotPw = () => {
         const verified = await verifyOTP(otp, systemOTP);
         setIsOTPVerified(verified);
         try {
-            setIsLoading(true);
             if (verified) {
                 showToastSuccess("Valid OTP")
                 setIsOTPVerified(true)
-                setIsLoading(false);
                 return true;
             }
             else {
                 showToastError("Invalid OTP");
-                setIsLoading(false);
                 return false;
             }
         } catch (error) {
             console.log(error);
             setIsOTPVerified(true);
-            setIsLoading(false);
             showToastError(error.response.data.message);
             return false;
         }
@@ -118,36 +105,31 @@ const useForgotPw = () => {
 
     const resetPassword = async ( email, newPassword) => {
         try {
-            setIsLoading(true);
             const response = await axiosInstance.post("/auth/reset-password", {
                 email,
                 newPassword,
             });
-            if(response.status === 404){
+            if(response?.status === 404){
                 return false;
             }
-            else if(response.status === 400){
+            else if(response?.status === 400){
                 return false;
             }
             else if (response.status === 200) {
-                setIsLoading(false);
                 return true;
             } else {
                 showToastError("Failed to reset password")
-                setIsLoading(false);
                 return false;
             }
 
         } catch (error) {
             console.log(error);
             setIsOTPVerified(true);
-            setIsLoading(false);
             showToastError(error.response.data.message);
             return false;
         }
     }
     return {
-        isLoading,
         isOTPVerified,
         getOTP,
         resetPassword,
