@@ -17,17 +17,6 @@ function ListChatComponent({ language, isAddFriend, isAddGroup, userChat }) {
   const [listChatCurrent, setListChatCurrent] = useState([]);
   const [isChatSelected, setIsChatSelected] = useState("");
   useEffect(() => {
-    // const newFriendList = [];
-    // for (let i = 0; i < 20; i++) {
-    //   newFriendList.push({
-    //     id: faker.string.uuid(),
-    //     name: faker.internet.userName(),
-    //     avatar: faker.image.avatar(),
-    //     unread: faker.datatype.boolean(),
-    //   });
-    // }
-    // setFriendList(newFriendList);
-    // setOriginalFriendList(newFriendList);
     const getFriends = async () => {
       try {
         const response = await axiosInstance.get("users/get/friends");
