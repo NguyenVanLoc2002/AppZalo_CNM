@@ -1,4 +1,4 @@
-import React, { useEffect,useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -6,7 +6,8 @@ import {
   TextInput,
   Pressable,
   StyleSheet,
-  ScrollView
+  ScrollView,
+  Image, ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import axiosInstance from "../../../api/axiosInstance";
@@ -16,20 +17,29 @@ import moment from 'moment-timezone';
 const Message = ({ navigation, route }) => {
   const { user } = route.params;
   const [chats, setChats] = useState([]);
+  const scrollViewRef = useRef();
+  const [contentHeight, setContentHeight] = useState(0);
+  const [scrollViewHeight, setScrollViewHeight] = useState(0);
+  const [lastTimestamp, setLastTimestamp] = useState("")
+  const [isLoad, setIsLoad] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
 
   useEffect(() => {
     const fetchChats = async () => {
       try {
         const response = await axiosInstance.get(`/chats/${user.userId}`);
-        const reversedChats = response.data.data;//.reverse(); 
+        const reversedChats = response.data.data.reverse();
         setChats(reversedChats);
+        const lastElement = reversedChats[0]
+        setLastTimestamp(lastElement.timestamp)
       } catch (error) {
         console.log(error);
       }
     };
     fetchChats();
   }, []);
-  
+
 
   const handleCheckIsSend = (message) => {
     if (message.senderId === user.userId) {
@@ -38,13 +48,18 @@ const Message = ({ navigation, route }) => {
       return true;
     }
   };
+  const handleCheckTypeText = (message) => {
+    if (message.contents[0].type === 'text') {
+      return true;
+    } else {
+      return false;
+    }
+  };
   const handleGetTime = (time) => {
     const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss');
     const dateObject = new Date(vietnamDatetime)
     return `${dateObject.getHours()}:${dateObject.getMinutes()}`
   };
-
-
 
   useEffect(() => {
     navigation.setOptions({
@@ -93,35 +108,93 @@ const Message = ({ navigation, route }) => {
     });
   }, [navigation]);
 
-  // const handleScrollEnd = (event) => {
-  //   const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+  useEffect(() => {
+    if (scrollViewRef.current && contentHeight > scrollViewHeight && !isLoad) {
+      const offset = contentHeight - scrollViewHeight;
+      setIsLoad(true)
+      scrollViewRef.current.scrollTo({ x: 0, y: offset, animated: true });
+    }
+  }, [contentHeight, scrollViewHeight]);
 
-  //   // const isAtBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height;
-  //   const isAtTop = contentOffset.y === 0;
-  //   if (isAtTop) {
-  //     console.log("hết r")
-  //   }
-  // };
 
+  // Khôi phục vị trí cuộn của ScrollView
+  const restoreScrollPosition = () => {
+
+    if (scrollViewRef.current) {
+      scrollViewRef.current.measure((x, y, width, height, pageX, pageY) => {
+        scrollViewRef.current.scrollTo({ x: 0, y: height + scrollViewHeight, animated: false });
+
+      });
+    }
+  };
+  const handleScrollToTop = () => {
+    setIsLoading(true)
+    const fetchChats = async () => {
+      try {
+        const response = await axiosInstance.get(`/chats/${user.userId}?lastTimestamp=${lastTimestamp}`);
+        const reversedChats = response.data.data.reverse();
+        if (reversedChats && reversedChats.length > 0) {
+          setChats(prevChats => [...reversedChats, ...prevChats]);
+          restoreScrollPosition();
+          const lastElement = reversedChats[0]
+          setLastTimestamp(lastElement.timestamp)
+        } 
+        setIsLoading(false)
+
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchChats();
+
+  };
+  const handleScroll = (event) => {
+    const { y } = event.nativeEvent.contentOffset;
+    if (y === 0) {
+      handleScrollToTop();
+    }
+  };
   return (
     <View style={{ flex: 1, backgroundColor: "#E5E9EB" }}>
       <View style={{ flex: 1, justifyContent: "center" }}>
+        {isLoading ? (
+          <ActivityIndicator color="blue" size="large"/>
+        ) : (
+          <View></View>
+        )}
+        <ScrollView ref={scrollViewRef}
+          onScroll={handleScroll}
+          onLayout={(event) => {
+            setScrollViewHeight(event.nativeEvent.layout.height);
+          }}
+          onContentSizeChange={(width, height) => {
+            setContentHeight(height);
+          }}
+        >
 
-        <ScrollView >
-          {/* onScrollEndDrag={handleScrollEnd} */}
           <View style={{ flex: 1, justifyContent: "flex-start" }}>
 
-            {chats.reverse().map((message, index) => (
+            {chats.map((message, index) => (
               <View key={index} style={{ justifyContent: 'space-around', borderRadius: 10, backgroundColor: handleCheckIsSend(message) ? "#7debf5" : "#d9d9d9", margin: 5, alignItems: handleCheckIsSend(message) ? "flex-end" : "flex-start", alignSelf: handleCheckIsSend(message) ? "flex-end" : "flex-start" }}>
-                <View style={{ paddingLeft: 15, paddingRight: 15, paddingTop: 5 }} >
-                  <Text style={{ fontSize: 18 }}>{message.contents[0].data}</Text>
+                {handleCheckTypeText(message) ?
+                  <View style={{ paddingLeft: 15, paddingRight: 15, paddingTop: 5 }} >
+                    <Text style={{ fontSize: 18 }}>{message.contents[0].data}</Text>
 
-                </View>
+                  </View> : <View style={{ paddingLeft: 15, paddingRight: 15, paddingTop: 5 }} >
+                    <Image
+                      source={{
+                        uri: message.contents[0].data
+                      }}
+                      style={{ width: 150, height: 150, borderRadius: 10 }}
+                    />
+                  </View>
+                }
                 <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTime(message.timestamp)}</Text></View>
               </View>
             ))}
+
           </View>
-          </ScrollView>
+        </ScrollView>
       </View>
 
 
