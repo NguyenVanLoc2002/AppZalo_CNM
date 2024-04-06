@@ -52,7 +52,6 @@ export const SocketContextProvider = ({ children }) => {
     socket.on("online_friends", (onlineFriends) => {
       setOnlineFriends(onlineFriends);
     });
-    
   }
 
   return (

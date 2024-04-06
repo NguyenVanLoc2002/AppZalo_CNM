@@ -25,7 +25,7 @@ exports.createConversation = async (req, res) => {
 exports.deleteConversation = async (req, res) => {
   try {
     const conversationId = req.params.conversationId;
-    
+
     //Xóa theo _id
     const deleteConversation = await Conversation.findByIdAndDelete(
       conversationId
@@ -36,7 +36,7 @@ exports.deleteConversation = async (req, res) => {
     }
 
     // await Chats.deleteMany({ _id: { $in: deleteConversation.messages } });
-    
+
     // Trả về phản hồi thành công
     res.status(200).json({ message: "Conversation deleted successfully" });
   } catch (error) {
@@ -46,3 +46,6 @@ exports.deleteConversation = async (req, res) => {
       .json({ message: "Failed to delete conversation", error: error.message });
   }
 };
+
+
+
