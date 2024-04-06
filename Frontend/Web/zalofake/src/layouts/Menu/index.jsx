@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 
 import { CiUser, CiCircleInfo } from "react-icons/ci";
 import { IoSettingsOutline } from "react-icons/io5";
@@ -8,6 +8,7 @@ import { GrLanguage } from "react-icons/gr";
 import { IoIosArrowForward } from "react-icons/io";
 
 import useLogout from "../../hooks/useLogout";
+import { checkPassword } from "../../utils/validation";
 
 function MenuComponent({
   language,

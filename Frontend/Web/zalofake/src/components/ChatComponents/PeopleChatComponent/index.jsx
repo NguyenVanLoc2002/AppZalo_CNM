@@ -33,11 +33,13 @@ import { format } from "date-fns";
 
 function PeopleChatComponent({ language, userChat }) {
   const [content, setContent] = useState("");
-  //  const chats = [];
   const [isSidebarVisible, setSidebarVisible] = useState(false);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef(null);
+
+  // Đảo ngược mảng tin nhắn và lưu vào biến mới
+  const reversedMessages = [...messages].reverse();
 
   useEffect(() => {
     const fetchMessageHistory = async (userId) => {
@@ -65,14 +67,40 @@ function PeopleChatComponent({ language, userChat }) {
     }
   }, [userChat]); //Mỗi lần thay đổi người chat thì sẽ được gọi lại để lấy lịch sử của người dùng đó
 
-  useEffect(() => {
+  const scrollToBottom = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  };
+  useEffect(scrollToBottom, []); // Chạy khi component được hiển thị
+  useEffect(scrollToBottom, [messages]); // Chạy lại useEffect khi messages thay đổi
 
-  // // Sử dụng map để trích xuất nội dung từ mỗi tin nhắn
-  // const contentsArray = messages.map((message) => message.contents);
+  const sendMessage = async () => {
+    try {
+      if (content.trim() === "") {
+        return;
+      }
+      if (userChat && userChat.id) {
+        const response = await axiosInstance.post(
+          `chats/${userChat.id}/sendMessage`,
+          {
+            data: content,
+          }
+        );
+    
+        setContent("");
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+  console.log('messages: ',messages);
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      sendMessage();
+    }
+  };
 
   const isoStringToTime = (isoString) => {
     const date = new Date(isoString);
@@ -167,72 +195,80 @@ function PeopleChatComponent({ language, userChat }) {
               className="flex flex-col p-2 h-[75vh] bg-slate-50 overflow-y-auto"
               ref={scrollRef}
             >
-              {messages
-                .slice(0)
-                .reverse()
-                .map((message, index) => (
-                  <div
-                    key={index}
-                    className={
-                      userChat.id === message.senderId
-                        ? "chat chat-start"
-                        : "chat chat-end"
-                    }
-                  >
-                    {userChat.id === message.senderId && (
-                      <div className="chat-image avatar">
-                        <div className="w-10 rounded-full">
-                          <img alt="avatar" src={userChat.avatar} />
-                        </div>
+              {reversedMessages.map((message, index) => (
+                <div
+                  key={index}
+                  className={
+                    userChat.id === message.senderId
+                      ? "chat chat-start"
+                      : "chat chat-end"
+                  }
+                >
+                  {userChat.id === message.senderId && (
+                    <div className="chat-image avatar">
+                      <div className="w-10 rounded-full">
+                        <img alt="avatar" src={userChat.avatar} />
                       </div>
-                    )}
+                    </div>
+                  )}
 
-                    <div className="flex chat-bubble bg-white ">
-                      {message.contents.map((content, contentIndex) => {
-                        const maxImagesPerRow = 3;
-                        const imagesCount = message.contents.filter(
-                          (c) => c.type === "image"
-                        ).length;
-                        const imagesPerRow = Math.min(
-                          imagesCount,
-                          maxImagesPerRow
-                        );
-                        const imageWidth = `calc(100% / ${imagesPerRow})`;
-                        const imageHeight = "auto";
+                  <div className="flex chat-bubble bg-white ">
+                    {message.contents.map((content, contentIndex) => {
+                      const maxImagesPerRow = 3;
+                      const imagesCount = message.contents.filter(
+                        (c) => c.type === "image"
+                      ).length;
+                      const imagesPerRow = Math.min(
+                        imagesCount,
+                        maxImagesPerRow
+                      );
+                      const imageWidth = `calc(100% / ${imagesPerRow})`;
+                      const imageHeight = "auto";
 
-                        return content.type === "text" ? (
-                          <div key={contentIndex} className="flex flex-col">
-                            <span className="text-base text-black">
-                              {content.data}
-                            </span>
-                            <time className="text-xs opacity-50 text-stone-500">
-                              {isoStringToTime(message.timestamp)}
-                            </time>
-                          </div>
-                        ) : (
-                          <img
-                            key={contentIndex}
-                            src={content.data}
-                            alt="image"
+                      return content.type === "text" ? (
+                        <div key={contentIndex} className="flex flex-col">
+                          <span className="text-base text-black">
+                            {content.data}
+                          </span>
+                          <time className="text-xs opacity-50 text-stone-500">
+                            {isoStringToTime(message.timestamp)}
+                          </time>
+                        </div>
+                      ) : content.type === "image" ? (
+                        <img
+                          key={contentIndex}
+                          src={content.data}
+                          alt="image"
+                          className="pr-2 pb-2"
+                          style={{ width: imageWidth, height: imageHeight }}
+                        />
+                      ) : (
+                        <div key={contentIndex}>
+                          <video
+                            controls
                             className="pr-2 pb-2"
-                            style={{ width: imageWidth, height: imageHeight }}
-                          />
-                        );
-                      })}
-                    </div>
-                    <div className="chat-footer opacity-50">
-                      {message.status}
-                    </div>
-
-                    <div className="chat-footer opacity-50">
-                      {message.status}
-                    </div>
-
-                    <div className="chat-footer opacity-50">
-                      {message.status}
-                    </div>
+                            style={{ width: "auto", height: "250px" }}
+                          >
+                            <source src={content.data} type="video/mp4" />
+                            <source src={content.data} type="video/webm" />
+                            <source src={content.data} type="video/ogg" />
+                            <source
+                              src={content.data}
+                              type="video/x-matroska"
+                            />
+                            <source src={content.data} type="video/x-msvideo" />
+                            <source src={content.data} type="video/quicktime" />
+                            Your browser does not support the video tag.
+                          </video>
+                          <time className="text-xs opacity-50 text-stone-500">
+                            {isoStringToTime(message.timestamp)}
+                          </time>
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
+                </div>
+              ))}
             </div>
           )}
 
@@ -277,6 +313,7 @@ function PeopleChatComponent({ language, userChat }) {
                 className="w-full outline-none p-3"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
+                onKeyPress={handleKeyPress}
               />
               <div className="flex items-center mr-2">
                 <button className="hover:bg-gray-300 p-2 rounded">
