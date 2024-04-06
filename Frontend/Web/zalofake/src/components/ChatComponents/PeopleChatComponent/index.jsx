@@ -72,6 +72,7 @@ function PeopleChatComponent({ language, userChat }) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   };
+<<<<<<< HEAD
   useEffect(scrollToBottom, []); // Chạy khi component được hiển thị
   useEffect(scrollToBottom, [messages]); // Chạy lại useEffect khi messages thay đổi
 
@@ -101,7 +102,14 @@ function PeopleChatComponent({ language, userChat }) {
       sendMessage();
     }
   };
+=======
 
+  useEffect(scrollToBottom, []); // Chạy khi component được hiển thị
+  useEffect(scrollToBottom, [messages]); // Chạy lại useEffect khi messages thay đổi
+>>>>>>> af9fbcca403cc1a965af6c08bb6dfbe7820c84cd
+
+  // Đảo ngược mảng tin nhắn và lưu vào biến mới
+  const reversedMessages = [...messages].reverse();
   const isoStringToTime = (isoString) => {
     const date = new Date(isoString);
     return format(date, "HH:mm");
@@ -243,6 +251,7 @@ function PeopleChatComponent({ language, userChat }) {
                           style={{ width: imageWidth, height: imageHeight }}
                         />
                       ) : (
+<<<<<<< HEAD
                         <div key={contentIndex}>
                           <video
                             controls
@@ -267,6 +276,36 @@ function PeopleChatComponent({ language, userChat }) {
                       );
                     })}
                   </div>
+=======
+                       <div  key={contentIndex}>
+                         <video
+                         
+                          controls
+                          className="pr-2 pb-2"
+                          style={{ width: imageWidth, height: imageHeight }}
+                        >
+                          <source src={content.data} type="video/mp4" />
+                          <source src={content.data} type="video/webm" />
+                          <source src={content.data} type="video/ogg" />
+                          <source src={content.data} type="video/x-matroska" />
+                          <source src={content.data} type="video/x-msvideo" />
+                          <source src={content.data} type="video/quicktime" />
+                          Your browser does not support the video tag.
+                        </video> 
+                        <time className="text-xs opacity-50 text-stone-500">
+                            {isoStringToTime(message.timestamp)}
+                          </time>
+                       </div>
+                       
+                      );
+                    })}
+                  </div>
+                  <div className="chat-footer opacity-50">{message.status}</div>
+
+                  <div className="chat-footer opacity-50">{message.status}</div>
+
+                  <div className="chat-footer opacity-50">{message.status}</div>
+>>>>>>> af9fbcca403cc1a965af6c08bb6dfbe7820c84cd
                 </div>
               ))}
             </div>
