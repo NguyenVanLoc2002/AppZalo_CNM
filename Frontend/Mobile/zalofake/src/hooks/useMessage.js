@@ -2,8 +2,25 @@ import React from 'react';
 import { View, Text, Image } from 'react-native';
 // import VideoPlayer from 'react-native-video';
 import { Video } from 'expo-av';
+import Toast from "react-native-toast-message";
 
 const useMessage = () => {
+  const showToastSuccess = (notice) => {
+    Toast.show({
+      text1: notice,
+      type: "success",
+      topOffset: 0,
+      position: "top",
+    });
+  };
+  const showToastError = (notice) => {
+    Toast.show({
+      text1: notice,
+      type: "error",
+      topOffset: 0,
+      position: "top",
+    });
+  };
   const renderMessageContent = (message) => {
     if (message.contents[0].type === 'text') {
       return (
@@ -39,7 +56,8 @@ const useMessage = () => {
     }
   }
   return {
-    renderMessageContent
+    renderMessageContent,
+    showToastError, showToastSuccess
   };
 };
 
