@@ -1,26 +1,27 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect,useState } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   TextInput,
   Pressable,
-  StyleSheet
+  StyleSheet,
+  ScrollView
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import axiosInstance from "../../../api/axiosInstance";
 import { useAuthContext } from "../../../contexts/AuthContext";
+import moment from 'moment-timezone';
 
 const Message = ({ navigation, route }) => {
   const { user } = route.params;
   const [chats, setChats] = useState([]);
-  const [isSend, setIsSend] = useState("");
 
   useEffect(() => {
     const fetchChats = async () => {
       try {
         const response = await axiosInstance.get(`/chats/${user.userId}`);
-        const reversedChats = response.data.data.reverse(); 
+        const reversedChats = response.data.data;//.reverse(); 
         setChats(reversedChats);
       } catch (error) {
         console.log(error);
@@ -28,20 +29,22 @@ const Message = ({ navigation, route }) => {
     };
     fetchChats();
   }, []);
+  
 
   const handleCheckIsSend = (message) => {
-    if(message.senderId===user.userId){
-      // setIsSend(false);
+    if (message.senderId === user.userId) {
       return false;
-    }else{
+    } else {
       return true;
-      // setIsSend(true);
     }
   };
   const handleGetTime = (time) => {
-    const dateObject = new Date(time); // Chuyển đổi chuỗi thành đối tượng Date
-    return `${dateObject.getUTCHours()}:${dateObject.getUTCMinutes()}`
+    const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss');
+    const dateObject = new Date(vietnamDatetime)
+    return `${dateObject.getHours()}:${dateObject.getMinutes()}`
   };
+
+
 
   useEffect(() => {
     navigation.setOptions({
@@ -90,25 +93,37 @@ const Message = ({ navigation, route }) => {
     });
   }, [navigation]);
 
+  // const handleScrollEnd = (event) => {
+  //   const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
 
+  //   // const isAtBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height;
+  //   const isAtTop = contentOffset.y === 0;
+  //   if (isAtTop) {
+  //     console.log("hết r")
+  //   }
+  // };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#E5E9EB" }}>
       <View style={{ flex: 1, justifyContent: "center" }}>
-       
-        <View style={{flex: 1, justifyContent: "flex-start" }}>
-        {chats.map((message, index) => (
-          <View key={index} style={{width:'75%', justifyContent:'space-around', borderRadius:10,backgroundColor: handleCheckIsSend(message) ? "#7debf5" : "#d9d9d9", margin:5,alignItems: handleCheckIsSend(message) ? "flex-end" :"flex-start", alignSelf: handleCheckIsSend(message) ? "flex-end" :"flex-start"}}>        
-              <View style={{paddingLeft:10, paddingRight:10, paddingTop:5}} >
-               <Text style={{ fontSize:18}}>{message.contents[0].data}</Text>
-                
-              </View>
-              <View style={{paddingLeft:10, paddingRight:10, paddingBottom:5}}><Text style={{ fontSize:18}}>{handleGetTime(message.timestamp)}</Text></View>
-          </View>
-        ))}
-        </View>
 
+        <ScrollView >
+          {/* onScrollEndDrag={handleScrollEnd} */}
+          <View style={{ flex: 1, justifyContent: "flex-start" }}>
+
+            {chats.reverse().map((message, index) => (
+              <View key={index} style={{ justifyContent: 'space-around', borderRadius: 10, backgroundColor: handleCheckIsSend(message) ? "#7debf5" : "#d9d9d9", margin: 5, alignItems: handleCheckIsSend(message) ? "flex-end" : "flex-start", alignSelf: handleCheckIsSend(message) ? "flex-end" : "flex-start" }}>
+                <View style={{ paddingLeft: 15, paddingRight: 15, paddingTop: 5 }} >
+                  <Text style={{ fontSize: 18 }}>{message.contents[0].data}</Text>
+
+                </View>
+                <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTime(message.timestamp)}</Text></View>
+              </View>
+            ))}
+          </View>
+          </ScrollView>
       </View>
+
 
       <View
         style={{
