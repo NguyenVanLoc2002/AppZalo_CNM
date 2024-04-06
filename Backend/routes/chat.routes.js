@@ -19,34 +19,21 @@ router.post(
   "/:userId/sendMessage",
   multerUploadImage.array("data"),
   formatBodyData,
-  (req, res, next) => {
-    console.log("Uploaded files:", req.files);
-    next(); // Chuyển tiếp yêu cầu sang middleware tiếp theo (sendMessage)
-  },
   sendMessage
 );
 
 // Gửi video mới cho một người dùng cụ thể
 router.post(
   "/:userId/sendVideo",
-  (req, res, next) => {
-    console.log("Uploaded files 1:", req.files);
-    next(); // Chuyển tiếp yêu cầu sang middleware tiếp theo (sendMessage)
-  },
-  multerUploadVideo.array("data"),(req, res, next) => {
-    console.log("Uploaded files 2:", req.files);
-    next(); // Chuyển tiếp yêu cầu sang middleware tiếp theo (sendMessage)
-  },
+
+  multerUploadVideo.array("data"),
   formatBodyData,
-  (req, res, next) => {
-    console.log("Uploaded files:", req.files);
-    next(); // Chuyển tiếp yêu cầu sang middleware tiếp theo (sendMessage)
-  },
+
   sendMessage
 );
 
-// Gửi video mới cho một người dùng cụ thể 
-router.post("/:chatId/delete",deleteChat);
+// Gửi video mới cho một người dùng cụ thể
+router.post("/:chatId/delete", deleteChat);
 
 //Xử lý lỗi từ Multer
 router.use((err, req, res, next) => {
