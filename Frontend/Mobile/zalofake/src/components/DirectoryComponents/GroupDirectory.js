@@ -24,7 +24,7 @@ const GroupDirectory = ({ navigation }) => {
           <Text style={styles.itemText}>Tạo nhóm mới</Text>
         </Pressable>
       </View>
- 
+
       <View style={styles.section}>
         <View style={styles.groupHeader}>
           <Text style={styles.groupHeaderText}>Nhóm đang tham gia (176)</Text>

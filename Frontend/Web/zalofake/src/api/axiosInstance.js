@@ -2,14 +2,10 @@ import axios from 'axios';
 import config from './config';
 // import AsyncStorage from '@react-native-async-storage/async-storage';
 
-let isRefreshing = false;
-let refreshSubscribers = [];
 
 const axiosInstance = axios.create({
-  baseURL: config.baseURL
+  baseURL: config.baseURL,
 });
-
-
 
 axiosInstance.interceptors.request.use(
   (config) => {
@@ -40,15 +36,17 @@ axiosInstance.interceptors.response.use(
           throw new Error("No refresh token available.");
         }
 
-        const refreshedTokenResponse = await axiosInstance.post("/auth/refreshToken", {
-          refreshToken: refreshToken
-        });
+        const refreshedTokenResponse = await axiosInstance.post(
+          "/auth/refreshToken",
+          {
+            refreshToken: refreshToken,
+          }
+        );
         const newAccessToken = refreshedTokenResponse.data.newAccessToken;
         localStorage.setItem("accessToken", JSON.stringify(newAccessToken));
 
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return axiosInstance(originalRequest);
-
       } catch (refreshError) {
         console.error("Refresh token failed:", refreshError);
         toast.error("Your session has expired. Please login again.");

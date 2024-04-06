@@ -5,27 +5,26 @@ const { Schema } = mongoose;
 
 const userSchema = new Schema({
   phone: { type: String, unique: true, required: true },
-  password: { type: String, required: true }, 
-  email: { type: String, unique: true, required: true},
-  profile:{
-    avatar: { 
+  password: { type: String, required: true },
+  email: { type: String, unique: true, required: true },
+  profile: {
+    avatar: {
       url: { type: String },
-      public_id: { type: String }
+      public_id: { type: String },
     },
-    background: { 
+    background: {
       url: { type: String },
-      public_id: { type: String }
+      public_id: { type: String },
     },
     name: { type: String, required: true },
-    gender:{ type: String, enum: ['male', 'female', 'other'] },
-    dob:{type: Date}
+    gender: { type: String, enum: ["male", "female", "other"] },
+    dob: { type: Date },
   },
-  email:{type:String, require: true,unique: true},
-  requestReceived : [{ type: mongoose.Schema.Types.ObjectId, ref: 'users' }],
-  requestSent : [{ type: mongoose.Schema.Types.ObjectId, ref: 'users' }],
-  friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'users' }],
-  groups: [{ type: mongoose.Schema.Types.ObjectId, ref: 'groups' }],
-  status: { type: String, default: "active" }, 
+  requestReceived: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  requestSent: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  groups: [{ type: mongoose.Schema.Types.ObjectId, ref: "groups" }],
+  status: { type: String, default: "active" },
   lastActive: { type: Date, default: Date.now },
 });
 
@@ -33,7 +32,6 @@ const userSchema = new Schema({
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
-
 
 //create user model
 const User = mongoose.model("users", userSchema);
