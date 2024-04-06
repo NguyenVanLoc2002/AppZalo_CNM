@@ -22,7 +22,6 @@ const uploadMediaToCloudinary = async (file) => {
   }
 };
 
-
 //Gửi tin nhắn mới cho một người dùng cụ thể.
 exports.sendMessage = async (req, resp) => {
   try {
@@ -32,7 +31,6 @@ exports.sendMessage = async (req, resp) => {
     console.log("senderId: ", senderId);
     const receiverId = req.params.userId;
     let contents = [];
-    console.log(contents);
 
     // Kiểm tra xem req.body có tồn tại không và có chứa nội dung không
     if (Object.keys(req.body).length) {
@@ -76,12 +74,16 @@ exports.sendMessage = async (req, resp) => {
 
     //Gọi socket và xử lý
     try {
+      console.log("receiverId: ", receiverId);
       const receiverSocketId = await getReciverSocketId(receiverId);
-      io.to(receiverSocketId.socket_id).emit("new_message", {
-        senderId,
-        contents,
-        read: false,
-      });
+      console.log("receiverSocketId: ", receiverSocketId);
+      if (receiverSocketId) {
+        io.to(receiverSocketId.socket_id).emit("new_message", {
+          senderId,
+          contents,
+          read: false,
+        });
+      }
     } catch (error) {
       console.error("Error sending message:", error);
     }
@@ -136,5 +138,23 @@ exports.getHistoryMessage = async (req, resp) => {
   } catch (error) {
     console.error(error);
     resp.status(500).json({ success: false, massage: "Internal server error" });
+  }
+};
+
+
+// Xóa tin nhắn khỏi cơ sở dữ liệu
+exports.deleteChat = async (req, res) => {
+  const { chatId } = req.params;
+  try {
+    const deletedChat = await Chat.findByIdAndDelete(chatId);
+
+    if (!deletedChat) {
+      return res.status(404).json({ message: "Tin nhắn không tồn tại" });
+    }
+
+    res.status(200).json({ message: "Xóa tin nhắn thành công" });
+  } catch (error) {
+    console.error("Lỗi khi xóa tin nhắn:", error);
+    res.status(500).json({ message: "Đã xảy ra lỗi khi xóa tin nhắn" });
   }
 };
