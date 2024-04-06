@@ -1,5 +1,11 @@
-import { View, Text, Pressable, ScrollView } from "react-native";
-import React, { useEffect } from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
+import React, { useEffect, useState } from "react";
 import { Entypo, Ionicons } from "react-native-vector-icons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
 import useLogout from "../../hooks/useLogout";
@@ -19,6 +25,8 @@ const showToastError = (notice) => {
 
 const PersonalSetting = ({ navigation }) => {
   const logout = useLogout();
+  const [isLoading, setIsLoading] = useState(false);
+
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -47,11 +55,13 @@ const PersonalSetting = ({ navigation }) => {
   }, [navigation]);
 
   const handleLogout = async () => {
+    setIsLoading(true)
     try {
       await logout();
     } catch (error) {
       console.log(error);
       showToastError("Lỗi ! Vui lòng thử lại sau");
+      setIsLoading(false)
     }
   };
 
@@ -345,9 +355,13 @@ const PersonalSetting = ({ navigation }) => {
           }}
           onPress={handleLogout}
         >
-          <View style={{ alignItems: "center", paddingHorizontal: 8 }}>
-            <Ionicons name="exit-outline" size={22} color="black" />
-          </View>
+          {isLoading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <View style={{ alignItems: "center", paddingHorizontal: 8 }}>
+              <Ionicons name="exit-outline" size={22} color="black" />
+            </View>
+          )}
           <View style={{ paddingHorizontal: 8 }}>
             <Text style={{ fontSize: 16 }}>Đăng xuất</Text>
           </View>

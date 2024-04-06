@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,9 +7,38 @@ import {
   Pressable,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import axiosInstance from "../../../api/axiosInstance";
 
 const Message = ({ navigation, route }) => {
   const { user } = route.params;
+  const [isHidden, setIsHidden] = useState(false)
+
+  const openImagePicker = async () => {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      console.log("Permission to access camera roll is required!");
+      return;
+    }
+
+    const pickerResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: false,
+      quality: 1,
+      allowsMultipleSelection: true,
+      selectionLimit: 20,
+      videoExportPreset: ImagePicker.VideoExportPreset.Passthrough,
+      videoMaxDuration: 10
+    });
+
+    if (!pickerResult.canceled) {
+      console.log("hihi")
+    } else {
+      console.log("No image selected");
+    }
+  };
+
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -107,7 +136,7 @@ const Message = ({ navigation, route }) => {
           />
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => console.log("Pressed image")}>
+        <TouchableOpacity onPress={openImagePicker}>
           <Ionicons name="image-outline" size={30} color="black" style={{}} />
         </TouchableOpacity>
       </View>

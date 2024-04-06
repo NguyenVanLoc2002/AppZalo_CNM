@@ -57,7 +57,6 @@ const useRegister = () => {
         });
         setIsOTPVerified(true);
         const data = response.data;
-        console.log(data);
 
         if (response.status === 201) {
           setIsLoading(false);
@@ -82,7 +81,7 @@ const useRegister = () => {
     }
   };
 
-  return { isLoading, isOTPVerified, getOTP, verifyEmailAndRegister };
+  return { isLoading,isOTPVerified, getOTP, verifyEmailAndRegister };
 };
 
 export default useRegister;
