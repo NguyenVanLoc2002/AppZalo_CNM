@@ -33,16 +33,13 @@ import { format } from "date-fns";
 import socketIOClient from "socket.io-client";
 import { useSocketContext } from "../../../contexts/SocketContext";
 
-
-
 function PeopleChatComponent({ language, userChat }) {
   const [content, setContent] = useState("");
   const [isSidebarVisible, setSidebarVisible] = useState(false);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef(null);
-  const {socket} = useSocketContext();
-
+  const { socket } = useSocketContext();
 
   // Đảo ngược mảng tin nhắn và lưu vào biến mới
   const reversedMessages = [...messages].reverse();
@@ -92,34 +89,42 @@ function PeopleChatComponent({ language, userChat }) {
   useEffect(scrollToBottom, []); // Chạy khi component được hiển thị
   useEffect(scrollToBottom, [messages]); // Chạy lại useEffect khi messages thay đổi
 
-  const sendMessage = async () => {
+  const sendMessage = async (data) => {
     try {
-      if (content.trim() === "") {
-        return;
-      }
+      if (!data) return;
+      console.log("data: ", data);
       if (userChat && userChat.id) {
         const response = await axiosInstance.post(
-          `chats/${userChat.id}/sendMessage`,
+          `chats/${userChat.id}/` +
+            (typeof data === "string"
+              ? "sendMessage"
+              : data.type.startsWith("video/")
+              ? "sendVideo"
+              : "sendMessage"),
+          { data: data },
           {
-            data: content,
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
           }
         );
-        console.log("response 1: " ,response.data.data);
-        setMessages((prevMessages)=>[response.data.data, ...prevMessages]);
+        console.log("response 1: ", response.data.data);
+        setMessages((prevMessages) => [response.data.data, ...prevMessages]);
         setContent("");
       }
     } catch (error) {
       console.error("Error sending message:", error);
     }
   };
-  console.log("messages: ", messages);
+  // console.log("messages: ", messages);
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
-      sendMessage();
+      sendMessage(content);
     }
   };
 
+  console.log("content", content);
   const isoStringToTime = (isoString) => {
     const date = new Date(isoString);
     return format(date, "HH:mm");
@@ -138,6 +143,24 @@ function PeopleChatComponent({ language, userChat }) {
     const imageWidth = `calc(100%/${imagesPerRow})`;
     const imageHeight = "auto";
     return { imageWidth, imageHeight };
+  };
+
+  const handleSelectImageClick = () => {
+    const fileInput = document.getElementById("fileInput");
+    fileInput.click();
+  };
+
+  const handleImageUpload = async (event) => {
+    const file = event.target.files[0];
+    console.log("file1: ", file);
+    // Xử lý tệp ảnh ở đây
+    try {
+      if (userChat) {
+        await sendMessage(file);
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
   };
 
   return (
@@ -295,7 +318,10 @@ function PeopleChatComponent({ language, userChat }) {
               <button className="hover:bg-gray-300 p-2 rounded">
                 <LuSticker size={20} />
               </button>
-              <button className="hover:bg-gray-300 p-2 rounded">
+              <button
+                className="hover:bg-gray-300 p-2 rounded"
+                onClick={handleSelectImageClick}
+              >
                 <IoImageOutline size={20} />
               </button>
               <button className="hover:bg-gray-300 p-2 rounded">
@@ -348,6 +374,12 @@ function PeopleChatComponent({ language, userChat }) {
                 </button>
               </div>
             </div>
+            <input
+              type="file"
+              id="fileInput"
+              style={{ display: "none" }}
+              onChange={handleImageUpload}
+            />
           </div>
         </div>
       )}
