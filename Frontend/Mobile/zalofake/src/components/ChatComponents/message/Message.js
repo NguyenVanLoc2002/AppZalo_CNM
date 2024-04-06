@@ -6,14 +6,14 @@ import {
   TextInput,
   Pressable,
   StyleSheet,
-  ScrollView, ActivityIndicator,
+  ScrollView, ActivityIndicator, Modal
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import axiosInstance from "../../../api/axiosInstance";
 import { useAuthContext } from "../../../contexts/AuthContext";
 import moment from 'moment-timezone';
 import useMessage from '../../../hooks/useMessage'
-
+import Toast from "react-native-toast-message";
 
 const Message = ({ navigation, route }) => {
   const { user } = route.params;
@@ -24,7 +24,13 @@ const Message = ({ navigation, route }) => {
   const [lastTimestamp, setLastTimestamp] = useState("")
   const [isLoad, setIsLoad] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { renderMessageContent } = useMessage();
+  const { renderMessageContent,showToastSuccess } = useMessage();
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [messageSelected, setMessageSelected] = useState("");
+
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
 
   useEffect(() => {
     const fetchChats = async () => {
@@ -148,6 +154,40 @@ const Message = ({ navigation, route }) => {
       handleScrollToTop();
     }
   };
+  const handlePressIn = ( message) => {
+    setMessageSelected(message)
+    setModalVisible(true)
+  };
+  const removeItemById = (array, idToRemove) => {
+    const indexToRemove = array.findIndex(item => item._id === idToRemove);
+    if (indexToRemove !== -1) {
+      array.splice(indexToRemove, 1);
+    }
+    return array;
+  };
+  const handleDeleteMess = () => {
+    const deleteChat = async () => {
+      try {
+        const response = await axiosInstance.post(`chats/${messageSelected._id}/delete`);
+        if(response.status===200){
+         
+          
+          // Sử dụng hàm removeItemById() để xóa phần tử có ID cụ thể khỏi mảng
+          const newArray = removeItemById(chats, messageSelected._id);
+          
+          setChats(newArray)
+          showToastSuccess("Xóa thành công")
+          toggleModal()
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    deleteChat();
+    // setModalVisible(false)
+  };
+  
+
   return (
     <View style={{ flex: 1, backgroundColor: "#E5E9EB" }}>
       <View style={{ flex: 1, justifyContent: "center" }}>
@@ -156,6 +196,7 @@ const Message = ({ navigation, route }) => {
         ) : (
           <View></View>
         )}
+        <Toast />
         <ScrollView ref={scrollViewRef}
           onScroll={handleScroll}
           onLayout={(event) => {
@@ -169,16 +210,24 @@ const Message = ({ navigation, route }) => {
           <View style={{ flex: 1, justifyContent: "flex-start" }}>
 
             {chats.map((message, index) => (
+
               <View key={index} style={{ justifyContent: 'space-around', borderRadius: 10, backgroundColor: handleCheckIsSend(message) ? "#7debf5" : "#d9d9d9", margin: 5, alignItems: handleCheckIsSend(message) ? "flex-end" : "flex-start", alignSelf: handleCheckIsSend(message) ? "flex-end" : "flex-start" }}>
-         
-                {renderMessageContent(message)}
-                <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTime(message.timestamp)}</Text></View>
-              </View>
+                <Pressable 
+                 onPress={() => handlePressIn(message)}
+                >
+                <View>
+                  {renderMessageContent(message)}
+                  <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTime(message.timestamp)}</Text></View>
+                </View>
+              </Pressable>
+                </View>
+              
+
             ))}
 
-          </View>
-        </ScrollView>
       </View>
+    </ScrollView>
+      </View >
 
 
       <View
@@ -229,110 +278,75 @@ const Message = ({ navigation, route }) => {
           <Ionicons name="image-outline" size={30} color="black" style={{}} />
         </TouchableOpacity>
       </View>
-    </View>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={toggleModal}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalHeaderText}>
+              Choose
+            </Text>
+            <View style={styles.modalButtonContainer}>
+              <Pressable >
+                <Text style={styles.modalButton}>Chuyển tiếp</Text>
+              </Pressable>
+              <Pressable onPress={handleDeleteMess}>
+                <Text style={styles.modalButton} >Xóa</Text>
+              </Pressable>
+              <Pressable >
+                <Text style={styles.modalButton}>Thu hồi</Text>
+              </Pressable>
+            </View>
+            <View style={styles.modalButtonContainer}>
+              <Pressable onPress={toggleModal}>
+                <Text style={styles.modalButton}>HỦY</Text>
+              </Pressable>
+              <Pressable >
+
+                <Text style={styles.modalButton}>XÁC NHẬN</Text>
+
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View >
   );
 };
 const styles = StyleSheet.create({
-  container: {
+  modalContainer: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
-  },
-  topSection: {
-    backgroundColor: "white",
-    padding: 10,
-  },
-  buttonRow: {
-    flexDirection: "row",
+
+    justifyContent: "center",
     alignItems: "center",
-    padding: 5,
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
-  buttonText: {
-    marginLeft: 10,
-    fontSize: 16,
+  modalContent: {
+    backgroundColor: "#fff",
+    width: 300,
+    padding: 20,
+    borderRadius: 10,
+  },
+  modalHeaderText: {
     fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: "center",
   },
-  iconImage: {
-    width: 40,
-    height: 40,
-    marginRight: 10,
+  modalText: {
+    marginBottom: 20,
   },
-  buttonBar: {
+  modalButtonContainer: {
     flexDirection: "row",
-    backgroundColor: "white",
-    padding: 10,
-    marginTop: 10,
+    justifyContent: "flex-end",
+    marginTop: 20
   },
-  roundedButton: {
-    borderRadius: 50,
-    backgroundColor: "#bebebe",
-    paddingHorizontal: 20,
-    paddingVertical: 5,
-    marginRight: 10,
-  },
-  borderedButton: {
-    borderRadius: 50,
-    borderWidth: 1,
-    borderColor: "#e5e5e5",
-    paddingHorizontal: 20,
-    paddingVertical: 5,
-  },
-  whiteText: {
-    color: "white",
-    fontSize: 16,
-  },
-  grayText: {
-    color: "gray",
-    fontSize: 16,
-  },
-  friendList: {
-    backgroundColor: "white",
-    padding: 10,
-    borderTopColor: "#e5e5e5",
-    borderTopWidth: 0.5,
-  },
-  friendListHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  titleText: {
-    fontSize: 18,
+  modalButton: {
     fontWeight: "bold",
-    marginLeft: 5,
-  },
-  addText: {
+    marginHorizontal: 10,
     color: "#0091FF",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  friendRow: {
-    paddingVertical: 10,
-  },
-  friendItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  friendInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  friendAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 10,
-  },
-  friendName: {
-    fontSize: 16,
-  },
-  friendActions: {
-    flexDirection: "row",
-  },
-  actionIcon: {
-    marginRight: 20,
   },
 });
 export default Message;
