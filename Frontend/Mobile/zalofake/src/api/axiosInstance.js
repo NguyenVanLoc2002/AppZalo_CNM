@@ -6,7 +6,7 @@ import Toast from "react-native-toast-message";
 const axiosInstance = axios.create({
   baseURL: config.baseURL,
 });
-// AsyncStorage.clear()
+
 axiosInstance.interceptors.request.use(
   async (config) => {
     try {

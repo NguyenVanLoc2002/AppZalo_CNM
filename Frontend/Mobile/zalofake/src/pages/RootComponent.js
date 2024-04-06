@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import RegisterName from "../components/LoginComponents/RegisterName";
 import RegisterInfo from "../components/LoginComponents/RegisterInfo";
+import ResetPassword from "../components/LoginComponents/ResetPassword";
 import Login from "../components/LoginComponents/Login";
 import { useAuthContext } from "../contexts/AuthContext";
 
@@ -26,7 +27,6 @@ import PersonalPrivacy from "../components/InfoComponents/PersonalPrivacy";
 import AccountVsSecurity from "../components/InfoComponents/AccoutVsSecurity";
 import PersonalSetting from "../components/InfoComponents/PersonalSetting";
 import ChangePassword from "../components/InfoComponents/ChangePassword";
-import ResetPassword from "../components/LoginComponents/ResetPassword";
 import ForgotPassword from "../components/InfoComponents/ForgotPassword";
 
 const Stack = createNativeStackNavigator();
