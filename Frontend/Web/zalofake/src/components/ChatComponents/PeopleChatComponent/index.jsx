@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AiFillLike, AiOutlineUsergroupAdd } from "react-icons/ai";
 import { BiLockOpen, BiScreenshot, BiSmile } from "react-icons/bi";
 import { BsLayoutSidebarReverse, BsThreeDots } from "react-icons/bs";
@@ -28,70 +28,72 @@ import {
 import { RiAlarmLine, RiBatteryChargeLine } from "react-icons/ri";
 import { TfiAlarmClock } from "react-icons/tfi";
 import { TiPinOutline } from "react-icons/ti";
+import axiosInstance from "../../../api/axiosInstance";
+import { format } from "date-fns";
 
 function PeopleChatComponent({ language, userChat }) {
   const [content, setContent] = useState("");
-  const chats = [];
+  //  const chats = [];
   const [isSidebarVisible, setSidebarVisible] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    const fetchMessageHistory = async (userId) => {
+      if (!userId) return; // Kiểm tra userId trước khi gọi API
+
+      setLoading(true);
+      try {
+        const response = await axiosInstance.get(`chats/${userId}`);
+        console.log("response:", response);
+        const { data } = response; // Truy cập vào dữ liệu từ phản hồi
+        if (data.success) {
+          setMessages(data.data);
+        } else {
+          throw new Error(data.data || "Failed to fetch message history");
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (userChat && userChat.id) {
+      fetchMessageHistory(userChat.id);
+    }
+  }, [userChat]); //Mỗi lần thay đổi người chat thì sẽ được gọi lại để lấy lịch sử của người dùng đó
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  // // Sử dụng map để trích xuất nội dung từ mỗi tin nhắn
+  // const contentsArray = messages.map((message) => message.contents);
+
+  const isoStringToTime = (isoString) => {
+    const date = new Date(isoString);
+    return format(date, "HH:mm");
+  };
 
   const toggleSidebar = () => {
     setSidebarVisible(!isSidebarVisible);
   };
 
-  // for (let i = 0; i < 10; i++) {
-  //   if (i % 2 != 0)
-  //     chats.push(
-  //       <div
-  //         key={i % 2 == 0 ? i * 2 : i * 2 + 1}
-  //         className={`chat ${i % 2 === 0 ? "chat-start" : "chat-end"}`}
-  //       >
-  //         <div className="chat-image avatar">
-  //           <div className="w-10 rounded-full">
-  //             <img
-  //               alt="Tailwind CSS chat bubble component"
-  //               src="https://daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg"
-  //             />
-  //           </div>
-  //         </div>
-  //         <div className="chat-header">
-  //           {i % 2 === 0 ? "Obi-Wan Kenobi" : "Anakin"}
-  //           <time className="text-xs opacity-50">12:45</time>
-  //         </div>
-  //         <div className="chat-bubble bg-gray-100 text-black">
-  //           {i % 2 === 0 ? "You were the Chosen One!" : "I hate you!"}
-  //         </div>
-  //         <div className="chat-footer opacity-50">
-  //           {i % 2 === 0 ? "Delivered" : `Seen at 12:${46 + i}`}
-  //         </div>
-  //       </div>
-  //     );
+  //Giới hạn 3 ảnh trong 1 phần chat-bubble
+  const calcImageSizeInChatBubble = (contents, maxImagePerRow) => {
+    const imagesCount = contents.filter(
+      (content) => content.type === "image"
+    ).length;
+    const imagesPerRow = Math.min(imagesCount, maxImagePerRow);
+    const imageWidth = `calc(100%/${imagesPerRow})`;
+    const imageHeight = "auto";
+    return { imageWidth, imageHeight };
+  };
 
-  //   chats.push(
-  //     <div
-  //       key={i % 2 == 0 ? i : i * i}
-  //       className={`chat ${i % 2 === 0 ? "chat-start" : "chat-end"}`}
-  //     >
-  //       <div className="chat-image avatar">
-  //         <div className="w-10 rounded-full">
-  //           <img
-  //             alt="Tailwind CSS chat bubble component"
-  //             src="https://daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg"
-  //           />
-  //         </div>
-  //       </div>
-  //       <div className="chat-header">
-  //         {i % 2 === 0 ? "Obi-Wan Kenobi" : "Anakin"}
-  //         <time className="text-xs opacity-50">12:45</time>
-  //       </div>
-  //       <div className="chat-bubble bg-gray-100 text-black">
-  //         {i % 2 === 0 ? "You were the Chosen One!" : "I hate you!"}
-  //       </div>
-  //       <div className="chat-footer opacity-50">
-  //         {i % 2 === 0 ? "Delivered" : `Seen at 12:${46 + i}`}
-  //       </div>
-  //     </div>
-  //   );
-  // }
   return (
     <>
       {userChat && (
@@ -130,8 +132,8 @@ function PeopleChatComponent({ language, userChat }) {
           </div>
 
           {/*Content Chat */}
-          {chats.length === 0 ? (
-            <div className="flex flex-col justify-center items-center bg-slate-50 h-[75vh]">
+          {messages.length === 0 ? (
+            <div className="flex flex-col justify-center items-center  h-[75vh] bg-slate-50 overflow-y-auto">
               <p className="text-lg text-center">
                 {language === "vi" ? (
                   <span>
@@ -161,7 +163,77 @@ function PeopleChatComponent({ language, userChat }) {
               </div>
             </div>
           ) : (
-            <div className="h-[75%] pl-3 pr-3 overflow-y-auto">{chats}</div>
+            <div
+              className="flex flex-col p-2 h-[75vh] bg-slate-50 overflow-y-auto"
+              ref={scrollRef}
+            >
+              {messages
+                .slice(0)
+                .reverse()
+                .map((message, index) => (
+                  <div
+                    key={index}
+                    className={
+                      userChat.id === message.senderId
+                        ? "chat chat-start"
+                        : "chat chat-end"
+                    }
+                  >
+                    {userChat.id === message.senderId && (
+                      <div className="chat-image avatar">
+                        <div className="w-10 rounded-full">
+                          <img alt="avatar" src={userChat.avatar} />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex chat-bubble bg-white ">
+                      {message.contents.map((content, contentIndex) => {
+                        const maxImagesPerRow = 3;
+                        const imagesCount = message.contents.filter(
+                          (c) => c.type === "image"
+                        ).length;
+                        const imagesPerRow = Math.min(
+                          imagesCount,
+                          maxImagesPerRow
+                        );
+                        const imageWidth = `calc(100% / ${imagesPerRow})`;
+                        const imageHeight = "auto";
+
+                        return content.type === "text" ? (
+                          <div key={contentIndex} className="flex flex-col">
+                            <span className="text-base text-black">
+                              {content.data}
+                            </span>
+                            <time className="text-xs opacity-50 text-stone-500">
+                              {isoStringToTime(message.timestamp)}
+                            </time>
+                          </div>
+                        ) : (
+                          <img
+                            key={contentIndex}
+                            src={content.data}
+                            alt="image"
+                            className="pr-2 pb-2"
+                            style={{ width: imageWidth, height: imageHeight }}
+                          />
+                        );
+                      })}
+                    </div>
+                    <div className="chat-footer opacity-50">
+                      {message.status}
+                    </div>
+
+                    <div className="chat-footer opacity-50">
+                      {message.status}
+                    </div>
+
+                    <div className="chat-footer opacity-50">
+                      {message.status}
+                    </div>
+                  </div>
+                ))}
+            </div>
           )}
 
           <div className="h-[15vh] bg-white flex-col border-t">
