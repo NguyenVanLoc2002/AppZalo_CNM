@@ -7,9 +7,8 @@ import axiosInstance from "../api/axiosInstance";
 
 const useLogin = () => {
   const [loading, setLoading] = useState(false);
-
+  const [loginCount, setLoginCount] = useState(1);
   const { setAuthUser, setAccessToken, setRefreshToken } = useAuthContext();
-
   const login = async (phone, password) => {
 
     setLoading(true);
@@ -36,6 +35,11 @@ const useLogin = () => {
     } catch (error) {
       console.log("LOGIN ER: ", error);
       if (error.response.status === 401) {
+        console.log(loginCount)
+        setLoginCount(loginCount+1)
+        if(loginCount===5){
+          setLoginCount(1)
+        }
         showMesg("Invalid phone or password !", "error");
       }
       else if (error.request) {
@@ -49,7 +53,7 @@ const useLogin = () => {
     setLoading(false);
   };
 
-  return { login, loading };
+  return { login,setLoginCount, loading, loginCount };
 };
 
 const showMesg = (mesg, type) => {

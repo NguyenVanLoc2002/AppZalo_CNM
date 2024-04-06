@@ -6,12 +6,24 @@ import { GoDatabase } from "react-icons/go";
 import { FiTool } from "react-icons/fi";
 import { GrLanguage } from "react-icons/gr";
 import { IoIosArrowForward } from "react-icons/io";
+
 import useLogout from "../../hooks/useLogout";
 
-function MenuComponent({ language, setLanguage, typeMenu, showModal }) {
+function MenuComponent({
+  language,
+  setLanguage,
+  typeMenu,
+  showModal,
+  typeModal,
+}) {
   const [tabSelected, setTabSelected] = useState("");
   const logout = useLogout();
   const user = JSON.parse(localStorage.getItem("authUser"));
+
+  const toggleModal = () => {
+    typeModal("setting");
+    showModal();
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -23,7 +35,10 @@ function MenuComponent({ language, setLanguage, typeMenu, showModal }) {
         <div className="row-span-2">
           <div
             className="px-3 py-2  w-full flex items-center hover:bg-gray-200"
-            onClick={showModal}
+            onClick={() => {
+              showModal();
+              typeModal("profile");
+            }}
           >
             <CiUser size={20} color="#555555" />
             <p className="text-sm ml-6">
@@ -191,13 +206,19 @@ function MenuComponent({ language, setLanguage, typeMenu, showModal }) {
         <div className="row-span-2">
           <div
             className="px-3 py-[10px] w-full flex items-center hover:bg-gray-200 justify-between relative"
-            onClick={showModal}
+            onClick={() => {
+              showModal();
+              typeModal("profile");
+            }}
           >
             <p className="text-sm w-full ml-2">
               {language == "vi" ? "Hồ sơ của bạn" : "Profile"}
             </p>
           </div>
-          <div className="px-3 py-[10px]  w-full flex items-center hover:bg-gray-200 justify-between relative">
+          <div
+            className="px-3 py-[10px]  w-full flex items-center hover:bg-gray-200 justify-between relative"
+            onClick={toggleModal}
+          >
             <p className="text-sm w-full ml-2">
               {language == "vi" ? "Cài đặt" : "Setting"}
             </p>
