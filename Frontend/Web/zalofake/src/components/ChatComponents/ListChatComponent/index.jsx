@@ -16,6 +16,7 @@ function ListChatComponent({ language, isAddFriend, isAddGroup, userChat }) {
   const [originalFriendList, setOriginalFriendList] = useState([]);
   const [listChatCurrent, setListChatCurrent] = useState([]);
   const [isChatSelected, setIsChatSelected] = useState("");
+  
   useEffect(() => {
     const getFriends = async () => {
       try {
@@ -62,7 +63,7 @@ function ListChatComponent({ language, isAddFriend, isAddGroup, userChat }) {
       setFriendList(filteredFriends);
     }
   };
-
+ 
   return (
     <>
       <div className="border-r">
