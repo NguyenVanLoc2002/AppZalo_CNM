@@ -8,6 +8,7 @@ const authRoute = require("./routes/auth.routes");
 const { app, server } = require("./socket/socket.io");
 const authMiddleware = require("./middlewares/authMiddleware");
 const chatRouter = require("./routes/chat.routes");
+const conversationRouter = require("./routes/conversation.routes");
 
 const bodyParser = require("body-parser");
 
@@ -29,6 +30,7 @@ app.get("/api/terms_of_service", (req, res) => {
 app.use("/api/users", userRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/chats", authMiddleware.protect, chatRouter);
+app.use("/api/conversations", authMiddleware.protect, conversationRouter);
 
 server.listen(process.env.PORT, () => {
   const os = require("os");
