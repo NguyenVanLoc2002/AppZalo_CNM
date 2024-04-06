@@ -30,6 +30,10 @@ import { TfiAlarmClock } from "react-icons/tfi";
 import { TiPinOutline } from "react-icons/ti";
 import axiosInstance from "../../../api/axiosInstance";
 import { format } from "date-fns";
+import socketIOClient from "socket.io-client";
+import { useSocketContext } from "../../../contexts/SocketContext";
+
+
 
 function PeopleChatComponent({ language, userChat }) {
   const [content, setContent] = useState("");
@@ -37,6 +41,8 @@ function PeopleChatComponent({ language, userChat }) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef(null);
+  const {socket} = useSocketContext();
+
 
   // Đảo ngược mảng tin nhắn và lưu vào biến mới
   const reversedMessages = [...messages].reverse();
@@ -67,6 +73,17 @@ function PeopleChatComponent({ language, userChat }) {
     }
   }, [userChat]); //Mỗi lần thay đổi người chat thì sẽ được gọi lại để lấy lịch sử của người dùng đó
 
+  // Nhận tin nhắn mới từ socket
+  // useEffect(() => {
+  //   socket.on("new_message", ({ message }) => {
+  //     setMessages((prevMessages) => [message, ...prevMessages]);
+  //   });
+  //   console.log(`New message`);
+  //   return () => {
+  //     socket.off("new_message");
+  //   };
+  // }, []);
+
   const scrollToBottom = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -87,14 +104,15 @@ function PeopleChatComponent({ language, userChat }) {
             data: content,
           }
         );
-    
+        console.log("response 1: " ,response.data.data);
+        setMessages((prevMessages)=>[response.data.data, ...prevMessages]);
         setContent("");
       }
     } catch (error) {
       console.error("Error sending message:", error);
     }
   };
-  console.log('messages: ',messages);
+  console.log("messages: ", messages);
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
