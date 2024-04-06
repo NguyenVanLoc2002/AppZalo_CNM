@@ -6,13 +6,14 @@ import {
   TextInput,
   Pressable,
   StyleSheet,
-  ScrollView,
-  Image, ActivityIndicator,
+  ScrollView, ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import axiosInstance from "../../../api/axiosInstance";
 import { useAuthContext } from "../../../contexts/AuthContext";
 import moment from 'moment-timezone';
+import useMessage from '../../../hooks/useMessage'
+
 
 const Message = ({ navigation, route }) => {
   const { user } = route.params;
@@ -23,7 +24,7 @@ const Message = ({ navigation, route }) => {
   const [lastTimestamp, setLastTimestamp] = useState("")
   const [isLoad, setIsLoad] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
+  const { renderMessageContent } = useMessage();
 
   useEffect(() => {
     const fetchChats = async () => {
@@ -46,13 +47,6 @@ const Message = ({ navigation, route }) => {
       return false;
     } else {
       return true;
-    }
-  };
-  const handleCheckTypeText = (message) => {
-    if (message.contents[0].type === 'text') {
-      return true;
-    } else {
-      return false;
     }
   };
   const handleGetTime = (time) => {
@@ -138,7 +132,7 @@ const Message = ({ navigation, route }) => {
           restoreScrollPosition();
           const lastElement = reversedChats[0]
           setLastTimestamp(lastElement.timestamp)
-        } 
+        }
         setIsLoading(false)
 
       } catch (error) {
@@ -158,7 +152,7 @@ const Message = ({ navigation, route }) => {
     <View style={{ flex: 1, backgroundColor: "#E5E9EB" }}>
       <View style={{ flex: 1, justifyContent: "center" }}>
         {isLoading ? (
-          <ActivityIndicator color="blue" size="large"/>
+          <ActivityIndicator color="blue" size="large" />
         ) : (
           <View></View>
         )}
@@ -176,19 +170,8 @@ const Message = ({ navigation, route }) => {
 
             {chats.map((message, index) => (
               <View key={index} style={{ justifyContent: 'space-around', borderRadius: 10, backgroundColor: handleCheckIsSend(message) ? "#7debf5" : "#d9d9d9", margin: 5, alignItems: handleCheckIsSend(message) ? "flex-end" : "flex-start", alignSelf: handleCheckIsSend(message) ? "flex-end" : "flex-start" }}>
-                {handleCheckTypeText(message) ?
-                  <View style={{ paddingLeft: 15, paddingRight: 15, paddingTop: 5 }} >
-                    <Text style={{ fontSize: 18 }}>{message.contents[0].data}</Text>
-
-                  </View> : <View style={{ paddingLeft: 15, paddingRight: 15, paddingTop: 5 }} >
-                    <Image
-                      source={{
-                        uri: message.contents[0].data
-                      }}
-                      style={{ width: 150, height: 150, borderRadius: 10 }}
-                    />
-                  </View>
-                }
+         
+                {renderMessageContent(message)}
                 <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTime(message.timestamp)}</Text></View>
               </View>
             ))}
