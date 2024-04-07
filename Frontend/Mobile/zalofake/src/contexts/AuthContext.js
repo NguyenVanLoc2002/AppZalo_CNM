@@ -88,6 +88,19 @@ export const AuthContextProvider = ({ children }) => {
       },
     }));
   };
+  const reloadAuthUser = async () => {
+    try {
+      const response = await axiosInstance.get("users/get/me");
+      if (response.status === 200) {
+        setAuthUser(response.data.user);
+        return true;
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to get user information");
+      return false;
+    }
+  };
   return (
     <AuthContext.Provider
       value={{
@@ -99,6 +112,7 @@ export const AuthContextProvider = ({ children }) => {
         setRefreshToken,
         updateAvatar,
         updateBia,
+        reloadAuthUser
       }}
     >
       {children}
