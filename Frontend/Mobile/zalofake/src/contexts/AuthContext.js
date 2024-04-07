@@ -69,7 +69,7 @@ export const AuthContextProvider = ({ children }) => {
         avatar: {
           ...prevUser.profile.avatar,
           url: newAvatarUrl,
-          public_id:publicId
+          public_id: publicId,
         },
       },
     }));
@@ -83,7 +83,7 @@ export const AuthContextProvider = ({ children }) => {
         background: {
           ...prevUser.profile.background,
           url: backgroundUrl,
-          public_id:publicId
+          public_id: publicId,
         },
       },
     }));
@@ -98,7 +98,7 @@ export const AuthContextProvider = ({ children }) => {
         refreshToken,
         setRefreshToken,
         updateAvatar,
-        updateBia
+        updateBia,
       }}
     >
       {children}
