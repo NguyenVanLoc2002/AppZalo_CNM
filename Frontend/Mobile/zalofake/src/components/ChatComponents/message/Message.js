@@ -16,7 +16,7 @@ import moment from 'moment-timezone';
 import useMessage from '../../../hooks/useMessage'
 import Toast from "react-native-toast-message";
 import useSendMessage from "../../../hooks/useSendMessage";
-
+import * as ImagePicker from "expo-image-picker";
 const Message = ({ navigation, route }) => {
   const { user } = route.params;
   //nhi  const 
@@ -217,10 +217,10 @@ const Message = ({ navigation, route }) => {
 
   const chuyenTiepChat = (friend) => {
     if (messageSelected.contents[0].type === 'text') {
-      
+
       const handleSendMessage = async () => {
         try {
-          const send = await sendMessage(friend, messageSelected.contents[0].data)        
+          const send = await sendMessage(friend, messageSelected.contents[0].data)
           if (send) {
             showToastSuccess("Chuyển tiếp thành công")
           }
@@ -239,7 +239,6 @@ const Message = ({ navigation, route }) => {
 
 
   //nhi
-
   const openImagePicker = async () => {
     const permissionResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -257,27 +256,51 @@ const Message = ({ navigation, route }) => {
       videoExportPreset: ImagePicker.VideoExportPreset.Passthrough,
       videoMaxDuration: 10
     });
+   
 
     if (!pickerResult.canceled) {
-      console.log(pickerResult.assets[0].uri)
       const formData = new FormData();
-      formData.append("avatar", {
-        uri: pickerResult.assets[0].uri,
-        type: "image/jpeg",
-        name: "avatar.jpg",
+      pickerResult.assets.forEach(image => {
+        const fileName = image.uri.split('/').pop();
+        formData.append('data', {
+          uri: image.uri,
+          name: fileName,
+          type: 'image/jpeg', // Loại hình ảnh có thể thay đổi tùy theo loại tệp
+        });
       });
-      console.log(formData);
+    
+      console.log(formData)
 
-      const send = await sendMessage(user, formData)
+      try {
+        
+        const response = await axiosInstance.post(`/chats/${user.userId}/sendMessage`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        )
+        if (response.status === 201) {
+          console.log("success");
+          return true;
+        }
+        else if (response.status === 500) {
+          console.log("fail");
+          return false;
+        }
+        console.log(response)
 
-      if (send) {
-        console.log("send image success");
-        setIsMessageSent(true);
+      } catch (error) {
+        console.log("error1:", error)
+        return false;
       }
     } else {
       console.log("No image selected");
     }
   };
+
+
   const handleSendImage = async () => {
     try {
       const formData = new FormData();
@@ -287,29 +310,7 @@ const Message = ({ navigation, route }) => {
         name: "sendMessageImage.jpg",
       });
       console.log(formData);
-      // const response = await axiosInstance.post(
-      //   "/users/upload-avatar",
-      //   formData,
-      //   {
-      //     headers: {
-      //       "Content-Type": "multipart/form-data",
-      //     },
-      //   }
-      // );
-      // const responseJson = response.request._response;
 
-      // // // Phân tích chuỗi JSON thành đối tượng JavaScript
-      // const responseUrl = JSON.parse(responseJson);
-      // // Lấy URL của avatar từ đối tượng phân tích
-      // const avatarUrl = responseUrl.avatar.url;
-
-      // if (avatarUrl) {
-      //   setSelectedImage(avatarUrl);
-      //   updateAvatar(avatarUrl, responseUrl.avatar.public_id);
-      //   console.log("Success", "Avatar updated successfully");
-      // } else {
-      //   throw new Error("Failed to update avatar");
-      // }
     } catch (error) {
       console.error(error);
       console.log("Error", error.message || "Failed to update avatar");
