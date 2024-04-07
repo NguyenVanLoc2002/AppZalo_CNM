@@ -4,9 +4,14 @@ import { AiOutlineUserAdd, AiOutlineUsergroupAdd } from "react-icons/ai";
 import { CiSearch } from "react-icons/ci";
 import { FaSortDown } from "react-icons/fa";
 import { IoIosMore } from "react-icons/io";
-import axiosInstance from "../../../api/axiosInstance";
 
-function ListChatComponent({ language, isAddFriend, isAddGroup, userChat }) {
+function ListChatComponent({
+  language,
+  isAddFriend,
+  isAddGroup,
+  userChat,
+  friends,
+}) {
   const [valueSearch, setValueSearch] = useState("");
   const [isHovered, setIsHovered] = useState(false);
   const [friendList, setFriendList] = useState([]);
@@ -16,31 +21,16 @@ function ListChatComponent({ language, isAddFriend, isAddGroup, userChat }) {
   const [originalFriendList, setOriginalFriendList] = useState([]);
   const [listChatCurrent, setListChatCurrent] = useState([]);
   const [isChatSelected, setIsChatSelected] = useState("");
-  
+
   useEffect(() => {
-    const getFriends = async () => {
-      try {
-        const response = await axiosInstance.get("users/get/friends");
-        const newFriendList = response.data.friends.map((friend) => ({
-          id: friend.userId,
-          name: friend.profile.name,
-          avatar: friend.profile.avatar.url ?? "/zalo.svg",
-          background: friend.profile.background.url ?? "/zalo.svg",
-          unread: faker.datatype.boolean(),
-        }));
-        setFriendList(newFriendList);
-        setOriginalFriendList(newFriendList);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    getFriends();
-  }, []);
+    setOriginalFriendList(friends);
+    setFriendList(friends);
+  }, [friends]);
 
   const changeTab = (tab) => {
     setActiveTab(tab);
     if (tab === "all") {
-      setFriendList(originalFriendList);
+      setFriendList(friends);
       setShowUnread(true);
     } else if (tab === "unread") {
       const listFriendUnread = friendList.filter((friend) => friend.unread);
