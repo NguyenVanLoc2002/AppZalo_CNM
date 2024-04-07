@@ -200,7 +200,7 @@ function ChatComponents({ language }) {
                     >
                       <div className="bg-blue w-10 ">
                         <img
-                          className="rounded-full"
+                          className="rounded-full w-10 h-10"
                           src={friend.avatar || "/zalo.svg"}
                           alt="cloud"
                         />

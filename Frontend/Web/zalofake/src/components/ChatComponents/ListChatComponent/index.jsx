@@ -170,7 +170,7 @@ function ListChatComponent({
               >
                 <div className="bg-blue w-14 ">
                   <img
-                    className="rounded-full"
+                    className="rounded-full w-14 h-14"
                     src={friend.avatar}
                     alt="cloud"
                   />
@@ -242,7 +242,7 @@ function ListChatComponent({
                 >
                   <div className="bg-blue w-14 ">
                     <img
-                      className="rounded-full"
+                      className="rounded-full w-14 h-14"
                       src={friend.avatar}
                       alt="cloud"
                     />
