@@ -2,43 +2,51 @@ import React, { useEffect, useState } from "react";
 import { RiContactsLine } from "react-icons/ri";
 import { CiSearch } from "react-icons/ci";
 import { TbArrowsSort } from "react-icons/tb";
-import { CiFilter } from "react-icons/ci";
-import { faker } from "@faker-js/faker";
 import { IoIosMore } from "react-icons/io";
+import useFriend from "../../../hooks/useFriend";
+import toast from "react-hot-toast";
 
-import axiosInstance from "../../../api/axiosInstance";
-
-function FriendListComponent({ language }) {
+function FriendListComponent({ language, friends }) {
   const [friendList, setFriendList] = useState([]);
+  const [originalFriendList, setOriginalFriendList] = useState([]);
   const [sortDirection, setSortDirection] = useState("asc");
-
-  var newFriendList = [];
+  const { unFriend } = useFriend();
 
   useEffect(() => {
-    // for (let i = 0; i < 20; i++) {
-    //   newFriendList.push({
-    //     id: faker.string.uuid(),
-    //     name: faker.internet.userName(),
-    //     avatar: faker.image.avatar(),
-    //   });
-    // }
+    setOriginalFriendList(friends);
+    setFriendList(friends);
+  }, [friends]);
 
-    const getFriends = async () => {
-      try {
-        const response = await axiosInstance.get("users/get/friends");
-        const newFriendList = response.data.friends.map((friend) => ({
-          id: friend.userId,
-          name: friend.profile.name,
-          avatar: friend.profile.avatar.url ?? "/zalo.svg",
-          unread: faker.datatype.boolean(),
-        }));
-        setFriendList(newFriendList);
-      } catch (error) {
-        console.log(error);
+  const searchFriend = (e) => {
+    const searchTerm = e.target.value;
+    if (searchTerm.trim() === "") {
+      setFriendList(originalFriendList);
+    } else {
+      const filteredFriends = originalFriendList.filter((friend) =>
+        friend.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFriendList(filteredFriends);
+    }
+  };
+  const removeFriend = async (friend) => {
+    try {
+      const rs = await unFriend(friend.phone);
+      if (rs) {
+        toast.success(
+          language == "vi"
+            ? `Xóa ${friend.name} khỏi danh sách bạn bè thành công`
+            : `Remove ${friend.name} from friend list successfully`
+        );
       }
-    };
-    getFriends();
-  }, []);
+    } catch (error) {
+      console.log(error);
+      toast.error(
+        language == "vi"
+          ? `Xóa ${friend.name} khỏi danh sách bạn bè thất bại`
+          : `Remove ${friend.name} from friend list failed`
+      );
+    }
+  };
   return (
     <>
       <div className="h-[70px] w-full flex items-center bg-white border-b fixed z-20">
@@ -64,6 +72,7 @@ function FriendListComponent({ language }) {
                 type="text"
                 className="h-9 w-full bg-transparent outline-none px-3"
                 placeholder="Search"
+                onChange={searchFriend}
               />
             </div>
             <div className="lg:w-full flex items-center justify-between mt-5 lg:mt-0 lg:ml-2">
@@ -78,14 +87,6 @@ function FriendListComponent({ language }) {
                   </option>
                   <option value="desc">
                     {language == "vi" ? "Tên (Z - A )" : "Name (Z - A)"}
-                  </option>
-                </select>
-              </div>
-              <div className="ml-2 w-full bg-gray-100 flex items-center justify-center px-3 border rounded">
-                <CiFilter size={20} />
-                <select className="h-9 w-full px-3 bg-transparent outline-none">
-                  <option value="all">
-                    {language == "vi" ? "Tất cả" : "ALl"}
                   </option>
                 </select>
               </div>
@@ -135,7 +136,7 @@ function FriendListComponent({ language }) {
                         </li>
                         <li>
                           <a className="py-3">
-                            {language == "vi" ? "Đặt tên gợi nhớ" : "Set alias"}
+                            {language == "vi" ? "Nhắn Tin" : "Chat"}
                           </a>
                         </li>
                         <li className="border-b">
@@ -146,7 +147,10 @@ function FriendListComponent({ language }) {
                           </a>
                         </li>
                         <li>
-                          <a className="py-3 text-red-500">
+                          <a
+                            className="py-3 text-red-500"
+                            onClick={() => removeFriend(friend)}
+                          >
                             {language == "vi" ? "Xóa Bạn" : "Remove friend"}
                           </a>
                         </li>

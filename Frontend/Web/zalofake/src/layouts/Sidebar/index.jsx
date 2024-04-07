@@ -7,16 +7,21 @@ import { FaRegSquareCheck } from "react-icons/fa6";
 import { IoSettingsOutline, IoSettingsSharp } from "react-icons/io5";
 import { CiCloudOn } from "react-icons/ci";
 
-function Sidebar({ changeTab, changeMenu }) {
+function Sidebar({ changeTab, changeMenu, useInfo }) {
   const [tabSelected, setTabSelected] = useState();
   const [settingClick, setSettingClick] = useState(false);
+  const [user, setUser] = useState(useInfo || {});
   const [avtUrl, setAvtUrl] = useState("/zalo.svg");
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("authUser"));
-    const avatarUrl = user?.profile?.avatar?.url ?? "/zalo.svg";
-    setAvtUrl(avatarUrl);
-  }, [localStorage.getItem("authUser")]);
+    setUser(useInfo);
+  }, [useInfo]);
+
+  useEffect(() => {
+    if (user.profile) {
+      setAvtUrl(user.profile?.avatar?.url || "/zalo.svg");
+    }
+  }, [user]);
 
   return (
     <div className="bg-[#0091ff] h-full flex flex-col items-center justify-between">
