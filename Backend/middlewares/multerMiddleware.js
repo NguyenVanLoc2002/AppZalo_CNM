@@ -5,10 +5,10 @@ const cloudinary = require("../configs/Cloudinary.config");
 const uploadImage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder: "Zalo_Fake_App",
+    // folder: "Zalo_Fake_App",
     allowed_formats: ["jpg", "png", "jpeg"],
     public_id: (req, file) => {
-      return `zaloFake_${file.fieldname}_${Date.now()}`;
+      return `zaloFake_${file.fieldname}_${Date.now()}_${req.user.user_id}`;
     },
   },
 });
@@ -16,11 +16,11 @@ const uploadImage = new CloudinaryStorage({
 const uploadVideo = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder: "Zalo_Fake_App",
+    // folder: "Zalo_Fake_App",
     allowed_formats: ["mp4","mkv","webm","ogg","avi","mov"],
     resource_type: "video",
     public_id: (req, file) => {
-      return `zaloFake_${file.fieldname}_${Date.now()}`;
+      return `zaloFake_${file.fieldname}_${Date.now()}_${req.user.user_id}`;
     },
   },
 });
