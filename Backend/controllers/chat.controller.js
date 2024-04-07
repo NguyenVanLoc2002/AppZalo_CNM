@@ -2,26 +2,6 @@ const cloudinary = require("../configs/Cloudinary.config.js");
 const Chat = require("../models/Chat.js");
 const { io, getReciverSocketId } = require("../socket/socket.io.js");
 
-//Upload media to cloudinary
-const uploadMediaToCloudinary = async (file) => {
-  try {
-    let result;
-    if (file.mimetype.startsWith("image/")) {
-      result = await cloudinary.uploader.upload(file.path);
-    } else if (file.mimetype.startsWith("video/")) {
-      result = await cloudinary.uploader.upload(file.path, {
-        resource_type: "video",
-      });
-    }
-    return {
-      url: result.secure_url,
-      public_id: result.public_id,
-    };
-  } catch (error) {
-    throw new Error("Failled to upload media to Cloudinary");
-  }
-};
-
 //Gửi tin nhắn mới cho một người dùng cụ thể.
 exports.sendMessage = async (req, resp) => {
   try {
@@ -44,25 +24,13 @@ exports.sendMessage = async (req, resp) => {
     //Upload media to Cloudinary if any
     if (req.files) {
       for (const file of req.files) {
-        if (
-          file.mimetype.startsWith("image/") ||
-          file.mimetype.startsWith("video/")
-        ) {
-          const media = await uploadMediaToCloudinary(file);
-          contents.push({
-            type: file.mimetype.startsWith("image/") ? "image" : "video",
-            data: media.url,
-          });
-        } else {
-          const media = uploadMediaToCloudinary(file);
-          contents.push({
-            type: file.mimetype,
-            data: media.url,
-          });
-        }
+        contents.push({
+          type: file.mimetype.startsWith("image/") ? "image" : "video",
+          data: file.path,
+        });
       }
     }
-    console.log(contents);
+    console.log("contents: ", contents);
 
     if (!contents || !contents.length) {
       throw new Error("Contents are empty or contain no fields");
@@ -79,9 +47,7 @@ exports.sendMessage = async (req, resp) => {
       console.log("receiverSocketId: ", receiverSocketId);
       if (receiverSocketId) {
         io.to(receiverSocketId.socket_id).emit("new_message", {
-          senderId,
-          contents,
-          read: false,
+          message,
         });
       }
     } catch (error) {
@@ -118,9 +84,9 @@ exports.getHistoryMessage = async (req, resp) => {
     const totalMessageHistory = await Chat.countDocuments(queryCondition);
     let messagesHistory;
     //Lấy 20% tin nhắn khi vượt quá 100 tin nhắn
-    if (totalMessageHistory >= 100) {
+    if (totalMessageHistory >= 200) {
       if (lastTimestamp) {
-        queryCondition.timestamp = { $lt: new Date(parseInt(lastTimestamp)) };
+        queryCondition.timestamp = { $lt: lastTimestamp };
       }
       messagesHistory = await Chat.find(queryCondition)
         .sort({
@@ -141,20 +107,82 @@ exports.getHistoryMessage = async (req, resp) => {
   }
 };
 
+//Lấy tin nhắn đầu tiên
+exports.getFirstMessage = async (req, res) => {
+  try {
+    const userId = req.params.userId; //người nhận lấy từ param
+    const currentUserId = req.user.user_id; // người dùng hiện đang đăng nhập
+
+    // Tìm tin nhắn đầu tiên trong chat có chatId
+
+    // Tìm tin nhắn đầu tiên trong cuộc trò chuyện giữa currentUserId và userId
+    const firstMessage = await Chat.findOne({
+      $or: [
+        { senderId: currentUserId, receiverId: userId },
+        { senderId: userId, receiverId: currentUserId },
+      ],
+    }).sort({ timestamp: 1 });
+
+    if (!firstMessage) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No message found in this chat" });
+    }
+
+    // Trả về tin nhắn đầu tiên nếu có
+    res.status(200).json({ success: true, data: firstMessage });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// Hàm trích xuất public_id từ URL của hình ảnh trên Cloudinary
+function extractPublicId(url) {
+  const segments = url.split("/");
+  const publicIdWithExtension = segments.pop(); // Lấy phần cuối cùng của đường dẫn
+  const publicId = publicIdWithExtension.split(".")[0]; // Loại bỏ phần mở rộng tệp
+  console.log("publicIdWithExtension: ", publicIdWithExtension);
+  return publicId;
+}
 
 // Xóa tin nhắn khỏi cơ sở dữ liệu
 exports.deleteChat = async (req, res) => {
   const { chatId } = req.params;
   try {
-    const deletedChat = await Chat.findByIdAndDelete(chatId);
+    const chat = await Chat.findById(chatId);
 
-    if (!deletedChat) {
-      return res.status(404).json({ message: "Tin nhắn không tồn tại" });
+    if (!chat) {
+      return res.status(404).json({ message: "Message not found !" });
     }
 
-    res.status(200).json({ message: "Xóa tin nhắn thành công" });
+    console.log("chat:", chat);
+    // Lấy danh sách các tệp đa phương tiện từ tin nhắn đã xóa
+    const mediaFiles = chat.contents.filter(
+      (content) => content.type === "image" || content.type === "video"
+    );
+    console.log("mediaFiles: ", mediaFiles);
+    // Xóa các tệp đa phương tiện từ Cloudinary
+    if (mediaFiles) {
+      await Promise.all(
+        mediaFiles.map(async (media) => {
+          const publicId = extractPublicId(media.data);
+          console.log("publicId: ", publicId);
+          try {
+            await cloudinary.uploader.destroy(publicId,{resource_type:"video"});
+          } catch (error) {
+            console.log("Error deleting media in cloudinary:", error);
+          }
+        })
+      );
+    }
+
+    await Chat.findByIdAndDelete(chatId);
+    res.status(200).json({ message: "Success deleted" });
   } catch (error) {
-    console.error("Lỗi khi xóa tin nhắn:", error);
-    res.status(500).json({ message: "Đã xảy ra lỗi khi xóa tin nhắn" });
+    console.error("Error deleting message:", error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while deleting the message" });
   }
 };

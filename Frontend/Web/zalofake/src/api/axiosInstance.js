@@ -32,7 +32,7 @@ axiosInstance.interceptors.response.use(
       try {
         const refreshToken = JSON.parse(localStorage.getItem("refreshToken"));
         if (!refreshToken) {
-          toast.error("Your session has expired. Please login again.");
+          // toast.error("Your session has expired. Please login again.");
           throw new Error("No refresh token available.");
         }
 
@@ -49,7 +49,7 @@ axiosInstance.interceptors.response.use(
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         console.error("Refresh token failed:", refreshError);
-        toast.error("Your session has expired. Please login again.");
+        // toast.error("Your session has expired. Please login again.");
         localStorage.clear();
         return Promise.reject(refreshError);
       }
