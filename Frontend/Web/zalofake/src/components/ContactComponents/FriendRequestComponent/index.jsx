@@ -10,7 +10,6 @@ function FriendRequestComponent({ language, reqFriends, receivedFriends }) {
     useFriend();
 
   useEffect(() => {
-    console.log(reqFriends, receivedFriends);
     setFriendRequests(reqFriends || []);
     setFriendRecieved(receivedFriends || []);
   }, [reqFriends, receivedFriends]);
