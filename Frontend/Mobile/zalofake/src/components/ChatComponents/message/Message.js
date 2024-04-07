@@ -149,18 +149,14 @@ const Message = ({ navigation, route }) => {
 
       const formData = new FormData();
 
-      // Lấy đường dẫn của file hình ảnh
-      const uri = Platform.OS === 'ios' ? imageData.uri.replace('file://', '') : imageData.uri;
-
       // Tạo một Blob object từ file hình ảnh
-      const fileInfo = await FileSystem.getInfoAsync(uri);
       const fileContent = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
 
       // Thêm file vào FormData object
       formData.append('file', {
-        uri: uri,
+        uri: pickerResult.assets[0].uri,
         type: 'image/png', // Thay đổi kiểu file tùy thuộc vào kiểu của file bạn muốn gửi
-        name: fileInfo.name,
+        name: imageData.name,
         data: fileContent // Thay đổi tên file tùy thuộc vào tên bạn muốn đặt
       });
       console.log("formData: ", formData);
