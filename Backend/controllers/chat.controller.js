@@ -11,13 +11,13 @@ exports.sendMessage = async (req, resp) => {
     console.log("senderId: ", senderId);
     const receiverId = req.params.userId;
     let contents = [];
-
+    console.log("req.body.data: ", req.body.data);
     // Kiểm tra xem req.body có tồn tại không và có chứa nội dung không
     if (Object.keys(req.body).length) {
       // Nếu có nội dung, thêm vào mảng contents
       contents.push({
-        type: "text",
-        data: req.body.data,
+        type: req.body.data.type,
+        data: req.body.data.data,
       });
     }
 
