@@ -37,29 +37,28 @@ const useMessage = () => {
           />
         </View>
       );
+    } else if (message.contents[0].type === 'video') {
+      return (
+        <View style={{ paddingLeft: 15, paddingRight: 15, paddingTop: 5 }}>
+          <Video
+            source={{ uri: message.contents[0].data }}
 
-  } else if (message.contents[0].type === 'video') {
-    return (
-      <View style={{ paddingLeft: 15, paddingRight: 15, paddingTop: 5 }}>
-        <Video
-          source={{ uri: message.contents[0].data }}
+            useNativeControls
+            resizeMode="contain"
 
-          useNativeControls
-          resizeMode="contain"
+            style={{ width: 150, height: 150, borderRadius: 10 }}
 
-          style={{ width: 150, height: 150, borderRadius: 10 }}
-
-        />
-      </View>
-    );
-  } else {
-    return null; // Loại nội dung không được hỗ trợ
+          />
+        </View>
+      );
+    } else {
+      return null; // Loại nội dung không được hỗ trợ
+    }
   }
-}
-return {
-  renderMessageContent,
-  showToastError, showToastSuccess
-};
+  return {
+    renderMessageContent,
+    showToastError, showToastSuccess
+  };
 };
 
 export default useMessage;
