@@ -35,12 +35,14 @@ const Message = ({ navigation, route }) => {
   const [lastTimestamp, setLastTimestamp] = useState("")
   const [isLoad, setIsLoad] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { renderMessageContent, showToastSuccess } = useMessage();
+  const { renderMessageContent, showToastSuccess, showToastError } = useMessage();
   const [isModalVisible, setModalVisible] = useState(false);
   const [messageSelected, setMessageSelected] = useState("");
   const [isModalFriendVisible, setIsModalFriendVisible] = useState(false);
   const [friends, setFriends] = useState([]);
   const [isLoadMess, setIsLoadMess] = useState(false)
+  const [isLoadChuyenTiep, setIsLoadChuyenTiep] = useState(false)
+  const [isLoadThuHoi, setIsLoadThuHoi] = useState(false)
 
 
   const toggleModal = () => {
@@ -135,7 +137,7 @@ const Message = ({ navigation, route }) => {
       },
     });
   }, [navigation]);
-  
+
   useEffect(() => {
     if (scrollViewRef.current && contentHeight > scrollViewHeight && !isLoad) {
       const offset = contentHeight - scrollViewHeight;
@@ -194,17 +196,20 @@ const Message = ({ navigation, route }) => {
     return array;
   };
   const handleDeleteMess = () => {
+    setIsLoadThuHoi(true)
     const deleteChat = async () => {
       try {
         const response = await axiosInstance.post(`chats/${messageSelected._id}/delete`);
         if (response.status === 200) {
           const newArray = removeItemById(chats, messageSelected._id);
           setChats(newArray)
-          showToastSuccess("Xóa thành công")
+          showToastSuccess("Thu hồi thành công")
           toggleModal()
+          setIsLoadThuHoi(false)
         }
       } catch (error) {
         console.log(error);
+        setIsLoadThuHoi(false)
       }
     };
     deleteChat();
@@ -216,16 +221,22 @@ const Message = ({ navigation, route }) => {
   };
 
   const chuyenTiepChat = (friend) => {
+    setIsLoadChuyenTiep(true)
     const handleSendMessage = async () => {
       try {
         const send = await sendMessage(friend, messageSelected.contents[0])
         if (send) {
           showToastSuccess("Chuyển tiếp thành công")
+          setIsLoadChuyenTiep(false)
+        }else{
+          showToastError("Chuyển tiếp thất bại")
         }
       } catch (error) {
         console.log("error1:", error)
+        setIsLoadChuyenTiep(false)
         return false;
       }
+      toggleModalFriend();
     }
     handleSendMessage();
   };
@@ -308,12 +319,13 @@ const Message = ({ navigation, route }) => {
           setChats(
             chats.concat(response.data.data))
           console.log("success");
-
+          setTextMessage("")
         }
         else if (response.status === 500) {
+          showToastError("Gửi tin nhắn thất bại")
           console.log("fail");
-
         }
+        
       } catch (error) {
         console.log(error);
         setIsLoadMess(false)
@@ -434,7 +446,7 @@ const Message = ({ navigation, route }) => {
                 />
                 <Text style={styles.modalButton}>Chuyển tiếp</Text>
               </Pressable>
-              <Pressable onPress={handleDeleteMess} style={styles.pressCol}>
+              <Pressable style={styles.pressCol}>
                 <FontAwesome5
                   name="trash"
                   size={20}
@@ -443,13 +455,18 @@ const Message = ({ navigation, route }) => {
                 />
                 <Text style={styles.modalButton} >Xóa</Text>
               </Pressable>
-              <Pressable style={styles.pressCol}>
-                <FontAwesome5
-                  name="comment-slash"
-                  size={20}
-                  color="black"
-                  style={{ marginRight: 8 }}
-                />
+              <Pressable style={styles.pressCol} onPress={handleDeleteMess}>
+                {isLoadThuHoi ? (
+                  <ActivityIndicator color="black" size="large" />
+                ) : (
+                  <FontAwesome5
+                    name="comment-slash"
+                    size={20}
+                    color="black"
+                    style={{ marginRight: 8 }}
+                  />
+                )}
+
                 <Text style={styles.modalButton}>Thu hồi</Text>
               </Pressable>
             </View>
@@ -494,11 +511,17 @@ const Message = ({ navigation, route }) => {
                 <View style={styles.friendList}>
                   <View style={styles.friendListHeader}>
                     <Text style={styles.sectionTitle}>#</Text>
+                    {isLoadChuyenTiep ? (
+                      <ActivityIndicator color="black" size="large" />
+                    ) : (
+                      <View></View>
+                    )}
                   </View>
                   {friends.map((friend, index) => (
                     <View key={index} style={styles.friendRow}>
                       <Pressable style={styles.friendItem} >
                         <View style={styles.friendInfo}>
+
                           <Image
                             source={{
                               uri: friend?.profile?.avatar?.url,
@@ -508,12 +531,17 @@ const Message = ({ navigation, route }) => {
                           <Text style={styles.friendName}>{friend.profile.name}</Text>
                         </View>
                         <View style={styles.friendActions}>
-                          <Pressable onPress={() => chuyenTiepChat(friend)} style={styles.pressCol}><FontAwesome5
-                            name="arrow-right"
-                            size={30}
-                            color="black"
-                            style={{ alignContent: "center", alignItems: "center" }}
-                          /></Pressable>
+                          <Pressable onPress={() => chuyenTiepChat(friend)} style={styles.pressCol}>
+
+
+                            <FontAwesome5
+                              name="arrow-right"
+                              size={30}
+                              color="black"
+                              style={{ alignContent: "center", alignItems: "center" }}
+                            />
+
+                          </Pressable>
                         </View>
                       </Pressable>
                     </View>
