@@ -48,6 +48,7 @@ function MainLayout() {
             curentTab={curentTab}
             changeTab={changeTab}
             changeMenu={changeMenu}
+            useInfo={userInfo}
           />
         </div>
         <div className="h-screen w-full relative">
