@@ -178,6 +178,7 @@ exports.deleteChat = async (req, res) => {
     }
 
     await Chat.findByIdAndDelete(chatId);
+    
     res.status(200).json({ message: "Success deleted" });
   } catch (error) {
     console.error("Error deleting message:", error);
