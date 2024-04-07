@@ -16,8 +16,10 @@ exports.sendMessage = async (req, resp) => {
     if (Object.keys(req.body).length) {
       // Nếu có nội dung, thêm vào mảng contents
       contents.push({
-        type: "text",
-        data: req.body.data,
+        // type: "text",
+        // data: req.body.data,
+        type: req.body.data.type,
+        data: req.body.data.data,
       });
     }
 
@@ -39,7 +41,6 @@ exports.sendMessage = async (req, resp) => {
     // Tạo và lưu tin nhắn mới vào cơ sở dữ liệu
     const message = new Chat({ senderId, receiverId, contents });
     await message.save();
-
     //Gọi socket và xử lý
     try {
       console.log("receiverId: ", receiverId);
@@ -73,26 +74,28 @@ exports.getHistoryMessage = async (req, resp) => {
     const currentUserId = req.user.user_id; // người dùng hiện đang đăng nhập
 
     const lastTimestamp = req.query.lastTimestamp; // Lấy tham số lastTimestamp từ query string
-
     let queryCondition = {
       $or: [
         { senderId: currentUserId, receiverId: userId },
         { senderId: userId, receiverId: currentUserId },
       ],
     };
-
+  
     const totalMessageHistory = await Chat.countDocuments(queryCondition);
     let messagesHistory;
     //Lấy 20% tin nhắn khi vượt quá 100 tin nhắn
-    if (totalMessageHistory >= 200) {
+    if (totalMessageHistory >= 100) {
+     
       if (lastTimestamp) {
-        queryCondition.timestamp = { $lt: lastTimestamp };
+        queryCondition.timestamp = { $lt:  lastTimestamp};//new Date(parseInt(lastTimestamp))
+        
       }
       messagesHistory = await Chat.find(queryCondition)
         .sort({
           timestamp: -1,
         })
         .limit(Math.ceil(totalMessageHistory * 0.2));
+       
     } else {
       //Lấy toàn bộ tin nhắn
       messagesHistory = await Chat.find(queryCondition).sort({
@@ -147,6 +150,7 @@ function extractPublicId(url) {
 }
 
 // Xóa tin nhắn khỏi cơ sở dữ liệu
+
 exports.deleteChat = async (req, res) => {
   const { chatId } = req.params;
   try {
