@@ -28,32 +28,32 @@ const chatSchema = new mongoose.Schema({
 
 
 // Hook để tự động thêm _id của tin nhắn vào messages của cuộc trò chuyện
-chatSchema.post("save", async function (chat, next) {
-  try {
-    // console.log("Chat saved:", chat);
-    const Conversation = mongoose.model("Conversation");
+// chatSchema.post("save", async function (chat, next) {
+//   try {
+//     // console.log("Chat saved:", chat);
+//     const Conversation = mongoose.model("Conversation");
     
 
-    const conversation = await Conversation.findOne({
-      participants: { $all: [chat.senderId, chat.receiverId] },
-    });
+//     const conversation = await Conversation.findOne({
+//       participants: { $all: [chat.senderId, chat.receiverId] },
+//     });
 
-    // Nếu không tìm thấy cuộc trò chuyện, tạo mới và lưu vào database
-    if (!conversation) {
-      const newConversation = new Conversation({
-        participants: [chat.senderId, chat.receiverId],
-        messages: [chat._id],
-      });
-      await newConversation.save();
-    } else {
-      conversation.messages.push(chat._id);
-      await conversation.save();
-    }
-    next();
-  } catch (error) {
-    next(error);
-  }
-});
+//     // Nếu không tìm thấy cuộc trò chuyện, tạo mới và lưu vào database
+//     if (!conversation) {
+//       const newConversation = new Conversation({
+//         participants: [chat.senderId, chat.receiverId],
+//         messages: [chat._id],
+//       });
+//       await newConversation.save();
+//     } else {
+//       conversation.messages.push(chat._id);
+//       await conversation.save();
+//     }
+//     next();
+//   } catch (error) {
+//     next(error);
+//   }
+// });
 
 const Chats = mongoose.model("chats", chatSchema);
 
