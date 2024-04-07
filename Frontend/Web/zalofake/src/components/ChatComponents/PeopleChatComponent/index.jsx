@@ -434,7 +434,7 @@ function PeopleChatComponent({ language, userChat }) {
                           size={18}
                           color="black"
                         />
-                        <p>Chuyển tiếp</p>
+                        <p>{language === 'vi' ? "Chuyển tiếp" : "Forward"}</p>
                       </div>
                       <div
                         className="flex p-2 text-red-500 items-center  border-b border-gray-200 hover:bg-gray-200"
@@ -445,11 +445,11 @@ function PeopleChatComponent({ language, userChat }) {
                           size={18}
                           color="red"
                         />
-                        <p>Thu hồi</p>
+                        <p>{language === 'vi' ? "Thu hồi" : "Recall"}</p>
                       </div>
                       <div className="flex p-2 text-red-500 items-center ">
                         <BsTrash3 className="mr-3" size={20} color="red" />
-                        <p>Xóa chỉ phía tôi</p>
+                        <p>{language === 'vi' ? "Xóa chỉ phía tôi" : "Delete only my side"}</p>
                       </div>
                     </div>
                   )}
