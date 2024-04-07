@@ -64,7 +64,7 @@ const Message = ({ navigation, route }) => {
         const reversedChats = response.data.data.reverse();
         setChats(reversedChats);
         fetchFriends();
-        const lastElement = reversedChats[reversedChats.length - 1]
+        const lastElement = reversedChats[0]
         setLastTimestamp(lastElement.timestamp)
       } catch (error) {
         console.log(error);
@@ -86,13 +86,6 @@ const Message = ({ navigation, route }) => {
       return true;
     }
   };
-  const handleCheckTypeImage = (message) => {
-    if (message.contents[0].type === 'image') {
-      return true;
-    } else {
-      return false;
-    }
-  };
   const handleGetTime = (time) => {
     const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss');
     const dateObject = new Date(vietnamDatetime)
@@ -107,77 +100,6 @@ const Message = ({ navigation, route }) => {
     }
   }, [contentHeight, scrollViewHeight]);
 
-  // Khôi phục vị trí cuộn của ScrollView
-  const restoreScrollPosition = () => {
-
-    if (scrollViewRef.current) {
-      scrollViewRef.current.measure((x, y, width, height, pageX, pageY) => {
-        scrollViewRef.current.scrollTo({ x: 0, y: height + scrollViewHeight, animated: false });
-
-      });
-    }
-  };
-
-  const handleScrollToTop = () => {
-    setIsLoading(true)
-    const fetchChats = async () => {
-      try {
-        const response = await axiosInstance.get(`/chats/${user.userId}?lastTimestamp=${lastTimestamp}`);
-        const reversedChats = response.data.data.reverse();
-        if (reversedChats && reversedChats.length > 0) {
-          setChats(prevChats => [...reversedChats, ...prevChats]);
-          restoreScrollPosition();
-          const lastElement = reversedChats[0]
-          setLastTimestamp(lastElement.timestamp)
-        }
-        setIsLoading(false)
-
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchChats();
-  };
-
-  const handleScroll = (event) => {
-    const { y } = event.nativeEvent.contentOffset;
-    if (y === 1) {
-      handleScrollToTop();
-    }
-  };
-
-  const handlePressIn = (message) => {
-    setMessageSelected(message)
-    setModalVisible(true)
-  };
-  const removeItemById = (array, idToRemove) => {
-    const indexToRemove = array.findIndex(item => item._id === idToRemove);
-    if (indexToRemove !== -1) {
-      array.splice(indexToRemove, 1);
-    }
-    return array;
-  };
-  const handleDeleteMess = () => {
-    const deleteChat = async () => {
-      try {
-        const response = await axiosInstance.post(`chats/${messageSelected._id}/delete`);
-        if (response.status === 200) {
-
-
-          // Sử dụng hàm removeItemById() để xóa phần tử có ID cụ thể khỏi mảng
-          const newArray = removeItemById(chats, messageSelected._id);
-
-          setChats(newArray)
-          showToastSuccess("Xóa thành công")
-          toggleModal()
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    deleteChat();
-    // setModalVisible(false)
-  };
   const handleGetModalFriend = () => {
     toggleModal();
     toggleModalFriend();
@@ -287,25 +209,6 @@ const Message = ({ navigation, route }) => {
     }
   }, [textMessage]);
 
-  const handleSendMessage = async () => {
-    if (!textMessage) {
-      return;
-    }
-    else {
-      setIsLoadMess(true)
-      try {
-        const send = await sendMessage(user, textMessage)
-        if (send) {
-          setTextMessage(null)
-          setIsMessageSent(true);
-          setIsLoadMess(false)
-        }
-      } catch (error) {
-        console.log(error);
-        setIsLoadMess(false)
-      }
-    }
-  }
 
   // }
   useEffect(() => {
@@ -353,7 +256,125 @@ const Message = ({ navigation, route }) => {
         fontSize: 20,
       },
     });
-  }, [navigation, friend]);
+  }, [navigation]);
+  
+  useEffect(() => {
+    if (scrollViewRef.current && contentHeight > scrollViewHeight && !isLoad) {
+      const offset = contentHeight - scrollViewHeight;
+      setIsLoad(true)
+      scrollViewRef.current.scrollTo({ x: 0, y: offset, animated: true });
+    }
+  }, [contentHeight, scrollViewHeight]);
+
+
+  // Khôi phục vị trí cuộn của ScrollView
+  const restoreScrollPosition = () => {
+
+    if (scrollViewRef.current) {
+      scrollViewRef.current.measure((x, y, width, height, pageX, pageY) => {
+        scrollViewRef.current.scrollTo({ x: 0, y: height + scrollViewHeight, animated: false });
+
+      });
+    }
+  };
+  const handleScrollToTop = () => {
+    setIsLoading(true)
+    const fetchChats = async () => {
+      try {
+        const response = await axiosInstance.get(`/chats/${user.userId}?lastTimestamp=${lastTimestamp}`);
+        const reversedChats = response.data.data.reverse();
+        if (reversedChats && reversedChats.length > 0) {
+          setChats(prevChats => [...reversedChats, ...prevChats]);
+          restoreScrollPosition();
+          const lastElement = reversedChats[0]
+          setLastTimestamp(lastElement.timestamp)
+        }
+        setIsLoading(false)
+
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchChats();
+
+  };
+  const handleScroll = (event) => {
+    const { y } = event.nativeEvent.contentOffset;
+    if (y === 0) {
+      handleScrollToTop();
+    }
+  };
+  const handlePressIn = (message) => {
+    setMessageSelected(message)
+    setModalVisible(true)
+  };
+  const removeItemById = (array, idToRemove) => {
+    const indexToRemove = array.findIndex(item => item._id === idToRemove);
+    if (indexToRemove !== -1) {
+      array.splice(indexToRemove, 1);
+    }
+    return array;
+  };
+  const handleDeleteMess = () => {
+    const deleteChat = async () => {
+      try {
+        const response = await axiosInstance.post(`chats/${messageSelected._id}/delete`);
+        if (response.status === 200) {
+          const newArray = removeItemById(chats, messageSelected._id);
+          setChats(newArray)
+          showToastSuccess("Xóa thành công")
+          toggleModal()
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    deleteChat();
+    // setModalVisible(false)
+  };
+
+  
+
+  //nhi
+ 
+
+
+  useEffect(() => {
+    // Update send button color based on textMessage
+    if (!textMessage) {
+      setIsColorSend("black");
+    } else {
+      setIsColorSend("#0091FF");
+    }
+  }, [textMessage]);
+
+  const handleSendMessage = async () => {
+    if (!textMessage) {
+      console.log("message rỗng");
+    }
+    else {
+      setIsLoadMess(true)
+      try {
+        const response = await sendMessage(user,
+          { type: 'text', data: textMessage })
+        if (response.status === 201) {
+          setIsLoadMess(false)
+          setIsLoad(false)
+          setChats(
+            chats.concat(response.data.data))
+          console.log("success");
+
+        }
+        else if (response.status === 500) {
+          console.log("fail");
+
+        }
+      } catch (error) {
+        console.log(error);
+        setIsLoadMess(false)
+      }
+    }
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: "#E5E9EB" }}>
@@ -363,9 +384,9 @@ const Message = ({ navigation, route }) => {
         ) : (
           <View></View>
         )}
+        <Toast />
         <ScrollView ref={scrollViewRef}
           onScroll={handleScroll}
-          scrollEventThrottle={16}
           onLayout={(event) => {
             setScrollViewHeight(event.nativeEvent.layout.height);
           }}
@@ -374,9 +395,7 @@ const Message = ({ navigation, route }) => {
           }}
         >
           <View style={{ flex: 1, justifyContent: "flex-start" }}>
-
             {chats.map((message, index) => (
-
               <View key={index} style={{ justifyContent: 'space-around', borderRadius: 10, backgroundColor: handleCheckIsSend(message) ? "#7debf5" : "#d9d9d9", margin: 5, alignItems: handleCheckIsSend(message) ? "flex-end" : "flex-start", alignSelf: handleCheckIsSend(message) ? "flex-end" : "flex-start" }}>
                 <Pressable
                   onPress={() => handlePressIn(message)}
@@ -387,14 +406,10 @@ const Message = ({ navigation, route }) => {
                   </View>
                 </Pressable>
               </View>
-
-
             ))}
           </View>
         </ScrollView>
-      </View>
-
-
+      </View >
       <View
         style={{
           flexDirection: "row",
@@ -455,7 +470,6 @@ const Message = ({ navigation, route }) => {
           </TouchableOpacity>
         </View>
       </View>
-
       <Modal
         animationType="slide"
         transparent={true}
@@ -467,16 +481,46 @@ const Message = ({ navigation, route }) => {
             <Text style={styles.modalHeaderText}>
               Choose
             </Text>
-            <View style={styles.modalButtonContainer}>
-              <Pressable onPress={handleGetModalFriend}>
+            <View style={styles.modalButtonContainer1}>
+              <Pressable style={styles.pressCol} onPress={handleGetModalFriend}>
+                <FontAwesome5
+                  name="share"
+                  size={20}
+                  color="black"
+                  style={{ marginRight: 8 }}
+                />
                 <Text style={styles.modalButton}>Chuyển tiếp</Text>
               </Pressable>
-              <Pressable onPress={handleDeleteMess}>
+              <Pressable onPress={handleDeleteMess} style={styles.pressCol}>
+                <FontAwesome5
+                  name="trash"
+                  size={20}
+                  color="black"
+                  style={{ marginRight: 8 }}
+                />
                 <Text style={styles.modalButton} >Xóa</Text>
               </Pressable>
-              <Pressable >
+              <Pressable style={styles.pressCol}>
+                <FontAwesome5
+                  name="comment-slash"
+                  size={20}
+                  color="black"
+                  style={{ marginRight: 8 }}
+                />
                 <Text style={styles.modalButton}>Thu hồi</Text>
               </Pressable>
+            </View>
+            <View style={styles.modalButtonContainer1}>
+              <Pressable style={styles.pressCol}>
+                <FontAwesome5
+                  name="list"
+                  size={20}
+                  color="black"
+                  style={{ margin: 'auto' }}
+                />
+                <Text style={styles.modalButton}>Chọn nhiều</Text>
+              </Pressable>
+
             </View>
             <View style={styles.modalButtonContainer}>
               <Pressable onPress={toggleModal}>
@@ -521,7 +565,12 @@ const Message = ({ navigation, route }) => {
                           <Text style={styles.friendName}>{friend.profile.name}</Text>
                         </View>
                         <View style={styles.friendActions}>
-                          <Pressable onPress={() => chuyenTiepChat(friend)} style={styles.modalButton}><Text>Gửi</Text></Pressable>
+                          <Pressable onPress={() => chuyenTiepChat(friend)} style={styles.pressCol}><FontAwesome5
+                            name="arrow-right"
+                            size={30}
+                            color="black"
+                            style={{ alignContent: "center", alignItems: "center" }}
+                          /></Pressable>
                         </View>
                       </Pressable>
                     </View>
@@ -534,15 +583,13 @@ const Message = ({ navigation, route }) => {
                 <Text style={styles.modalButton}>HỦY</Text>
               </Pressable>
               <Pressable >
-
                 <Text style={styles.modalButton}>XÁC NHẬN</Text>
-
               </Pressable>
             </View>
           </View>
         </View>
       </Modal>
-    </View>
+    </View >
   );
 };
 const styles = StyleSheet.create({
@@ -612,6 +659,20 @@ const styles = StyleSheet.create({
   friendListHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
+  },
+  pressCol: {
+    // flexDirection: "column",
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalButtonContainer1: {
+    // flex:1,
+    // height: 300,
+    // width: 450,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: 'center',
+    marginTop: 20
   },
 });
 export default Message;
