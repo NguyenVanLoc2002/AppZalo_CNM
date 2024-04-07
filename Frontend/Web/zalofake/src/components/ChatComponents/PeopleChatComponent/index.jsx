@@ -29,23 +29,30 @@ import {
   PiMagnifyingGlass,
   PiTagSimpleLight,
 } from "react-icons/pi";
-import { RiAlarmLine, RiBatteryChargeLine, RiDoubleQuotesR } from "react-icons/ri";
+import {
+  RiAlarmLine,
+  RiBatteryChargeLine,
+  RiDoubleQuotesR,
+} from "react-icons/ri";
 import { TfiAlarmClock } from "react-icons/tfi";
 import { FaArrowRotateLeft } from "react-icons/fa6";
 import { TiPinOutline } from "react-icons/ti";
 import axiosInstance from "../../../api/axiosInstance";
-import { format } from "date-fns";
+import { format, previousMonday } from "date-fns";
 import { useSocketContext } from "../../../contexts/SocketContext";
+import EmojiPicker from "emoji-picker-react";
 
 function PeopleChatComponent({ language, userChat }) {
   const [content, setContent] = useState("");
   const [isSidebarVisible, setSidebarVisible] = useState(false);
   const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [loadingMedia, setLoadingMedia] = useState(false);
   const scrollRef = useRef(null);
   const { socket } = useSocketContext();
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [isAddingMessages, setIsAddingMessages] = useState(false); //Flag để scroll bottom
+  const [showPicker, setShowPicker] = useState(false);
 
   // Đảo ngược mảng tin nhắn và lưu vào biến mới
   const reversedMessages = [...messages].reverse();
@@ -74,12 +81,11 @@ function PeopleChatComponent({ language, userChat }) {
     if (userChat && userChat.id) {
       fetchMessageHistory(userChat.id);
     }
-  }, [userChat]); 
+  }, [userChat]);
 
-  
   const handleScroll = async (event) => {
     const container = event.target;
-    
+
     const lastScrollPosition = container.scrollHeight - container.clientHeight;
     if (container.scrollTop === 0 && !isFetchingMore) {
       setIsFetchingMore(true);
@@ -108,16 +114,14 @@ function PeopleChatComponent({ language, userChat }) {
         console.error(error);
       } finally {
         setIsFetchingMore(false);
-
-        
       }
     }
   };
 
   // Nhận tin nhắn mới từ socket
   useEffect(() => {
-    if(socket) {
-      socket.on("new_message", ({message}) => {
+    if (socket) {
+      socket.on("new_message", ({ message }) => {
         setMessages((prevMessages) => [message, ...prevMessages]);
         console.log("new_message: ", message);
       });
@@ -137,16 +141,16 @@ function PeopleChatComponent({ language, userChat }) {
     if (!isAddingMessages) {
       scrollToBottom();
     }
-  }, [messages, isAddingMessages]); 
+  }, [messages, isAddingMessages]);
 
-  const sendMessage = async (data) => {
+  const sendMessage = async (data, receiverId) => {
+    setLoadingMedia(true);
     try {
       if (!data || data.trim === "") return;
-
-      console.log("data: ", data);
-      if (userChat && userChat.id) {
+      // console.log("data: ", data);
+      if (receiverId) {
         const response = await axiosInstance.post(
-          `chats/${userChat.id}/` +
+          `chats/${receiverId}/` +
             (typeof data === "string"
               ? "sendMessage"
               : data.type.startsWith("video/")
@@ -166,12 +170,14 @@ function PeopleChatComponent({ language, userChat }) {
       }
     } catch (error) {
       console.error("Error sending message:", error);
+    } finally {
+      setLoadingMedia(false);
     }
   };
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
-      sendMessage(content);
+      sendMessage(content, userChat?.id);
     }
   };
 
@@ -205,7 +211,7 @@ function PeopleChatComponent({ language, userChat }) {
     console.log("file1: ", file);
     // Xử lý tệp ảnh và video ở đây
     try {
-      await sendMessage(file);
+      await sendMessage(file,userChat?.id);
     } catch (error) {
       console.error("Error sending message:", error);
     }
@@ -254,6 +260,15 @@ function PeopleChatComponent({ language, userChat }) {
     }
   };
 
+  const togglePicker = () => {
+    setShowPicker((prevState) => !prevState);
+  };
+
+  const onEmojiClick = (e, emojiObject) => {
+    console.log("emojiObject.emoji: ", emojiObject.emoji); // Log emojiObject để kiểm tra
+    setContent((prevInput) => prevInput + emojiObject.emoji);
+    setShowPicker(false);
+  };
   return (
     <>
       {userChat && (
@@ -414,6 +429,7 @@ function PeopleChatComponent({ language, userChat }) {
                       );
                     })}
                   </div>
+                 
 
                   {contextMenuStates[message._id] && (
                     <div
@@ -434,7 +450,7 @@ function PeopleChatComponent({ language, userChat }) {
                           size={18}
                           color="black"
                         />
-                        <p>{language === 'vi' ? "Chuyển tiếp" : "Forward"}</p>
+                        <p>{language === "vi" ? "Chuyển tiếp" : "Forward"}</p>
                       </div>
                       <div
                         className="flex p-2 text-red-500 items-center  border-b border-gray-200 hover:bg-gray-200"
@@ -445,25 +461,47 @@ function PeopleChatComponent({ language, userChat }) {
                           size={18}
                           color="red"
                         />
-                        <p>{language === 'vi' ? "Thu hồi" : "Recall"}</p>
+                        <p>{language === "vi" ? "Thu hồi" : "Recall"}</p>
                       </div>
                       <div className="flex p-2 text-red-500 items-center ">
                         <BsTrash3 className="mr-3" size={20} color="red" />
-                        <p>{language === 'vi' ? "Xóa chỉ phía tôi" : "Delete only my side"}</p>
+                        <p>
+                          {language === "vi"
+                            ? "Xóa chỉ phía tôi"
+                            : "Delete only my side"}
+                        </p>
                       </div>
                     </div>
                   )}
                 </div>
               ))}
               {isFetchingMore && <div>Loading...</div>}
+              {loadingMedia && <p className="flex flex-col justify-end mr-2 mb-2">Loading....</p>}
             </div>
+             
           )}
 
           <div className="h-[15vh] bg-white flex-col border-t">
             <div className="h-[40%] bg-white flex justify-between items-center border-b p-1">
-              <button className="hover:bg-gray-300 p-2 rounded">
+              <button
+                className="hover:bg-gray-300 p-2 rounded"
+                onClick={togglePicker}
+              >
                 <LuSticker size={20} />
               </button>
+
+              {showPicker && (
+                <EmojiPicker
+                  className="-translate-y-60"
+                  style={{ width: "100%" }}
+                  onEmojiClick={(e) => {
+                    console.log("e.emoji: ", e.emoji);
+                    setContent((prevInput) => prevInput + e.emoji);
+                    setShowPicker(false);
+                  }}
+                />
+              )}
+
               <button
                 className="hover:bg-gray-300 p-2 rounded"
                 onClick={handleSelectImageClick}

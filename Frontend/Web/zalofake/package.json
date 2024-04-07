@@ -13,6 +13,7 @@
     "axios": "^1.6.8",
     "country-calling-code": "^0.0.3",
     "date-fns": "^3.6.0",
+    "emoji-picker-react": "^4.9.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
