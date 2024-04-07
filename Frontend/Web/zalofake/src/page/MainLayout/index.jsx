@@ -4,7 +4,6 @@ import MenuComponent from "../../layouts/Menu";
 import ModalComponent from "../../layouts/Modal/index";
 import ContactComponent from "../../components/ContactComponents/ContactComponent";
 import ChatComponents from "../../components/ChatComponents/ChatComponent";
-import { useSocketContext } from "../../contexts/SocketContext";
 import { useAuthContext } from "../../contexts/AuthContext";
 
 function MainLayout() {
