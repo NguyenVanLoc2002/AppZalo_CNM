@@ -71,7 +71,6 @@ exports.sendMessage = async (req, resp) => {
     // Tạo và lưu tin nhắn mới vào cơ sở dữ liệu
     const message = new Chat({ senderId, receiverId, contents });
     await message.save();
-
     //Gọi socket và xử lý
     try {
       console.log("receiverId: ", receiverId);
