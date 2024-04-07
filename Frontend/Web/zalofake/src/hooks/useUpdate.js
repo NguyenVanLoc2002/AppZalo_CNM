@@ -27,6 +27,7 @@ const useUpdate = () => {
         const { avatar } = data;
         if (avatar) {
           toast.success("Avatar updated successfully");
+          await reloadAuthUser();
         } else {
           throw new Error("Failed to update avatar");
         }
@@ -62,6 +63,7 @@ const useUpdate = () => {
         const { background } = data;
         if (background) {
           toast.success("Background updated successfully");
+          await reloadAuthUser();
         } else {
           throw new Error("Failed to update background");
         }
