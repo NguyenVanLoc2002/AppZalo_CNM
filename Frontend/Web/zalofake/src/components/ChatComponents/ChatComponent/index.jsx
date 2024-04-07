@@ -1,4 +1,3 @@
-import { faker } from "@faker-js/faker";
 import { useEffect, useState } from "react";
 import { FaCaretDown } from "react-icons/fa";
 import { PiUserSwitchThin } from "react-icons/pi";
@@ -6,38 +5,54 @@ import ListChatComponent from "../ListChatComponent";
 import PeopleChatComponent from "../PeopleChatComponent";
 import { MdCameraAlt } from "react-icons/md";
 import { HiMagnifyingGlass } from "react-icons/hi2";
-
+import useFriend from "../../../hooks/useFriend";
+import { toast } from "react-hot-toast";
+import { useAuthContext } from "../../../contexts/AuthContext";
 function ChatComponents({ language }) {
   const [isAddFriend, setIsAddFriend] = useState(false);
   const [isAddGroup, setIsAddGroup] = useState(false);
   const [userChat, setUserChat] = useState(null);
+  const {
+    friends,
+    recommendedFriends,
+    loading,
+    getAllFriends,
+    getFriendByPhone,
+    getRecommendedFriends,
+    addFriend,
+    acceptFriend,
+    unFriend,
+    rejectFriend,
+    cancelFriendRequest,
+  } = useFriend();
+  const { authUser, reloadAuthUser } = useAuthContext();
 
   const [phone, setPhone] = useState("");
   const [nameGroup, setNameGroup] = useState("");
   const [isInputFocus, setIsInputFocus] = useState(false);
   const [isInputFocusGroup, setIsInputFocusGroup] = useState(false);
   const [friendList, setFriendList] = useState([]);
-  const [isHovered, setIsHovered] = useState(false);
   const [showAllNewFriends, setShowAllNewFriends] = useState(false);
   const [activeButton, setActiveButton] = useState("Tất cả");
+  const [recommentFriendList, setRecommentFriendList] = useState();
+  const [friendToAdd, setFriendToAdd] = useState("");
 
   const visibleFriends = showAllNewFriends
-    ? friendList
-    : friendList.slice(0, 3);
+    ? recommentFriendList
+    : recommentFriendList?.slice(0, 3);
 
   useEffect(() => {
-    const newFriendList = [];
-    for (let i = 0; i < 20; i++) {
-      newFriendList.push({
-        id: faker.string.uuid(),
-        name: faker.internet.userName(),
-        avatar: faker.image.avatar(),
-        unread: faker.datatype.boolean(),
-        isChecked: false,
-      });
-    }
-    setFriendList(newFriendList);
-  }, []);
+    const fetchFriends = async () => {
+      await getAllFriends();
+      await getRecommendedFriends();
+    };
+    fetchFriends();
+  }, [authUser]);
+
+  useEffect(() => {
+    setFriendList(friends);
+    setRecommentFriendList(recommendedFriends);
+  }, [friends, recommendedFriends]);
 
   const handleRadioChange = (friendId) => {
     setFriendList((prevList) =>
@@ -47,6 +62,50 @@ function ChatComponents({ language }) {
           : friend
       )
     );
+  };
+
+  const handleSearch = async () => {
+    if (phone === "") {
+      setRecommentFriendList(recommendedFriends);
+      toast.error(
+        language == "vi"
+          ? "Vui lòng nhập số điện thoại để tìm kiếm"
+          : "Please enter a phone number to search"
+      );
+      return;
+    }
+    const userSearch = await getFriendByPhone(phone);
+    if (userSearch) {
+      setRecommentFriendList([userSearch]);
+      setShowAllNewFriends(true);
+    }
+    return;
+  };
+
+  const handleAddFriend = async (friend) => {
+    setFriendToAdd(friend.phone);
+    await addFriend(friend.phone);
+    await reloadAuthUser();
+  };
+
+  const handleAcceptFriend = async (friend) => {
+    await acceptFriend(friend.phone);
+    await reloadAuthUser();
+  };
+
+  const handleUnFriend = async (friend) => {
+    await unFriend(friend.phone);
+    await reloadAuthUser();
+  };
+
+  const handleRejectFriend = async (friend) => {
+    await rejectFriend(friend.phone);
+    await reloadAuthUser();
+  };
+
+  const handleCancelFriendRequest = async (friend) => {
+    await cancelFriendRequest(friend.phone);
+    await reloadAuthUser();
   };
 
   const buttons = [
@@ -59,7 +118,6 @@ function ChatComponents({ language }) {
     "Đồng nghiệp",
   ];
 
-  // console.log(userChat);
   return (
     <>
       <div className="relative bg-gray-100 h-screen w-full flex">
@@ -69,6 +127,7 @@ function ChatComponents({ language }) {
             isAddFriend={setIsAddFriend}
             isAddGroup={setIsAddGroup}
             userChat={setUserChat}
+            friends={friendList}
           />
         </div>
         <PeopleChatComponent language={language} userChat={userChat} />
@@ -80,6 +139,8 @@ function ChatComponents({ language }) {
                 onClick={() => {
                   setIsAddFriend(false);
                   setShowAllNewFriends(false);
+                  setRecommentFriendList(recommendedFriends);
+                  setPhone("");
                 }}
               >
                 x
@@ -106,11 +167,13 @@ function ChatComponents({ language }) {
                 <input
                   type="text"
                   className="h-9 w-full outline-none"
-                  placeholder="Số điện thoại"
+                  placeholder={
+                    language == "vi"
+                      ? "Nhập số điện thoại"
+                      : "Enter your phone number"
+                  }
                   value={phone}
-                  onChange={(e) => setPhone(e.target.phone)}
-                  onFocus={() => setIsInputFocus(true)}
-                  onBlur={() => setIsInputFocus(false)}
+                  onChange={(e) => setPhone(e.target.value)}
                 />
               </div>
             </div>
@@ -124,25 +187,59 @@ function ChatComponents({ language }) {
                 <p className="text-sm text-gray-500 ml-2">Có thể bạn quen</p>
               </div>
               <div className="flex-col h-screen mt-2">
-                {visibleFriends.map((friend) => (
-                  <div
-                    key={friend.id}
-                    className="flex justify-between hover:bg-gray-200 transition-colors duration-300 ease-in-out p-2"
-                    onMouseEnter={() => setIsHovered(true)}
-                    onMouseLeave={() => setIsHovered(false)}
-                  >
-                    <div className="bg-blue w-10 ">
-                      <img
-                        className="rounded-full"
-                        src={friend.avatar}
-                        alt="cloud"
-                      />
+                {visibleFriends.map((friend) => {
+                  const isFriend = friendList.some((f) => f.id === friend.id);
+                  const isSent = authUser?.requestSent?.some(
+                    (f) => f === friend.id
+                  );
+
+                  return (
+                    <div
+                      key={friend.id}
+                      className="flex justify-between hover:bg-gray-200 transition-colors duration-300 ease-in-out p-2"
+                    >
+                      <div className="bg-blue w-10 ">
+                        <img
+                          className="rounded-full"
+                          src={friend.avatar || "/zalo.svg"}
+                          alt="cloud"
+                        />
+                      </div>
+                      <div className="flex mr-auto ml-2 p-1">
+                        <p className="font-semibold ">
+                          {friend.name || friend.profile.name}
+                        </p>
+                      </div>
+
+                      {!isFriend && (
+                        <>
+                          {!isSent ? (
+                            <button
+                              className="bg-primary p-2 pl-4 pr-4 rounded-lg hover:bg-primaryHover"
+                              onClick={() => handleAddFriend(friend)}
+                            >
+                              <p className="text-white">
+                                {loading && friendToAdd === friend.phone ? (
+                                  <span className="loading loading-spinner"></span>
+                                ) : language == "vi" ? (
+                                  "Kết bạn"
+                                ) : (
+                                  "Add friend"
+                                )}
+                              </p>
+                            </button>
+                          ) : (
+                            <button className="bg-gray-200 p-2 pl-4 pr-4 rounded-lg hover:bg-slate-300">
+                              <p className="text-md hover:font-semibold">
+                                {language == "vi" ? "Đã gửi" : "Sent"}
+                              </p>
+                            </button>
+                          )}
+                        </>
+                      )}
                     </div>
-                    <div className="flex mr-auto ml-2 p-1">
-                      <p className="font-semibold ">{friend.name}</p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {!showAllNewFriends && visibleFriends.length <= 3 && (
                   <button
                     className="text-blue-500 hover:underline"
@@ -154,15 +251,22 @@ function ChatComponents({ language }) {
               </div>
             </div>
             <div className="flex items-center border-t h-[15%]">
-              <div className="flex ml-auto mb-auto mt-1">
+              <div className="flex ml-auto mb-auto mt-3">
                 <button
                   className="rounded-lg bg-gray-300 p-3 pl-6 pr-6 mr-3 hover:bg-gray-500"
                   onClick={() => setIsAddFriend(false)}
                 >
-                  <p className="text-lg font-semibold">Hủy</p>
+                  <p className="text-lg font-semibold">
+                    {language == "vi" ? "Hủy" : "Cancel"}
+                  </p>
                 </button>
-                <button className="rounded-lg bg-blue-500 p-3 pl-6 pr-6 mr-3 hover:bg-blue-800">
-                  <p className="text-lg font-semibold">Tìm kiếm</p>
+                <button
+                  className="rounded-lg bg-primary p-3 pl-6 pr-6 mr-3 hover:bg-primaryHover"
+                  onClick={handleSearch}
+                >
+                  <p className="text-lg font-semibold text-white">
+                    {language == "vi" ? "Tìm Kiếm" : "Search"}
+                  </p>
                 </button>
               </div>
             </div>
@@ -241,8 +345,6 @@ function ChatComponents({ language }) {
                   <div
                     key={friend.id}
                     className="flex items-center  justify-between hover:bg-gray-200 transition-colors duration-300 ease-in-out p-2"
-                    onMouseEnter={() => setIsHovered(true)}
-                    onMouseLeave={() => setIsHovered(false)}
                   >
                     <input
                       type="radio"
@@ -271,10 +373,17 @@ function ChatComponents({ language }) {
                   className="rounded-lg bg-gray-300 p-3 pl-6 pr-6 mr-3 hover:bg-gray-500"
                   onClick={() => setIsAddGroup(false)}
                 >
-                  <p className="text-lg font-semibold">Hủy</p>
+                  <p className="text-lg font-semibold">
+                    {language == "vi" ? "Hủy" : "Cancel"}
+                  </p>
                 </button>
-                <button className="rounded-lg bg-blue-500 p-3 pl-6 pr-6 mr-3 hover:bg-blue-800">
-                  <p className="text-lg font-semibold">Tìm kiếm</p>
+                <button
+                  className="rounded-lg bg-blue-500 p-3 pl-6 pr-6 mr-3 hover:bg-blue-800"
+                  onClick={handleSearch}
+                >
+                  <p className="text-lg font-semibold">
+                    {language == "vi" ? "Tìm Kiếm" : "Search"}
+                  </p>
                 </button>
               </div>
             </div>
