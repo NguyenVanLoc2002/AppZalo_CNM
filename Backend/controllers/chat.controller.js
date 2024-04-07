@@ -2,31 +2,6 @@ const cloudinary = require("../configs/Cloudinary.config.js");
 const Chat = require("../models/Chat.js");
 const { io, getReciverSocketId } = require("../socket/socket.io.js");
 
-// //Upload media to cloudinary
-// const uploadMediaToCloudinary = async (file) => {
-//   try {
-//     let result;
-//     const uploadOptions = {
-//       folder: "Zalo_Fake_App", // Thư mục trên Cloudinary
-//     };
-//     if (file.mimetype.startsWith("image/")) {
-//       result = await cloudinary.uploader.upload(file.path, uploadOptions);
-//     } else if (file.mimetype.startsWith("video/")) {
-//       result = await cloudinary.uploader.upload(file.path, {
-//         resource_type: "video",
-//         ...uploadOptions,
-//       });
-//     }
-//     const customizePublicId =`zaloFake_${file.fieldname}_${Date.now()}_${req_file}`
-//     return {
-//       url: result.secure_url,
-//       public_id: result.public_id,
-//     };
-//   } catch (error) {
-//     throw new Error("Failled to upload media to Cloudinary");
-//   }
-// };
-
 //Gửi tin nhắn mới cho một người dùng cụ thể.
 exports.sendMessage = async (req, resp) => {
   try {
