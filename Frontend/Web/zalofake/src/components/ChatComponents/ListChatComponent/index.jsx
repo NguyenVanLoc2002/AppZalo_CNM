@@ -31,6 +31,7 @@ function ListChatComponent({ language, isAddFriend, isAddGroup, userChat }) {
     const getFriends = async () => {
       try {
         const response = await axiosInstance.get("users/get/friends");
+        console.log(response);
         const newFriendList = response.data.friends.map((friend) => ({
           id: friend.userId,
           name: friend.profile.name,
