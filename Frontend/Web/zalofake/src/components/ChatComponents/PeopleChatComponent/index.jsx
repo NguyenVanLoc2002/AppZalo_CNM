@@ -46,7 +46,6 @@ function PeopleChatComponent({ language, userChat }) {
   const { socket } = useSocketContext();
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [isAddingMessages, setIsAddingMessages] = useState(false); //Flag để scroll bottom
-  const [showContextMenu, setShowContextMenu] = useState(false);
 
   // Đảo ngược mảng tin nhắn và lưu vào biến mới
   const reversedMessages = [...messages].reverse();
@@ -142,7 +141,8 @@ function PeopleChatComponent({ language, userChat }) {
 
   const sendMessage = async (data) => {
     try {
-      if (!data || data.trim() === "") return;
+      if (!data || data.trim === "") return;
+
       console.log("data: ", data);
       if (userChat && userChat.id) {
         const response = await axiosInstance.post(
@@ -205,29 +205,53 @@ function PeopleChatComponent({ language, userChat }) {
     console.log("file1: ", file);
     // Xử lý tệp ảnh và video ở đây
     try {
-      if (userChat) {
-        await sendMessage(file);
-      }
+      await sendMessage(file);
     } catch (error) {
       console.error("Error sending message:", error);
     }
   };
 
+  // Thêm state để lưu vị trí của context menu
   const [contextMenuPosition, setContextMenuPosition] = useState({
     x: 0,
     y: 0,
   });
+  const [contextMenuStates, setContextMenuStates] = useState({});
 
-  // Xử lý khi click chuột phải
-  const handleContextMenu = (event) => {
-    event.preventDefault(); // Ngăn chặn hiển thị menu chuột phải mặc định
-    setShowContextMenu(true);
-    setContextMenuPosition({ x: event.clientX, y: event.clientY });
+  const handleContextMenu = (e, chatId) => {
+    e.preventDefault(); // Ngăn chặn hiển thị context menu mặc định của trình duyệt
+    const newPosition = { x: e.pageX, y: e.pageY };
+
+    // Cập nhật state để hiển thị context menu cho tin nhắn được click chuột phải
+    setContextMenuStates((prevState) => ({
+      ...prevState,
+      [chatId]: true, // chatId là khóa của tin nhắn trong state contextMenuStates
+    }));
+
+    // Cập nhật vị trí của context menu
+    setContextMenuPosition(newPosition);
   };
 
-  // Ẩn context menu khi click ra ngoài hoặc click chuột trái
+  // Hàm xử lý ẩn context menu khi click bất kỳ đâu ngoài context menu
   const handleHideContextMenu = () => {
-    setShowContextMenu(false);
+    setContextMenuStates({}); // Ẩn context menu cho tất cả các tin nhắn
+  };
+
+  const deleteChat = async (chatId) => {
+    try {
+      console.log(chatId);
+      const response = await axiosInstance.post(`chats/${chatId}/delete`);
+      if (response.status === 200) {
+        const updatedMessagesResponse = await axiosInstance.get(
+          `chats/${userChat.id}`
+        );
+        const dataUpdate = updatedMessagesResponse.data.data;
+        setMessages(dataUpdate);
+      }
+    } catch (error) {
+      console.error("Lỗi khi xóa tin nhắn:", error);
+      throw error; // Ném lỗi để xử lý ở nơi gọi hàm này nếu cần
+    }
   };
 
   return (
@@ -312,6 +336,7 @@ function PeopleChatComponent({ language, userChat }) {
                       ? "chat chat-start"
                       : "chat chat-end"
                   }
+                  onContextMenu={(e) => handleContextMenu(e, message._id)}
                 >
                   {userChat.id === message.senderId && (
                     <div className="chat-image avatar">
@@ -335,11 +360,7 @@ function PeopleChatComponent({ language, userChat }) {
                       const imageHeight = "auto";
 
                       return (
-                        <div
-                          key={contentIndex}
-                          className="message-container"
-                          onContextMenu={handleContextMenu}
-                        >
+                        <div key={contentIndex} className="message-container">
                           {/* Render nội dung của message */}
                           {content.type === "text" ? (
                             <div className="flex flex-col">
@@ -392,39 +413,35 @@ function PeopleChatComponent({ language, userChat }) {
                         </div>
                       );
                     })}
-
-                    {/* Overlay để bắt sự kiện click */}
-                    {showContextMenu && (
-                      <div
-                        className="fixed top-0 left-0 w-full h-full bg-transparent"
-                        onClick={handleHideContextMenu}
-                      />
-                    )}
-
-                    {showContextMenu && (
-                      <div
-                        className="flex flex-col fixed top-1/2 transform -translate-x-40 -translate-y-30 w-52  bg-white rounded shadow shadow-gray-300"
-                        style={{
-                          top: contextMenuPosition.y,
-                          left: contextMenuPosition.x,
-                        }}
-                        onClick={handleHideContextMenu} // Ẩn context menu khi click ra ngoài
-                      >
-                        <div className="flex p-2 text-red-500 items-center  border-b border-gray-200">
-                          <FaArrowRotateLeft
-                            className="mr-3"
-                            size={18}
-                            color="red"
-                          />
-                          <p>Thu hồi</p>
-                        </div>
-                        <div className="flex p-2 text-red-500 items-center ">
-                          <BsTrash3 className="mr-3" size={20} color="red" />
-                          <p>Xóa chỉ phía tôi</p>
-                        </div>
-                      </div>
-                    )}
                   </div>
+
+                  {contextMenuStates[message._id] && (
+                    <div
+                      className="flex flex-col z-10 fixed top-1/2 transform -translate-x-40 -translate-y-30 w-52  bg-white rounded shadow shadow-gray-300 "
+                      style={{
+                        top: contextMenuPosition.y,
+                        left: contextMenuPosition.x,
+                      }}
+                      key={index}
+                      onClick={handleHideContextMenu} // Ẩn context menu khi click ra ngoài
+                    >
+                      <div
+                        className="flex p-2 text-red-500 items-center  border-b border-gray-200 hover:bg-gray-200"
+                        onClick={() => deleteChat(message._id)}
+                      >
+                        <FaArrowRotateLeft
+                          className="mr-3"
+                          size={18}
+                          color="red"
+                        />
+                        <p>Thu hồi</p>
+                      </div>
+                      <div className="flex p-2 text-red-500 items-center ">
+                        <BsTrash3 className="mr-3" size={20} color="red" />
+                        <p>Xóa chỉ phía tôi</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
               {isFetchingMore && <div>Loading...</div>}
@@ -495,7 +512,7 @@ function PeopleChatComponent({ language, userChat }) {
             <input
               type="file"
               id="fileInput"
-              multiple
+              // multiple
               style={{ display: "none" }}
               onChange={handleUpload}
             />
