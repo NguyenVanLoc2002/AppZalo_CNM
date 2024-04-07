@@ -9,8 +9,6 @@ import useFriend from "../../../hooks/useFriend";
 import { toast } from "react-hot-toast";
 import { useAuthContext } from "../../../contexts/AuthContext";
 function ChatComponents({ language }) {
-  const [isAddFriend, setIsAddFriend] = useState(false);
-  const [isAddGroup, setIsAddGroup] = useState(false);
   const [userChat, setUserChat] = useState(null);
   const {
     friends,
@@ -36,6 +34,11 @@ function ChatComponents({ language }) {
   const [activeButton, setActiveButton] = useState("Tất cả");
   const [recommentFriendList, setRecommentFriendList] = useState();
   const [friendToAdd, setFriendToAdd] = useState("");
+  const [isShowModal, setIsShowModal] = useState("");
+  const [shareMessage, setShareMessage] = useState();
+  const [valueSearch, setValueSearch] = useState("");
+  const [originalFriendList, setOriginalFriendList] = useState([]);
+  console.log("shareMessage", shareMessage);
 
   const visibleFriends = showAllNewFriends
     ? recommentFriendList
@@ -51,6 +54,7 @@ function ChatComponents({ language }) {
 
   useEffect(() => {
     setFriendList(friends);
+    setOriginalFriendList(friends);
     setRecommentFriendList(recommendedFriends);
   }, [friends, recommendedFriends]);
 
@@ -62,6 +66,10 @@ function ChatComponents({ language }) {
           : friend
       )
     );
+  };
+
+  const changeShowModal = (modal) => {
+    setIsShowModal(modal);
   };
 
   const handleSearch = async () => {
@@ -108,6 +116,21 @@ function ChatComponents({ language }) {
     await reloadAuthUser();
   };
 
+  const handleInputChange = (e) => {
+    const searchTerm = e.target.value;
+    console.log("searchTerm", searchTerm);
+    console.log("originalFriendList", originalFriendList);
+    setValueSearch(searchTerm);
+    if (searchTerm.trim() === "") {
+      setFriendList(originalFriendList);
+    } else {
+      const filteredFriends = originalFriendList.filter((friend) =>
+        friend.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFriendList(filteredFriends);
+    }
+  };
+
   const buttons = [
     "Tất cả",
     "Khách hàng",
@@ -124,20 +147,24 @@ function ChatComponents({ language }) {
         <div className="h-screen w-full sm:w-96 bg-white">
           <ListChatComponent
             language={language}
-            isAddFriend={setIsAddFriend}
-            isAddGroup={setIsAddGroup}
             userChat={setUserChat}
+            showModal={changeShowModal}
             friends={friendList}
           />
         </div>
-        <PeopleChatComponent language={language} userChat={userChat} />
-        {isAddFriend && (
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2/5 h-[90%] bg-white rounded-lg shadow-lg ">
+        <PeopleChatComponent
+          language={language}
+          userChat={userChat}
+          showModal={changeShowModal}
+          shareMessage={setShareMessage}
+        />
+        {isShowModal === "addFriend" && (
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/5 h-[90%] bg-white rounded-lg shadow-lg ">
             <div className=" flex items-center justify-between p-4 border-b text-lg font-semibold h-[10%]">
               <p>Thêm bạn </p>
               <button
                 onClick={() => {
-                  setIsAddFriend(false);
+                  setIsShowModal("");
                   setShowAllNewFriends(false);
                   setRecommentFriendList(recommendedFriends);
                   setPhone("");
@@ -160,8 +187,8 @@ function ChatComponents({ language }) {
               <div
                 className={`${
                   isInputFocus === true
-                    ? " w-full flex items-center border-b mr-auto ml-6 border-blue-500 "
-                    : "w-full flex items-center border-b mr-auto ml-6 "
+                    ? "flex border-b mr-auto ml-6 w-full border-blue-500  "
+                    : "flex  border-b mr-auto ml-6 w-full "
                 }`}
               >
                 <input
@@ -254,7 +281,7 @@ function ChatComponents({ language }) {
               <div className="flex ml-auto mb-auto mt-3">
                 <button
                   className="rounded-lg bg-gray-300 p-3 pl-6 pr-6 mr-3 hover:bg-gray-500"
-                  onClick={() => setIsAddFriend(false)}
+                  onClick={() => setIsShowModal("")}
                 >
                   <p className="text-lg font-semibold">
                     {language == "vi" ? "Hủy" : "Cancel"}
@@ -272,13 +299,13 @@ function ChatComponents({ language }) {
             </div>
           </div>
         )}
-        {isAddGroup && (
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2/5 h-[90%] bg-white rounded-lg shadow-lg ">
+        {isShowModal === "addGroup" && (
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/5 h-[90%] bg-white rounded-lg shadow-lg ">
             <div className=" flex items-center justify-between p-4 border-b text-lg font-semibold h-[10%]">
               <p>Tạo nhóm</p>
               <button
                 onClick={() => {
-                  setIsAddGroup(false);
+                  setIsShowModal("");
                   setShowAllNewFriends(false);
                 }}
               >
@@ -354,7 +381,7 @@ function ChatComponents({ language }) {
                     />
                     <div className="bg-blue w-10 ">
                       <img
-                        className="rounded-full"
+                        className="rounded-full w-10 h-10"
                         src={friend.avatar}
                         alt="cloud"
                       />
@@ -371,7 +398,7 @@ function ChatComponents({ language }) {
               <div className="flex ml-auto mb-auto mt-1">
                 <button
                   className="rounded-lg bg-gray-300 p-3 pl-6 pr-6 mr-3 hover:bg-gray-500"
-                  onClick={() => setIsAddGroup(false)}
+                  onClick={() => setIsShowModal("")}
                 >
                   <p className="text-lg font-semibold">
                     {language == "vi" ? "Hủy" : "Cancel"}
@@ -383,6 +410,140 @@ function ChatComponents({ language }) {
                 >
                   <p className="text-lg font-semibold">
                     {language == "vi" ? "Tìm Kiếm" : "Search"}
+                  </p>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {isShowModal === "share" && (
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/5 h-[90%] bg-white rounded-lg shadow-lg ">
+            <div className=" flex items-center justify-between p-4 border-b text-lg font-semibold h-[10%]">
+              <p>Chia sẻ</p>
+              <button
+                onClick={() => {
+                  setIsShowModal("");
+                  setShowAllNewFriends(false);
+                }}
+              >
+                x
+              </button>
+            </div>
+
+            <div className=" flex items-center justify-between p-4 h-[10%]">
+              <div className="flex  border-b mr-auto ml-6 w-full justify-between items-center">
+                <HiMagnifyingGlass size={18} className="mx-3" />
+                <input
+                  type="text"
+                  className="h-9 w-full outline-none"
+                  placeholder={
+                    language == "vi" ? "Tìm Kiếm bạn bè" : "Search for friends"
+                  }
+                  value={valueSearch}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+
+            <div className=" h-[50%] flex-col pt-2 p-4 items-center overflow-y-auto">
+              <p className="font-semibold">
+                {language == "vi" ? "Danh sách bạn bè" : "List of friends"}
+              </p>
+              <div className="flex-col max-h-44 mt-2">
+                {friendList.map((friend) => (
+                  <div
+                    key={friend.id}
+                    className="flex items-center  justify-between hover:bg-gray-200 transition-colors duration-300 ease-in-out p-2"
+                  >
+                    <div className="bg-blue w-10 ">
+                      <img
+                        className="rounded-full w-10 h-10"
+                        src={friend.avatar}
+                        alt="cloud"
+                      />
+                    </div>
+                    <div className="flex mr-auto ml-2 p-1">
+                      <p className="font-semibold ">{friend.name}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex flex-col pl-4 pr-4 pb-4 overflow-x-auto h-[20%] border w-full rounded-lg">
+              <h1 className="font-bold w-full border-b py-2">
+                {language == "vi"
+                  ? "Nội dung chia sẻ:"
+                  : "Content to be shared :"}
+              </h1>
+
+              {shareMessage.contents[0].type === "text" && (
+                <p className="text-base font-semibold">
+                  {shareMessage.contents[0].data}
+                </p>
+              )}
+              {shareMessage.contents[0].type === "image" && (
+                <div className="p-3 flex justify-center items-center">
+                  <img
+                    src={shareMessage.contents[0].data}
+                    alt="share"
+                    className="w-full h-full rounded-sm object-cover"
+                  />
+                </div>
+              )}
+
+              {shareMessage.contents[0].type === "video" && (
+                <div>
+                  <video
+                    controls
+                    className="pr-2 pb-2"
+                    style={{ width: "auto", height: "250px" }}
+                  >
+                    <source
+                      src={shareMessage.contents[0].data}
+                      type="video/mp4"
+                    />
+                    <source
+                      src={shareMessage.contents[0].data}
+                      type="video/webm"
+                    />
+                    <source
+                      src={shareMessage.contents[0].data}
+                      type="video/ogg"
+                    />
+                    <source
+                      src={shareMessage.contents[0].data}
+                      type="video/x-matroska"
+                    />
+                    <source
+                      src={shareMessage.contents[0].data}
+                      type="video/x-msvideo"
+                    />
+                    <source
+                      src={shareMessage.contents[0].data}
+                      type="video/quicktime"
+                    />
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center h-[10%] mt-3">
+              <div className="flex ml-auto mb-auto mt-1">
+                <button
+                  className="rounded-lg bg-gray-300 p-3 pl-6 pr-6 mr-3 hover:bg-gray-500"
+                  onClick={() => setIsShowModal("")}
+                >
+                  <p className="text-lg font-semibold">
+                    {language == "vi" ? "Hủy" : "Cancel"}
+                  </p>
+                </button>
+                <button
+                  className="rounded-lg bg-primary p-3 pl-6 pr-6 mr-3 hover:bg-primaryHover"
+                  onClick={handleSearch}
+                >
+                  <p className="text-lg text-white font-semibold">
+                    {language == "vi" ? "Chia sẻ" : "Share"}
                   </p>
                 </button>
               </div>
