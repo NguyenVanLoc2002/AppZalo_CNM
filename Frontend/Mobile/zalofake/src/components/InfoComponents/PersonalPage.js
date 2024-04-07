@@ -11,7 +11,6 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
 import { useAuthContext } from "../../contexts/AuthContext";
@@ -23,7 +22,6 @@ const PersonalPage = ({ navigation }) => {
   const [modalVisibleBia, setModalVisibleBia] = useState(false);
   const [selectedImageBia, setSelectedImageBia] = useState();
   const [status, setStatus] = useState("");
-
 
   useEffect(() => {
     navigation.setOptions({
@@ -77,8 +75,7 @@ const PersonalPage = ({ navigation }) => {
 
     if (!pickerResult.canceled) {
       setSelectedImage(pickerResult.assets[0].uri);
-      setSelectedImageBia(pickerResult.assets[0].uri)
-
+      setSelectedImageBia(pickerResult.assets[0].uri);
     } else {
       console.log("No image selected");
     }
@@ -92,7 +89,6 @@ const PersonalPage = ({ navigation }) => {
         type: "image/jpeg",
         name: "avatar.jpg",
       });
-      console.log(formData);
       const response = await axiosInstance.post(
         "/users/upload-avatar",
         formData,
@@ -125,8 +121,10 @@ const PersonalPage = ({ navigation }) => {
   };
 
   const openModal = () => {
-    setSelectedImage(authUser?.profile?.avatar?.url ||
-      "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",)
+    setSelectedImage(
+      authUser?.profile?.avatar?.url ||
+        "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png"
+    );
     setModalVisible(true);
   };
 
@@ -135,8 +133,10 @@ const PersonalPage = ({ navigation }) => {
   };
 
   const openModalBia = () => {
-    setModalVisibleBia(authUser?.profile?.background?.url ||
-      "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",)
+    setModalVisibleBia(
+      authUser?.profile?.background?.url ||
+        "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png"
+    );
     setModalVisibleBia(true);
   };
 
@@ -152,7 +152,6 @@ const PersonalPage = ({ navigation }) => {
         type: "image/jpeg",
         name: "background.jpg",
       });
-      console.log(formData);
       const response = await axiosInstance.post(
         "/users/upload-background",
         formData,
@@ -187,15 +186,18 @@ const PersonalPage = ({ navigation }) => {
   return (
     <ScrollView style={{ backgroundColor: "#f1f2f6", flex: 1 }}>
       <View style={{ alignItems: "center" }}>
-        <Pressable onPress={openModalBia} style={{ width: '100%', height: 200 }}>
-          
-            <Image
-              source={{
-                uri: authUser?.profile?.background?.url ||
-                  "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
-              }}
-              style={{ width: '100%', height: 200 }}
-            />
+        <Pressable
+          onPress={openModalBia}
+          style={{ width: "100%", height: 200 }}
+        >
+          <Image
+            source={{
+              uri:
+                authUser?.profile?.background?.url ||
+                "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+            }}
+            style={{ width: "100%", height: 200 }}
+          />
         </Pressable>
         <Pressable onPress={openModal}>
           <Image
@@ -426,11 +428,10 @@ const PersonalPage = ({ navigation }) => {
           >
             <Image
               source={{
-
-                uri: selectedImage ||
+                uri:
+                  selectedImage ||
                   authUser?.profile?.avatar?.url ||
                   "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
-
               }}
               style={{ width: 200, height: 200, borderRadius: 100 }}
             />
@@ -486,12 +487,11 @@ const PersonalPage = ({ navigation }) => {
           >
             <Image
               source={{
-
-                uri: selectedImageBia || authUser?.profile?.background?.url ||
+                uri:
+                  selectedImageBia ||
+                  authUser?.profile?.background?.url ||
                   "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
-
               }}
-
               style={{ width: 200, height: 200, borderRadius: 20 }}
             />
             <Pressable onPress={openImagePicker}>
@@ -525,7 +525,6 @@ const PersonalPage = ({ navigation }) => {
           </View>
         </View>
       </Modal>
-
     </ScrollView>
   );
 };
