@@ -18,11 +18,7 @@ import {
   IoWarningOutline,
 } from "react-icons/io5";
 import { LuPencilLine, LuSticker } from "react-icons/lu";
-import {
-  MdFormatColorText,
-  MdOutlineContentCopy,
-  MdPhone,
-} from "react-icons/md";
+import { MdFormatColorText, MdPhone } from "react-icons/md";
 import {
   PiAlarmThin,
   PiBellRingingThin,
@@ -40,6 +36,7 @@ import { TiPinOutline } from "react-icons/ti";
 import axiosInstance from "../../../api/axiosInstance";
 import { format } from "date-fns";
 import { useSocketContext } from "../../../contexts/SocketContext";
+import toast from "react-hot-toast";
 
 function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
   const [content, setContent] = useState("");
@@ -78,7 +75,20 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
     if (userChat && userChat.id) {
       fetchMessageHistory(userChat.id);
     }
-  }, [userChat]);
+
+    if (socket) {
+      socket.on("new_message", ({ message }) => {
+        setMessages((prevMessages) => [message, ...prevMessages]);
+      });
+      socket.on("delete_message", ({ chatId }) => {
+        fetchMessageHistory(userChat.id);
+      });
+      return () => {
+        socket.off("new_message");
+        socket.off("delete_message");
+      };
+    }
+  }, [userChat || socket]);
 
   const handleScroll = async (event) => {
     const container = event.target;
@@ -115,19 +125,6 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
     }
   };
 
-  // Nhận tin nhắn mới từ socket
-  useEffect(() => {
-    if (socket) {
-      socket.on("new_message", ({ message }) => {
-        setMessages((prevMessages) => [message, ...prevMessages]);
-        console.log("new_message: ", message);
-      });
-      return () => {
-        socket.off("new_message");
-      };
-    }
-  }, [socket]);
-
   const scrollToBottom = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -143,8 +140,6 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
   const sendMessage = async (data) => {
     try {
       if (!data || data.trim === "") return;
-
-      console.log("data: ", data);
       if (userChat && userChat.id) {
         const response = await axiosInstance.post(
           `chats/${userChat.id}/` +
@@ -240,7 +235,6 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
 
   const deleteChat = async (chatId) => {
     try {
-      console.log(chatId);
       const response = await axiosInstance.post(`chats/${chatId}/delete`);
       if (response.status === 200) {
         const updatedMessagesResponse = await axiosInstance.get(
@@ -251,14 +245,25 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
       }
     } catch (error) {
       console.error("Lỗi khi xóa tin nhắn:", error);
-      throw error; // Ném lỗi để xử lý ở nơi gọi hàm này nếu cần
+      if (error.status === 403) {
+        toast.error(
+          language === "vi"
+            ? "Bạn không được phép xóa tin nhắn này"
+            : "You are not authorized to delete this message"
+        );
+      }
+
+      throw error;
     }
   };
 
   return (
     <>
       {userChat && (
-        <div className=" bg-white h-screen sm:w-[calc(100%-24rem)] w-0 border-r overflow-auto" onClick={handleHideContextMenu}>
+        <div
+          className=" bg-white h-screen sm:w-[calc(100%-24rem)] w-0 border-r overflow-auto"
+          onClick={handleHideContextMenu}
+        >
           <div className="h-[10vh] bg-white flex justify-between items-center border-b">
             <div className="flex items-center w-14 h-14 mr-3 ">
               <img
