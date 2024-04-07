@@ -16,7 +16,7 @@ function Sidebar({ changeTab, changeMenu }) {
     const user = JSON.parse(localStorage.getItem("authUser"));
     const avatarUrl = user?.profile?.avatar?.url ?? "/zalo.svg";
     setAvtUrl(avatarUrl);
-  }, [localStorage.getItem("authUser")]);
+  }, []);
 
   return (
     <div className="bg-[#0091ff] h-full flex flex-col items-center justify-between">

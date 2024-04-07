@@ -94,7 +94,6 @@ function PeopleChatComponent({ language, userChat }) {
       console.error("Error sending message:", error);
     }
   };
-  console.log('messages: ',messages);
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
