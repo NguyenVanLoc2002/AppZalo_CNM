@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AiFillLike, AiOutlineUsergroupAdd } from "react-icons/ai";
 import { BiLockOpen, BiScreenshot, BiSmile } from "react-icons/bi";
-import { BsLayoutSidebarReverse, BsThreeDots } from "react-icons/bs";
+import { BsLayoutSidebarReverse, BsThreeDots, BsTrash3 } from "react-icons/bs";
 import { CiCircleQuestion } from "react-icons/ci";
 import {
   FaAddressCard,
@@ -18,7 +18,11 @@ import {
   IoWarningOutline,
 } from "react-icons/io5";
 import { LuPencilLine, LuSticker } from "react-icons/lu";
-import { MdFormatColorText, MdPhone } from "react-icons/md";
+import {
+  MdFormatColorText,
+  MdOutlineContentCopy,
+  MdPhone,
+} from "react-icons/md";
 import {
   PiAlarmThin,
   PiBellRingingThin,
@@ -27,9 +31,12 @@ import {
 } from "react-icons/pi";
 import { RiAlarmLine, RiBatteryChargeLine } from "react-icons/ri";
 import { TfiAlarmClock } from "react-icons/tfi";
+import { FaArrowRotateLeft } from "react-icons/fa6";
 import { TiPinOutline } from "react-icons/ti";
 import axiosInstance from "../../../api/axiosInstance";
 import { format } from "date-fns";
+import socketIOClient from "socket.io-client";
+import { useSocketContext } from "../../../contexts/SocketContext";
 
 function PeopleChatComponent({ language, userChat }) {
   const [content, setContent] = useState("");
@@ -37,6 +44,10 @@ function PeopleChatComponent({ language, userChat }) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef(null);
+  const { socket } = useSocketContext();
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [isAddingMessages, setIsAddingMessages] = useState(false); //Flag để scroll bottom
+  const [showContextMenu, setShowContextMenu] = useState(false);
 
   // Đảo ngược mảng tin nhắn và lưu vào biến mới
   const reversedMessages = [...messages].reverse();
@@ -67,28 +78,90 @@ function PeopleChatComponent({ language, userChat }) {
     }
   }, [userChat]); //Mỗi lần thay đổi người chat thì sẽ được gọi lại để lấy lịch sử của người dùng đó
 
+  //Load thêm tin nhắn khi thanh scroll ở trên cùng
+  const handleScroll = async (event) => {
+    const container = event.target;
+    // Lưu lại vị trí cuối cùng của thanh cuộn
+    const lastScrollPosition = container.scrollHeight - container.clientHeight;
+    if (container.scrollTop === 0 && !isFetchingMore) {
+      setIsFetchingMore(true);
+      try {
+        const lastMessage = messages[messages.length - 1];
+        const firstMessageInChat = await axiosInstance(
+          `chats/${userChat.id}/getFirstMessage`
+        );
+
+        if (lastMessage.timestamp !== firstMessageInChat.data.data.timestamp) {
+          setIsAddingMessages(true);
+          const response = await axiosInstance(
+            `chats/${userChat.id}?lastTimestamp=${lastMessage.timestamp}`
+          );
+          const { data } = response;
+          if (data.success) {
+            setMessages((prevMessages) => [...prevMessages, ...data.data]);
+            container.scrollTop = lastScrollPosition;
+          } else {
+            throw new Error(
+              data.data || "Failed to fetch more message history"
+            );
+          }
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsFetchingMore(false);
+
+        // setIsAddingMessages(false);
+      }
+    }
+  };
+
+  // Nhận tin nhắn mới từ socket
+  // useEffect(() => {
+  //   socket.on("new_message", ({ message }) => {
+  //     setMessages((prevMessages) => [message, ...prevMessages]);
+  //   });
+  //   console.log(`New message`);
+  //   return () => {
+  //     socket.off("new_message");
+  //   };
+  // }, []);
+
   const scrollToBottom = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   };
   useEffect(scrollToBottom, []); // Chạy khi component được hiển thị
-  useEffect(scrollToBottom, [messages]); // Chạy lại useEffect khi messages thay đổi
+  useEffect(() => {
+    if (!isAddingMessages) {
+      scrollToBottom();
+    }
+  }, [messages, isAddingMessages]); // Chạy khi message được cập nhật
 
-  const sendMessage = async () => {
+  const sendMessage = async (data) => {
     try {
-      if (content.trim() === "") {
-        return;
-      }
+      if (!data || data.trim() === "") return;
+      console.log("data: ", data);
       if (userChat && userChat.id) {
         const response = await axiosInstance.post(
-          `chats/${userChat.id}/sendMessage`,
+          `chats/${userChat.id}/` +
+            (typeof data === "string"
+              ? "sendMessage"
+              : data.type.startsWith("video/")
+              ? "sendVideo"
+              : "sendMessage"),
+          { data: data },
           {
-            data: content,
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
           }
         );
-    
+        console.log("response 1: ", response.data.data);
+        setMessages((prevMessages) => [response.data.data, ...prevMessages]);
         setContent("");
+        setIsAddingMessages(false);
       }
     } catch (error) {
       console.error("Error sending message:", error);
@@ -97,7 +170,7 @@ function PeopleChatComponent({ language, userChat }) {
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
-      sendMessage();
+      sendMessage(content);
     }
   };
 
@@ -119,6 +192,41 @@ function PeopleChatComponent({ language, userChat }) {
     const imageWidth = `calc(100%/${imagesPerRow})`;
     const imageHeight = "auto";
     return { imageWidth, imageHeight };
+  };
+
+  const handleSelectImageClick = () => {
+    const fileInput = document.getElementById("fileInput");
+    fileInput.click();
+  };
+
+  const handleUpload = async (event) => {
+    const file = event.target.files[0];
+    console.log("file1: ", file);
+    // Xử lý tệp ảnh và video ở đây
+    try {
+      if (userChat) {
+        await sendMessage(file);
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+
+  const [contextMenuPosition, setContextMenuPosition] = useState({
+    x: 0,
+    y: 0,
+  });
+
+  // Xử lý khi click chuột phải
+  const handleContextMenu = (event) => {
+    event.preventDefault(); // Ngăn chặn hiển thị menu chuột phải mặc định
+    setShowContextMenu(true);
+    setContextMenuPosition({ x: event.clientX, y: event.clientY });
+  };
+
+  // Ẩn context menu khi click ra ngoài hoặc click chuột trái
+  const handleHideContextMenu = () => {
+    setShowContextMenu(false);
   };
 
   return (
@@ -193,6 +301,7 @@ function PeopleChatComponent({ language, userChat }) {
             <div
               className="flex flex-col p-2 h-[75vh] bg-slate-50 overflow-y-auto"
               ref={scrollRef}
+              onScroll={handleScroll}
             >
               {reversedMessages.map((message, index) => (
                 <div
@@ -211,7 +320,7 @@ function PeopleChatComponent({ language, userChat }) {
                     </div>
                   )}
 
-                  <div className="flex chat-bubble bg-white ">
+                  <div className="flex chat-bubble bg-white">
                     {message.contents.map((content, contentIndex) => {
                       const maxImagesPerRow = 3;
                       const imagesCount = message.contents.filter(
@@ -224,50 +333,100 @@ function PeopleChatComponent({ language, userChat }) {
                       const imageWidth = `calc(100% / ${imagesPerRow})`;
                       const imageHeight = "auto";
 
-                      return content.type === "text" ? (
-                        <div key={contentIndex} className="flex flex-col">
-                          <span className="text-base text-black">
-                            {content.data}
-                          </span>
-                          <time className="text-xs opacity-50 text-stone-500">
-                            {isoStringToTime(message.timestamp)}
-                          </time>
-                        </div>
-                      ) : content.type === "image" ? (
-                        <img
+                      return (
+                        <div
                           key={contentIndex}
-                          src={content.data}
-                          alt="image"
-                          className="pr-2 pb-2"
-                          style={{ width: imageWidth, height: imageHeight }}
-                        />
-                      ) : (
-                        <div key={contentIndex}>
-                          <video
-                            controls
-                            className="pr-2 pb-2"
-                            style={{ width: "auto", height: "250px" }}
-                          >
-                            <source src={content.data} type="video/mp4" />
-                            <source src={content.data} type="video/webm" />
-                            <source src={content.data} type="video/ogg" />
-                            <source
+                          className="message-container"
+                          onContextMenu={handleContextMenu}
+                        >
+                          {/* Render nội dung của message */}
+                          {content.type === "text" ? (
+                            <div className="flex flex-col">
+                              <span className="text-base text-black">
+                                {content.data}
+                              </span>
+                              <time className="text-xs opacity-50 text-stone-500">
+                                {isoStringToTime(message.timestamp)}
+                              </time>
+                            </div>
+                          ) : content.type === "image" ? (
+                            <img
                               src={content.data}
-                              type="video/x-matroska"
+                              alt="image"
+                              className="pr-2 pb-2"
+                              style={{
+                                width: imagesCount === 1 ? "300px" : imageWidth,
+                                height: imageHeight,
+                              }}
                             />
-                            <source src={content.data} type="video/x-msvideo" />
-                            <source src={content.data} type="video/quicktime" />
-                            Your browser does not support the video tag.
-                          </video>
-                          <time className="text-xs opacity-50 text-stone-500">
-                            {isoStringToTime(message.timestamp)}
-                          </time>
+                          ) : (
+                            <div>
+                              <video
+                                controls
+                                className="pr-2 pb-2"
+                                style={{ width: "auto", height: "250px" }}
+                              >
+                                <source src={content.data} type="video/mp4" />
+                                <source src={content.data} type="video/webm" />
+                                <source src={content.data} type="video/ogg" />
+                                <source
+                                  src={content.data}
+                                  type="video/x-matroska"
+                                />
+                                <source
+                                  src={content.data}
+                                  type="video/x-msvideo"
+                                />
+                                <source
+                                  src={content.data}
+                                  type="video/quicktime"
+                                />
+                                Your browser does not support the video tag.
+                              </video>
+                              <time className="text-xs opacity-50 text-stone-500">
+                                {isoStringToTime(message.timestamp)}
+                              </time>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
+
+                    {/* Overlay để bắt sự kiện click */}
+                    {showContextMenu && (
+                      <div
+                        className="fixed top-0 left-0 w-full h-full bg-transparent"
+                        onClick={handleHideContextMenu}
+                      />
+                    )}
+
+                    {showContextMenu && (
+                      <div
+                        className="flex flex-col fixed top-1/2 transform -translate-x-40 -translate-y-30 w-52  bg-white rounded shadow shadow-gray-300"
+                        style={{
+                          top: contextMenuPosition.y,
+                          left: contextMenuPosition.x,
+                        }}
+                        onClick={handleHideContextMenu} // Ẩn context menu khi click ra ngoài
+                      >
+                        <div className="flex p-2 text-red-500 items-center  border-b border-gray-200">
+                          <FaArrowRotateLeft
+                            className="mr-3"
+                            size={18}
+                            color="red"
+                          />
+                          <p>Thu hồi</p>
+                        </div>
+                        <div className="flex p-2 text-red-500 items-center ">
+                          <BsTrash3 className="mr-3" size={20} color="red" />
+                          <p>Xóa chỉ phía tôi</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
+              {isFetchingMore && <div>Loading...</div>}
             </div>
           )}
 
@@ -276,7 +435,10 @@ function PeopleChatComponent({ language, userChat }) {
               <button className="hover:bg-gray-300 p-2 rounded">
                 <LuSticker size={20} />
               </button>
-              <button className="hover:bg-gray-300 p-2 rounded">
+              <button
+                className="hover:bg-gray-300 p-2 rounded"
+                onClick={handleSelectImageClick}
+              >
                 <IoImageOutline size={20} />
               </button>
               <button className="hover:bg-gray-300 p-2 rounded">
@@ -329,6 +491,13 @@ function PeopleChatComponent({ language, userChat }) {
                 </button>
               </div>
             </div>
+            <input
+              type="file"
+              id="fileInput"
+              multiple
+              style={{ display: "none" }}
+              onChange={handleUpload}
+            />
           </div>
         </div>
       )}

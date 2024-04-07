@@ -53,7 +53,7 @@ function ListChatComponent({
       setFriendList(filteredFriends);
     }
   };
-
+ 
   return (
     <>
       <div className="border-r">
