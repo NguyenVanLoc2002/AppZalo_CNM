@@ -1,20 +1,14 @@
 import React, { useEffect } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  Pressable,
-} from "react-native";
+import { View, Text, TextInput, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 const Message = ({ navigation, route }) => {
-  const { user } = route.params;
+  const { friend } = route.params;
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <View style={{ flexDirection: "row" }}>
-          <Pressable>
+          <Pressable onPress={() => console.log("Pressed call")}>
             <Ionicons
               name="call-outline"
               size={27}
@@ -29,7 +23,7 @@ const Message = ({ navigation, route }) => {
             style={{ padding: 5, marginRight: 10 }}
           />
           <Pressable
-            onPress={() => navigation.navigate("MessageSettings", { user })}
+            onPress={() => navigation.navigate("MessageSettings", { friend })}
           >
             <Ionicons
               name="list-outline"
@@ -42,7 +36,7 @@ const Message = ({ navigation, route }) => {
       ),
       headerTitle: () => (
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text style={{ fontSize: 20 }}>{user.ten}</Text>
+          <Text style={{ fontSize: 20 }}>{friend.profile.name}</Text>
         </View>
       ),
       headerStyle: {
@@ -55,7 +49,7 @@ const Message = ({ navigation, route }) => {
         fontSize: 20,
       },
     });
-  }, [navigation]);
+  }, [navigation, friend]);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#E5E9EB" }}>
@@ -72,9 +66,9 @@ const Message = ({ navigation, route }) => {
           backgroundColor: "white",
         }}
       >
-        <TouchableOpacity onPress={() => console.log("Pressed smiley")}>
+        <Pressable onPress={() => console.log("Pressed smiley")}>
           <Ionicons name="happy-outline" size={30} color="black" />
-        </TouchableOpacity>
+        </Pressable>
 
         <TextInput
           style={{
@@ -89,27 +83,27 @@ const Message = ({ navigation, route }) => {
           placeholder="Tin nhắn"
         />
 
-        <TouchableOpacity onPress={() => console.log("Pressed menu")}>
+        <Pressable onPress={() => console.log("Pressed menu")}>
           <Ionicons
             name="ellipsis-horizontal-outline"
             size={30}
             color="black"
             style={{ marginRight: 10 }}
           />
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity onPress={() => console.log("Pressed microphone")}>
+        <Pressable onPress={() => console.log("Pressed microphone")}>
           <Ionicons
             name="mic-outline"
             size={30}
             color="black"
             style={{ marginRight: 10 }}
           />
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity onPress={() => console.log("Pressed image")}>
+        <Pressable onPress={() => console.log("Pressed image")}>
           <Ionicons name="image-outline" size={30} color="black" style={{}} />
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </View>
   );
