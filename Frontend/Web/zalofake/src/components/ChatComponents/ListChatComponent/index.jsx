@@ -5,12 +5,10 @@ import { CiSearch } from "react-icons/ci";
 import { FaSortDown } from "react-icons/fa";
 import { IoIosMore } from "react-icons/io";
 
-function ListChatComponent({
-  language,
-  showModal,
-  userChat,
-  friends,
-}) {
+import useConversation from "../../../hooks/useConversation";
+import { useAuthContext } from "../../../contexts/AuthContext";
+
+function ListChatComponent({ language, showModal, userChat, friends }) {
   const [valueSearch, setValueSearch] = useState("");
   const [isHovered, setIsHovered] = useState(false);
   const [friendList, setFriendList] = useState([]);
@@ -20,11 +18,36 @@ function ListChatComponent({
   const [originalFriendList, setOriginalFriendList] = useState([]);
   const [listChatCurrent, setListChatCurrent] = useState([]);
   const [isChatSelected, setIsChatSelected] = useState("");
+  const { conversations, loading, getConversations } = useConversation();
+  const { authUser } = useAuthContext();
 
   useEffect(() => {
+    getConversations();
     setOriginalFriendList(friends);
     setFriendList(friends);
   }, [friends]);
+
+  useEffect(() => {
+    const listChat = conversations.map((conversation) => {
+      const friend = conversation.participants.find(
+        (participant) => participant.phone !== authUser.phone
+      );
+      return {
+        id: friend._id,
+        name: friend.profile.name,
+        avatar: friend.profile.avatar.url || "/zalo.svg",
+        unread: conversation.messages.some(
+          (message) =>
+            message.receiver === authUser.phone && !message.isRead
+        ),
+      }
+    });
+    setListChatCurrent(listChat);
+  }, [conversations]);
+
+  conversations.map((conversation) => {
+    console.log("conversation: ", conversation);
+  });
 
   const changeTab = (tab) => {
     setActiveTab(tab);
@@ -52,7 +75,7 @@ function ListChatComponent({
       setFriendList(filteredFriends);
     }
   };
- 
+
   return (
     <>
       <div className="border-r">
