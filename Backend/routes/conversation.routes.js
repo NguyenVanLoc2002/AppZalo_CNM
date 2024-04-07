@@ -1,11 +1,16 @@
 const express = require("express");
-const { createConversation, deleteConversation } = require("../controllers/conversation.controller");
+const {
+  createConversation,
+  deleteConversation,
+  getConversation,
+  getConversations,
+} = require("../controllers/conversation.controller");
 const router = express.Router();
 
-// Tạo Cuộc Trò Chuyện Mới
-router.post("/newConversation", createConversation);
+router.get("/get/:conversationId", getConversation);
+router.get("/getConversations", getConversations);
 
-// Xóa Cuộc Trò Chuyện theo _id của conversation
-router.post("/deleted/:conversationId", deleteConversation)
+router.post("/newConversation", createConversation);
+router.post("/deleted/:conversationId", deleteConversation);
 
 module.exports = router;
