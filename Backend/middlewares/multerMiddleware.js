@@ -8,7 +8,7 @@ const uploadImage = new CloudinaryStorage({
     folder: "Zalo_Fake_App",
     allowed_formats: ["jpg", "png", "jpeg"],
     public_id: (req, file) => {
-      return `zaloFake_${file.fieldname}_${Date.now()}`;
+      return `zaloFake_${file.fieldname}_${Date.now()}_${req.user.user_id}`;
     },
   },
 });
@@ -20,7 +20,7 @@ const uploadVideo = new CloudinaryStorage({
     allowed_formats: ["mp4","mkv","webm","ogg","avi","mov"],
     resource_type: "video",
     public_id: (req, file) => {
-      return `zaloFake_${file.fieldname}_${Date.now()}`;
+      return `zaloFake_${file.fieldname}_${Date.now()}_${req.user.user_id}`;
     },
   },
 });
