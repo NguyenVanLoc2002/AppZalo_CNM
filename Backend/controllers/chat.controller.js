@@ -5,8 +5,6 @@ const { io, getReciverSocketId } = require("../socket/socket.io.js");
 //Gửi tin nhắn mới cho một người dùng cụ thể.
 exports.sendMessage = async (req, resp) => {
   try {
-    console.log("req.files: ", req.files);
-    console.log("req.body: ", req.body);
     const senderId = req.user.user_id; // Lấy userId của người gửi từ thông tin đăng nhập (đã được đặt trong middleware auth)
     console.log("senderId: ", senderId);
     const receiverId = req.params.userId;
@@ -42,9 +40,7 @@ exports.sendMessage = async (req, resp) => {
 
     //Gọi socket và xử lý
     try {
-      console.log("receiverId: ", receiverId);
       const receiverSocketId = await getReciverSocketId(receiverId);
-      console.log("receiverSocketId: ", receiverSocketId);
       if (receiverSocketId) {
         io.to(receiverSocketId.socket_id).emit("new_message", {
           message,
@@ -149,34 +145,42 @@ function extractPublicId(url) {
 // Xóa tin nhắn khỏi cơ sở dữ liệu
 exports.deleteChat = async (req, res) => {
   const { chatId } = req.params;
+
   try {
     const chat = await Chat.findById(chatId);
 
     if (!chat) {
       return res.status(404).json({ message: "Message not found !" });
     }
+    if (chat.senderId.toString() !== req.user.user_id) {
+      return res
+        .status(403)
+        .json({ message: "You are not authorized to delete this message" });
+    }
 
-    console.log("chat:", chat);
     // Lấy danh sách các tệp đa phương tiện từ tin nhắn đã xóa
     const mediaFiles = chat.contents.filter(
       (content) => content.type === "image" || content.type === "video"
     );
-    console.log("mediaFiles: ", mediaFiles);
-    // Xóa các tệp đa phương tiện từ Cloudinary
     await Promise.all(
       mediaFiles.map(async (media) => {
         const publicId = extractPublicId(media.data);
-        console.log("publicId: ", publicId);
-       try {
-        await cloudinary.uploader.destroy(publicId);
-       } catch (error) {
-        console.log("Error deleting media in cloudinary:", error);
-       }
+        try {
+          await cloudinary.uploader.destroy(publicId);
+        } catch (error) {
+          console.log("Error deleting media in cloudinary:", error);
+        }
       })
     );
-
     await Chat.findByIdAndDelete(chatId);
-    
+
+    const receiverSocketId = await getReciverSocketId(chat.receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId.socket_id).emit("delete_message", {
+        chatId,
+      });
+    }
+
     res.status(200).json({ message: "Success deleted" });
   } catch (error) {
     console.error("Error deleting message:", error);
