@@ -1,5 +1,6 @@
 /* eslint-disable react/prop-types */
 import { createContext, useContext, useState, useEffect } from "react";
+import axiosInstance from "../api/axiosInstance";
 
 const AuthContext = createContext();
 
@@ -21,6 +22,7 @@ export const AuthContextProvider = ({ children }) => {
   useEffect(() => {
     if (authUser) {
       localStorage.setItem("authUser", JSON.stringify(authUser));
+      console.log("Resave authUser : ", authUser);
     } else {
       localStorage.removeItem("authUser");
     }
@@ -36,6 +38,19 @@ export const AuthContextProvider = ({ children }) => {
     }
   }, [authUser, accessToken, refreshToken]);
 
+  const reloadAuthUser = async () => {
+    try {
+      const response = await axiosInstance.get("users/get/me");
+      if (response.status === 200) {
+        setAuthUser(response.data.user);
+        console.log("Reload authUser : ", response.data.user);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to get user information");
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -45,6 +60,7 @@ export const AuthContextProvider = ({ children }) => {
         setAccessToken,
         refreshToken,
         setRefreshToken,
+        reloadAuthUser,
       }}
     >
       {children}

@@ -201,7 +201,7 @@ function MenuComponent({
     <>
       <div className="h-[170px] w-[300px] bg-white rounded shadow-2xl border absolute top-10 left-0 z-40 grid grid-rows-4">
         <div className="row-span-1">
-          <p className="font-bold ml-2 p-3">{user?.profile.name}</p>
+          <p className="font-bold ml-2 p-3">{user?.profile?.name}</p>
           <hr />
         </div>
         <div className="row-span-2">
