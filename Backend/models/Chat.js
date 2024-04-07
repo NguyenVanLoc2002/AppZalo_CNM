@@ -28,15 +28,22 @@ const chatSchema = new mongoose.Schema({
 chatSchema.post("save", async function (chat, next) {
   try {
     const Conversation = mongoose.model("Conversation");
+    console.log("chat.senderId: ",chat.senderId);
+    console.log("chat.receiverId: ",chat.receiverId);
     const conversation = await Conversation.findOne({
       participants: { $all: [chat.senderId, chat.receiverId] },
     });
+    console.log("conversation: ", conversation);
     if (!conversation) {
       const newConversation = new Conversation({
         participants: [chat.senderId, chat.receiverId],
         messages: [chat._id],
       });
-      await newConversation.save();
+      try {
+        await newConversation.save();
+      } catch (error) {
+        console.log("Lỗi chà bá: ", error);
+      }
     } else {
       conversation.messages.push(chat._id);
       await conversation.save();
