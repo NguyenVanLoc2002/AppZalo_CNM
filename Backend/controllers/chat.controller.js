@@ -163,17 +163,19 @@ exports.deleteChat = async (req, res) => {
     );
     console.log("mediaFiles: ", mediaFiles);
     // Xóa các tệp đa phương tiện từ Cloudinary
-    await Promise.all(
-      mediaFiles.map(async (media) => {
-        const publicId = extractPublicId(media.data);
-        console.log("publicId: ", publicId);
-       try {
-        await cloudinary.uploader.destroy(publicId);
-       } catch (error) {
-        console.log("Error deleting media in cloudinary:", error);
-       }
-      })
-    );
+    if (mediaFiles) {
+      await Promise.all(
+        mediaFiles.map(async (media) => {
+          const publicId = extractPublicId(media.data);
+          console.log("publicId: ", publicId);
+          try {
+            await cloudinary.uploader.destroy(publicId,{resource_type:"video"});
+          } catch (error) {
+            console.log("Error deleting media in cloudinary:", error);
+          }
+        })
+      );
+    }
 
     await Chat.findByIdAndDelete(chatId);
     res.status(200).json({ message: "Success deleted" });
