@@ -34,19 +34,23 @@ import { TfiAlarmClock } from "react-icons/tfi";
 import { FaArrowRotateLeft } from "react-icons/fa6";
 import { TiPinOutline } from "react-icons/ti";
 import axiosInstance from "../../../api/axiosInstance";
-import { format } from "date-fns";
+import { format, previousMonday } from "date-fns";
 import { useSocketContext } from "../../../contexts/SocketContext";
-import toast from "react-hot-toast";
+import EmojiPicker from "emoji-picker-react";
+import ListChatComponent from "../ListChatComponent";
+import ChatComponents from "../ChatComponent";
 
 function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
   const [content, setContent] = useState("");
   const [isSidebarVisible, setSidebarVisible] = useState(false);
   const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [loadingMedia, setLoadingMedia] = useState(false);
   const scrollRef = useRef(null);
   const { socket } = useSocketContext();
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [isAddingMessages, setIsAddingMessages] = useState(false); //Flag để scroll bottom
+  const [showPicker, setShowPicker] = useState(false);
 
   // Đảo ngược mảng tin nhắn và lưu vào biến mới
   const reversedMessages = [...messages].reverse();
@@ -137,17 +141,17 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
     }
   }, [messages, isAddingMessages]);
 
-  const sendMessage = async (data) => {
+  const sendMessage = async (data, receiverId) => {
+    setLoadingMedia(true);
+    console.log(data);
     try {
       if (!data || data.trim === "") return;
-      if (userChat && userChat.id) {
+      // console.log("data: ", data);
+      if (receiverId) {
         const response = await axiosInstance.post(
-          `chats/${userChat.id}/` +
-            (typeof data === "string"
-              ? "sendMessage"
-              : data.type.startsWith("video/")
-              ? "sendVideo"
-              : "sendMessage"),
+          `chats/${receiverId}/${
+            data.type.startsWith("video/") ? "sendVideo" : "sendMessage"
+          }`,
           { data: data },
           {
             headers: {
@@ -162,12 +166,14 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
       }
     } catch (error) {
       console.error("Error sending message:", error);
+    } finally {
+      setLoadingMedia(false);
     }
   };
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
-      sendMessage(content);
+      sendMessage({ type: "text", data: content }, userChat?.id);
     }
   };
 
@@ -201,7 +207,7 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
     console.log("file1: ", file);
     // Xử lý tệp ảnh và video ở đây
     try {
-      await sendMessage(file);
+      await sendMessage(file, userChat?.id);
     } catch (error) {
       console.error("Error sending message:", error);
     }
@@ -257,6 +263,15 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
     }
   };
 
+  const togglePicker = () => {
+    setShowPicker((prevState) => !prevState);
+  };
+
+  const onEmojiClick = (e, emojiObject) => {
+    console.log("emojiObject.emoji: ", emojiObject.emoji); // Log emojiObject để kiểm tra
+    setContent((prevInput) => prevInput + emojiObject.emoji);
+    setShowPicker(false);
+  };
   return (
     <>
       {userChat && (
@@ -451,17 +466,20 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                         />
                         <p>{language === "vi" ? "Chuyển tiếp" : "Forward"}</p>
                       </div>
-                      <div
-                        className="flex p-2 text-red-400 items-center rounded-xl border-b border-gray-100 hover:bg-gray-100"
-                        onClick={() => deleteChat(message._id)}
-                      >
-                        <FaArrowRotateLeft
-                          className="mr-3"
-                          size={14}
-                          color="red"
-                        />
-                        <p>{language === "vi" ? "Thu hồi" : "Recall"}</p>
-                      </div>
+                      {message.senderId !== userChat.id && (
+                        <div
+                          className="flex p-2 text-red-400 items-center rounded-xl border-b border-gray-100 hover:bg-gray-100"
+                          onClick={() => deleteChat(message._id)}
+                        >
+                          <FaArrowRotateLeft
+                            className="mr-3"
+                            size={14}
+                            color="red"
+                          />
+                          <p>{language === "vi" ? "Thu hồi" : "Recall"}</p>
+                        </div>
+                      )}
+
                       <div className="flex p-2 text-red-400 items-center rounded-xl border-b border-gray-100 hover:bg-gray-100">
                         <BsTrash3 className="mr-3" size={16} color="red" />
                         <p>
@@ -475,14 +493,35 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                 </div>
               ))}
               {isFetchingMore && <div>Loading...</div>}
+              {loadingMedia && (
+                <p className="flex flex-col justify-end mr-2 mb-2">
+                  Loading....
+                </p>
+              )}
             </div>
           )}
 
           <div className="h-[15vh] bg-white flex-col border-t">
             <div className="h-[40%] bg-white flex justify-between items-center border-b p-1">
-              <button className="hover:bg-gray-300 p-2 rounded">
+              <button
+                className="hover:bg-gray-300 p-2 rounded"
+                onClick={togglePicker}
+              >
                 <LuSticker size={20} />
               </button>
+
+              {showPicker && (
+                <EmojiPicker
+                  className="-translate-y-60"
+                  style={{ width: "100%" }}
+                  onEmojiClick={(e) => {
+                    console.log("e.emoji: ", e.emoji);
+                    setContent((prevInput) => prevInput + e.emoji);
+                    setShowPicker(false);
+                  }}
+                />
+              )}
+
               <button
                 className="hover:bg-gray-300 p-2 rounded"
                 onClick={handleSelectImageClick}
