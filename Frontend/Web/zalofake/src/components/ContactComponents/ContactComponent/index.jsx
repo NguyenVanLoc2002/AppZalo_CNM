@@ -233,7 +233,7 @@ function ContactComponent({ language }) {
                     >
                       <div className="bg-blue w-10 ">
                         <img
-                          className="rounded-full"
+                          className="rounded-full w-10 h-10"
                           src={friend.avatar || "/zalo.svg"}
                           alt="cloud"
                         />
@@ -373,7 +373,7 @@ function ContactComponent({ language }) {
                     />
                     <div className="bg-blue w-10 ">
                       <img
-                        className="rounded-full"
+                        className="rounded-full w-10 h-10"
                         src={friend.avatar}
                         alt="cloud"
                       />
