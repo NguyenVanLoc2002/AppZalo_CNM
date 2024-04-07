@@ -35,7 +35,7 @@ router.post(
   sendMessage
 );
 
-// Gửi video mới cho một người dùng cụ thể
+// Xóa tin nhắn cụ thể
 router.post("/:chatId/delete", deleteChat);
 
 //Xử lý lỗi từ Multer
