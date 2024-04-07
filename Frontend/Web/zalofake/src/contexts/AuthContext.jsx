@@ -22,7 +22,6 @@ export const AuthContextProvider = ({ children }) => {
   useEffect(() => {
     if (authUser) {
       localStorage.setItem("authUser", JSON.stringify(authUser));
-      console.log("Resave authUser : ", authUser);
     } else {
       localStorage.removeItem("authUser");
     }
@@ -43,11 +42,12 @@ export const AuthContextProvider = ({ children }) => {
       const response = await axiosInstance.get("users/get/me");
       if (response.status === 200) {
         setAuthUser(response.data.user);
-        console.log("Reload authUser : ", response.data.user);
+        return true;
       }
     } catch (error) {
       console.log(error);
       toast.error("Failed to get user information");
+      return false;
     }
   };
 
