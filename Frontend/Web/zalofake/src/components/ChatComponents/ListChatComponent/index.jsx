@@ -7,8 +7,7 @@ import { IoIosMore } from "react-icons/io";
 
 function ListChatComponent({
   language,
-  isAddFriend,
-  isAddGroup,
+  showModal,
   userChat,
   friends,
 }) {
@@ -84,13 +83,13 @@ function ListChatComponent({
               <>
                 <button
                   className="p-2 rounded-lg hover:bg-gray-300"
-                  onClick={() => isAddFriend(true)}
+                  onClick={() => showModal("addFriend")}
                 >
                   <AiOutlineUserAdd size={18} opacity={0.8} />
                 </button>
                 <button
                   className="p-2 rounded-lg hover:bg-gray-300"
-                  onClick={() => isAddGroup(true)}
+                  onClick={() => showModal("addGroup")}
                 >
                   <AiOutlineUsergroupAdd size={20} opacity={0.8} />
                 </button>
@@ -170,7 +169,7 @@ function ListChatComponent({
               >
                 <div className="bg-blue w-14 ">
                   <img
-                    className="rounded-full"
+                    className="rounded-full w-14 h-14"
                     src={friend.avatar}
                     alt="cloud"
                   />
@@ -242,7 +241,7 @@ function ListChatComponent({
                 >
                   <div className="bg-blue w-14 ">
                     <img
-                      className="rounded-full"
+                      className="rounded-full w-14 h-14"
                       src={friend.avatar}
                       alt="cloud"
                     />
