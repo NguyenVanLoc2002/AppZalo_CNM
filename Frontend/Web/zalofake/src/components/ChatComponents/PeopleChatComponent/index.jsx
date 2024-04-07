@@ -29,7 +29,7 @@ import {
   PiMagnifyingGlass,
   PiTagSimpleLight,
 } from "react-icons/pi";
-import { RiAlarmLine, RiBatteryChargeLine } from "react-icons/ri";
+import { RiAlarmLine, RiBatteryChargeLine, RiDoubleQuotesR } from "react-icons/ri";
 import { TfiAlarmClock } from "react-icons/tfi";
 import { FaArrowRotateLeft } from "react-icons/fa6";
 import { TiPinOutline } from "react-icons/ti";
@@ -425,6 +425,17 @@ function PeopleChatComponent({ language, userChat }) {
                       key={index}
                       onClick={handleHideContextMenu} // Ẩn context menu khi click ra ngoài
                     >
+                      <div
+                        className="flex p-2 text-black items-center  border-b border-gray-200 hover:bg-gray-200"
+                        onClick={() => deleteChat(message._id)}
+                      >
+                        <RiDoubleQuotesR
+                          className="mr-3"
+                          size={18}
+                          color="black"
+                        />
+                        <p>Chuyển tiếp</p>
+                      </div>
                       <div
                         className="flex p-2 text-red-500 items-center  border-b border-gray-200 hover:bg-gray-200"
                         onClick={() => deleteChat(message._id)}
