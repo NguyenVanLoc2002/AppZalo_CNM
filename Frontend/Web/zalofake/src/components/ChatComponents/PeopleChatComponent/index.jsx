@@ -284,7 +284,7 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
               <img
                 src={userChat?.avatar}
                 alt="avatar"
-                className="w-full h-full object-cover rounded-full border mr-3"
+                className="w-full h-[80%] object-cover rounded-full border mr-3"
               />
             </div>
             <div className="flex-col items-center mr-auto ml-2">
