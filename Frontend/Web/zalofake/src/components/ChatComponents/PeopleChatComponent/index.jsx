@@ -29,7 +29,7 @@ import {
   PiMagnifyingGlass,
   PiTagSimpleLight,
 } from "react-icons/pi";
-import { RiAlarmLine, RiBatteryChargeLine } from "react-icons/ri";
+import { RiAlarmLine, RiBatteryChargeLine, RiDoubleQuotesR } from "react-icons/ri";
 import { TfiAlarmClock } from "react-icons/tfi";
 import { FaArrowRotateLeft } from "react-icons/fa6";
 import { TiPinOutline } from "react-icons/ti";
@@ -426,6 +426,17 @@ function PeopleChatComponent({ language, userChat }) {
                       onClick={handleHideContextMenu} // Ẩn context menu khi click ra ngoài
                     >
                       <div
+                        className="flex p-2 text-black items-center  border-b border-gray-200 hover:bg-gray-200"
+                        onClick={() => deleteChat(message._id)}
+                      >
+                        <RiDoubleQuotesR
+                          className="mr-3"
+                          size={18}
+                          color="black"
+                        />
+                        <p>{language === 'vi' ? "Chuyển tiếp" : "Forward"}</p>
+                      </div>
+                      <div
                         className="flex p-2 text-red-500 items-center  border-b border-gray-200 hover:bg-gray-200"
                         onClick={() => deleteChat(message._id)}
                       >
@@ -434,11 +445,11 @@ function PeopleChatComponent({ language, userChat }) {
                           size={18}
                           color="red"
                         />
-                        <p>Thu hồi</p>
+                        <p>{language === 'vi' ? "Thu hồi" : "Recall"}</p>
                       </div>
                       <div className="flex p-2 text-red-500 items-center ">
                         <BsTrash3 className="mr-3" size={20} color="red" />
-                        <p>Xóa chỉ phía tôi</p>
+                        <p>{language === 'vi' ? "Xóa chỉ phía tôi" : "Delete only my side"}</p>
                       </div>
                     </div>
                   )}
