@@ -81,7 +81,17 @@ function PeopleChatComponent({ language, userChat }) {
     if (userChat && userChat.id) {
       fetchMessageHistory(userChat.id);
     }
-  }, [userChat]);
+
+    if (socket) {
+      socket.on("new_message", ({ message }) => {
+        setMessages((prevMessages) => [message, ...prevMessages]);
+        console.log("new_message: ", message);
+      });
+      return () => {
+        socket.off("new_message");
+      };
+    }
+  }, [userChat || socket]);
 
   const handleScroll = async (event) => {
     const container = event.target;
@@ -90,6 +100,16 @@ function PeopleChatComponent({ language, userChat }) {
     if (container.scrollTop === 0 && !isFetchingMore) {
       setIsFetchingMore(true);
       try {
+        if (socket) {
+          socket.on("new_message", ({ message }) => {
+            setMessages((prevMessages) => [message, ...prevMessages]);
+            console.log("new_message: ", message);
+          });
+          return () => {
+            socket.off("new_message");
+          };
+        }
+        
         const lastMessage = messages[messages.length - 1];
         const firstMessageInChat = await axiosInstance(
           `chats/${userChat.id}/getFirstMessage`
@@ -117,19 +137,7 @@ function PeopleChatComponent({ language, userChat }) {
       }
     }
   };
-
-  // Nhận tin nhắn mới từ socket
-  useEffect(() => {
-    if (socket) {
-      socket.on("new_message", ({ message }) => {
-        setMessages((prevMessages) => [message, ...prevMessages]);
-        console.log("new_message: ", message);
-      });
-      return () => {
-        socket.off("new_message");
-      };
-    }
-  }, [socket]);
+  
 
   const scrollToBottom = () => {
     if (scrollRef.current) {
