@@ -16,8 +16,10 @@ exports.sendMessage = async (req, resp) => {
     if (Object.keys(req.body).length) {
       // Nếu có nội dung, thêm vào mảng contents
       contents.push({
-        type: "text",
-        data: req.body.data,
+        // type: "text",
+        // data: req.body.data,
+        type: req.body.data.type,
+        data: req.body.data.data,
       });
     }
 
@@ -148,6 +150,7 @@ function extractPublicId(url) {
 }
 
 // Xóa tin nhắn khỏi cơ sở dữ liệu
+
 exports.deleteChat = async (req, res) => {
   const { chatId } = req.params;
   try {
