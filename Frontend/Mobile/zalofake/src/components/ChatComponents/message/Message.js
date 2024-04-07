@@ -17,12 +17,13 @@ import useMessage from '../../../hooks/useMessage'
 import Toast from "react-native-toast-message";
 import useSendMessage from "../../../hooks/useSendMessage";
 import * as ImagePicker from "expo-image-picker";
+import { FontAwesome5 } from "@expo/vector-icons";
 const Message = ({ navigation, route }) => {
   const { user } = route.params;
   //nhi  const 
   [textMessage, setTextMessage] = useState(null)
   const [isColorSend, setIsColorSend] = useState(false)
-  const { sendMessage } = useSendMessage();
+  const { sendMessage, sendImage } = useSendMessage();
   const [isMessageSent, setIsMessageSent] = useState(false);
   const [selectedImage, setSelectedImage] = useState();
 
@@ -39,6 +40,9 @@ const Message = ({ navigation, route }) => {
   const [messageSelected, setMessageSelected] = useState("");
   const [isModalFriendVisible, setIsModalFriendVisible] = useState(false);
   const [friends, setFriends] = useState([]);
+  const [isLoadMess, setIsLoadMess] = useState(false)
+
+
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
   };
@@ -131,7 +135,7 @@ const Message = ({ navigation, route }) => {
       },
     });
   }, [navigation]);
-
+  sendImage
   useEffect(() => {
     if (scrollViewRef.current && contentHeight > scrollViewHeight && !isLoad) {
       const offset = contentHeight - scrollViewHeight;
@@ -194,11 +198,7 @@ const Message = ({ navigation, route }) => {
       try {
         const response = await axiosInstance.post(`chats/${messageSelected._id}/delete`);
         if (response.status === 200) {
-
-
-          // Sử dụng hàm removeItemById() để xóa phần tử có ID cụ thể khỏi mảng
           const newArray = removeItemById(chats, messageSelected._id);
-
           setChats(newArray)
           showToastSuccess("Xóa thành công")
           toggleModal()
@@ -231,12 +231,37 @@ const Message = ({ navigation, route }) => {
       }
       handleSendMessage();
     } else if (messageSelected.contents[0].type === 'image') {
+      chuyenTiepImage(friend)
       showToastSuccess("image")
     } else if (messageSelected.contents[0].type === 'video') {
       showToastSuccess("video")
     }
   };
 
+  const chuyenTiepImage = async (friend) => {
+    const formData = new FormData();
+
+    messageSelected.contents.forEach(image => {
+      const fileName = image.data.split('/').pop();
+      formData.append('data', {
+        uri: image.data,
+        name: fileName,
+        type: 'image/jpeg', // Loại hình ảnh có thể thay đổi tùy theo loại tệp
+      });
+    });
+    console.log(formData)
+    try {
+      const send = await sendImage(friend, formData)
+      console.log(send)
+      if (send) {
+        console.log("send image success");
+        // setIsLoadMess(false)
+      }
+    } catch (error) {
+      console.log(error);
+      // setIsLoadMess(false)
+    }
+  };
 
   //nhi
   const openImagePicker = async () => {
@@ -256,9 +281,9 @@ const Message = ({ navigation, route }) => {
       videoExportPreset: ImagePicker.VideoExportPreset.Passthrough,
       videoMaxDuration: 10
     });
-   
-
+    console.log(pickerResult.assets[0])
     if (!pickerResult.canceled) {
+      setIsLoadMess(true)
       const formData = new FormData();
       pickerResult.assets.forEach(image => {
         const fileName = image.uri.split('/').pop();
@@ -268,54 +293,20 @@ const Message = ({ navigation, route }) => {
           type: 'image/jpeg', // Loại hình ảnh có thể thay đổi tùy theo loại tệp
         });
       });
-    
       console.log(formData)
-
       try {
-        
-        const response = await axiosInstance.post(`/chats/${user.userId}/sendMessage`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        )
-        if (response.status === 201) {
-          console.log("success");
-          return true;
+        const send = await sendImage(user, formData)
+        if (send) {
+          console.log("send image success");
+          setIsLoadMess(false)
         }
-        else if (response.status === 500) {
-          console.log("fail");
-          return false;
-        }
-        console.log(response)
-
       } catch (error) {
-        console.log("error1:", error)
-        return false;
+        console.log(error);
+        setIsLoadMess(false)
       }
-    } else {
-      console.log("No image selected");
     }
-  };
+  }
 
-
-  const handleSendImage = async () => {
-    try {
-      const formData = new FormData();
-      formData.append("sendMessageImage", {
-        uri: selectedImage,
-        type: "image/jpeg",
-        name: "sendMessageImage.jpg",
-      });
-      console.log(formData);
-
-    } catch (error) {
-      console.error(error);
-      console.log("Error", error.message || "Failed to update avatar");
-    }
-  };
 
   useEffect(() => {
     // Update send button color based on textMessage
@@ -331,15 +322,18 @@ const Message = ({ navigation, route }) => {
       console.log("message rỗng");
     }
     else {
+      setIsLoadMess(true)
       try {
         const send = await sendMessage(user, textMessage)
         if (send) {
           console.log("truc")
           setTextMessage(null)
           setIsMessageSent(true);
+          setIsLoadMess(false)
         }
       } catch (error) {
-
+        console.log(error);
+        setIsLoadMess(false)
       }
     }
   }
@@ -362,11 +356,8 @@ const Message = ({ navigation, route }) => {
             setContentHeight(height);
           }}
         >
-
           <View style={{ flex: 1, justifyContent: "flex-start" }}>
-
             {chats.map((message, index) => (
-
               <View key={index} style={{ justifyContent: 'space-around', borderRadius: 10, backgroundColor: handleCheckIsSend(message) ? "#7debf5" : "#d9d9d9", margin: 5, alignItems: handleCheckIsSend(message) ? "flex-end" : "flex-start", alignSelf: handleCheckIsSend(message) ? "flex-end" : "flex-start" }}>
                 <Pressable
                   onPress={() => handlePressIn(message)}
@@ -377,15 +368,10 @@ const Message = ({ navigation, route }) => {
                   </View>
                 </Pressable>
               </View>
-
-
             ))}
-
           </View>
         </ScrollView>
       </View >
-
-
       <View
         style={{
           flexDirection: "row",
@@ -436,7 +422,11 @@ const Message = ({ navigation, route }) => {
           </TouchableOpacity>
 
           <TouchableOpacity onPress={handleSendMessage}>
-            <Ionicons name="paper-plane" size={30} color={isColorSend} />
+            {isLoadMess ? (
+              <ActivityIndicator color="black" size="large" />
+            ) : (
+              <Ionicons name="paper-plane" size={30} color={isColorSend} />
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -451,16 +441,46 @@ const Message = ({ navigation, route }) => {
             <Text style={styles.modalHeaderText}>
               Choose
             </Text>
-            <View style={styles.modalButtonContainer}>
-              <Pressable onPress={handleGetModalFriend}>
+            <View style={styles.modalButtonContainer1}>
+              <Pressable style={styles.pressCol} onPress={handleGetModalFriend}>
+                <FontAwesome5
+                  name="share"
+                  size={20}
+                  color="black"
+                  style={{ marginRight: 8 }}
+                />
                 <Text style={styles.modalButton}>Chuyển tiếp</Text>
               </Pressable>
-              <Pressable onPress={handleDeleteMess}>
+              <Pressable onPress={handleDeleteMess} style={styles.pressCol}>
+                <FontAwesome5
+                  name="trash"
+                  size={20}
+                  color="black"
+                  style={{ marginRight: 8 }}
+                />
                 <Text style={styles.modalButton} >Xóa</Text>
               </Pressable>
-              <Pressable >
+              <Pressable style={styles.pressCol}>
+                <FontAwesome5
+                  name="comment-slash"
+                  size={20}
+                  color="black"
+                  style={{ marginRight: 8 }}
+                />
                 <Text style={styles.modalButton}>Thu hồi</Text>
               </Pressable>
+            </View>
+            <View style={styles.modalButtonContainer1}>
+              <Pressable style={styles.pressCol}>
+                <FontAwesome5
+                  name="list"
+                  size={20}
+                  color="black"
+                  style={{margin:'auto'}}
+                />
+                <Text style={styles.modalButton}>Chọn nhiều</Text>
+              </Pressable>
+
             </View>
             <View style={styles.modalButtonContainer}>
               <Pressable onPress={toggleModal}>
@@ -505,7 +525,12 @@ const Message = ({ navigation, route }) => {
                           <Text style={styles.friendName}>{friend.profile.name}</Text>
                         </View>
                         <View style={styles.friendActions}>
-                          <Pressable onPress={() => chuyenTiepChat(friend)} style={styles.modalButton}><Text>Gửi</Text></Pressable>
+                          <Pressable onPress={() => chuyenTiepChat(friend)} style={styles.pressCol}><FontAwesome5
+                  name="arrow-right"
+                  size={30}
+                  color="black"
+                  style={{ alignContent:"center", alignItems:"center"}}
+                /></Pressable>
                         </View>
                       </Pressable>
                     </View>
@@ -518,9 +543,7 @@ const Message = ({ navigation, route }) => {
                 <Text style={styles.modalButton}>HỦY</Text>
               </Pressable>
               <Pressable >
-
                 <Text style={styles.modalButton}>XÁC NHẬN</Text>
-
               </Pressable>
             </View>
           </View>
@@ -596,6 +619,20 @@ const styles = StyleSheet.create({
   friendListHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
+  },
+  pressCol: {
+    // flexDirection: "column",
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalButtonContainer1: {
+    // flex:1,
+    // height: 300,
+    // width: 450,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: 'center',
+    marginTop:20
   },
 });
 export default Message;

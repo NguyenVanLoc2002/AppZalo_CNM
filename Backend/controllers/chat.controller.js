@@ -49,7 +49,6 @@ exports.sendMessage = async (req, resp) => {
           file.mimetype.startsWith("video/")
         ) {
           const media = await uploadMediaToCloudinary(file);
-          console.log(media)
           contents.push({
             type: file.mimetype.startsWith("image/") ? "image" : "video",
             data: media.url,
