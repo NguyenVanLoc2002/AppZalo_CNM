@@ -35,7 +35,6 @@ import { FaArrowRotateLeft } from "react-icons/fa6";
 import { TiPinOutline } from "react-icons/ti";
 import axiosInstance from "../../../api/axiosInstance";
 import { format } from "date-fns";
-import socketIOClient from "socket.io-client";
 import { useSocketContext } from "../../../contexts/SocketContext";
 
 function PeopleChatComponent({ language, userChat }) {
@@ -76,12 +75,12 @@ function PeopleChatComponent({ language, userChat }) {
     if (userChat && userChat.id) {
       fetchMessageHistory(userChat.id);
     }
-  }, [userChat]); //Mỗi lần thay đổi người chat thì sẽ được gọi lại để lấy lịch sử của người dùng đó
+  }, [userChat]); 
 
-  //Load thêm tin nhắn khi thanh scroll ở trên cùng
+  
   const handleScroll = async (event) => {
     const container = event.target;
-    // Lưu lại vị trí cuối cùng của thanh cuộn
+    
     const lastScrollPosition = container.scrollHeight - container.clientHeight;
     if (container.scrollTop === 0 && !isFetchingMore) {
       setIsFetchingMore(true);
@@ -111,33 +110,35 @@ function PeopleChatComponent({ language, userChat }) {
       } finally {
         setIsFetchingMore(false);
 
-        // setIsAddingMessages(false);
+        
       }
     }
   };
 
   // Nhận tin nhắn mới từ socket
-  // useEffect(() => {
-  //   socket.on("new_message", ({ message }) => {
-  //     setMessages((prevMessages) => [message, ...prevMessages]);
-  //   });
-  //   console.log(`New message`);
-  //   return () => {
-  //     socket.off("new_message");
-  //   };
-  // }, []);
+  useEffect(() => {
+    if(socket) {
+      socket.on("new_message", ({message}) => {
+        setMessages((prevMessages) => [message, ...prevMessages]);
+        console.log("new_message: ", message);
+      });
+      return () => {
+        socket.off("new_message");
+      };
+    }
+  }, [socket]);
 
   const scrollToBottom = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   };
-  useEffect(scrollToBottom, []); // Chạy khi component được hiển thị
+  useEffect(scrollToBottom, []);
   useEffect(() => {
     if (!isAddingMessages) {
       scrollToBottom();
     }
-  }, [messages, isAddingMessages]); // Chạy khi message được cập nhật
+  }, [messages, isAddingMessages]); 
 
   const sendMessage = async (data) => {
     try {
