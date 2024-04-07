@@ -5,13 +5,10 @@ import { CiSearch } from "react-icons/ci";
 import { FaSortDown } from "react-icons/fa";
 import { IoIosMore } from "react-icons/io";
 
-function ListChatComponent({
-  language,
-  isAddFriend,
-  isAddGroup,
-  userChat,
-  friends,
-}) {
+import useConversation from "../../../hooks/useConversation";
+import { useAuthContext } from "../../../contexts/AuthContext";
+
+function ListChatComponent({ language, showModal, userChat, friends }) {
   const [valueSearch, setValueSearch] = useState("");
   const [isHovered, setIsHovered] = useState(false);
   const [friendList, setFriendList] = useState([]);
@@ -21,11 +18,36 @@ function ListChatComponent({
   const [originalFriendList, setOriginalFriendList] = useState([]);
   const [listChatCurrent, setListChatCurrent] = useState([]);
   const [isChatSelected, setIsChatSelected] = useState("");
+  const { conversations, loading, getConversations } = useConversation();
+  const { authUser } = useAuthContext();
 
   useEffect(() => {
+    getConversations();
     setOriginalFriendList(friends);
     setFriendList(friends);
   }, [friends]);
+
+  useEffect(() => {
+    const listChat = conversations.map((conversation) => {
+      const friend = conversation.participants.find(
+        (participant) => participant.phone !== authUser.phone
+      );
+      return {
+        id: friend._id,
+        name: friend.profile.name,
+        avatar: friend.profile.avatar.url || "/zalo.svg",
+        unread: conversation.messages.some(
+          (message) =>
+            message.receiver === authUser.phone && !message.isRead
+        ),
+      }
+    });
+    setListChatCurrent(listChat);
+  }, [conversations]);
+
+  conversations.map((conversation) => {
+    console.log("conversation: ", conversation);
+  });
 
   const changeTab = (tab) => {
     setActiveTab(tab);
@@ -53,7 +75,7 @@ function ListChatComponent({
       setFriendList(filteredFriends);
     }
   };
- 
+
   return (
     <>
       <div className="border-r">
@@ -84,13 +106,13 @@ function ListChatComponent({
               <>
                 <button
                   className="p-2 rounded-lg hover:bg-gray-300"
-                  onClick={() => isAddFriend(true)}
+                  onClick={() => showModal("addFriend")}
                 >
                   <AiOutlineUserAdd size={18} opacity={0.8} />
                 </button>
                 <button
                   className="p-2 rounded-lg hover:bg-gray-300"
-                  onClick={() => isAddGroup(true)}
+                  onClick={() => showModal("addGroup")}
                 >
                   <AiOutlineUsergroupAdd size={20} opacity={0.8} />
                 </button>
@@ -170,7 +192,7 @@ function ListChatComponent({
               >
                 <div className="bg-blue w-14 ">
                   <img
-                    className="rounded-full"
+                    className="rounded-full w-14 h-14"
                     src={friend.avatar}
                     alt="cloud"
                   />
@@ -242,7 +264,7 @@ function ListChatComponent({
                 >
                   <div className="bg-blue w-14 ">
                     <img
-                      className="rounded-full"
+                      className="rounded-full w-14 h-14"
                       src={friend.avatar}
                       alt="cloud"
                     />
