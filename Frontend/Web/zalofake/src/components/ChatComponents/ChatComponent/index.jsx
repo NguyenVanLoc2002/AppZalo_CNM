@@ -8,6 +8,9 @@ import { HiMagnifyingGlass } from "react-icons/hi2";
 import useFriend from "../../../hooks/useFriend";
 import { toast } from "react-hot-toast";
 import { useAuthContext } from "../../../contexts/AuthContext";
+import { FaBullseye } from "react-icons/fa6";
+import axiosInstance from "../../../api/axiosInstance";
+
 function ChatComponents({ language }) {
   const [userChat, setUserChat] = useState(null);
   const {
@@ -38,7 +41,32 @@ function ChatComponents({ language }) {
   const [shareMessage, setShareMessage] = useState();
   const [valueSearch, setValueSearch] = useState("");
   const [originalFriendList, setOriginalFriendList] = useState([]);
+  const [selectedFriends, setSelectedFriends] = useState([]);
+
   console.log("shareMessage", shareMessage);
+
+  const sendMessage = async (data, receiverId) => {
+    try {
+      if (!data || data.trim === "") return;
+      // console.log("data: ", data);
+      if (receiverId) {
+        const response = await axiosInstance.post(
+          `chats/${receiverId}/${
+            data.type.startsWith("video/") ? "sendVideo" : "sendMessage"
+          }`,
+          { data: data },
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        console.log("response 1: ", response.data.data);
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
 
   const visibleFriends = showAllNewFriends
     ? recommentFriendList
@@ -131,6 +159,16 @@ function ChatComponents({ language }) {
     }
   };
 
+  const handleCheckboxChange = (friendId) => {
+    if (selectedFriends.includes(friendId)) {
+      setSelectedFriends(selectedFriends.filter((id) => id !== friendId));
+    } else {
+      setSelectedFriends([...selectedFriends, friendId]);
+    }
+  };
+
+  console.log("selectedFriends: ", selectedFriends);
+
   const buttons = [
     "Tất cả",
     "Khách hàng",
@@ -140,6 +178,27 @@ function ChatComponents({ language }) {
     "Trả lời sau",
     "Đồng nghiệp",
   ];
+
+  const sendMessageToSelectedFriends = async (content) => {
+    for (const receiverId of selectedFriends) {
+      try {
+        await sendMessage(content, receiverId);
+        console.log(`Sent message to user ${receiverId} successfully.`);
+      } catch (error) {
+        console.error(`Error sending message to user ${receiverId}:`, error);
+      }
+    }
+  };
+
+  const handleSendButtonClick = () => {
+    if (selectedFriends.length === 0) {
+      console.log('Please select friends to send message to.');
+      return;
+    }
+    console.log("Nội dung:",shareMessage.contents[0]);
+    sendMessageToSelectedFriends(shareMessage.contents[0]);
+    setIsShowModal(false);
+  };
 
   return (
     <>
@@ -300,7 +359,7 @@ function ChatComponents({ language }) {
           </div>
         )}
         {isShowModal === "addGroup" && (
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/5 h-[90%] bg-white rounded-lg shadow-lg ">
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-60 w-3/5 h-[90%] bg-white rounded-lg shadow-lg ">
             <div className=" flex items-center justify-between p-4 border-b text-lg font-semibold h-[10%]">
               <p>Tạo nhóm</p>
               <button
@@ -455,14 +514,20 @@ function ChatComponents({ language }) {
                     key={friend.id}
                     className="flex items-center  justify-between hover:bg-gray-200 transition-colors duration-300 ease-in-out p-2"
                   >
-                    <div className="bg-blue w-10 ">
+                    <div className="bg-blue w-10 flex">
+                      <input
+                        className=""
+                        type="checkbox"
+                        checked={selectedFriends.includes(friend.id)}
+                        onChange={() => handleCheckboxChange(friend.id)}
+                      />
                       <img
-                        className="rounded-full w-10 h-10"
+                        className="rounded-full w-10 h-10 ml-2"
                         src={friend.avatar}
                         alt="cloud"
                       />
                     </div>
-                    <div className="flex mr-auto ml-2 p-1">
+                    <div className="flex mr-auto ml-6 p-1">
                       <p className="font-semibold ">{friend.name}</p>
                     </div>
                   </div>
@@ -528,10 +593,10 @@ function ChatComponents({ language }) {
               )}
             </div>
 
-            <div className="flex items-center h-[10%] mt-3">
+            <div className="flex items-center h-[10%] ">
               <div className="flex ml-auto mb-auto mt-1">
                 <button
-                  className="rounded-lg bg-gray-300 p-3 pl-6 pr-6 mr-3 hover:bg-gray-500"
+                  className="rounded-lg bg-gray-300 p-2 pl-6 pr-6 mr-3 hover:bg-gray-500"
                   onClick={() => setIsShowModal("")}
                 >
                   <p className="text-lg font-semibold">
@@ -539,8 +604,8 @@ function ChatComponents({ language }) {
                   </p>
                 </button>
                 <button
-                  className="rounded-lg bg-primary p-3 pl-6 pr-6 mr-3 hover:bg-primaryHover"
-                  onClick={handleSearch}
+                  className="rounded-lg bg-primary  p-2 pl-6 pr-6 mr-3 hover:bg-primaryHover"
+                  onClick={handleSendButtonClick}
                 >
                   <p className="text-lg text-white font-semibold">
                     {language == "vi" ? "Chia sẻ" : "Share"}

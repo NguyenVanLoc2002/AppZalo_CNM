@@ -41,6 +41,8 @@ import axiosInstance from "../../../api/axiosInstance";
 import { format, previousMonday } from "date-fns";
 import { useSocketContext } from "../../../contexts/SocketContext";
 import EmojiPicker from "emoji-picker-react";
+import ListChatComponent from "../ListChatComponent";
+import ChatComponents from "../ChatComponent";
 
 function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
   const [content, setContent] = useState("");
@@ -145,17 +147,15 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
 
   const sendMessage = async (data, receiverId) => {
     setLoadingMedia(true);
+    console.log(data);
     try {
       if (!data || data.trim === "") return;
       // console.log("data: ", data);
       if (receiverId) {
         const response = await axiosInstance.post(
-          `chats/${receiverId}/` +
-            (typeof data === "string"
-              ? "sendMessage"
-              : data.type.startsWith("video/")
-              ? "sendVideo"
-              : "sendMessage"),
+          `chats/${receiverId}/${
+            data.type.startsWith("video/") ? "sendVideo" : "sendMessage"
+          }`,
           { data: data },
           {
             headers: {
@@ -177,7 +177,7 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
-      sendMessage(content, userChat?.id);
+      sendMessage({ type: "text", data: content }, userChat?.id);
     }
   };
 
@@ -211,7 +211,7 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
     console.log("file1: ", file);
     // Xử lý tệp ảnh và video ở đây
     try {
-      await sendMessage(file,userChat?.id);
+      await sendMessage(file, userChat?.id);
     } catch (error) {
       console.error("Error sending message:", error);
     }
@@ -272,7 +272,10 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
   return (
     <>
       {userChat && (
-        <div className=" bg-white h-screen sm:w-[calc(100%-24rem)] w-0 border-r overflow-auto" onClick={handleHideContextMenu}>
+        <div
+          className=" bg-white h-screen sm:w-[calc(100%-24rem)] w-0 border-r overflow-auto"
+          onClick={handleHideContextMenu}
+        >
           <div className="h-[10vh] bg-white flex justify-between items-center border-b">
             <div className="flex items-center w-14 h-14 mr-3 ">
               <img
@@ -435,7 +438,6 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                       );
                     })}
                   </div>
-                 
 
                   {contextMenuStates[message._id] && (
                     <div
@@ -461,17 +463,20 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                         />
                         <p>{language === "vi" ? "Chuyển tiếp" : "Forward"}</p>
                       </div>
-                      <div
-                        className="flex p-2 text-red-400 items-center rounded-xl border-b border-gray-100 hover:bg-gray-100"
-                        onClick={() => deleteChat(message._id)}
-                      >
-                        <FaArrowRotateLeft
-                          className="mr-3"
-                          size={14}
-                          color="red"
-                        />
-                        <p>{language === "vi" ? "Thu hồi" : "Recall"}</p>
-                      </div>
+                      {message.senderId !== userChat.id && (
+                        <div
+                          className="flex p-2 text-red-400 items-center rounded-xl border-b border-gray-100 hover:bg-gray-100"
+                          onClick={() => deleteChat(message._id)}
+                        >
+                          <FaArrowRotateLeft
+                            className="mr-3"
+                            size={14}
+                            color="red"
+                          />
+                          <p>{language === "vi" ? "Thu hồi" : "Recall"}</p>
+                        </div>
+                      )}
+
                       <div className="flex p-2 text-red-400 items-center rounded-xl border-b border-gray-100 hover:bg-gray-100">
                         <BsTrash3 className="mr-3" size={16} color="red" />
                         <p>
@@ -485,9 +490,12 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                 </div>
               ))}
               {isFetchingMore && <div>Loading...</div>}
-              {loadingMedia && <p className="flex flex-col justify-end mr-2 mb-2">Loading....</p>}
+              {loadingMedia && (
+                <p className="flex flex-col justify-end mr-2 mb-2">
+                  Loading....
+                </p>
+              )}
             </div>
-             
           )}
 
           <div className="h-[15vh] bg-white flex-col border-t">
