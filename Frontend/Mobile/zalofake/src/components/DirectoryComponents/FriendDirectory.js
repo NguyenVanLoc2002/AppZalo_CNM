@@ -15,11 +15,10 @@ const FriendDirectory = ({ navigation }) => {
   const [friends, setFriends] = useState([]);
   const { authUser } = useAuthContext();
   const [totalFriends, setTotalFriends] = useState("");
-  console.log(authUser);
   useEffect(() => {
     const fetchFriends = async () => {
       try {
-        const response = await axiosInstance.get('/users/get/friends');
+        const response = await axiosInstance.get("/users/get/friends");
         setFriends(response.data.friends);
       } catch (error) {
         console.log(error);
@@ -28,7 +27,7 @@ const FriendDirectory = ({ navigation }) => {
     fetchFriends();
   }, []);
   useEffect(() => {
-    setTotalFriends(friends.length)
+    setTotalFriends(friends.length);
   }, [friends]);
 
   return (
@@ -38,28 +37,11 @@ const FriendDirectory = ({ navigation }) => {
           <Ionicons name={"people-circle-sharp"} size={40} color={"#0091FF"} />
           <Text style={styles.buttonText}>Lời mời kết bạn</Text>
         </Pressable>
-        <Pressable style={styles.buttonRow}>
-          <Image
-            style={styles.iconImage}
-            resizeMode="contain"
-            source={require("../../../assets/contacts.png")}
-          />
-          <Text style={styles.buttonText}>Danh bạ máy</Text>
-        </Pressable>
-        <Pressable style={styles.buttonRow}>
-          <Image
-            style={styles.iconImage}
-            resizeMode="contain"
-            source={require("../../../assets/cake.png")}
-          />
-          <Text style={styles.buttonText}>Lịch sinh nhật</Text>
-        </Pressable>
       </View>
       <View style={styles.buttonBar}>
         <Pressable style={styles.roundedButton}>
           <Text style={styles.whiteText}>Tất cả {totalFriends}</Text>
         </Pressable>
-
       </View>
 
       {/* List danh bạ nè */}
