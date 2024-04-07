@@ -7,10 +7,10 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-rl.question("Enter user ID: ", (userId) => {
+rl.question("Enter user ID: ", (token) => {
   const socket = io("http://localhost:3000", {
     query: {
-      userId: userId,
+      token: token,
     },
   });
 
@@ -38,12 +38,10 @@ rl.question("Enter user ID: ", (userId) => {
   });
 
 // Nhận tin nhắn mới và hiển thị trên giao diện người dùng
-  socket.on("new_message",({senderId, contents,read})=>{
-    console.log(`New message received from ${senderId}: ${contents} status is ${read}`);
+  socket.on("new_message",({message})=>{
+    console.log(`New message received ${message}`);
   })
 
-  
-  
 
   rl.close();
 });
