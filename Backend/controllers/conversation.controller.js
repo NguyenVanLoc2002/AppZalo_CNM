@@ -26,18 +26,12 @@ exports.deleteConversation = async (req, res) => {
   try {
     const conversationId = req.params.conversationId;
 
-    //Xóa theo _id
     const deleteConversation = await Conversation.findByIdAndDelete(
       conversationId
     );
-
     if (!deleteConversation) {
       return res.status(404).json({ message: "Conversation not found" });
     }
-
-    // await Chats.deleteMany({ _id: { $in: deleteConversation.messages } });
-
-    // Trả về phản hồi thành công
     res.status(200).json({ message: "Conversation deleted successfully" });
   } catch (error) {
     console.error("Error deleting conversation:", error);
@@ -47,5 +41,42 @@ exports.deleteConversation = async (req, res) => {
   }
 };
 
+exports.getConversation = async (req, res) => {
+  try {
+    const conversationId = req.params.conversationId;
+    const conversation = await Conversation.findById(conversationId).populate(
+      "participants"
+    );
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+    res.status(200).json(conversation);
+  } catch (error) {
+    console.error("Error getting conversation:", error);
+    res
+      .status(500)
+      .json({ message: "Failed to get conversation", error: error.message });
+  }
+};
 
-
+exports.getConversations = async (req, res) => {
+  try {
+    const userId = req.user.user_id;
+    const conversations = await Conversation.find({
+      participants: userId,
+    }).populate({
+      path: "participants",
+      select: "phone email profile _id",
+    
+    });
+    if (!conversations) {
+      return res.status(404).json({ message: "Conversations not found" });
+    }
+    res.status(200).json(conversations);
+  } catch (error) {
+    console.error("Error getting conversations:", error);
+    res
+      .status(500)
+      .json({ message: "Failed to get conversations", error: error.message });
+  }
+};
