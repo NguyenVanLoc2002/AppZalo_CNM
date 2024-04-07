@@ -91,9 +91,12 @@ function ModalComponent({ showModal, language, userInfo, typeModal }) {
       gender: usGender,
       dob: selectedDate,
       dob: selectedDate,
+    }).then((rs) => {
+      if (rs) {
+        handleCancel();
+        showModal(false);
+      }
     });
-
-    handleCancel();
   };
 
   const handleCancel = () => {
@@ -177,9 +180,8 @@ function ModalComponent({ showModal, language, userInfo, typeModal }) {
         toast.success("Đổi mật khẩu thành công, vui lòng đăng nhập lại");
         setShowChangePassword(false);
         localStorage.clear();
-        navigate("/login", {state: {emailFromChangePassword: usEmail}});
+        navigate("/login", { state: { emailFromChangePassword: usEmail } });
         window.location.reload();
-        
       }
     }
   };
@@ -713,9 +715,9 @@ function ModalComponent({ showModal, language, userInfo, typeModal }) {
                     >
                       Hủy
                     </button>
-                    <button className="flex items-center justify-center text-lg font-semibold p-2 pl-3 pr-3  bg-sky-200 rounded hover:bg-sky-400"
-                    
-                    onClick={handleChangePassword}
+                    <button
+                      className="flex items-center justify-center text-lg font-semibold p-2 pl-3 pr-3  bg-sky-200 rounded hover:bg-sky-400"
+                      onClick={handleChangePassword}
                     >
                       Cập nhật
                     </button>
