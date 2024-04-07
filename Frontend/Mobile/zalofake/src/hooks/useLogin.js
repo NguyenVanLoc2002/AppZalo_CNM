@@ -27,7 +27,7 @@ const useLogin = () => {
         setAccessToken(data.accessToken);
         setRefreshToken(data.refreshToken);
         // Nếu đăng nhập thành công, reset errorCount về 0
-        setErrorCount(0);
+        setLoginCount(0);
       }
       else {
         showMesg("Error during login", "error");

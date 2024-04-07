@@ -15,12 +15,13 @@ const FriendDirectory = ({ navigation }) => {
   const [friends, setFriends] = useState([]);
   const { authUser } = useAuthContext();
   const [totalFriends, setTotalFriends] = useState("");
-  console.log(authUser);
+  // console.log(authUser);
   useEffect(() => {
     const fetchFriends = async () => {
       try {
         const response = await axiosInstance.get('/users/get/friends');
         setFriends(response.data.friends);
+        console.log(friends)
       } catch (error) {
         console.log(error);
       }
@@ -31,6 +32,9 @@ const FriendDirectory = ({ navigation }) => {
     setTotalFriends(friends.length)
   }, [friends]);
 
+  const handleFriendMessage = (friend) => {
+    navigation.navigate("Message",{ user :friend });
+  };
   return (
     <ScrollView style={styles.container}>
       <View style={styles.topSection}>
@@ -69,7 +73,7 @@ const FriendDirectory = ({ navigation }) => {
         </View>
         {friends.map((friend, index) => (
           <View key={index} style={styles.friendRow}>
-            <Pressable style={styles.friendItem}>
+            <Pressable style={styles.friendItem} onPress={() => handleFriendMessage(friend)}>
               <View style={styles.friendInfo}>
                 <Image
                   source={{
