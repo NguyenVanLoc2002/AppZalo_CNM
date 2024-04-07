@@ -17,7 +17,8 @@ router.get("/:userId", getHistoryMessage);
 // Gửi tin nhắn mới cho một người dùng cụ thể bao gồm text và image
 router.post(
   "/:userId/sendMessage",
-  multerUploadImage.array("data"),
+  multerUploadImage.array("data")
+  ,
   formatBodyData,
   sendMessage
 );
