@@ -16,7 +16,9 @@ import moment from 'moment-timezone';
 import useMessage from '../../../hooks/useMessage'
 import useSendMessage from "../../../hooks/useSendMessage";
 import * as ImagePicker from "expo-image-picker";
-
+import Toast from "react-native-toast-message";
+import { FontAwesome5 } from "@expo/vector-icons";
+import { useSocketContext } from "../../../contexts/SocketContext";
 
 const Message = ({ navigation, route }) => {
   const { user } = route.params;
@@ -25,9 +27,11 @@ const Message = ({ navigation, route }) => {
   const { sendMessage, sendImage, sendVideo } = useSendMessage();
   const [isMessageSent, setIsMessageSent] = useState(false);
   const [isLoadMess, setIsLoadMess] = useState(false)
+  const { socket } = useSocketContext();
 
   // truc {
   const [chats, setChats] = useState([]);
+
   const scrollViewRef = useRef();
   const [contentHeight, setContentHeight] = useState(0);
   const [scrollViewHeight, setScrollViewHeight] = useState(0);
@@ -39,7 +43,8 @@ const Message = ({ navigation, route }) => {
   const [messageSelected, setMessageSelected] = useState("");
   const [isModalFriendVisible, setIsModalFriendVisible] = useState(false);
   const [friends, setFriends] = useState([]);
-
+  const [isLoadChuyenTiep, setIsLoadChuyenTiep] = useState(false)
+  const [isLoadThuHoi, setIsLoadThuHoi] = useState(false)
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
@@ -72,12 +77,17 @@ const Message = ({ navigation, route }) => {
     };
     fetchChats();
 
-    if (isMessageSent) {
-      fetchChats();
-      setIsMessageSent(false);
+    if (socket) {
+      socket.on("new_message", ({ message }) => {
+        setChats((prevMessages) => [message, ...prevMessages]); 
+        console.log("new_message: ", message);
+      });
+      return () => {
+        socket.off("new_message");
+      };
     }
-
-  }, [isMessageSent, chats]);
+    
+  }, [chats,socket]);
 
   const handleCheckIsSend = (message) => {
     if (message.senderId === user.userId) {
@@ -106,25 +116,24 @@ const Message = ({ navigation, route }) => {
   };
 
   const chuyenTiepChat = (friend) => {
-    if (messageSelected.contents[0].type === 'text') {
-
-      const handleSendMessage = async () => {
-        try {
-          const send = await sendMessage(friend, messageSelected.contents[0].data)
-          if (send) {
-            showToastSuccess("Chuyển tiếp thành công")
-          }
-        } catch (error) {
-          console.log("error1:", error)
-          return false;
+    setIsLoadChuyenTiep(true)
+    const handleSendMessage = async () => {
+      try {
+        const send = await sendMessage(friend, messageSelected.contents[0])
+        if (send) {
+          showToastSuccess("Chuyển tiếp thành công")
+          setIsLoadChuyenTiep(false)
+        } else {
+          showToastError("Chuyển tiếp thất bại")
         }
+      } catch (error) {
+        console.log("error1:", error)
+        setIsLoadChuyenTiep(false)
+        return false;
       }
-      handleSendMessage();
-    } else if (messageSelected.contents[0].type === 'image') {
-      showToastSuccess("image")
-    } else if (messageSelected.contents[0].type === 'video') {
-      showToastSuccess("video")
+      toggleModalFriend();
     }
+    handleSendMessage();
   };
   // }
 
@@ -157,7 +166,7 @@ const Message = ({ navigation, route }) => {
             formData.append('data', {
               uri: image.uri,
               name: fileName,
-              type: 'image/jpeg', 
+              type: 'image/jpeg',
             });
           });
 
@@ -178,12 +187,12 @@ const Message = ({ navigation, route }) => {
             formData.append('data', {
               uri: image.uri,
               name: fileName,
-              type: 'video/mp4', 
+              type: 'video/mp4',
             });
           });
 
           console.log("formData: ", formData);
-          
+
           try {
             const send = await sendVideo(user, formData)
             if (send) {
@@ -257,7 +266,7 @@ const Message = ({ navigation, route }) => {
       },
     });
   }, [navigation]);
-  
+
   useEffect(() => {
     if (scrollViewRef.current && contentHeight > scrollViewHeight && !isLoad) {
       const offset = contentHeight - scrollViewHeight;
@@ -289,6 +298,7 @@ const Message = ({ navigation, route }) => {
           const lastElement = reversedChats[0]
           setLastTimestamp(lastElement.timestamp)
         }
+
         setIsLoading(false)
 
       } catch (error) {
@@ -333,10 +343,10 @@ const Message = ({ navigation, route }) => {
     // setModalVisible(false)
   };
 
-  
+
 
   //nhi
- 
+
 
 
   useEffect(() => {
@@ -357,18 +367,19 @@ const Message = ({ navigation, route }) => {
       try {
         const response = await sendMessage(user,
           { type: 'text', data: textMessage })
-        if (response.status === 201) {
+        if (response) {
           setIsLoadMess(false)
           setIsLoad(false)
+          setTextMessage(null)
           setChats(
             chats.concat(response.data.data))
           console.log("success");
-
         }
-        else if (response.status === 500) {
+        else {
           console.log("fail");
-
+          setIsLoadMess(false)
         }
+
       } catch (error) {
         console.log(error);
         setIsLoadMess(false)
@@ -387,6 +398,7 @@ const Message = ({ navigation, route }) => {
         <Toast />
         <ScrollView ref={scrollViewRef}
           onScroll={handleScroll}
+          scrollEventThrottle={16}
           onLayout={(event) => {
             setScrollViewHeight(event.nativeEvent.layout.height);
           }}
@@ -491,7 +503,7 @@ const Message = ({ navigation, route }) => {
                 />
                 <Text style={styles.modalButton}>Chuyển tiếp</Text>
               </Pressable>
-              <Pressable onPress={handleDeleteMess} style={styles.pressCol}>
+              <Pressable style={styles.pressCol}>
                 <FontAwesome5
                   name="trash"
                   size={20}
@@ -500,13 +512,18 @@ const Message = ({ navigation, route }) => {
                 />
                 <Text style={styles.modalButton} >Xóa</Text>
               </Pressable>
-              <Pressable style={styles.pressCol}>
-                <FontAwesome5
-                  name="comment-slash"
-                  size={20}
-                  color="black"
-                  style={{ marginRight: 8 }}
-                />
+              <Pressable style={styles.pressCol} onPress={handleDeleteMess}>
+                {isLoadThuHoi ? (
+                  <ActivityIndicator color="black" size="large" />
+                ) : (
+                  <FontAwesome5
+                    name="comment-slash"
+                    size={20}
+                    color="black"
+                    style={{ marginRight: 8 }}
+                  />
+                )}
+
                 <Text style={styles.modalButton}>Thu hồi</Text>
               </Pressable>
             </View>
@@ -551,11 +568,17 @@ const Message = ({ navigation, route }) => {
                 <View style={styles.friendList}>
                   <View style={styles.friendListHeader}>
                     <Text style={styles.sectionTitle}>#</Text>
+                    {isLoadChuyenTiep ? (
+                      <ActivityIndicator color="black" size="large" />
+                    ) : (
+                      <View></View>
+                    )}
                   </View>
                   {friends.map((friend, index) => (
                     <View key={index} style={styles.friendRow}>
                       <Pressable style={styles.friendItem} >
                         <View style={styles.friendInfo}>
+
                           <Image
                             source={{
                               uri: friend?.profile?.avatar?.url,
@@ -565,12 +588,17 @@ const Message = ({ navigation, route }) => {
                           <Text style={styles.friendName}>{friend.profile.name}</Text>
                         </View>
                         <View style={styles.friendActions}>
-                          <Pressable onPress={() => chuyenTiepChat(friend)} style={styles.pressCol}><FontAwesome5
-                            name="arrow-right"
-                            size={30}
-                            color="black"
-                            style={{ alignContent: "center", alignItems: "center" }}
-                          /></Pressable>
+                          <Pressable onPress={() => chuyenTiepChat(friend)} style={styles.pressCol}>
+
+
+                            <FontAwesome5
+                              name="arrow-right"
+                              size={30}
+                              color="black"
+                              style={{ alignContent: "center", alignItems: "center" }}
+                            />
+
+                          </Pressable>
                         </View>
                       </Pressable>
                     </View>
