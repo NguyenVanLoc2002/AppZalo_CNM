@@ -9,6 +9,7 @@ const {
 const {
   multerUploadImage,
   multerUploadVideo,
+  multerUploadFile,
 } = require("../middlewares/multerMiddleware");
 const { formatBodyData } = require("../middlewares/bodyDataFormat");
 
