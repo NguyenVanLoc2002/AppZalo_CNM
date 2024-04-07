@@ -5,6 +5,7 @@ const {
   sendMessage,
   deleteChat,
   getFirstMessage,
+  getLastMessage,
 } = require("../controllers/chat.controller");
 const {
   multerUploadImage,
@@ -19,6 +20,8 @@ router.get("/:userId", getHistoryMessage);
 // Lấy danh sách tin nhắn cá nhân với một người dùng cụ thể với userId là người nhận
 router.get("/:userId/getFirstMessage", getFirstMessage);
 
+// Lấy tin nhắn cuối cùng với một người dùng cụ thể với userId là người nhận
+router.get("/:userId/getLastMessage", getLastMessage);
 
 // Gửi tin nhắn mới cho một người dùng cụ thể bao gồm text và image
 router.post(
