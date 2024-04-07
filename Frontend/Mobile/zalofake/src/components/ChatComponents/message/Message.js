@@ -135,7 +135,7 @@ const Message = ({ navigation, route }) => {
       },
     });
   }, [navigation]);
-  sendImage
+  
   useEffect(() => {
     if (scrollViewRef.current && contentHeight > scrollViewHeight && !isLoad) {
       const offset = contentHeight - scrollViewHeight;
@@ -216,51 +216,18 @@ const Message = ({ navigation, route }) => {
   };
 
   const chuyenTiepChat = (friend) => {
-    if (messageSelected.contents[0].type === 'text') {
-
-      const handleSendMessage = async () => {
-        try {
-          const send = await sendMessage(friend, messageSelected.contents[0].data)
-          if (send) {
-            showToastSuccess("Chuyển tiếp thành công")
-          }
-        } catch (error) {
-          console.log("error1:", error)
-          return false;
+    const handleSendMessage = async () => {
+      try {
+        const send = await sendMessage(friend, messageSelected.contents[0])
+        if (send) {
+          showToastSuccess("Chuyển tiếp thành công")
         }
+      } catch (error) {
+        console.log("error1:", error)
+        return false;
       }
-      handleSendMessage();
-    } else if (messageSelected.contents[0].type === 'image') {
-      chuyenTiepImage(friend)
-      showToastSuccess("image")
-    } else if (messageSelected.contents[0].type === 'video') {
-      showToastSuccess("video")
     }
-  };
-
-  const chuyenTiepImage = async (friend) => {
-    const formData = new FormData();
-
-    messageSelected.contents.forEach(image => {
-      const fileName = image.data.split('/').pop();
-      formData.append('data', {
-        uri: image.data,
-        name: fileName,
-        type: 'image/jpeg', // Loại hình ảnh có thể thay đổi tùy theo loại tệp
-      });
-    });
-    console.log(formData)
-    try {
-      const send = await sendImage(friend, formData)
-      console.log(send)
-      if (send) {
-        console.log("send image success");
-        // setIsLoadMess(false)
-      }
-    } catch (error) {
-      console.log(error);
-      // setIsLoadMess(false)
-    }
+    handleSendMessage();
   };
 
   //nhi
@@ -295,11 +262,20 @@ const Message = ({ navigation, route }) => {
       });
       console.log(formData)
       try {
-        const send = await sendImage(user, formData)
-        if (send) {
-          console.log("send image success");
+        const response = await sendImage(user, formData)
+        if (response.status === 201) {
           setIsLoadMess(false)
+          setIsLoad(false)
+          setChats(
+            chats.concat(response.data.data))
+          console.log("success");
+
         }
+        else if (response.status === 500) {
+          console.log("fail");
+
+        }
+
       } catch (error) {
         console.log(error);
         setIsLoadMess(false)
@@ -324,12 +300,19 @@ const Message = ({ navigation, route }) => {
     else {
       setIsLoadMess(true)
       try {
-        const send = await sendMessage(user, textMessage)
-        if (send) {
-          console.log("truc")
-          setTextMessage(null)
-          setIsMessageSent(true);
+        const response = await sendMessage(user,
+          { type: 'text', data: textMessage })
+        if (response.status === 201) {
           setIsLoadMess(false)
+          setIsLoad(false)
+          setChats(
+            chats.concat(response.data.data))
+          console.log("success");
+
+        }
+        else if (response.status === 500) {
+          console.log("fail");
+
         }
       } catch (error) {
         console.log(error);
@@ -476,7 +459,7 @@ const Message = ({ navigation, route }) => {
                   name="list"
                   size={20}
                   color="black"
-                  style={{margin:'auto'}}
+                  style={{ margin: 'auto' }}
                 />
                 <Text style={styles.modalButton}>Chọn nhiều</Text>
               </Pressable>
@@ -526,11 +509,11 @@ const Message = ({ navigation, route }) => {
                         </View>
                         <View style={styles.friendActions}>
                           <Pressable onPress={() => chuyenTiepChat(friend)} style={styles.pressCol}><FontAwesome5
-                  name="arrow-right"
-                  size={30}
-                  color="black"
-                  style={{ alignContent:"center", alignItems:"center"}}
-                /></Pressable>
+                            name="arrow-right"
+                            size={30}
+                            color="black"
+                            style={{ alignContent: "center", alignItems: "center" }}
+                          /></Pressable>
                         </View>
                       </Pressable>
                     </View>
@@ -632,7 +615,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: 'center',
-    marginTop:20
+    marginTop: 20
   },
 });
 export default Message;
