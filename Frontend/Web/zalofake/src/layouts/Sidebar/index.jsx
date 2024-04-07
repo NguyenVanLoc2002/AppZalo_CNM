@@ -19,7 +19,7 @@ function Sidebar({ changeTab, changeMenu, useInfo }) {
 
   useEffect(() => {
     if (user.profile) {
-      setAvtUrl(user.profile.avatar.url);
+      setAvtUrl(user.profile?.avatar?.url || "/zalo.svg");
     }
   }, [user]);
 
