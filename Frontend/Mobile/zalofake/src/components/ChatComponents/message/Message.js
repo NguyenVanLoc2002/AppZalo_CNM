@@ -312,7 +312,7 @@ const Message = ({ navigation, route }) => {
     navigation.setOptions({
       headerRight: () => (
         <View style={{ flexDirection: "row" }}>
-          <Pressable>
+          <Pressable onPress={() => console.log("Pressed call")}>
             <Ionicons
               name="call-outline"
               size={27}
@@ -327,7 +327,7 @@ const Message = ({ navigation, route }) => {
             style={{ padding: 5, marginRight: 10 }}
           />
           <Pressable
-            onPress={() => navigation.navigate("MessageSettings", { user })}
+            onPress={() => navigation.navigate("MessageSettings", { friend })}
           >
             <Ionicons
               name="list-outline"
@@ -353,7 +353,7 @@ const Message = ({ navigation, route }) => {
         fontSize: 20,
       },
     });
-  }, [navigation]);
+  }, [navigation, friend]);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#E5E9EB" }}>

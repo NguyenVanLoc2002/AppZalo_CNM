@@ -30,8 +30,6 @@ function MenuComponent({
     await logout();
   };
 
-<<<<<<< HEAD
-=======
   const [isChecked, setIsChecked] = useState(false);
 
   const handleChange = () => {
@@ -69,8 +67,6 @@ function MenuComponent({
   //   }
   // };
 
-
->>>>>>> a0de96a47bc8b596060ccfd58f0f46b383c7a00c
   return typeMenu == "setting" ? (
     <>
       <div className="h-[285px] w-[225px] bg-white rounded-sm shadow-xl absolute bottom-[85px] -left-16 z-40 grid grid-rows-7">
@@ -242,7 +238,7 @@ function MenuComponent({
     <>
       <div className="h-[170px] w-[300px] bg-white rounded shadow-2xl border absolute top-10 left-0 z-40 grid grid-rows-4">
         <div className="row-span-1">
-          <p className="font-bold ml-2 p-3">{user?.profile.name}</p>
+          <p className="font-bold ml-2 p-3">{user?.profile?.name}</p>
           <hr />
         </div>
         <div className="row-span-2">
@@ -264,8 +260,7 @@ function MenuComponent({
             <p className="text-sm w-full ml-2">
               {language == "vi" ? "Cài đặt" : "Setting"}
             </p>
-<<<<<<< HEAD
-=======
+
             {isOpenSetup && (
               <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/5 h-[90%] bg-gray-100 rounded-lg shadow-lg ">
                 {/* Content */}
@@ -462,7 +457,6 @@ function MenuComponent({
                 </div>
               </div>
             )}
->>>>>>> a0de96a47bc8b596060ccfd58f0f46b383c7a00c
           </div>
           <hr />
         </div>
