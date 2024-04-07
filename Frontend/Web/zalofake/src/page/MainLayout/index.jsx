@@ -1,5 +1,5 @@
 import Sidebar from "../../layouts/Sidebar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import MenuComponent from "../../layouts/Menu";
 import ModalComponent from "../../layouts/Modal/index";
 import ContactComponent from "../../components/ContactComponents/ContactComponent";
@@ -11,6 +11,7 @@ function MainLayout() {
   const [typeModal, setTypeModal] = useState("");
   const [curentTab, setCurentTab] = useState(1);
   const [currentMenu, setCurrentMenu] = useState();
+  const [userInfo, setUserInfo] = useState({});
   const [language, setLanguage] = useState("vi");
   const { authUser } = useAuthContext();
 
@@ -34,6 +35,10 @@ function MainLayout() {
   const changeTypeModal = (type) => {
     setTypeModal(type);
   };
+
+  useEffect(() => {
+    setUserInfo(authUser);
+  }, [authUser]);
 
   return (
     <>
@@ -170,14 +175,14 @@ function MainLayout() {
               typeModal={typeModal}
               showModal={showModalProfile}
               language={language}
-              userInfo={authUser}
+              userInfo={userInfo}
             />
           ) : typeModal == "setting" ? (
             <ModalComponent
               typeModal={typeModal}
               showModal={showModalProfile}
               language={language}
-              userInfo={authUser}
+              userInfo={userInfo}
             />
           ) : (
             <></>

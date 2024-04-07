@@ -8,7 +8,7 @@ const useUpdate = () => {
   const [loading, setLoading] = useState(false);
   const [systemOTP, setSystemOTP] = useState(null);
 
-  const { setAuthUser } = useAuthContext();
+  const { reloadAuthUser } = useAuthContext();
 
   const updateAvatar = async (file, authToken) => {
     setLoading(true);
@@ -110,8 +110,10 @@ const useUpdate = () => {
       if (status === 200) {
         const { user } = data;
         if (user) {
-          setAuthUser(user);
           toast.success("Profile updated successfully");
+          const rs = await reloadAuthUser();
+          return rs;
+
         } else {
           throw new Error("Failed to update profile");
         }
