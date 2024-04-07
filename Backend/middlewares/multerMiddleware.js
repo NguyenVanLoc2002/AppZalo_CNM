@@ -6,12 +6,14 @@ const uploadImage = new CloudinaryStorage({
   cloudinary,
   params: {
     // folder: "Zalo_Fake_App",
-    allowed_formats: ["jpg", "png", "jpeg"],
+    allowed_formats: ["jpg", "png", "jpeg","webp"],
     public_id: (req, file) => {
       return `zaloFake_${file.fieldname}_${Date.now()}_${req.user.user_id}`;
     },
   },
 });
+
+
 
 const uploadVideo = new CloudinaryStorage({
   cloudinary,
@@ -25,6 +27,19 @@ const uploadVideo = new CloudinaryStorage({
   },
 });
 
+const uploadFile = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    // folder: "Zalo_Fake_App",
+    allowed_formats: ["docx", "pdf", "xlsx", "xls"],
+    resource_type: "auto",
+    public_id: (req, file) => {
+      return `zaloFake_${file.fieldname}_${Date.now()}_${req.user.user_id}`;
+    },
+  },
+});
+
 const multerUploadImage = multer({ storage: uploadImage });
 const multerUploadVideo = multer({ storage: uploadVideo });
-module.exports = { multerUploadImage, multerUploadVideo };
+const multerUploadFile = multer({ storage: uploadFile });
+module.exports = { multerUploadImage, multerUploadVideo,multerUploadFile };
