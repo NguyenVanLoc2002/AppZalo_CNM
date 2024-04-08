@@ -23,6 +23,7 @@ const chatSchema = new mongoose.Schema({
   ],
   timestamp: { type: Date, default: Date.now },
   read: { type: Boolean, default: false },
+  status:{type: Number, default: 0},
 });
 
 chatSchema.post("save", async function (chat, next) {
@@ -35,13 +36,20 @@ chatSchema.post("save", async function (chat, next) {
       ],
     });
 
+    const date = Date.now().toString();
+    // const senderId = chat.senderId.toString();
+    // const receiverId = chat.receiverId.toString();
+    // console.log("chat.senderId: ",senderId);
+    // console.log("chat.receiverId: ",receiverId);
+    // console.log("date: ",date);
+    // console.log("conversation: ", conversation);
     if (existingConversation) {
       existingConversation.messages.push(chat._id);
       existingConversation.lastMessage = chat._id;
       await existingConversation.save();
     } else {
       const newConversation = new Conversation({
-        participants: [chat.senderId, chat.receiverId],
+        participants: [chat.senderId,chat.receiverId],
         messages: [chat._id],
         lastMessage: chat._id,
       });
