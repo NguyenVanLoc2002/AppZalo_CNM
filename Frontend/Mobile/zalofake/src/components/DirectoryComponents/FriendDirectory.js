@@ -6,15 +6,42 @@ import {
   Image,
   ScrollView,
   StyleSheet,
+  Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import Toast from "react-native-toast-message";
+
 import axiosInstance from "../../api/axiosInstance";
 import { useAuthContext } from "../../contexts/AuthContext";
+import useFriend from "../../hooks/useFriend";
+
 const FriendDirectory = ({ navigation }) => {
+  const {
+    recommendedFriends,
+    loading,
+    getAllFriends,
+    getFriendByPhone,
+    getRecommendedFriends,
+    addFriend,
+    acceptFriend,
+    unFriend,
+    rejectFriend,
+    cancelFriendRequest,
+  } = useFriend();
   const [friend, setFriend] = useState("");
   const [friends, setFriends] = useState([]);
-  const { authUser } = useAuthContext();
+  const { authUser, reloadAuthUser } = useAuthContext();
   const [totalFriends, setTotalFriends] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalPosition, setModalPosition] = useState({});
+  const [selectedFriendPhone, setSelectedFriendPhone] = useState(null);
+
+  const toggleModal = (index, friendPhone) => {
+    setSelectedFriendPhone(friendPhone);
+    setModalPosition({ top: index * 70 + 300 });
+    setModalVisible(!modalVisible);
+  };
+
   useEffect(() => {
     const fetchFriends = async () => {
       try {
@@ -26,14 +53,41 @@ const FriendDirectory = ({ navigation }) => {
     };
     fetchFriends();
   }, []);
+
   useEffect(() => {
     setTotalFriends(friends.length);
   }, [friends]);
 
+  const handleUnFriend = async () => {
+    if (!selectedFriendPhone) return;
+
+    try {
+      await unFriend(selectedFriendPhone);
+      // Cập nhật danh sách bạn bè sau khi hủy kết bạn thành công
+      const updatedFriends = friends.filter(
+        (friend) => friend.phone !== selectedFriendPhone
+      );
+      setFriends(updatedFriends);
+      // Thực hiện reloadAuthUser ở đây nếu cần
+      reloadAuthUser();
+      Toast.show({
+        text1: "Đã hủy kết bạn",
+        type: "info",
+      });
+    } catch (error) {
+      console.log(error);
+      Toast.show("Hủy kết bạn thất bại!");
+    }
+    setModalVisible(false);
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.topSection}>
-        <Pressable style={styles.buttonRow}>
+        <Pressable
+          style={styles.buttonRow}
+          onPress={() => navigation.navigate("FriendRequest")}
+        >
           <Ionicons name={"people-circle-sharp"} size={40} color={"#0091FF"} />
           <Text style={styles.buttonText}>Lời mời kết bạn</Text>
         </Pressable>
@@ -51,11 +105,16 @@ const FriendDirectory = ({ navigation }) => {
         </View>
         {friends.map((friend, index) => (
           <View key={index} style={styles.friendRow}>
-            <Pressable style={styles.friendItem}>
+            <Pressable
+              style={styles.friendItem}
+              onPress={() => toggleModal(index, friend.phone)}
+            >
               <View style={styles.friendInfo}>
                 <Image
                   source={{
-                    uri: friend?.profile?.avatar?.url,
+                    uri:
+                      friend?.profile?.avatar?.url ||
+                      "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
                   }}
                   style={styles.friendAvatar}
                 />
@@ -72,10 +131,50 @@ const FriendDirectory = ({ navigation }) => {
                     color={"black"}
                   />
                 </View>
+                <Pressable
+                  style={styles.actionIcon}
+                  onPress={() => toggleModal(index, friend.phone)}
+                >
+                  <Ionicons
+                    name={"ellipsis-vertical"}
+                    size={25}
+                    color={"black"}
+                  />
+                </Pressable>
               </View>
             </Pressable>
           </View>
         ))}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(!modalVisible)}
+        >
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setModalVisible(!modalVisible)}
+          >
+            <View
+              style={[
+                styles.centeredView,
+                modalPosition,
+                { position: "absolute", right: 10 },
+              ]}
+            >
+              <Pressable
+                style={styles.modalView}
+                onPress={() => {
+                  handleUnFriend();
+                }}
+              >
+                <Text style={{ fontSize: 20, backgroundColor: "white" }}>
+                  Hủy kết bạn
+                </Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Modal>
       </View>
     </ScrollView>
   );
@@ -182,6 +281,12 @@ const styles = StyleSheet.create({
   },
   actionIcon: {
     marginRight: 20,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.0)",
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 
