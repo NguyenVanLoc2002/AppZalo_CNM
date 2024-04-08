@@ -108,31 +108,31 @@ exports.getConversations = async (req, res) => {
   }
 };
 
-exports.getConversations = async (req, res) => {
-  try {
-    const userId = req.user.user_id;
-    const conversations = await Conversation.find({
-      participants: userId,
-    }).populate([{
-      path: "participants",
-      select: "phone email profile _id",
-    }, 
-    {
-      path: "lastMessage",
-      select: "senderId receiverId contents timestamp read",
-    }
-  ]);
-    if (!conversations) {
-      return res.status(404).json({ message: "Conversations not found" });
-    }
-    res.status(200).json(conversations);
-  } catch (error) {
-    console.error("Error getting conversations:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to get conversations", error: error.message });
-  }
-};
+// exports.getConversations = async (req, res) => {
+//   try {
+//     const userId = req.user.user_id;
+//     const conversations = await Conversation.find({
+//       participants: userId,
+//     }).populate([{
+//       path: "participants",
+//       select: "phone email profile _id",
+//     }, 
+//     {
+//       path: "lastMessage",
+//       select: "senderId receiverId contents timestamp read",
+//     }
+//   ]);
+//     if (!conversations) {
+//       return res.status(404).json({ message: "Conversations not found" });
+//     }
+//     res.status(200).json(conversations);
+//   } catch (error) {
+//     console.error("Error getting conversations:", error);
+//     res
+//       .status(500)
+//       .json({ message: "Failed to get conversations", error: error.message });
+//   }
+// };
 
 // get conversation by participants every time a new message is sent
 exports.getConversationByParticipants = async () => {
