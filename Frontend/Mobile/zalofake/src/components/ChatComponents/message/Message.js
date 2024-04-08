@@ -43,7 +43,8 @@ const Message = ({ navigation, route }) => {
   const [isLoadMess, setIsLoadMess] = useState(false)
   const [isLoadChuyenTiep, setIsLoadChuyenTiep] = useState(false)
   const [isLoadThuHoi, setIsLoadThuHoi] = useState(false)
-
+  const [isLoadXoa, setIsLoadXoa] = useState(false)
+  const { authUser } = useAuthContext();
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
@@ -66,9 +67,11 @@ const Message = ({ navigation, route }) => {
       try {
         const response = await axiosInstance.get(`/chats/${user.userId}`);
         const reversedChats = response.data.data.reverse();
+
         setChats(reversedChats);
         fetchFriends();
         const lastElement = reversedChats[0]
+        console.log(lastElement)
         setLastTimestamp(lastElement.timestamp)
       } catch (error) {
         console.log(error);
@@ -215,6 +218,26 @@ const Message = ({ navigation, route }) => {
     deleteChat();
     // setModalVisible(false)
   };
+  const handleDeleteMessByStatus = () => {
+    setIsLoadXoa(true)
+    const deleteChat = async () => {
+      try {
+        const response = await axiosInstance.post(`chats/updateStatus/${messageSelected._id}`);
+        if (response.status === 200) {
+          const newArray = removeItemById(chats, messageSelected._id);
+          setChats(newArray)
+          showToastSuccess("Xóa thành công")
+          toggleModal()
+          setIsLoadXoa(false)
+        }
+      } catch (error) {
+        console.log(error);
+        setIsLoadXoa(false)
+      }
+    };
+    deleteChat();
+    // setModalVisible(false)
+  };
   const handleGetModalFriend = () => {
     toggleModal();
     toggleModalFriend();
@@ -228,7 +251,7 @@ const Message = ({ navigation, route }) => {
         if (send) {
           showToastSuccess("Chuyển tiếp thành công")
           setIsLoadChuyenTiep(false)
-        }else{
+        } else {
           showToastError("Chuyển tiếp thất bại")
         }
       } catch (error) {
@@ -325,7 +348,7 @@ const Message = ({ navigation, route }) => {
           showToastError("Gửi tin nhắn thất bại")
           console.log("fail");
         }
-        
+
       } catch (error) {
         console.log(error);
         setIsLoadMess(false)
@@ -446,13 +469,18 @@ const Message = ({ navigation, route }) => {
                 />
                 <Text style={styles.modalButton}>Chuyển tiếp</Text>
               </Pressable>
-              <Pressable style={styles.pressCol}>
-                <FontAwesome5
+              <Pressable style={styles.pressCol} onPress={handleDeleteMessByStatus}>
+              {isLoadXoa ? (
+                  <ActivityIndicator color="black" size="large" />
+                ) : (
+                  <FontAwesome5
                   name="trash"
                   size={20}
                   color="black"
                   style={{ marginRight: 8 }}
                 />
+                )}
+                
                 <Text style={styles.modalButton} >Xóa</Text>
               </Pressable>
               <Pressable style={styles.pressCol} onPress={handleDeleteMess}>
