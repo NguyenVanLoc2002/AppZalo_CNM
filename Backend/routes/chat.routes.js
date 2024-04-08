@@ -5,6 +5,7 @@ const {
   sendMessage,
   deleteChat,
   getFirstMessage,
+  setStatusMessage,
 } = require("../controllers/chat.controller");
 const {
   multerUploadImage,
@@ -38,6 +39,10 @@ router.post(
 
 // Xóa tin nhắn cụ thể
 router.post("/:chatId/delete", deleteChat);
+
+
+//Cập nhật status theo chatId
+router.post("/updateStatus/:chatId", setStatusMessage);
 
 //Xử lý lỗi từ Multer
 router.use((err, req, res, next) => {
