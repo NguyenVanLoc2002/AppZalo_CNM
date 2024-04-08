@@ -18,34 +18,39 @@ import {
   IoWarningOutline,
 } from "react-icons/io5";
 import { LuPencilLine, LuSticker } from "react-icons/lu";
-import {
-  MdFormatColorText,
-  MdOutlineContentCopy,
-  MdPhone,
-} from "react-icons/md";
+import { MdFormatColorText, MdPhone } from "react-icons/md";
 import {
   PiAlarmThin,
   PiBellRingingThin,
   PiMagnifyingGlass,
   PiTagSimpleLight,
 } from "react-icons/pi";
-import { RiAlarmLine, RiBatteryChargeLine, RiDoubleQuotesR } from "react-icons/ri";
+import {
+  RiAlarmLine,
+  RiBatteryChargeLine,
+  RiDoubleQuotesR,
+} from "react-icons/ri";
 import { TfiAlarmClock } from "react-icons/tfi";
 import { FaArrowRotateLeft } from "react-icons/fa6";
 import { TiPinOutline } from "react-icons/ti";
 import axiosInstance from "../../../api/axiosInstance";
-import { format } from "date-fns";
+import { format, previousMonday } from "date-fns";
 import { useSocketContext } from "../../../contexts/SocketContext";
+import EmojiPicker from "emoji-picker-react";
+import ListChatComponent from "../ListChatComponent";
+import ChatComponents from "../ChatComponent";
 
-function PeopleChatComponent({ language, userChat }) {
+function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
   const [content, setContent] = useState("");
   const [isSidebarVisible, setSidebarVisible] = useState(false);
   const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [loadingMedia, setLoadingMedia] = useState(false);
   const scrollRef = useRef(null);
   const { socket } = useSocketContext();
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [isAddingMessages, setIsAddingMessages] = useState(false); //Flag để scroll bottom
+  const [showPicker, setShowPicker] = useState(false);
 
   // Đảo ngược mảng tin nhắn và lưu vào biến mới
   const reversedMessages = [...messages].reverse();
@@ -57,7 +62,7 @@ function PeopleChatComponent({ language, userChat }) {
       setLoading(true);
       try {
         const response = await axiosInstance.get(`chats/${userId}`);
-        console.log("response:", response);
+
         const { data } = response; // Truy cập vào dữ liệu từ phản hồi
         if (data.success) {
           setMessages(data.data);
@@ -74,12 +79,24 @@ function PeopleChatComponent({ language, userChat }) {
     if (userChat && userChat.id) {
       fetchMessageHistory(userChat.id);
     }
-  }, [userChat]); 
 
-  
+    if (socket) {
+      socket.on("new_message", ({ message }) => {
+        setMessages((prevMessages) => [message, ...prevMessages]);
+      });
+      socket.on("delete_message", ({ chatId }) => {
+        fetchMessageHistory(userChat.id);
+      });
+      return () => {
+        socket.off("new_message");
+        socket.off("delete_message");
+      };
+    }
+  }, [userChat || socket]);
+
   const handleScroll = async (event) => {
     const container = event.target;
-    
+
     const lastScrollPosition = container.scrollHeight - container.clientHeight;
     if (container.scrollTop === 0 && !isFetchingMore) {
       setIsFetchingMore(true);
@@ -108,24 +125,9 @@ function PeopleChatComponent({ language, userChat }) {
         console.error(error);
       } finally {
         setIsFetchingMore(false);
-
-        
       }
     }
   };
-
-  // Nhận tin nhắn mới từ socket
-  useEffect(() => {
-    if(socket) {
-      socket.on("new_message", ({message}) => {
-        setMessages((prevMessages) => [message, ...prevMessages]);
-        console.log("new_message: ", message);
-      });
-      return () => {
-        socket.off("new_message");
-      };
-    }
-  }, [socket]);
 
   const scrollToBottom = () => {
     if (scrollRef.current) {
@@ -137,21 +139,19 @@ function PeopleChatComponent({ language, userChat }) {
     if (!isAddingMessages) {
       scrollToBottom();
     }
-  }, [messages, isAddingMessages]); 
+  }, [messages, isAddingMessages]);
 
-  const sendMessage = async (data) => {
+  const sendMessage = async (data, receiverId) => {
+    setLoadingMedia(true);
+    console.log(data);
     try {
       if (!data || data.trim === "") return;
-
-      console.log("data: ", data);
-      if (userChat && userChat.id) {
+      // console.log("data: ", data);
+      if (receiverId) {
         const response = await axiosInstance.post(
-          `chats/${userChat.id}/` +
-            (typeof data === "string"
-              ? "sendMessage"
-              : data.type.startsWith("video/")
-              ? "sendVideo"
-              : "sendMessage"),
+          `chats/${receiverId}/${
+            data.type.startsWith("video/") ? "sendVideo" : "sendMessage"
+          }`,
           { data: data },
           {
             headers: {
@@ -166,12 +166,14 @@ function PeopleChatComponent({ language, userChat }) {
       }
     } catch (error) {
       console.error("Error sending message:", error);
+    } finally {
+      setLoadingMedia(false);
     }
   };
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
-      sendMessage(content);
+      sendMessage({ type: "text", data: content }, userChat?.id);
     }
   };
 
@@ -205,7 +207,7 @@ function PeopleChatComponent({ language, userChat }) {
     console.log("file1: ", file);
     // Xử lý tệp ảnh và video ở đây
     try {
-      await sendMessage(file);
+      await sendMessage(file, userChat?.id);
     } catch (error) {
       console.error("Error sending message:", error);
     }
@@ -239,7 +241,6 @@ function PeopleChatComponent({ language, userChat }) {
 
   const deleteChat = async (chatId) => {
     try {
-      console.log(chatId);
       const response = await axiosInstance.post(`chats/${chatId}/delete`);
       if (response.status === 200) {
         const updatedMessagesResponse = await axiosInstance.get(
@@ -250,20 +251,40 @@ function PeopleChatComponent({ language, userChat }) {
       }
     } catch (error) {
       console.error("Lỗi khi xóa tin nhắn:", error);
-      throw error; // Ném lỗi để xử lý ở nơi gọi hàm này nếu cần
+      if (error.status === 403) {
+        toast.error(
+          language === "vi"
+            ? "Bạn không được phép xóa tin nhắn này"
+            : "You are not authorized to delete this message"
+        );
+      }
+
+      throw error;
     }
   };
 
+  const togglePicker = () => {
+    setShowPicker((prevState) => !prevState);
+  };
+
+  const onEmojiClick = (e, emojiObject) => {
+    console.log("emojiObject.emoji: ", emojiObject.emoji); // Log emojiObject để kiểm tra
+    setContent((prevInput) => prevInput + emojiObject.emoji);
+    setShowPicker(false);
+  };
   return (
     <>
       {userChat && (
-        <div className=" bg-white h-screen sm:w-[calc(100%-24rem)] w-0 border-r overflow-auto">
+        <div
+          className=" bg-white h-screen sm:w-[calc(100%-24rem)] w-0 border-r overflow-auto"
+          onClick={handleHideContextMenu}
+        >
           <div className="h-[10vh] bg-white flex justify-between items-center border-b">
             <div className="flex items-center w-14 h-14 mr-3 ">
               <img
                 src={userChat?.avatar}
                 alt="avatar"
-                className="w-full h-full object-cover rounded-full border mr-3"
+                className="w-full h-[80%] object-cover rounded-full border mr-3"
               />
             </div>
             <div className="flex-col items-center mr-auto ml-2">
@@ -333,8 +354,8 @@ function PeopleChatComponent({ language, userChat }) {
                   key={index}
                   className={
                     userChat.id === message.senderId
-                      ? "chat chat-start"
-                      : "chat chat-end"
+                      ? "chat chat-start w-fit  max-w-[50%]"
+                      : "chat chat-end "
                   }
                   onContextMenu={(e) => handleContextMenu(e, message._id)}
                 >
@@ -346,7 +367,13 @@ function PeopleChatComponent({ language, userChat }) {
                     </div>
                   )}
 
-                  <div className="flex chat-bubble bg-white">
+                  <div
+                    className={`flex chat-bubble ${
+                      userChat.id === message.senderId
+                        ? "bg-white"
+                        : "bg-[#e5efff]"
+                    }`}
+                  >
                     {message.contents.map((content, contentIndex) => {
                       const maxImagesPerRow = 3;
                       const imagesCount = message.contents.filter(
@@ -417,7 +444,7 @@ function PeopleChatComponent({ language, userChat }) {
 
                   {contextMenuStates[message._id] && (
                     <div
-                      className="flex flex-col z-10 fixed top-1/2 transform -translate-x-40 -translate-y-30 w-52  bg-white rounded shadow shadow-gray-300 "
+                      className="flex flex-col z-10 fixed top-1/2 transform -translate-x-40 -translate-y-30 w-52  bg-white rounded-2xl shadow shadow-gray-300 "
                       style={{
                         top: contextMenuPosition.y,
                         left: contextMenuPosition.x,
@@ -426,44 +453,75 @@ function PeopleChatComponent({ language, userChat }) {
                       onClick={handleHideContextMenu} // Ẩn context menu khi click ra ngoài
                     >
                       <div
-                        className="flex p-2 text-black items-center  border-b border-gray-200 hover:bg-gray-200"
-                        onClick={() => deleteChat(message._id)}
+                        className="flex p-2 text-black items-center rounded-xl border-b border-gray-100 hover:bg-gray-100"
+                        onClick={() => {
+                          shareMessage(message);
+                          showModal("share");
+                        }}
                       >
                         <RiDoubleQuotesR
                           className="mr-3"
-                          size={18}
+                          size={14}
                           color="black"
                         />
-                        <p>{language === 'vi' ? "Chuyển tiếp" : "Forward"}</p>
+                        <p>{language === "vi" ? "Chuyển tiếp" : "Forward"}</p>
                       </div>
-                      <div
-                        className="flex p-2 text-red-500 items-center  border-b border-gray-200 hover:bg-gray-200"
-                        onClick={() => deleteChat(message._id)}
-                      >
-                        <FaArrowRotateLeft
-                          className="mr-3"
-                          size={18}
-                          color="red"
-                        />
-                        <p>{language === 'vi' ? "Thu hồi" : "Recall"}</p>
-                      </div>
-                      <div className="flex p-2 text-red-500 items-center ">
-                        <BsTrash3 className="mr-3" size={20} color="red" />
-                        <p>{language === 'vi' ? "Xóa chỉ phía tôi" : "Delete only my side"}</p>
+                      {message.senderId !== userChat.id && (
+                        <div
+                          className="flex p-2 text-red-400 items-center rounded-xl border-b border-gray-100 hover:bg-gray-100"
+                          onClick={() => deleteChat(message._id)}
+                        >
+                          <FaArrowRotateLeft
+                            className="mr-3"
+                            size={14}
+                            color="red"
+                          />
+                          <p>{language === "vi" ? "Thu hồi" : "Recall"}</p>
+                        </div>
+                      )}
+
+                      <div className="flex p-2 text-red-400 items-center rounded-xl border-b border-gray-100 hover:bg-gray-100">
+                        <BsTrash3 className="mr-3" size={16} color="red" />
+                        <p>
+                          {language === "vi"
+                            ? "Xóa chỉ phía tôi"
+                            : "Delete only my side"}
+                        </p>
                       </div>
                     </div>
                   )}
                 </div>
               ))}
               {isFetchingMore && <div>Loading...</div>}
+              {loadingMedia && (
+                <p className="flex flex-col justify-end mr-2 mb-2">
+                  Loading....
+                </p>
+              )}
             </div>
           )}
 
           <div className="h-[15vh] bg-white flex-col border-t">
             <div className="h-[40%] bg-white flex justify-between items-center border-b p-1">
-              <button className="hover:bg-gray-300 p-2 rounded">
+              <button
+                className="hover:bg-gray-300 p-2 rounded"
+                onClick={togglePicker}
+              >
                 <LuSticker size={20} />
               </button>
+
+              {showPicker && (
+                <EmojiPicker
+                  className="-translate-y-60"
+                  style={{ width: "100%" }}
+                  onEmojiClick={(e) => {
+                    console.log("e.emoji: ", e.emoji);
+                    setContent((prevInput) => prevInput + e.emoji);
+                    setShowPicker(false);
+                  }}
+                />
+              )}
+
               <button
                 className="hover:bg-gray-300 p-2 rounded"
                 onClick={handleSelectImageClick}
