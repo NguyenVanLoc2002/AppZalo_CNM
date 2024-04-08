@@ -79,15 +79,15 @@ const Message = ({ navigation, route }) => {
 
     if (socket) {
       socket.on("new_message", ({ message }) => {
-        setChats((prevMessages) => [message, ...prevMessages]); 
+        setChats((prevMessages) => [message, ...prevMessages]);
         console.log("new_message: ", message);
       });
       return () => {
         socket.off("new_message");
       };
     }
-    
-  }, [chats,socket]);
+
+  }, [chats, socket]);
 
   const handleCheckIsSend = (message) => {
     if (message.senderId === user.userId) {
@@ -409,14 +409,18 @@ const Message = ({ navigation, route }) => {
           <View style={{ flex: 1, justifyContent: "flex-start" }}>
             {chats.map((message, index) => (
               <View key={index} style={{ justifyContent: 'space-around', borderRadius: 10, backgroundColor: handleCheckIsSend(message) ? "#7debf5" : "#d9d9d9", margin: 5, alignItems: handleCheckIsSend(message) ? "flex-end" : "flex-start", alignSelf: handleCheckIsSend(message) ? "flex-end" : "flex-start" }}>
-                <Pressable
-                  onPress={() => handlePressIn(message)}
+                {message.contents.map((content, i) => (
+                <Pressable key={i}
+                  onPress={() => handlePressIn(content)}
                 >
                   <View>
-                    {renderMessageContent(message)}
+                    {renderMessageContent(content)}
                     <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTime(message.timestamp)}</Text></View>
                   </View>
                 </Pressable>
+
+                ))}
+
               </View>
             ))}
           </View>
