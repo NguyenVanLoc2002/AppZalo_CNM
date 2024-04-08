@@ -21,27 +21,27 @@ const useMessage = () => {
       position: "top",
     });
   };
-  const renderMessageContent = (message) => {
-    if (message.contents[0].type === 'text') {
+  const renderMessageContent = (content) => {
+    if (content.type === 'text') {
       return (
         <View style={{ paddingLeft: 15, paddingRight: 15, paddingTop: 5 }}>
-          <Text style={{ fontSize: 18 }}>{message.contents[0].data}</Text>
+          <Text style={{ fontSize: 18 }}>{content.data}</Text>
         </View>
       );
-    } else if (message.contents[0].type === 'image') {
+    } else if (content.type === 'image') {
       return (
         <View style={{ paddingLeft: 15, paddingRight: 15, paddingTop: 5 }}>
           <Image
-            source={{ uri: message.contents.data }}
+            source={{ uri: content.data }}
             style={{ width: 150, height: 150, borderRadius: 10 }}
           />
         </View>
       );
-    } else if (message.contents[0].type === 'video') {
+    } else if (content.type === 'video') {
       return (
         <View style={{ paddingLeft: 15, paddingRight: 15, paddingTop: 5 }}>
           <Video
-            source={{ uri: message.contents.data }}
+            source={{ uri: content.data }}
 
             useNativeControls
             resizeMode="contain"
