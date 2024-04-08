@@ -11,26 +11,12 @@ import {
 } from "react-native";
 import ChatItem from "./ChatItem";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import axiosInstance from "../../../api/axiosInstance";
+import axiosInstance from "../../../api/axiosInstance"
+
 function Chat({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
-  const [conversations, setConversations] = useState([]);
-
-  const fetchConversations = async () => {
-    try {
-      const response = await axiosInstance.get("/conversations/getConversations");
-      setConversations(response.data);
-      // console.log(response.data)
-    } catch (error) {
-      console.log(error);
-    }
-  };
-  useEffect(() => {
-    
-    fetchConversations();
-  }, []);
-
-
+  const [friends, setFriends] = useState([]);
+  const [listFriends, setListFriends] = useState([])
 
   useEffect(() => {
     navigation.setOptions({
@@ -87,43 +73,58 @@ function Chat({ navigation }) {
     });
   }, [navigation]);
 
-  // Mảng dữ liệu mẫu
- 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axiosInstance.get("/users/get/friends");
+        setFriends(response.data.friends);
+        console.log(friends.length)
+      } catch (error) {
+        console.log("getFriendError:", error);
+      }
+
+      try {
+        const idSet = new Set();
+        friends.map(async (friend, index) => {
+          const getChat = await axiosInstance.get(`/chats/${friend.userId}/getLastMessage`);
+          if (getChat) {
+            const newFriend = {
+              friend: friend,
+              chat: getChat.data.data.contents[0].data
+            };
+
+            if (!idSet.has(friend.userId)) {
+              setListFriends(prevList => [...prevList, newFriend]);
+              idSet.add(friend.userId);
+            }
+          }
+          else {
+            console.log("Error get chat");
+          }
+        });
+      } catch (error) {
+        console.log("getFriendChatError:", error);
+      }
+
+    }
+    fetchData()
+  }, [])
 
   const handleChatItemPress = (item) => {
-    fetchConversations()
-    // fetchConversations()
     // Chuyển đến trang Message
-    // console.log(item.participants[0]._id)
-    // navigation.navigate("Message", { user: item });
+    navigation.navigate("Message", { user: item.friend });
   };
-  const [user, setUser] = useState();
-  // router.get("/get/uid/:uid", protect, getUserByPhoneOrId);
-
-  useEffect(() => {
-    const fetchUser = async (item) => {
-      console.log(item)
-      try {
-        const response = await axiosInstance.get(`/users/get/uid/${item.participants[0]._id}`);
-       return response.data;
-        // console.log(response.data)
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchUser();
-  }, []);
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <FlatList
-        data={conversations}
+        data={listFriends}
         renderItem={({ item }) => (
           <Pressable onPress={() => handleChatItemPress(item)}>
             <ChatItem item={item} />
           </Pressable>
         )}
-        keyExtractor={(item) => item}
+        keyExtractor={(item) => item.url}
       />
       <Modal
         animationType="none"
