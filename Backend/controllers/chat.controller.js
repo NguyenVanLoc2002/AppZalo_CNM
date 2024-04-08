@@ -1,4 +1,5 @@
 const cloudinary = require("../configs/Cloudinary.config.js");
+const Chats = require("../models/Chat.js");
 const Chat = require("../models/Chat.js");
 const Conversation = require("../models/Conversation.js");
 const { io, getReciverSocketId } = require("../socket/socket.io.js");
@@ -99,6 +100,53 @@ exports.getHistoryMessage = async (req, resp) => {
   } catch (error) {
     console.error(error);
     resp.status(500).json({ success: false, massage: "Internal server error" });
+  }
+};
+
+exports.setStatusMessage = async (req, res) => {
+  try {
+    const chatId = req.params.chatId;
+    const userIdCurrent = req.user.user_id; // người dùng hiện đang đăng nhập
+
+    const chat = await Chats.findById(chatId);
+    if (!chat) {
+      return res.status(404).json({ error: "Not Found" });
+    }
+
+    if (chat.senderId.equals(userIdCurrent)) {
+      if (chat.status === 0 || chat.status === null) {
+        chat.status = 1;
+        await chat.save();
+        res.status(200).json({ message: "Update status success" });
+      } else {
+        try {
+          await Chats.findByIdAndDelete(chatId);
+          res.status(200).json({ message: "Deleting" });
+        } catch (error) {
+          console.log("Error delete: ", error);
+        }
+      }
+    } else {
+      if (chat.status === 0 || chat.status === null) {
+        console.log("Đang đổi status");
+        chat.status = 2;
+        await chat.save();
+        res.status(200).json({ message: "Update status success" });
+      } else {
+        console.log("Đang xóa");
+        try {
+          await Chats.findByIdAndDelete(chatId);
+          res.status(200).json({ message: "Delete success" });
+        } catch (error) {
+          console.log("Error delete: ", error);
+        }
+      }
+    }
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while processing the request: " });
   }
 };
 
