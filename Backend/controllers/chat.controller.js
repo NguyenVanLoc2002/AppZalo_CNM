@@ -73,8 +73,18 @@ exports.getHistoryMessage = async (req, resp) => {
 
     let queryCondition = {
       $or: [
-        { senderId: currentUserId, receiverId: userId },
-        { senderId: userId, receiverId: currentUserId },
+        {
+          $and: [
+            { senderId: currentUserId, receiverId: userId },
+            { $or: [{ status: 0 }, { status: 2 }] },
+          ],
+        },
+        {
+          $and: [
+            { senderId: userId, receiverId: currentUserId },
+            { $or: [{ status: 0 }, { status: 1 }] },
+          ],
+        },
       ],
     };
 
@@ -122,7 +132,7 @@ exports.setStatusMessage = async (req, res) => {
       } else {
         try {
           await Chats.findByIdAndDelete(chatId);
-          res.status(200).json({ message: "Deleting" });
+          res.status(200).json({ message: "Update status success" });
         } catch (error) {
           console.log("Error delete: ", error);
         }
