@@ -1,9 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Text, View, Image } from "react-native";
-import axiosInstance from "../../../api/axiosInstance";
 
 const ChatItem = ({ item }) => {
-
   return (
     <View
       style={{
@@ -18,7 +16,7 @@ const ChatItem = ({ item }) => {
         style={{ width: "15%", justifyContent: "center", alignItems: "center" }}
       >
         <Image
-          source={{ uri: user?.profile?.avatar?.url}}
+          source={{  uri: item.friend?.profile?.avatar?.url, }}
           style={{ width: 55, height: 55, borderRadius: 25 }}
         />
       </View>
@@ -29,7 +27,7 @@ const ChatItem = ({ item }) => {
           paddingLeft: 20,
         }}
       >
-        <Text style={{ fontSize: 20, marginBottom: 5 }}>{user?.profile?.name}hi</Text>
+        <Text style={{ fontSize: 20, marginBottom: 5 }}>{item.friend.profile.name}</Text>
         <Text
           style={{
             fontSize: 14,
@@ -37,10 +35,10 @@ const ChatItem = ({ item }) => {
           }}
           numberOfLines={1}
         >
-          {/* {item.tinNhan} */}
+          {item.chat}
         </Text>
       </View>
-      <View
+      {/* <View
         style={{
           width: "18%",
           justifyContent: "center",
@@ -48,9 +46,9 @@ const ChatItem = ({ item }) => {
         }}
       >
         <Text style={{ marginBottom: 5 }}>
-          {/* {item.thoiGian === 0 ? "vừa xong" : `${item.thoiGian} phút`} */}
-        </Text>
-        <Text
+          {item.thoiGian === 0 ? "vừa xong" : `${item.thoiGian} phút`}
+        </Text> */}
+        {/* <Text
           style={{
             backgroundColor: "red",
             width: 20,
@@ -61,10 +59,10 @@ const ChatItem = ({ item }) => {
             fontWeight: "bold",
             display: item.soTNChuaDoc === 0 ? "none" : "flex",
           }}
-        >
+        > */}
           {/* {item.soTNChuaDoc} */}
-        </Text>
-      </View>
+        {/* </Text> */}
+      {/* </View> */}
     </View>
   );
 };
