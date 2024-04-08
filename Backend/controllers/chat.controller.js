@@ -37,7 +37,6 @@ exports.sendMessage = async (req, resp) => {
     // Tạo và lưu tin nhắn mới vào cơ sở dữ liệu
     const message = new Chat({ senderId, receiverId, contents });
     await message.save();
-
     //Gọi socket và xử lý
     try {
       const receiverSocketId = await getReciverSocketId(receiverId);
@@ -69,26 +68,45 @@ exports.getHistoryMessage = async (req, resp) => {
     const currentUserId = req.user.user_id; // người dùng hiện đang đăng nhập
 
     const lastTimestamp = req.query.lastTimestamp; // Lấy tham số lastTimestamp từ query string
-
+    // let queryCondition = {
+    //   $or: [
+    //     { senderId: currentUserId, receiverId: userId , status: { $in: [0, 2] }},
+    //     { senderId: userId, receiverId: currentUserId , status: { $in: [0, 1] }},
+    //   ],
+    // };
     let queryCondition = {
       $or: [
-        { senderId: currentUserId, receiverId: userId },
-        { senderId: userId, receiverId: currentUserId },
+        {
+          $and: [
+            { senderId: currentUserId, receiverId: userId },
+            { $or: [{ status: 0 }, { status: 2 }] },
+          ],
+        },
+        {
+          $and: [
+            { senderId: userId, receiverId: currentUserId },
+            { $or: [{ status: 0 }, { status: 1 }] },
+          ],
+        },
       ],
     };
+
 
     const totalMessageHistory = await Chat.countDocuments(queryCondition);
     let messagesHistory;
     //Lấy 20% tin nhắn khi vượt quá 100 tin nhắn
-    if (totalMessageHistory >= 200) {
+    if (totalMessageHistory >= 100) {
+
       if (lastTimestamp) {
-        queryCondition.timestamp = { $lt: lastTimestamp };
+        queryCondition.timestamp = { $lt: lastTimestamp };//new Date(parseInt(lastTimestamp))
+
       }
       messagesHistory = await Chat.find(queryCondition)
         .sort({
           timestamp: -1,
         })
         .limit(Math.ceil(totalMessageHistory * 0.2));
+
     } else {
       //Lấy toàn bộ tin nhắn
       messagesHistory = await Chat.find(queryCondition).sort({
@@ -121,7 +139,7 @@ exports.setStatusMessage = async (req, res) => {
       } else {
         try {
           await Chats.findByIdAndDelete(chatId);
-          res.status(200).json({ message: "Deleting" });
+          res.status(200).json({ message: "Update status success" });
         } catch (error) {
           console.log("Error delete: ", error);
         }
@@ -136,7 +154,7 @@ exports.setStatusMessage = async (req, res) => {
         console.log("Đang xóa");
         try {
           await Chats.findByIdAndDelete(chatId);
-          res.status(200).json({ message: "Delete success" });
+          res.status(200).json({ message: "Update status success" });
         } catch (error) {
           console.log("Error delete: ", error);
         }
