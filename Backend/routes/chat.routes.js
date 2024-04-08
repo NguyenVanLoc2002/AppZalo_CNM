@@ -41,8 +41,6 @@ router.post(
 router.post("/:chatId/delete", deleteChat);
 
 
-//Cập nhật status theo chatId
-router.post("/updateStatus/:chatId", setStatusMessage);
 
 //Xử lý lỗi từ Multer
 router.use((err, req, res, next) => {
