@@ -13,6 +13,8 @@ const ConversationSchema = new mongoose.Schema({
   tag: { type: String, default: "friend", optional: true },
 });
 
+// ConversationSchema.index({ participants: 1 }, { unique: false });
+
 const Conversation = mongoose.model("Conversation", ConversationSchema);
 
 ConversationSchema.pre("deleteOne", async function (next) {
