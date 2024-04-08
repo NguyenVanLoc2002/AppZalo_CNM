@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Text, View, Image } from "react-native";
+import axiosInstance from "../../../api/axiosInstance";
 
 const ChatItem = ({ item }) => {
+
   return (
     <View
       style={{
@@ -16,7 +18,7 @@ const ChatItem = ({ item }) => {
         style={{ width: "15%", justifyContent: "center", alignItems: "center" }}
       >
         <Image
-          source={{ uri: item.url }}
+          source={{ uri: user?.profile?.avatar?.url}}
           style={{ width: 55, height: 55, borderRadius: 25 }}
         />
       </View>
@@ -27,7 +29,7 @@ const ChatItem = ({ item }) => {
           paddingLeft: 20,
         }}
       >
-        <Text style={{ fontSize: 20, marginBottom: 5 }}>{item.ten}</Text>
+        <Text style={{ fontSize: 20, marginBottom: 5 }}>{user?.profile?.name}hi</Text>
         <Text
           style={{
             fontSize: 14,
@@ -35,7 +37,7 @@ const ChatItem = ({ item }) => {
           }}
           numberOfLines={1}
         >
-          {item.tinNhan}
+          {/* {item.tinNhan} */}
         </Text>
       </View>
       <View
@@ -46,7 +48,7 @@ const ChatItem = ({ item }) => {
         }}
       >
         <Text style={{ marginBottom: 5 }}>
-          {item.thoiGian === 0 ? "vừa xong" : `${item.thoiGian} phút`}
+          {/* {item.thoiGian === 0 ? "vừa xong" : `${item.thoiGian} phút`} */}
         </Text>
         <Text
           style={{
@@ -60,7 +62,7 @@ const ChatItem = ({ item }) => {
             display: item.soTNChuaDoc === 0 ? "none" : "flex",
           }}
         >
-          {item.soTNChuaDoc}
+          {/* {item.soTNChuaDoc} */}
         </Text>
       </View>
     </View>
