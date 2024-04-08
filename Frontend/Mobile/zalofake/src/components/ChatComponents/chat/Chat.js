@@ -78,8 +78,9 @@ function Chat({ navigation }) {
       try {
         const response = await axiosInstance.get("/users/get/friends");
         setFriends(response.data.friends);
-        console.log(friends.length)
-      } catch (error) {
+        console.log(response.data.friends)
+      } 
+      catch (error) {
         console.log("getFriendError:", error);
       }
 
