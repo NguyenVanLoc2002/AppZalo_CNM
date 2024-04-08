@@ -115,25 +115,29 @@ exports.setStatusMessage = async (req, res) => {
     }
 
     if (chat.senderId.equals(userIdCurrent)) {
-      if (chat.status === 0) {
+      if (chat.status === 0 || chat.status === null) {
         chat.status = 1;
         await chat.save();
         res.status(200).json({ message: "Update status success" });
       } else {
         try {
           await Chats.findByIdAndDelete(chatId);
+          res.status(200).json({ message: "Deleting" });
         } catch (error) {
           console.log("Error delete: ", error);
         }
       }
     } else {
-      if (chat.status === 0) {
+      if (chat.status === 0 || chat.status === null) {
+        console.log("Đang đổi status");
         chat.status = 2;
         await chat.save();
         res.status(200).json({ message: "Update status success" });
       } else {
+        console.log("Đang xóa");
         try {
           await Chats.findByIdAndDelete(chatId);
+          res.status(200).json({ message: "Delete success" });
         } catch (error) {
           console.log("Error delete: ", error);
         }
