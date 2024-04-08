@@ -17,8 +17,8 @@ const chatSchema = new mongoose.Schema({
         type: String,
         enum: ["text", "image", "video", "link", "file", "audio"],
         required: true,
-      }, 
-      data: { type: String }, 
+      },
+      data: { type: String },
     },
   ],
   timestamp: { type: Date, default: Date.now },
@@ -28,18 +28,24 @@ const chatSchema = new mongoose.Schema({
 chatSchema.post("save", async function (chat, next) {
   try {
     const Conversation = mongoose.model("Conversation");
-    const conversation = await Conversation.findOne({
-      participants: { $all: [chat.senderId, chat.receiverId] },
+    const existingConversation = await Conversation.findOne({
+      $or: [
+        { participants: { $all: [chat.senderId, chat.receiverId] } },
+        { participants: { $all: [chat.receiverId, chat.senderId] } },
+      ],
     });
-    if (!conversation) {
+
+    if (existingConversation) {
+      existingConversation.messages.push(chat._id);
+      existingConversation.lastMessage = chat._id;
+      await existingConversation.save();
+    } else {
       const newConversation = new Conversation({
         participants: [chat.senderId, chat.receiverId],
         messages: [chat._id],
+        lastMessage: chat._id,
       });
       await newConversation.save();
-    } else {
-      conversation.messages.push(chat._id);
-      await conversation.save();
     }
     next();
   } catch (error) {

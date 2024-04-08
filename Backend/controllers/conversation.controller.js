@@ -64,11 +64,15 @@ exports.getConversations = async (req, res) => {
     const userId = req.user.user_id;
     const conversations = await Conversation.find({
       participants: userId,
-    }).populate({
+    }).populate([{
       path: "participants",
       select: "phone email profile _id",
-    
-    });
+    }, 
+    {
+      path: "lastMessage",
+      select: "senderId receiverId contents timestamp read",
+    }
+  ]);
     if (!conversations) {
       return res.status(404).json({ message: "Conversations not found" });
     }
@@ -78,5 +82,27 @@ exports.getConversations = async (req, res) => {
     res
       .status(500)
       .json({ message: "Failed to get conversations", error: error.message });
+  }
+};
+
+// get conversation by participants every time a new message is sent
+exports.getConversationByParticipants = async () => {
+  try {
+    const participants = req.body.participants;
+    if (!participants) {
+      return res.status(400).json({ message: "Participants are required" });
+    }
+
+    const conversation = await Conversation.findOne({
+      participants: { $all: participants },
+    });
+
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+    return conversation;
+  } catch (error) {
+    console.error("Error getting conversation by participants:", error);
+    return null;
   }
 };
