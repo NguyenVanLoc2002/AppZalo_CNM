@@ -32,7 +32,7 @@ const useMessage = () => {
       return (
         <View style={{ paddingLeft: 15, paddingRight: 15, paddingTop: 5 }}>
           <Image
-            source={{ uri: message.contents[0].data }}
+            source={{ uri: message.contents.data }}
             style={{ width: 150, height: 150, borderRadius: 10 }}
           />
         </View>
@@ -41,7 +41,7 @@ const useMessage = () => {
       return (
         <View style={{ paddingLeft: 15, paddingRight: 15, paddingTop: 5 }}>
           <Video
-            source={{ uri: message.contents[0].data }}
+            source={{ uri: message.contents.data }}
 
             useNativeControls
             resizeMode="contain"
