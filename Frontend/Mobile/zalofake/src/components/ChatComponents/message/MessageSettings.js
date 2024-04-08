@@ -49,10 +49,10 @@ const MessageSettings = ({ navigation, route }) => {
         onPress={() => navigation.navigate("FriendProfile", { user })}
       >
         <Image
-          source={{ uri: user.url }}
+          source={{ uri: user?.profile?.avatar?.url }}
           style={{ width: 100, height: 100, borderRadius: 50 }}
         />
-        <Text style={{ fontSize: 20, fontWeight: "bold" }}>{user.ten}</Text>
+        <Text style={{ fontSize: 20, fontWeight: "bold" }}>{user.profile.name}</Text>
       </Pressable>
       <View
         style={{

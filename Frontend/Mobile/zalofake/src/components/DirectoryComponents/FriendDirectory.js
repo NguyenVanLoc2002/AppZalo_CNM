@@ -47,6 +47,7 @@ const FriendDirectory = ({ navigation }) => {
       try {
         const response = await axiosInstance.get("/users/get/friends");
         setFriends(response.data.friends);
+        console.log(friends)
       } catch (error) {
         console.log(error);
       }
