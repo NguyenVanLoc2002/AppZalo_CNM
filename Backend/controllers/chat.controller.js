@@ -1,5 +1,6 @@
 const cloudinary = require("../configs/Cloudinary.config.js");
 const Chat = require("../models/Chat.js");
+const Conversation = require("../models/Conversation.js");
 const { io, getReciverSocketId } = require("../socket/socket.io.js");
 
 //Gửi tin nhắn mới cho một người dùng cụ thể.
@@ -9,7 +10,6 @@ exports.sendMessage = async (req, resp) => {
     console.log("senderId: ", senderId);
     const receiverId = req.params.userId;
     let contents = [];
-    console.log("req.body.data: ", req.body.data);
     // Kiểm tra xem req.body có tồn tại không và có chứa nội dung không
     if (Object.keys(req.body).length) {
       // Nếu có nội dung, thêm vào mảng contents
@@ -28,7 +28,6 @@ exports.sendMessage = async (req, resp) => {
         });
       }
     }
-    console.log("contents: ", contents);
 
     if (!contents || !contents.length) {
       throw new Error("Contents are empty or contain no fields");
@@ -55,7 +54,7 @@ exports.sendMessage = async (req, resp) => {
       .status(201)
       .json({ message: "Message sent successfully", data: message });
   } catch (error) {
-    // Xử lý lỗi
+    console.log("Error sending message:", error);
     resp
       .status(500)
       .json({ message: "Failed to send message", error: error.message });
@@ -142,7 +141,6 @@ function extractPublicId(url) {
   return publicId;
 }
 
-// Xóa tin nhắn khỏi cơ sở dữ liệu
 exports.deleteChat = async (req, res) => {
   const { chatId } = req.params;
 
@@ -158,7 +156,6 @@ exports.deleteChat = async (req, res) => {
         .json({ message: "You are not authorized to delete this message" });
     }
 
-    // Lấy danh sách các tệp đa phương tiện từ tin nhắn đã xóa
     const mediaFiles = chat.contents.filter(
       (content) => content.type === "image" || content.type === "video"
     );
@@ -173,6 +170,20 @@ exports.deleteChat = async (req, res) => {
       })
     );
     await Chat.findByIdAndDelete(chatId);
+
+    const conversation = await Conversation.findOne({
+      participants: { $all: [chat.senderId, chat.receiverId] },
+    });
+    if (conversation) {
+      conversation.messages = conversation.messages.filter(
+        (message) => message.toString() !== chatId
+      );
+      if (conversation.messages.length === 0) {
+        await conversation.deleteOne({
+          participants: { $all: [chat.senderId, chat.receiverId] },
+        });
+      } else await conversation.save();
+    }
 
     const receiverSocketId = await getReciverSocketId(chat.receiverId);
     if (receiverSocketId) {
