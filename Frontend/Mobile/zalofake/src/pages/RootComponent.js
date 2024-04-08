@@ -28,6 +28,7 @@ import AccountVsSecurity from "../components/InfoComponents/AccoutVsSecurity";
 import PersonalSetting from "../components/InfoComponents/PersonalSetting";
 import ChangePassword from "../components/InfoComponents/ChangePassword";
 import ForgotPassword from "../components/InfoComponents/ForgotPassword";
+import FriendRequest from "../components/ChatComponents/FriendRequest";
 
 const Stack = createNativeStackNavigator();
 
@@ -55,6 +56,7 @@ export default function RootComponent() {
       <Stack.Screen name="FriendProfile" component={FriendProfile} />
       <Stack.Screen name="AddFriends" component={AddFriends} />
       <Stack.Screen name="CreateGroup" component={CreateGroup} />
+      <Stack.Screen name="FriendRequest" component={FriendRequest} />
 
       <Stack.Screen name="ChatContent" component={Chat} />
       <Stack.Screen name="News" component={News} />
@@ -69,7 +71,6 @@ export default function RootComponent() {
       <Stack.Screen name="PersonalSetting" component={PersonalSetting} />
       <Stack.Screen name="ChangePassword" component={ChangePassword} />
       <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
-
     </Stack.Navigator>
   ) : (
     <Stack.Navigator initialRouteName="LoginMain">
@@ -113,17 +114,17 @@ export default function RootComponent() {
           title: "Đăng nhập",
         }}
       />
-       <Stack.Screen 
-       name="ResetPassword" 
-       component={ResetPassword}
-       options={{
-        headerStyle: {
-          backgroundColor: "#0091FF",
-        },
-        headerTintColor: "#fff",
-        title: "Lấy lại mật khẩu", 
-        }} />
-       
+      <Stack.Screen
+        name="ResetPassword"
+        component={ResetPassword}
+        options={{
+          headerStyle: {
+            backgroundColor: "#0091FF",
+          },
+          headerTintColor: "#fff",
+          title: "Lấy lại mật khẩu",
+        }}
+      />
     </Stack.Navigator>
   );
 }
