@@ -47,7 +47,6 @@ const FriendDirectory = ({ navigation }) => {
       try {
         const response = await axiosInstance.get("/users/get/friends");
         setFriends(response.data.friends);
-        console.log(friends)
       } catch (error) {
         console.log(error);
       }
@@ -82,6 +81,13 @@ const FriendDirectory = ({ navigation }) => {
     setModalVisible(false);
   };
 
+
+
+  const handleFriendMessage = (friend) => {
+    navigation.navigate("Message",{ user :friend });
+  };
+  
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.topSection}>
@@ -108,7 +114,7 @@ const FriendDirectory = ({ navigation }) => {
           <View key={index} style={styles.friendRow}>
             <Pressable
               style={styles.friendItem}
-              onPress={() => toggleModal(index, friend.phone)}
+              onPress={() => handleFriendMessage(friend)}
             >
               <View style={styles.friendInfo}>
                 <Image
