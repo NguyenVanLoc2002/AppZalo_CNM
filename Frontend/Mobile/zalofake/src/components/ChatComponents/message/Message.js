@@ -23,7 +23,7 @@ const Message = ({ navigation, route }) => {
   //nhi  const 
   [textMessage, setTextMessage] = useState(null)
   const [isColorSend, setIsColorSend] = useState(false)
-  const { sendMessage, sendImage } = useSendMessage();
+  const { sendMessage, sendImage, sendVideo } = useSendMessage();
   const [isMessageSent, setIsMessageSent] = useState(false);
   const [selectedImage, setSelectedImage] = useState();
 
@@ -65,7 +65,7 @@ const Message = ({ navigation, route }) => {
   useEffect(() => {
     const fetchChats = async () => {
       try {
-        const response = await axiosInstance.get(`/chats/${user.userId}`);
+        const response = await axiosInstance.get(`/chats/getHistoryMessage/${user.userId}`);
         const reversedChats = response.data.data.reverse();
 
         setChats(reversedChats);
@@ -164,7 +164,7 @@ const Message = ({ navigation, route }) => {
     setIsLoading(true)
     const fetchChats = async () => {
       try {
-        const response = await axiosInstance.get(`/chats/${user.userId}?lastTimestamp=${lastTimestamp}`);
+        const response = await axiosInstance.get(`/chats/getHistoryMessage/${user.userId}?lastTimestamp=${lastTimestamp}`);
         const reversedChats = response.data.data.reverse();
         if (reversedChats && reversedChats.length > 0) {
           setChats(prevChats => [...reversedChats, ...prevChats]);
@@ -201,8 +201,10 @@ const Message = ({ navigation, route }) => {
   const handleDeleteMess = () => {
     setIsLoadThuHoi(true)
     const deleteChat = async () => {
+      console.log('id'+messageSelected._id)
       try {
         const response = await axiosInstance.post(`chats/${messageSelected._id}/delete`);
+        console.log(response)
         if (response.status === 200) {
           const newArray = removeItemById(chats, messageSelected._id);
           setChats(newArray)
@@ -286,36 +288,67 @@ const Message = ({ navigation, route }) => {
     if (!pickerResult.canceled) {
       setIsLoadMess(true)
       const formData = new FormData();
-      pickerResult.assets.forEach(image => {
-        const fileName = image.uri.split('/').pop();
-        formData.append('data', {
-          uri: image.uri,
-          name: fileName,
-          type: 'image/jpeg', // Loại hình ảnh có thể thay đổi tùy theo loại tệp
-        });
-      });
-      console.log(formData)
-      try {
-        const response = await sendImage(user, formData)
-        if (response.status === 201) {
-          setIsLoadMess(false)
-          setIsLoad(false)
-          setChats(
-            chats.concat(response.data.data))
-          console.log("success");
+      for (const asset of pickerResult.assets) {
+        if (asset.type === 'image') {
+          pickerResult.assets.forEach(image => {
+            const fileName = image.uri.split('/').pop();
+            formData.append('data', {
+              uri: image.uri,
+              name: fileName,
+              type: 'image/jpeg',
+            });
+          });
+          try {
+            const response = await sendImage(user, formData)
+            if (response.status === 201) {
+              setIsLoadMess(false)
+              setIsLoad(false)
+              setChats(
+                chats.concat(response.data.data))
+              console.log("success");
+            }
+            else if (response.status === 500) {
+              console.log("fail");
 
+            }
+
+
+          } catch (error) {
+            console.log(error);
+            setIsLoadMess(false)
+          }
+        } else if (asset.type === 'video') {
+          console.log("sendVideo", asset);
+          pickerResult.assets.forEach(image => {
+            const fileName = image.uri.split('/').pop();
+            formData.append('data', {
+              uri: image.uri,
+              name: fileName,
+              type: 'video/mp4',
+            });
+          });
+          console.log("formData: ", formData);
+          try {
+            const response = await sendVideo(user, formData)
+            if (response.status === 201) {
+              setIsLoadMess(false)
+              setIsLoad(false)
+              setChats(
+                chats.concat(response.data.data))
+              console.log("success");
+            }
+            else if (response.status === 500) {
+              console.log("fail");
+            }
+          } catch (error) {
+            console.log(error);
+            setIsLoadMess(false)
+          }
         }
-        else if (response.status === 500) {
-          console.log("fail");
-
-        }
-
-      } catch (error) {
-        console.log(error);
-        setIsLoadMess(false)
       }
     }
   }
+
 
 
   useEffect(() => {
@@ -367,6 +400,7 @@ const Message = ({ navigation, route }) => {
         <Toast />
         <ScrollView ref={scrollViewRef}
           onScroll={handleScroll}
+          scrollEventThrottle={16}
           onLayout={(event) => {
             setScrollViewHeight(event.nativeEvent.layout.height);
           }}
@@ -377,14 +411,18 @@ const Message = ({ navigation, route }) => {
           <View style={{ flex: 1, justifyContent: "flex-start" }}>
             {chats.map((message, index) => (
               <View key={index} style={{ justifyContent: 'space-around', borderRadius: 10, backgroundColor: handleCheckIsSend(message) ? "#7debf5" : "#d9d9d9", margin: 5, alignItems: handleCheckIsSend(message) ? "flex-end" : "flex-start", alignSelf: handleCheckIsSend(message) ? "flex-end" : "flex-start" }}>
-                <Pressable
-                  onPress={() => handlePressIn(message)}
-                >
-                  <View>
-                    {renderMessageContent(message)}
-                    <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTime(message.timestamp)}</Text></View>
-                  </View>
-                </Pressable>
+                {message.contents.map((content, i) => (
+                  <Pressable key={i}
+                    onPress={() => handlePressIn(message)}
+                  >
+                    <View>
+                      {renderMessageContent(content)}
+                      <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTime(message.timestamp)}</Text></View>
+                    </View>
+                  </Pressable>
+
+                ))}
+
               </View>
             ))}
           </View>
@@ -470,17 +508,17 @@ const Message = ({ navigation, route }) => {
                 <Text style={styles.modalButton}>Chuyển tiếp</Text>
               </Pressable>
               <Pressable style={styles.pressCol} onPress={handleDeleteMessByStatus}>
-              {isLoadXoa ? (
+                {isLoadXoa ? (
                   <ActivityIndicator color="black" size="large" />
                 ) : (
                   <FontAwesome5
-                  name="trash"
-                  size={20}
-                  color="black"
-                  style={{ marginRight: 8 }}
-                />
+                    name="trash"
+                    size={20}
+                    color="black"
+                    style={{ marginRight: 8 }}
+                  />
                 )}
-                
+
                 <Text style={styles.modalButton} >Xóa</Text>
               </Pressable>
               <Pressable style={styles.pressCol} onPress={handleDeleteMess}>
