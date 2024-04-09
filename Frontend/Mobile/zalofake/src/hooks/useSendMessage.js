@@ -11,18 +11,11 @@ const useSendMessage = () => {
                     }
                 }
             )
-            if (response.status === 201) {
-                console.log("success");
-                return true;
-            }
-            else if (response.status === 500) {
-                console.log("fail");
-                return false;
-            }
+            return response;
 
         } catch (error) {
             console.log("error1:", error)
-            return false;
+
         }
     }
 
@@ -31,22 +24,15 @@ const useSendMessage = () => {
         try {
             const response = await axiosInstance.post(`/chats/${user.userId}/sendMessage`,
                 { data: message }
-
             )
-            if (response.status === 201) {
-                console.log("success");
-                return true;
-            }
-            else if (response.status === 500) {
-                console.log("fail");
-                return false;
-            }
-
+            return response;
         } catch (error) {
             console.log("error1:", error)
             return false;
         }
     }
+
+ 
 
     const sendVideo = async (user, message) => {
         console.log("hihi");
@@ -60,15 +46,8 @@ const useSendMessage = () => {
                 }
 
             )
-            if (response.status === 201) {
-                console.log("success");
-                return true;
-            }
-            else if (response.status === 500) {
-                console.log("fail");
-                return false;
-            }
-
+            return response;
+            
         } catch (error) {
             console.log("error1:", error)
             return false;

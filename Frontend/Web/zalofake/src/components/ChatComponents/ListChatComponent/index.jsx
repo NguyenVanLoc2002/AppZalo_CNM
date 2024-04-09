@@ -7,6 +7,7 @@ import { IoIosMore } from "react-icons/io";
 
 import useConversation from "../../../hooks/useConversation";
 import { useAuthContext } from "../../../contexts/AuthContext";
+import { useSocketContext } from "../../../contexts/SocketContext";
 
 function ListChatComponent({ language, showModal, userChat, friends }) {
   const [valueSearch, setValueSearch] = useState("");
@@ -18,8 +19,9 @@ function ListChatComponent({ language, showModal, userChat, friends }) {
   const [originalFriendList, setOriginalFriendList] = useState([]);
   const [listChatCurrent, setListChatCurrent] = useState([]);
   const [isChatSelected, setIsChatSelected] = useState("");
-  const { conversations, loading, getConversations } = useConversation();
+  const { conversations, getConversations } = useConversation();
   const { authUser } = useAuthContext();
+  const { socket } = useSocketContext();
 
   useEffect(() => {
     getConversations();
@@ -32,22 +34,26 @@ function ListChatComponent({ language, showModal, userChat, friends }) {
       const friend = conversation.participants.find(
         (participant) => participant.phone !== authUser.phone
       );
+
       return {
         id: friend._id,
         name: friend.profile.name,
-        avatar: friend.profile.avatar.url || "/zalo.svg",
+        avatar: friend.profile.avatar?.url || "/zalo.svg",
         unread: conversation.messages.some(
-          (message) =>
-            message.receiver === authUser.phone && !message.isRead
+          (message) => message.receiver === authUser.phone && !message.isRead
         ),
-      }
+        lastMessage: conversation.lastMessage,
+      };
     });
     setListChatCurrent(listChat);
-  }, [conversations]);
 
-  conversations.map((conversation) => {
-    console.log("conversation: ", conversation);
-  });
+    if (socket) {
+      socket.on("new_message", ({ message }) => {
+        console.log("new_message form list", message);
+        getConversations();
+      });
+    }
+  }, [conversations || socket]);
 
   const changeTab = (tab) => {
     setActiveTab(tab);
@@ -279,9 +285,18 @@ function ListChatComponent({ language, showModal, userChat, friends }) {
                       className="text-gray-600 mt-auto "
                       style={{ fontSize: 14 }}
                     >
-                      {friend.name.length > 20
-                        ? `${friend.name.slice(0, 20)}...`
-                        : friend.name}
+                      {friend.lastMessage?.senderId === authUser._id
+                        ? "Bạn: "
+                        : ""}
+                      {friend.lastMessage?.contents[0].type === "text"
+                        ? friend.lastMessage?.contents[0].data
+                        : "File: "}
+
+                      {friend.unread ? (
+                        <span className="text-blue-500"> (1)</span>
+                      ) : (
+                        ""
+                      )}
                     </p>
                   </div>
                   <div>

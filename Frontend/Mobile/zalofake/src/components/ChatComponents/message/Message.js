@@ -26,7 +26,6 @@ const Message = ({ navigation, route }) => {
   const [isColorSend, setIsColorSend] = useState(false)
   const { sendMessage, sendImage, sendVideo } = useSendMessage();
   const [isMessageSent, setIsMessageSent] = useState(false);
-  const [isLoadMess, setIsLoadMess] = useState(false)
   const { socket } = useSocketContext();
 
   // truc {
@@ -38,13 +37,16 @@ const Message = ({ navigation, route }) => {
   const [lastTimestamp, setLastTimestamp] = useState("")
   const [isLoad, setIsLoad] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { renderMessageContent, showToastSuccess } = useMessage();
+  const { renderMessageContent, showToastSuccess, showToastError } = useMessage();
   const [isModalVisible, setModalVisible] = useState(false);
   const [messageSelected, setMessageSelected] = useState("");
   const [isModalFriendVisible, setIsModalFriendVisible] = useState(false);
   const [friends, setFriends] = useState([]);
+  const [isLoadMess, setIsLoadMess] = useState(false)
   const [isLoadChuyenTiep, setIsLoadChuyenTiep] = useState(false)
   const [isLoadThuHoi, setIsLoadThuHoi] = useState(false)
+  const [isLoadXoa, setIsLoadXoa] = useState(false)
+  const { authUser } = useAuthContext();
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
@@ -65,11 +67,13 @@ const Message = ({ navigation, route }) => {
   useEffect(() => {
     const fetchChats = async () => {
       try {
-        const response = await axiosInstance.get(`/chats/${user.userId}`);
+        const response = await axiosInstance.get(`/chats/getHistoryMessage/${user.userId}`);
         const reversedChats = response.data.data.reverse();
+
         setChats(reversedChats);
         fetchFriends();
         const lastElement = reversedChats[0]
+        console.log(lastElement)
         setLastTimestamp(lastElement.timestamp)
       } catch (error) {
         console.log(error);
@@ -115,99 +119,6 @@ const Message = ({ navigation, route }) => {
     toggleModalFriend();
   };
 
-  const chuyenTiepChat = (friend) => {
-    setIsLoadChuyenTiep(true)
-    const handleSendMessage = async () => {
-      try {
-        const send = await sendMessage(friend, messageSelected.contents[0])
-        if (send) {
-          showToastSuccess("Chuyển tiếp thành công")
-          setIsLoadChuyenTiep(false)
-        } else {
-          showToastError("Chuyển tiếp thất bại")
-        }
-      } catch (error) {
-        console.log("error1:", error)
-        setIsLoadChuyenTiep(false)
-        return false;
-      }
-      toggleModalFriend();
-    }
-    handleSendMessage();
-  };
-  // }
-
-  // nhi {
-  const openImagePicker = async () => {
-    const permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) {
-      console.log("Permission to access camera roll is required!");
-      return;
-    }
-
-    const pickerResult = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: false,
-      quality: 1,
-      allowsMultipleSelection: true,
-      selectionLimit: 20,
-      videoExportPreset: ImagePicker.VideoExportPreset.Passthrough,
-      videoMaxDuration: 10
-    });
-
-    if (!pickerResult.canceled) {
-      setIsLoadMess(true)
-      const formData = new FormData();
-      for (const asset of pickerResult.assets) {
-        if (asset.type === 'image') {
-          pickerResult.assets.forEach(image => {
-            const fileName = image.uri.split('/').pop();
-            formData.append('data', {
-              uri: image.uri,
-              name: fileName,
-              type: 'image/jpeg',
-            });
-          });
-
-          try {
-            const send = await sendImage(user, formData)
-            if (send) {
-              console.log("send image success");
-              setIsLoadMess(false)
-            }
-          } catch (error) {
-            console.log(error);
-            setIsLoadMess(false)
-          }
-        } else if (asset.type === 'video') {
-          console.log("sendVideo", asset);
-          pickerResult.assets.forEach(image => {
-            const fileName = image.uri.split('/').pop();
-            formData.append('data', {
-              uri: image.uri,
-              name: fileName,
-              type: 'video/mp4',
-            });
-          });
-
-          console.log("formData: ", formData);
-
-          try {
-            const send = await sendVideo(user, formData)
-            if (send) {
-              console.log("send video success");
-              setIsLoadMess(false)
-            }
-          } catch (error) {
-            console.log(error);
-            setIsLoadMess(false)
-          }
-        }
-
-      }
-    }
-  }
 
   useEffect(() => {
     // Update send button color based on textMessage
@@ -290,7 +201,7 @@ const Message = ({ navigation, route }) => {
     setIsLoading(true)
     const fetchChats = async () => {
       try {
-        const response = await axiosInstance.get(`/chats/${user.userId}?lastTimestamp=${lastTimestamp}`);
+        const response = await axiosInstance.get(`/chats/getHistoryMessage/${user.userId}?lastTimestamp=${lastTimestamp}`);
         const reversedChats = response.data.data.reverse();
         if (reversedChats && reversedChats.length > 0) {
           setChats(prevChats => [...reversedChats, ...prevChats]);
@@ -326,26 +237,151 @@ const Message = ({ navigation, route }) => {
     return array;
   };
   const handleDeleteMess = () => {
+    setIsLoadThuHoi(true)
     const deleteChat = async () => {
+      console.log('id' + messageSelected._id)
       try {
         const response = await axiosInstance.post(`chats/${messageSelected._id}/delete`);
+        console.log(response)
+        if (response.status === 200) {
+          const newArray = removeItemById(chats, messageSelected._id);
+          setChats(newArray)
+          showToastSuccess("Thu hồi thành công")
+          toggleModal()
+          setIsLoadThuHoi(false)
+        }
+      } catch (error) {
+        console.log(error);
+        setIsLoadThuHoi(false)
+      }
+    };
+    deleteChat();
+    // setModalVisible(false)
+  };
+  const handleDeleteMessByStatus = () => {
+    setIsLoadXoa(true)
+    const deleteChat = async () => {
+      try {
+        const response = await axiosInstance.post(`chats/updateStatus/${messageSelected._id}`);
         if (response.status === 200) {
           const newArray = removeItemById(chats, messageSelected._id);
           setChats(newArray)
           showToastSuccess("Xóa thành công")
           toggleModal()
+          setIsLoadXoa(false)
         }
       } catch (error) {
         console.log(error);
+        setIsLoadXoa(false)
       }
     };
     deleteChat();
     // setModalVisible(false)
   };
 
-
+  const chuyenTiepChat = (friend) => {
+    setIsLoadChuyenTiep(true)
+    const handleSendMessage = async () => {
+      try {
+        const send = await sendMessage(friend, messageSelected.contents[0])
+        if (send) {
+          showToastSuccess("Chuyển tiếp thành công")
+          setIsLoadChuyenTiep(false)
+        } else {
+          showToastError("Chuyển tiếp thất bại")
+        }
+      } catch (error) {
+        console.log("error1:", error)
+        setIsLoadChuyenTiep(false)
+        return false;
+      }
+      toggleModalFriend();
+    }
+    handleSendMessage();
+  };
 
   //nhi
+  const openImagePicker = async () => {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      console.log("Permission to access camera roll is required!");
+      return;
+    }
+
+    const pickerResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: false,
+      quality: 1,
+      allowsMultipleSelection: true,
+      selectionLimit: 20,
+      videoExportPreset: ImagePicker.VideoExportPreset.Passthrough,
+      videoMaxDuration: 10
+    });
+
+    if (!pickerResult.canceled) {
+      setIsLoadMess(true)
+      const formData = new FormData();
+      for (const asset of pickerResult.assets) {
+        if (asset.type === 'image') {
+          pickerResult.assets.forEach(image => {
+            const fileName = image.uri.split('/').pop();
+            formData.append('data', {
+              uri: image.uri,
+              name: fileName,
+              type: 'image/jpeg',
+            });
+          });
+          try {
+            const response = await sendImage(user, formData)
+            if (response.status === 201) {
+              setIsLoadMess(false)
+              setIsLoad(false)
+              setChats(
+                chats.concat(response.data.data))
+              console.log("success");
+            }
+            else if (response.status === 500) {
+              console.log("fail");
+
+            }
+
+
+          } catch (error) {
+            console.log(error);
+            setIsLoadMess(false)
+          }
+        } else if (asset.type === 'video') {
+          console.log("sendVideo", asset);
+          pickerResult.assets.forEach(image => {
+            const fileName = image.uri.split('/').pop();
+            formData.append('data', {
+              uri: image.uri,
+              name: fileName,
+              type: 'video/mp4',
+            });
+          });
+          console.log("formData: ", formData);
+          try {
+            const response = await sendVideo(user, formData)
+            if (response.status === 201) {
+              setIsLoadMess(false)
+              setIsLoad(false)
+              setChats(
+                chats.concat(response.data.data))
+              console.log("success");
+            }
+            else if (response.status === 500) {
+              console.log("fail");
+            }
+          } catch (error) {
+            console.log(error);
+            setIsLoadMess(false)
+          }
+        }
+      }
+    }
+  }
 
 
 
@@ -374,10 +410,11 @@ const Message = ({ navigation, route }) => {
           setChats(
             chats.concat(response.data.data))
           console.log("success");
+          setTextMessage("")
         }
-        else {
+        else if (response.status === 500) {
+          showToastError("Gửi tin nhắn thất bại")
           console.log("fail");
-          setIsLoadMess(false)
         }
 
       } catch (error) {
@@ -410,14 +447,14 @@ const Message = ({ navigation, route }) => {
             {chats.map((message, index) => (
               <View key={index} style={{ justifyContent: 'space-around', borderRadius: 10, backgroundColor: handleCheckIsSend(message) ? "#7debf5" : "#d9d9d9", margin: 5, alignItems: handleCheckIsSend(message) ? "flex-end" : "flex-start", alignSelf: handleCheckIsSend(message) ? "flex-end" : "flex-start" }}>
                 {message.contents.map((content, i) => (
-                <Pressable key={i}
-                  onPress={() => handlePressIn(content)}
-                >
-                  <View>
-                    {renderMessageContent(content)}
-                    <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTime(message.timestamp)}</Text></View>
-                  </View>
-                </Pressable>
+                  <Pressable key={i}
+                    onPress={() => handlePressIn(message)}
+                  >
+                    <View>
+                      {renderMessageContent(content)}
+                      <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTime(message.timestamp)}</Text></View>
+                    </View>
+                  </Pressable>
 
                 ))}
 
@@ -507,13 +544,18 @@ const Message = ({ navigation, route }) => {
                 />
                 <Text style={styles.modalButton}>Chuyển tiếp</Text>
               </Pressable>
-              <Pressable style={styles.pressCol}>
-                <FontAwesome5
-                  name="trash"
-                  size={20}
-                  color="black"
-                  style={{ marginRight: 8 }}
-                />
+              <Pressable style={styles.pressCol} onPress={handleDeleteMessByStatus}>
+                {isLoadXoa ? (
+                  <ActivityIndicator color="black" size="large" />
+                ) : (
+                  <FontAwesome5
+                    name="trash"
+                    size={20}
+                    color="black"
+                    style={{ marginRight: 8 }}
+                  />
+                )}
+
                 <Text style={styles.modalButton} >Xóa</Text>
               </Pressable>
               <Pressable style={styles.pressCol} onPress={handleDeleteMess}>

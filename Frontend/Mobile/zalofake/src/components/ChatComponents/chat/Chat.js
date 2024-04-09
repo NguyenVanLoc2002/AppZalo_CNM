@@ -77,14 +77,10 @@ function Chat({ navigation }) {
     const fetchData = async () => {
       try {
         const response = await axiosInstance.get("/users/get/friends");
-        if (response.status === 200) {
-          setFriends(response.data.friends);
-          console.log(friends.length)
-        }
-        else if(response.status === 404){
-          console.log("getFriendError:", error);
-        }
-      } catch (error) {
+        setFriends(response.data.friends);
+        console.log(response.data.friends)
+      } 
+      catch (error) {
         console.log("getFriendError:", error);
       }
 
@@ -92,7 +88,7 @@ function Chat({ navigation }) {
         const idSet = new Set();
         friends.map(async (friend, index) => {
           const getChat = await axiosInstance.get(`/chats/${friend.userId}/getLastMessage`);
-          if (getChat.status === 200) {
+          if (getChat) {
             const newFriend = {
               friend: friend,
               chat: getChat.data.data.contents[0].data
