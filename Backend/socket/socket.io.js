@@ -62,7 +62,7 @@ io.on("connection", async (socket) => {
     console.log(err);
     return;
   }
-  console.log(`User connected with id: ${userId}`);
+  // console.log(`User connected with id: ${userId}`);
 
   const userSocketMaping = await UserSocketMaping.findOne({
     user_id: userId,
@@ -98,7 +98,7 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("disconnect", async () => {
-    console.log(`User disconnected with id: ${userId}`);
+    // console.log(`User disconnected with id: ${userId}`);
     try {
       const deletedUser = await UserSocketMaping.findOneAndDelete({
         user_id: userId,
