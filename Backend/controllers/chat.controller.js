@@ -1,5 +1,7 @@
 const cloudinary = require("../configs/Cloudinary.config.js");
+const Chats = require("../models/Chat.js");
 const Chat = require("../models/Chat.js");
+const Conversation = require("../models/Conversation.js");
 const { io, getReciverSocketId } = require("../socket/socket.io.js");
 
 //Gửi tin nhắn mới cho một người dùng cụ thể.
@@ -9,7 +11,6 @@ exports.sendMessage = async (req, resp) => {
     console.log("senderId: ", senderId);
     const receiverId = req.params.userId;
     let contents = [];
-    console.log("req.body.data: ", req.body.data);
     // Kiểm tra xem req.body có tồn tại không và có chứa nội dung không
     if (Object.keys(req.body).length) {
       // Nếu có nội dung, thêm vào mảng contents
@@ -28,7 +29,6 @@ exports.sendMessage = async (req, resp) => {
         });
       }
     }
-    console.log("contents: ", contents);
 
     if (!contents || !contents.length) {
       throw new Error("Contents are empty or contain no fields");
@@ -54,7 +54,7 @@ exports.sendMessage = async (req, resp) => {
       .status(201)
       .json({ message: "Message sent successfully", data: message });
   } catch (error) {
-    // Xử lý lỗi
+    console.log("Error sending message:", error);
     resp
       .status(500)
       .json({ message: "Failed to send message", error: error.message });
@@ -70,26 +70,28 @@ exports.getHistoryMessage = async (req, resp) => {
     const lastTimestamp = req.query.lastTimestamp; // Lấy tham số lastTimestamp từ query string
     let queryCondition = {
       $or: [
-        { senderId: currentUserId, receiverId: userId },
+        { senderId: currentUserId, receiverId: userId},
         { senderId: userId, receiverId: currentUserId },
       ],
     };
-  
+   
+
+
     const totalMessageHistory = await Chat.countDocuments(queryCondition);
     let messagesHistory;
     //Lấy 20% tin nhắn khi vượt quá 100 tin nhắn
     if (totalMessageHistory >= 100) {
-     
+
       if (lastTimestamp) {
-        queryCondition.timestamp = { $lt:  lastTimestamp};//new Date(parseInt(lastTimestamp))
-        
+        queryCondition.timestamp = { $lt: lastTimestamp };//new Date(parseInt(lastTimestamp))
+
       }
       messagesHistory = await Chat.find(queryCondition)
         .sort({
           timestamp: -1,
         })
         .limit(Math.ceil(totalMessageHistory * 0.2));
-       
+
     } else {
       //Lấy toàn bộ tin nhắn
       messagesHistory = await Chat.find(queryCondition).sort({
@@ -101,6 +103,111 @@ exports.getHistoryMessage = async (req, resp) => {
   } catch (error) {
     console.error(error);
     resp.status(500).json({ success: false, massage: "Internal server error" });
+  }
+};
+exports.getHistoryMessageMobile = async (req, resp) => {
+  try {
+    const userId = req.params.userId; //người nhận lấy từ param
+    const currentUserId = req.user.user_id; // người dùng hiện đang đăng nhập
+
+    const lastTimestamp = req.query.lastTimestamp; // Lấy tham số lastTimestamp từ query string
+    // let queryCondition = {
+    //   $or: [
+    //     { senderId: currentUserId, receiverId: userId , status: { $in: [0, 2] }},
+    //     { senderId: userId, receiverId: currentUserId , status: { $in: [0, 1] }},
+    //   ],
+    // };
+    let queryCondition = {
+      $or: [
+        {
+          $and: [
+            { senderId: currentUserId, receiverId: userId },
+            { $or: [{ status: 0 }, { status: 2 }] },
+          ],
+        },
+        {
+          $and: [
+            { senderId: userId, receiverId: currentUserId },
+            { $or: [{ status: 0 }, { status: 1 }] },
+          ],
+        },
+      ],
+    };
+
+
+    const totalMessageHistory = await Chat.countDocuments(queryCondition);
+    let messagesHistory;
+    //Lấy 20% tin nhắn khi vượt quá 100 tin nhắn
+    if (totalMessageHistory >= 100) {
+
+      if (lastTimestamp) {
+        queryCondition.timestamp = { $lt: lastTimestamp };//new Date(parseInt(lastTimestamp))
+
+      }
+      messagesHistory = await Chat.find(queryCondition)
+        .sort({
+          timestamp: -1,
+        })
+        .limit(Math.ceil(totalMessageHistory * 0.2));
+
+    } else {
+      //Lấy toàn bộ tin nhắn
+      messagesHistory = await Chat.find(queryCondition).sort({
+        timestamp: -1,
+      });
+    }
+
+    resp.status(200).json({ success: true, data: messagesHistory });
+  } catch (error) {
+    console.error(error);
+    resp.status(500).json({ success: false, massage: "Internal server error" });
+  }
+};
+
+exports.setStatusMessage = async (req, res) => {
+  try {
+    const chatId = req.params.chatId;
+    const userIdCurrent = req.user.user_id; // người dùng hiện đang đăng nhập
+
+    const chat = await Chats.findById(chatId);
+    if (!chat) {
+      return res.status(404).json({ error: "Not Found" });
+    }
+
+    if (chat.senderId.equals(userIdCurrent)) {
+      if (chat.status === 0 || chat.status === null) {
+        chat.status = 1;
+        await chat.save();
+        res.status(200).json({ message: "Update status success" });
+      } else {
+        try {
+          await Chats.findByIdAndDelete(chatId);
+          res.status(200).json({ message: "Update status success" });
+        } catch (error) {
+          console.log("Error delete: ", error);
+        }
+      }
+    } else {
+      if (chat.status === 0 || chat.status === null) {
+        console.log("Đang đổi status");
+        chat.status = 2;
+        await chat.save();
+        res.status(200).json({ message: "Update status success" });
+      } else {
+        console.log("Đang xóa");
+        try {
+          await Chats.findByIdAndDelete(chatId);
+          res.status(200).json({ message: "Update status success" });
+        } catch (error) {
+          console.log("Error delete: ", error);
+        }
+      }
+    }
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while processing the request: " });
   }
 };
 
@@ -173,8 +280,6 @@ function extractPublicId(url) {
   return publicId;
 }
 
-// Xóa tin nhắn khỏi cơ sở dữ liệu
-
 exports.deleteChat = async (req, res) => {
   const { chatId } = req.params;
 
@@ -190,7 +295,6 @@ exports.deleteChat = async (req, res) => {
         .json({ message: "You are not authorized to delete this message" });
     }
 
-    // Lấy danh sách các tệp đa phương tiện từ tin nhắn đã xóa
     const mediaFiles = chat.contents.filter(
       (content) => content.type === "image" || content.type === "video"
     );
@@ -205,6 +309,20 @@ exports.deleteChat = async (req, res) => {
       })
     );
     await Chat.findByIdAndDelete(chatId);
+
+    const conversation = await Conversation.findOne({
+      participants: { $all: [chat.senderId, chat.receiverId] },
+    });
+    if (conversation) {
+      conversation.messages = conversation.messages.filter(
+        (message) => message.toString() !== chatId
+      );
+      if (conversation.messages.length === 0) {
+        await conversation.deleteOne({
+          participants: { $all: [chat.senderId, chat.receiverId] },
+        });
+      } else await conversation.save();
+    }
 
     const receiverSocketId = await getReciverSocketId(chat.receiverId);
     if (receiverSocketId) {
