@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Toast from "react-native-toast-message";
+import axiosInstance from "../api/axiosInstance";
 
 const AuthContext = createContext();
 
@@ -7,7 +9,7 @@ export const useAuthContext = () => {
   return useContext(AuthContext);
 };
 
-// AsyncStorage.clear();
+AsyncStorage.clear();
 export const AuthContextProvider = ({ children }) => {
   const [authUser, setAuthUser] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
@@ -97,7 +99,10 @@ export const AuthContextProvider = ({ children }) => {
       }
     } catch (error) {
       console.log(error);
-      toast.error("Failed to get user information");
+      Toast.error({
+        text1: "Failed to get user information",
+        type: "error",
+      });
       return false;
     }
   };
@@ -112,7 +117,7 @@ export const AuthContextProvider = ({ children }) => {
         setRefreshToken,
         updateAvatar,
         updateBia,
-        reloadAuthUser
+        reloadAuthUser,
       }}
     >
       {children}
