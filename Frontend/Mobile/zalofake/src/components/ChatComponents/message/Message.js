@@ -25,9 +25,8 @@ const Message = ({ navigation, route }) => {
   const [textMessage, setTextMessage] = useState(null)
   const [isColorSend, setIsColorSend] = useState(false)
   const { sendMessage, sendImage, sendVideo } = useSendMessage();
-  const [isMessageSent, setIsMessageSent] = useState(false);
   const { socket } = useSocketContext();
-
+  // console.log("socket: ", socket);
   // truc {
   const [chats, setChats] = useState([]);
 
@@ -46,7 +45,6 @@ const Message = ({ navigation, route }) => {
   const [isLoadChuyenTiep, setIsLoadChuyenTiep] = useState(false)
   const [isLoadThuHoi, setIsLoadThuHoi] = useState(false)
   const [isLoadXoa, setIsLoadXoa] = useState(false)
-  const { authUser } = useAuthContext();
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
@@ -73,7 +71,6 @@ const Message = ({ navigation, route }) => {
         setChats(reversedChats);
         fetchFriends();
         const lastElement = reversedChats[0]
-        console.log(lastElement)
         setLastTimestamp(lastElement.timestamp)
       } catch (error) {
         console.log(error);
@@ -81,17 +78,7 @@ const Message = ({ navigation, route }) => {
     };
     fetchChats();
 
-    if (socket) {
-      socket.on("new_message", ({ message }) => {
-        setChats((prevMessages) => [message, ...prevMessages]);
-        console.log("new_message: ", message);
-      });
-      return () => {
-        socket.off("new_message");
-      };
-    }
-
-  }, [chats, socket]);
+  }, [chats]);
 
   const handleCheckIsSend = (message) => {
     if (message.senderId === user.userId) {
@@ -127,6 +114,7 @@ const Message = ({ navigation, route }) => {
     } else {
       setIsColorSend("#0091FF");
     }
+    
   }, [textMessage]);
 
 
@@ -201,6 +189,18 @@ const Message = ({ navigation, route }) => {
     setIsLoading(true)
     const fetchChats = async () => {
       try {
+        if (socket) {
+          setIsLoading(false)
+          console.log("socket:",socket);
+          socket.on("new_message", ({ message }) => {
+            setChats((prevMessages) => [message, ...prevMessages]);
+            console.log("new_message: ", message);
+          });
+          return () => {
+            socket.off("new_message");
+          };
+        }
+
         const response = await axiosInstance.get(`/chats/getHistoryMessage/${user.userId}?lastTimestamp=${lastTimestamp}`);
         const reversedChats = response.data.data.reverse();
         if (reversedChats && reversedChats.length > 0) {
@@ -239,10 +239,10 @@ const Message = ({ navigation, route }) => {
   const handleDeleteMess = () => {
     setIsLoadThuHoi(true)
     const deleteChat = async () => {
-      console.log('id' + messageSelected._id)
+
       try {
         const response = await axiosInstance.post(`chats/${messageSelected._id}/delete`);
-        console.log(response)
+
         if (response.status === 200) {
           const newArray = removeItemById(chats, messageSelected._id);
           setChats(newArray)
@@ -352,7 +352,7 @@ const Message = ({ navigation, route }) => {
             setIsLoadMess(false)
           }
         } else if (asset.type === 'video') {
-          console.log("sendVideo", asset);
+
           pickerResult.assets.forEach(image => {
             const fileName = image.uri.split('/').pop();
             formData.append('data', {
@@ -361,7 +361,7 @@ const Message = ({ navigation, route }) => {
               type: 'video/mp4',
             });
           });
-          console.log("formData: ", formData);
+
           try {
             const response = await sendVideo(user, formData)
             if (response.status === 201) {
