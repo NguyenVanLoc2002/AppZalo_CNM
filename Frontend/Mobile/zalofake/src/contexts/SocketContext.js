@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import io from "socket.io-client";
 import { useAuthContext } from "./AuthContext";
-import toast from "react-native-toast-message";
+import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import config from "../api/config";
 
@@ -15,10 +15,10 @@ export const SocketContextProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [onlineFriends, setOnlineFriends] = useState([]);
   const { refreshToken, authUser, setAuthUser, reloadAuthUser } =
-    useAuthContext();
+  useAuthContext();
 
   const connectSocket = (token) => {
-    const newSocket = io(config.baseURL, {
+    const newSocket = io(config.socketURL, {
       query: {
         token: token,
       },
@@ -47,7 +47,10 @@ export const SocketContextProvider = ({ children }) => {
     if (socket) {
       socket.on("force_logout", () => {
         if (authUser) {
-          toast.error("Your account has been logged out from another device");
+          Toast.error({
+            text1: "Your account has been logged out from another device",
+            type: "error",
+          });
         }
         socket.disconnect();
         setAuthUser(null);
@@ -74,17 +77,26 @@ export const SocketContextProvider = ({ children }) => {
   }, [socket]);
 
   const handleReceiveFriendRequest = async (sender) => {
-    toast.success(`${sender.sender.name} has sent you a friend request`);
+    Toast.show({
+      text1: `${sender.sender.name} has sent you a friend request`,
+      type: "success",
+    });
     await reloadAuthUser();
   };
 
   const handleFriendAcceptAction = async (sender) => {
-    toast.success(`${sender.sender.name} has accepted your friend request`);
+    Toast.show({
+      text1: `${sender.sender.name} has accepted your friend request`,
+      type: "success",
+    });
     await reloadAuthUser();
   };
   const handleFriendRejectAction = async (sender) => {
     console.log("reject", sender);
-    toast.error(`${sender.sender.name} has rejected your friend request`);
+    Toast.show({
+      text1: `${sender.sender.name} has rejected your friend request`,
+      type: "error",
+    });
     await reloadAuthUser();
   };
 

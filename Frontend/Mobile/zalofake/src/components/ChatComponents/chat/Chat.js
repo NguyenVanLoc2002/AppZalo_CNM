@@ -78,37 +78,41 @@ function Chat({ navigation }) {
       try {
         const response = await axiosInstance.get("/users/get/friends");
         setFriends(response.data.friends);
-        console.log(response.data.friends)
-      } 
+        console.log(friends)
+
+      }
       catch (error) {
         console.log("getFriendError:", error);
       }
-
-      try {
-        const idSet = new Set();
-        friends.map(async (friend, index) => {
-          const getChat = await axiosInstance.get(`/chats/${friend.userId}/getLastMessage`);
-          if (getChat) {
-            const newFriend = {
-              friend: friend,
-              chat: getChat.data.data.contents[0].data
-            };
-
-            if (!idSet.has(friend.userId)) {
-              setListFriends(prevList => [...prevList, newFriend]);
-              idSet.add(friend.userId);
-            }
-          }
-          else {
-            console.log("Error get chat");
-          }
-        });
-      } catch (error) {
-        console.log("getFriendChatError:", error);
-      }
-
     }
+    
+    const fetchChats = async () => {
+    try {
+      const idSet = new Set();
+      friends.map(async (friend, index) => {
+        const getChat = await axiosInstance.get(`/chats/${friend.userId}/getLastMessage`);
+        if (getChat) {
+          const newFriend = {
+            friend: friend,
+            chat: getChat.data.data.contents[0].data
+          };
+          if (!idSet.has(friend.userId)) {
+            setListFriends(prevList => [...prevList, newFriend]);
+            idSet.add(friend.userId);
+          }
+        }
+        else {
+          console.log("Error get chat");
+        }
+      });
+    } catch (error) {
+      console.log("getFriendChatError:", error);
+    }
+
+  }
     fetchData()
+    fetchChats()
+
   }, [])
 
   const handleChatItemPress = (item) => {
@@ -121,7 +125,7 @@ function Chat({ navigation }) {
       <FlatList
         data={listFriends}
         renderItem={({ item }) => (
-          <Pressable onPress={() => handleChatItemPress(item)}>
+          <Pressable key={item} onPress={() => handleChatItemPress(item)}>
             <ChatItem item={item} />
           </Pressable>
         )}
