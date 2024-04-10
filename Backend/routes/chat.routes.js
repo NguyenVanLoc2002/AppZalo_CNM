@@ -5,6 +5,7 @@ const {
   sendMessage,
   deleteChat,
   getFirstMessage,
+  getLastMessage,
   setStatusMessage,
   getHistoryMessageMobile
 } = require("../controllers/chat.controller");
