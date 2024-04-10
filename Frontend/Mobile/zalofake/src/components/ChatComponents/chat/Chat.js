@@ -11,12 +11,13 @@ import {
 } from "react-native";
 import ChatItem from "./ChatItem";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import axiosInstance from "../../../api/axiosInstance"
+import axiosInstance from "../../../api/axiosInstance";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 function Chat({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
   const [friends, setFriends] = useState([]);
-  const [listFriends, setListFriends] = useState([])
+  const [listFriends, setListFriends] = useState([]);
 
   useEffect(() => {
     navigation.setOptions({
@@ -76,45 +77,48 @@ function Chat({ navigation }) {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const AsyncStorageValue = await AsyncStorage.getAllKeys();
+        console.log("AsyncStorageValue: ", AsyncStorageValue);
         const response = await axiosInstance.get("/users/get/friends");
         setFriends(response.data.friends);
-        console.log(response.data.friends)
-      } 
-      catch (error) {
+        console.log("response.data.friends: ", response.data.friends);
+      } catch (error) {
         console.log("getFriendError:", error);
       }
 
       try {
         const idSet = new Set();
         friends.map(async (friend, index) => {
-          const getChat = await axiosInstance.get(`/chats/${friend.userId}/getLastMessage`);
+          const getChat = await axiosInstance.get(
+            `/chats/${friend.userId}/getLastMessage`
+          );
           if (getChat) {
             const newFriend = {
               friend: friend,
-              chat: getChat.data.data.contents[0].data
+              chat: getChat.data.data.contents[0].data,
             };
 
             if (!idSet.has(friend.userId)) {
-              setListFriends(prevList => [...prevList, newFriend]);
+              setListFriends((prevList) => [...prevList, newFriend]);
               idSet.add(friend.userId);
             }
-          }
-          else {
+          } else {
             console.log("Error get chat");
           }
         });
       } catch (error) {
         console.log("getFriendChatError:", error);
       }
-
-    }
-    fetchData()
-  }, [])
+    };
+    fetchData();
+  }, []);
 
   const handleChatItemPress = (item) => {
     // Chuyển đến trang Message
     navigation.navigate("Message", { user: item.friend });
   };
+
+  console.log();
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
