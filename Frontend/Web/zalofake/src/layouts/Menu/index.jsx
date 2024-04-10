@@ -1,27 +1,53 @@
 import React, { useRef, useState } from "react";
 
 import { CiUser, CiCircleInfo } from "react-icons/ci";
-import { IoSettingsOutline } from "react-icons/io5";
+import { IoSettingsOutline, IoSettingsSharp } from "react-icons/io5";
 import { GoDatabase } from "react-icons/go";
 import { FiTool } from "react-icons/fi";
 import { GrLanguage } from "react-icons/gr";
 import { IoIosArrowForward } from "react-icons/io";
-
+import { HiMiniLockClosed } from "react-icons/hi2";
+import { TiArrowSync } from "react-icons/ti";
+import { FaDatabase } from "react-icons/fa";
 import useLogout from "../../hooks/useLogout";
 import { checkPassword } from "../../utils/validation";
 
-function MenuComponent({
-  language,
-  setLanguage,
-  typeMenu,
-  showModal,
-  typeModal,
-}) {
+function MenuComponent({ language, setLanguage, typeMenu, showModal, typeModal }) {
   const [tabSelected, setTabSelected] = useState("");
   const logout = useLogout();
   const user = JSON.parse(localStorage.getItem("authUser"));
+  const [isOpenSetup, setIsOpenSetup] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
-  const toggleModal = () => {
+  const [passwordCurrent, setPasswordCurrent] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [passwordNew, setPasswordNew] = useState("");
+  const [showPasswordNew, setShowPasswordNew] = useState(false);
+
+  const [passwordReNew, setPasswordReNew] = useState("");
+  const [showPasswordReNew, setShowPasswordReNew] = useState(false);
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const togglePasswordNew = () => {
+    setShowPasswordNew(!showPasswordNew);
+  };
+
+  const togglePasswordReNew = () => {
+    setShowPasswordReNew(!showPasswordReNew);
+  };
+
+  const toggleModalProfile = () => {
+    // setIsOpenSetup(!isOpenSetup);
+    typeModal("profile");
+    showModal();
+  };
+
+  const toggleModalSetting = () => {
+    // setIsSecurity(!isOpenSecurity);
     typeModal("setting");
     showModal();
   };
@@ -30,16 +56,14 @@ function MenuComponent({
     await logout();
   };
 
+
   return typeMenu == "setting" ? (
     <>
       <div className="h-[285px] w-[225px] bg-white rounded-sm shadow-xl absolute bottom-[85px] -left-16 z-40 grid grid-rows-7">
         <div className="row-span-2">
           <div
             className="px-3 py-2  w-full flex items-center hover:bg-gray-200"
-            onClick={() => {
-              showModal();
-              typeModal("profile");
-            }}
+            onClick={showModal}
           >
             <CiUser size={20} color="#555555" />
             <p className="text-sm ml-6">
@@ -207,10 +231,7 @@ function MenuComponent({
         <div className="row-span-2">
           <div
             className="px-3 py-[10px] w-full flex items-center hover:bg-gray-200 justify-between relative"
-            onClick={() => {
-              showModal();
-              typeModal("profile");
-            }}
+            onClick={toggleModalProfile}
           >
             <p className="text-sm w-full ml-2">
               {language == "vi" ? "Hồ sơ của bạn" : "Profile"}
@@ -218,11 +239,12 @@ function MenuComponent({
           </div>
           <div
             className="px-3 py-[10px]  w-full flex items-center hover:bg-gray-200 justify-between relative"
-            onClick={toggleModal}
+            onClick={toggleModalSetting}
           >
             <p className="text-sm w-full ml-2">
               {language == "vi" ? "Cài đặt" : "Setting"}
             </p>
+
           </div>
           <hr />
         </div>

@@ -37,8 +37,7 @@ import axiosInstance from "../../../api/axiosInstance";
 import { format, previousMonday } from "date-fns";
 import { useSocketContext } from "../../../contexts/SocketContext";
 import EmojiPicker from "emoji-picker-react";
-import ListChatComponent from "../ListChatComponent";
-import ChatComponents from "../ChatComponent";
+import useConversation from "../../../hooks/useConversation";
 
 function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
   const [content, setContent] = useState("");
@@ -51,6 +50,7 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [isAddingMessages, setIsAddingMessages] = useState(false); //Flag để scroll bottom
   const [showPicker, setShowPicker] = useState(false);
+  const { getConversations } = useConversation();
 
   // Đảo ngược mảng tin nhắn và lưu vào biến mới
   const reversedMessages = [...messages].reverse();
@@ -82,6 +82,12 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
 
     if (socket) {
       socket.on("new_message", ({ message }) => {
+        console.log("new_message: ", message);
+        getConversations();
+        if (message.senderId !== userChat?.id) {
+          console.log("message.sender: ", message.senderId);
+          return;
+        }
         setMessages((prevMessages) => [message, ...prevMessages]);
       });
       socket.on("delete_message", ({ chatId }) => {
@@ -143,15 +149,21 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
 
   const sendMessage = async (data, receiverId) => {
     setLoadingMedia(true);
-    console.log(data);
     try {
       if (!data || data.trim === "") return;
-      // console.log("data: ", data);
+      let messageType;
+
       if (receiverId) {
+        if (typeof data === "string") {
+          messageType = "sendText";
+        } else if (data[0].type.startsWith("image/")) {
+          messageType = "sendImages";
+        } else {
+          messageType = "sendVideo";
+        }
+
         const response = await axiosInstance.post(
-          `chats/${receiverId}/${
-            data.type.startsWith("video/") ? "sendVideo" : "sendMessage"
-          }`,
+          `chats/${receiverId}/${messageType}`,
           { data: data },
           {
             headers: {
@@ -159,7 +171,6 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
             },
           }
         );
-        console.log("response 1: ", response.data.data);
         setMessages((prevMessages) => [response.data.data, ...prevMessages]);
         setContent("");
         setIsAddingMessages(false);
@@ -203,11 +214,11 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
   };
 
   const handleUpload = async (event) => {
-    const file = event.target.files[0];
-    console.log("file1: ", file);
+    const files = event.target.files;
+    console.log("file1: ", files);
     // Xử lý tệp ảnh và video ở đây
     try {
-      await sendMessage(file, userChat?.id);
+      await sendMessage(files, userChat?.id);
     } catch (error) {
       console.error("Error sending message:", error);
     }
@@ -267,11 +278,13 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
   const handleDeleteOnlyMySide = async (chatId) => {
     console.log("chatId: ", chatId);
     console.log("dang delete");
-    try {  
+    try {
       const response = await axiosInstance.post(`chats/updateStatus/${chatId}`);
       console.log(response);
-      const updatedMessages = messages.filter(message => message._id !== chatId);
-        setMessages(updatedMessages);
+      const updatedMessages = messages.filter(
+        (message) => message._id !== chatId
+      );
+      setMessages(updatedMessages);
     } catch (error) {
       console.error(error);
     }
@@ -694,7 +707,12 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                               </div>
                             )}
 
-                            <div className="flex p-2 text-red-400 items-center rounded-xl border-b border-gray-100 hover:bg-gray-100" onClick={()=>handleDeleteOnlyMySide(message._id)}>
+                            <div
+                              className="flex p-2 text-red-400 items-center rounded-xl border-b border-gray-100 hover:bg-gray-100"
+                              onClick={() =>
+                                handleDeleteOnlyMySide(message._id)
+                              }
+                            >
                               <BsTrash3
                                 className="mr-3"
                                 size={16}
@@ -802,7 +820,7 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
             <input
               type="file"
               id="fileInput"
-              // multiple
+              multiple
               style={{ display: "none" }}
               onChange={handleUpload}
             />
