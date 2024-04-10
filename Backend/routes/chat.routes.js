@@ -7,7 +7,7 @@ const {
   getFirstMessage,
   getLastMessage,
   setStatusMessage,
-  getHistoryMessageMobile
+  getHistoryMessageMobile,
 } = require("../controllers/chat.controller");
 const {
   multerUploadImage,
@@ -20,25 +20,33 @@ const { formatBodyData } = require("../middlewares/bodyDataFormat");
 router.get("/:userId", getHistoryMessage);
 router.get("/getHistoryMessage/:userId", getHistoryMessageMobile);
 
+router.get("/gets/:userId", getHistoryMessageMobile);
 // Lấy danh sách tin nhắn cá nhân với một người dùng cụ thể với userId là người nhận
 router.get("/:userId/getFirstMessage", getFirstMessage);
-
 // Lấy tin nhắn cuối cùng với một người dùng cụ thể với userId là người nhận
 router.get("/:userId/getLastMessage", getLastMessage);
 
 // Gửi tin nhắn mới cho một người dùng cụ thể bao gồm text và image
 router.post(
-  "/:userId/sendMessage",
-  multerUploadImage.array("data")
+  "/:userId/sendImages",
+  multerUploadImage.array("data[]")
   ,
   formatBodyData,
   sendMessage
 );
 
+// Gửi text mới cho một người dùng cụ thể 
+router.post(
+  "/:userId/sendText",
+  formatBodyData,
+  sendMessage
+);
+
+
 // Gửi video mới cho một người dùng cụ thể
 router.post(
   "/:userId/sendVideo",
-  multerUploadVideo.array("data"),
+  multerUploadVideo.array("data[]"),
   formatBodyData,
   sendMessage
 );
