@@ -77,8 +77,14 @@ function Chat({ navigation }) {
     const fetchData = async () => {
       try {
         const response = await axiosInstance.get("/users/get/friends");
-        setFriends(response.data.friends);
-        console.log(friends)
+        if(response.status === 200){
+          setFriends(response.data.friends);
+          console.log(friends)
+        }else if(response.status === 400){
+          console.log("getFriendError400:");
+        }else if(response.status === 404){
+          console.log("getFriendError404:");
+        }
 
       }
       catch (error) {
