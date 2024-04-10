@@ -6,30 +6,32 @@ import {
   TextInput,
   Pressable,
   StyleSheet,
-  ScrollView,
-  Image, ActivityIndicator,
-  Modal
+  ScrollView, ActivityIndicator, Modal,
+  Image
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import axiosInstance from "../../../api/axiosInstance";
+import { useAuthContext } from "../../../contexts/AuthContext";
 import moment from 'moment-timezone';
 import useMessage from '../../../hooks/useMessage'
+import Toast from "react-native-toast-message";
 import useSendMessage from "../../../hooks/useSendMessage";
 import * as ImagePicker from "expo-image-picker";
-import Toast from "react-native-toast-message";
 import { FontAwesome5 } from "@expo/vector-icons";
-import { useSocketContext } from "../../../contexts/SocketContext";
+import { useSocketContext } from "../../../contexts/SocketContext"
 
 const Message = ({ navigation, route }) => {
   const { user } = route.params;
+  //nhi  
   const [textMessage, setTextMessage] = useState(null)
   const [isColorSend, setIsColorSend] = useState(false)
   const { sendMessage, sendImage, sendVideo } = useSendMessage();
-  const { socket } = useSocketContext();
-  // console.log("socket: ", socket);
-  // truc {
-  const [chats, setChats] = useState([]);
+  const [isMessageSent, setIsMessageSent] = useState(false);
+  const [selectedImage, setSelectedImage] = useState();
+  const { socket } = useSocketContext()
 
+  //truc
+  const [chats, setChats] = useState([]);
   const scrollViewRef = useRef();
   const [contentHeight, setContentHeight] = useState(0);
   const [scrollViewHeight, setScrollViewHeight] = useState(0);
@@ -45,6 +47,7 @@ const Message = ({ navigation, route }) => {
   const [isLoadChuyenTiep, setIsLoadChuyenTiep] = useState(false)
   const [isLoadThuHoi, setIsLoadThuHoi] = useState(false)
   const [isLoadXoa, setIsLoadXoa] = useState(false)
+  const { authUser } = useAuthContext();
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
@@ -56,29 +59,46 @@ const Message = ({ navigation, route }) => {
     try {
       const response = await axiosInstance.get('/users/get/friends');
       setFriends(response.data.friends);
-      // console.log(friends)
     } catch (error) {
       console.log(error);
     }
   };
+  const fetchChats = async () => {
+    try {
+      const response = await axiosInstance.get(`/chats/getHistoryMessage/${user.userId}`);
+      const reversedChats = response.data.data.reverse();
 
+      setChats(reversedChats);
+      fetchFriends();
+      const lastElement = reversedChats[0]
+      setLastTimestamp(lastElement.timestamp)
+    } catch (error) {
+      console.log(error);
+      return false;
+    }
+  };
+  const scrollToEnd = () => {
+    fetchChats()
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollToEnd({ animated: true });
+    }
+  }
   useEffect(() => {
-    const fetchChats = async () => {
-      try {
-        const response = await axiosInstance.get(`/chats/getHistoryMessage/${user.userId}`);
-        const reversedChats = response.data.data.reverse();
 
-        setChats(reversedChats);
-        fetchFriends();
-        const lastElement = reversedChats[0]
-        setLastTimestamp(lastElement.timestamp)
-      } catch (error) {
-        console.log(error);
-      }
-    };
     fetchChats();
 
-  }, [chats]);
+    if (socket) {
+      socket.on("new_message", ({ message }) => {
+        setChats((prevMessages) => [message, ...prevMessages]);
+        console.log("new_message: ", message);
+        scrollToEnd()
+      });
+      return () => {
+        socket.off("new_message");
+      };
+    }
+  }, [socket]);
+
 
   const handleCheckIsSend = (message) => {
     if (message.senderId === user.userId) {
@@ -93,32 +113,6 @@ const Message = ({ navigation, route }) => {
     return `${dateObject.getHours()}:${dateObject.getMinutes()}`
   };
 
-  useEffect(() => {
-    if (scrollViewRef.current && contentHeight > scrollViewHeight && !isLoad) {
-      const offset = contentHeight - scrollViewHeight;
-      setIsLoad(true)
-      scrollViewRef.current.scrollTo({ x: 0, y: offset, animated: true });
-    }
-  }, [contentHeight, scrollViewHeight]);
-
-  const handleGetModalFriend = () => {
-    toggleModal();
-    toggleModalFriend();
-  };
-
-
-  useEffect(() => {
-    // Update send button color based on textMessage
-    if (!textMessage) {
-      setIsColorSend("black");
-    } else {
-      setIsColorSend("#0091FF");
-    }
-    
-  }, [textMessage]);
-
-
-  // }
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -151,7 +145,7 @@ const Message = ({ navigation, route }) => {
       ),
       headerTitle: () => (
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text style={{ fontSize: 20, color: 'white', fontWeight: 'bold' }}>{user.profile.name}</Text>
+          <Text style={{ fontSize: 20, color: "white", fontWeight: 'bold' }}>{user?.profile?.name}</Text>
         </View>
       ),
       headerStyle: {
@@ -189,18 +183,6 @@ const Message = ({ navigation, route }) => {
     setIsLoading(true)
     const fetchChats = async () => {
       try {
-        if (socket) {
-          setIsLoading(false)
-          console.log("socket:",socket);
-          socket.on("new_message", ({ message }) => {
-            setChats((prevMessages) => [message, ...prevMessages]);
-            console.log("new_message: ", message);
-          });
-          return () => {
-            socket.off("new_message");
-          };
-        }
-
         const response = await axiosInstance.get(`/chats/getHistoryMessage/${user.userId}?lastTimestamp=${lastTimestamp}`);
         const reversedChats = response.data.data.reverse();
         if (reversedChats && reversedChats.length > 0) {
@@ -209,7 +191,6 @@ const Message = ({ navigation, route }) => {
           const lastElement = reversedChats[0]
           setLastTimestamp(lastElement.timestamp)
         }
-
         setIsLoading(false)
 
       } catch (error) {
@@ -239,10 +220,10 @@ const Message = ({ navigation, route }) => {
   const handleDeleteMess = () => {
     setIsLoadThuHoi(true)
     const deleteChat = async () => {
-
+      console.log('id' + messageSelected._id)
       try {
         const response = await axiosInstance.post(`chats/${messageSelected._id}/delete`);
-
+        console.log(response)
         if (response.status === 200) {
           const newArray = removeItemById(chats, messageSelected._id);
           setChats(newArray)
@@ -278,6 +259,10 @@ const Message = ({ navigation, route }) => {
     deleteChat();
     // setModalVisible(false)
   };
+  const handleGetModalFriend = () => {
+    toggleModal();
+    toggleModalFriend();
+  };
 
   const chuyenTiepChat = (friend) => {
     setIsLoadChuyenTiep(true)
@@ -301,6 +286,7 @@ const Message = ({ navigation, route }) => {
   };
 
   //nhi
+
   const openImagePicker = async () => {
     const permissionResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -318,7 +304,7 @@ const Message = ({ navigation, route }) => {
       videoExportPreset: ImagePicker.VideoExportPreset.Passthrough,
       videoMaxDuration: 10
     });
-
+    console.log(pickerResult.assets[0])
     if (!pickerResult.canceled) {
       setIsLoadMess(true)
       const formData = new FormData();
@@ -340,6 +326,7 @@ const Message = ({ navigation, route }) => {
               setChats(
                 chats.concat(response.data.data))
               console.log("success");
+              scrollToEnd()
             }
             else if (response.status === 500) {
               console.log("fail");
@@ -352,7 +339,7 @@ const Message = ({ navigation, route }) => {
             setIsLoadMess(false)
           }
         } else if (asset.type === 'video') {
-
+          console.log("sendVideo", asset);
           pickerResult.assets.forEach(image => {
             const fileName = image.uri.split('/').pop();
             formData.append('data', {
@@ -361,7 +348,7 @@ const Message = ({ navigation, route }) => {
               type: 'video/mp4',
             });
           });
-
+          console.log("formData: ", formData);
           try {
             const response = await sendVideo(user, formData)
             if (response.status === 201) {
@@ -370,6 +357,7 @@ const Message = ({ navigation, route }) => {
               setChats(
                 chats.concat(response.data.data))
               console.log("success");
+              scrollToEnd()
             }
             else if (response.status === 500) {
               console.log("fail");
@@ -403,14 +391,14 @@ const Message = ({ navigation, route }) => {
       try {
         const response = await sendMessage(user,
           { type: 'text', data: textMessage })
-        if (response) {
+        if (response.status === 201) {
           setIsLoadMess(false)
           setIsLoad(false)
-          setTextMessage(null)
           setChats(
             chats.concat(response.data.data))
           console.log("success");
-          setTextMessage("")
+          setTextMessage(null)
+          scrollToEnd()
         }
         else if (response.status === 500) {
           showToastError("Gửi tin nhắn thất bại")
@@ -466,18 +454,15 @@ const Message = ({ navigation, route }) => {
       <View
         style={{
           flexDirection: "row",
-          justifyContent: "space-between",
+          justifyContent: "space-around",
           alignItems: "center",
           padding: 10,
           backgroundColor: "white",
-          height: 70
         }}
       >
-        <View style={{ width: '10%' }}>
-          <TouchableOpacity onPress={() => console.log("Pressed smiley")}>
-            <Ionicons name="happy-outline" size={30} color="black" />
-          </TouchableOpacity>
-        </View>
+        <Pressable onPress={() => console.log("Pressed smiley")}>
+          <Ionicons name="happy-outline" size={30} color="black" />
+        </Pressable>
 
         <View style={{ width: '54%' }}>
           <TextInput
@@ -493,6 +478,7 @@ const Message = ({ navigation, route }) => {
             placeholder="Tin nhắn"
           />
         </View>
+
         <View style={{ flexDirection: 'row', width: '35%', justifyContent: 'space-between' }}>
           <TouchableOpacity onPress={() => console.log("Pressed menu")}>
             <Ionicons
@@ -631,7 +617,7 @@ const Message = ({ navigation, route }) => {
                             }}
                             style={styles.friendAvatar}
                           />
-                          <Text style={styles.friendName}>{friend.profile.name}</Text>
+                          <Text style={styles.friendName}>{friend?.profile?.name}</Text>
                         </View>
                         <View style={styles.friendActions}>
                           <Pressable onPress={() => chuyenTiepChat(friend)} style={styles.pressCol}>
