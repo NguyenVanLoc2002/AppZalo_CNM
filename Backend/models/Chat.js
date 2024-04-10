@@ -17,19 +17,19 @@ const chatSchema = new mongoose.Schema({
         type: String,
         enum: ["text", "image", "video", "link", "file", "audio"],
         required: true,
-      }, 
-      data: { type: String }, 
+      },
+      data: { type: String },
     },
   ],
   timestamp: { type: Date, default: Date.now },
   read: { type: Boolean, default: false },
-  status:{type: Number, default: 0},
+  status: { type: Number, default: 0 },
 });
 
 chatSchema.post("save", async function (chat, next) {
   try {
     const Conversation = mongoose.model("Conversation");
-    
+
     const conversation = await Conversation.findOne({
       participants: { $all: [chat.senderId, chat.receiverId] },
     });
@@ -42,7 +42,7 @@ chatSchema.post("save", async function (chat, next) {
     // console.log("conversation: ", conversation);
     if (!conversation) {
       const newConversation = new Conversation({
-        participants: [chat.senderId,chat.receiverId],
+        participants: [chat.senderId, chat.receiverId],
         messages: [chat._id],
       });
       try {
