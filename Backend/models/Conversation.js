@@ -1,19 +1,15 @@
 const mongoose = require("mongoose");
 
 const ConversationSchema = new mongoose.Schema({
-  participants: {
-    type: [{ type: mongoose.Schema.Types.ObjectId, ref: "users" }],
-    required: true,
-    unique: false,
-    index: false,
-  },
+  participants: [
+    { type: mongoose.Schema.Types.ObjectId, unique: false, ref: "users" },
+  ],
   messages: [{ type: mongoose.Schema.Types.ObjectId, ref: "chats" }],
   lastMessage: { type: mongoose.Schema.Types.ObjectId, ref: "chats" },
   createdAt: { type: Date, default: Date.now },
-  tag: { type: String, default: "friend", optional: true },
+  tag: { type: String, default: "friend", optional: true }, 
 });
 
-// ConversationSchema.index({ participants: 1 }, { unique: false });
 
 const Conversation = mongoose.model("Conversation", ConversationSchema);
 
@@ -22,7 +18,12 @@ ConversationSchema.pre("deleteOne", async function (next) {
     const Chat = mongoose.model("chats");
     const messagesToDelete = await Chat.find({ _id: { $in: this.messages } });
     for (const message of messagesToDelete) {
-      await message.deleteOne();
+      await message.deleteOne(
+        {
+          _id: message._id,
+        },
+        { timestamps: false }
+      );
     }
     next();
   } catch (error) {
