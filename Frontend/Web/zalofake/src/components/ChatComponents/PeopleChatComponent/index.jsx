@@ -161,11 +161,19 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
     setLoadingMedia(true);
     try {
       if (!data || data.trim === "") return;
+      let messageType;
+
       if (receiverId) {
+        if (typeof data === "string") {
+          messageType = "sendText";
+        } else if (data[0].type.startsWith("image/")) {
+          messageType = "sendImages";
+        } else {
+          messageType = "sendVideo";
+        }
+
         const response = await axiosInstance.post(
-          `chats/${receiverId}/${
-            data.type.startsWith("video/") ? "sendVideo" : "sendMessage"
-          }`,
+          `chats/${receiverId}/${messageType}`,
           { data: data },
           {
             headers: {
@@ -216,11 +224,11 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
   };
 
   const handleUpload = async (event) => {
-    const file = event.target.files[0];
-    console.log("file1: ", file);
+    const files = event.target.files;
+    console.log("file1: ", files);
     // Xử lý tệp ảnh và video ở đây
     try {
-      await sendMessage(file, userChat?.id);
+      await sendMessage(files, userChat?.id);
     } catch (error) {
       console.error("Error sending message:", error);
     }
@@ -280,11 +288,13 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
   const handleDeleteOnlyMySide = async (chatId) => {
     console.log("chatId: ", chatId);
     console.log("dang delete");
-    try {  
+    try {
       const response = await axiosInstance.post(`chats/updateStatus/${chatId}`);
       console.log(response);
-      const updatedMessages = messages.filter(message => message._id !== chatId);
-        setMessages(updatedMessages);
+      const updatedMessages = messages.filter(
+        (message) => message._id !== chatId
+      );
+      setMessages(updatedMessages);
     } catch (error) {
       console.error(error);
     }
@@ -707,7 +717,12 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                               </div>
                             )}
 
-                            <div className="flex p-2 text-red-400 items-center rounded-xl border-b border-gray-100 hover:bg-gray-100" onClick={()=>handleDeleteOnlyMySide(message._id)}>
+                            <div
+                              className="flex p-2 text-red-400 items-center rounded-xl border-b border-gray-100 hover:bg-gray-100"
+                              onClick={() =>
+                                handleDeleteOnlyMySide(message._id)
+                              }
+                            >
                               <BsTrash3
                                 className="mr-3"
                                 size={16}
@@ -815,7 +830,7 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
             <input
               type="file"
               id="fileInput"
-              // multiple
+              multiple
               style={{ display: "none" }}
               onChange={handleUpload}
             />
