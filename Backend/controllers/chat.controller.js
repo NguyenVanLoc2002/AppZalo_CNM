@@ -63,7 +63,7 @@ exports.sendMessage = async (req, resp) => {
 };
 
 //Lấy danh sách tin nhắn cá nhân với một người dùng cụ thể
-exports.getHistoryMessage = async (req, resp) => {
+exports.getHistoryMessageMobile = async (req, resp) => {
   try {
     const userId = req.params.userId; //người nhận lấy từ param
     const currentUserId = req.user.user_id; // người dùng hiện đang đăng nhập
@@ -112,7 +112,7 @@ exports.getHistoryMessage = async (req, resp) => {
     resp.status(500).json({ success: false, massage: "Internal server error" });
   }
 };
-exports.getHistoryMessageMobile = async (req, resp) => {
+exports.getHistoryMessage= async (req, resp) => {
   try {
     const userId = req.params.userId; //người nhận lấy từ param
     const currentUserId = req.user.user_id; // người dùng hiện đang đăng nhập
@@ -297,5 +297,34 @@ exports.deleteChat = async (req, res) => {
     res
       .status(500)
       .json({ message: "An error occurred while deleting the message" });
+  }
+};
+//Lấy tin nhắn cuối cùng
+exports.getLastMessage = async (req, res) => {
+  try {
+    const userId = req.params.userId; //người nhận lấy từ param
+    const currentUserId = req.user.user_id; // người dùng hiện đang đăng nhập
+
+    // Tìm tin nhắn đầu tiên trong chat có chatId
+
+    // Tìm tin nhắn đầu tiên trong cuộc trò chuyện giữa currentUserId và userId
+    const firstMessage = await Chat.findOne({
+      $or: [
+        { senderId: currentUserId, receiverId: userId },
+        { senderId: userId, receiverId: currentUserId },
+      ],
+    }).sort({ timestamp: -1 });
+
+    if (!firstMessage) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No message found in this chat" });
+    }
+
+    // Trả về tin nhắn đầu tiên nếu có
+    res.status(200).json({ success: true, data: firstMessage });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server Error" });
   }
 };

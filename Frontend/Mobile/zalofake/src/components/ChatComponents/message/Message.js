@@ -66,8 +66,8 @@ const Message = ({ navigation, route }) => {
       try {
         const response = await axiosInstance.get(`/chats/getHistoryMessage/${user.userId}`);
         const reversedChats = response.data.data.reverse();
-
         setChats(reversedChats);
+        console.log(reversedChats)
         fetchFriends();
         const lastElement = reversedChats[0]
         setLastTimestamp(lastElement.timestamp)
@@ -112,7 +112,7 @@ const Message = ({ navigation, route }) => {
             style={{ padding: 5, marginRight: 10 }}
           />
           <Pressable
-            onPress={() => navigation.navigate("MessageSettings", { friend })}
+            onPress={() => navigation.navigate("MessageSettings", { user })}
           >
             <Ionicons
               name="list-outline"
@@ -520,7 +520,10 @@ const Message = ({ navigation, route }) => {
 
                 <Text style={styles.modalButton} >Xóa</Text>
               </Pressable>
-              <Pressable style={styles.pressCol} onPress={handleDeleteMess}>
+              {messageSelected.senderId===user.userId ? (
+                  <Text></Text>
+                ) : (
+                  <Pressable style={styles.pressCol} onPress={handleDeleteMess}>
                 {isLoadThuHoi ? (
                   <ActivityIndicator color="black" size="large" />
                 ) : (
@@ -534,6 +537,8 @@ const Message = ({ navigation, route }) => {
 
                 <Text style={styles.modalButton}>Thu hồi</Text>
               </Pressable>
+                )}
+              
             </View>
             <View style={styles.modalButtonContainer1}>
               <Pressable style={styles.pressCol}>

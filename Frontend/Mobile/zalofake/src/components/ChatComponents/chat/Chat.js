@@ -13,12 +13,13 @@ import ChatItem from "./ChatItem";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import axiosInstance from "../../../api/axiosInstance";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import moment from 'moment-timezone';
 
 function Chat({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
-  const [friends, setFriends] = useState([]);
+  // const [friends, setFriends] = useState([]);
   const [listFriends, setListFriends] = useState([]);
-
+  const [isLoad, SetIsLoad] = useState(false);
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -74,62 +75,107 @@ function Chat({ navigation }) {
     });
   }, [navigation]);
 
-  useEffect(() => {
-    const fetchData = async () => {
+
+  const fetchData = async () => {
+    try {
+      const AsyncStorageValue = await AsyncStorage.getAllKeys();
+      console.log("AsyncStorageValue: ", AsyncStorageValue);
+      const response = await axiosInstance.get("/users/get/friends");
+      if (response.status === 200) {
+        // setFriends(response.data.friends);
+        fetchDataFriend(response.data.friends)
+        // console.log(response.data.friends)
+      }
+      else if (response.status === 404) {
+        console.log("getFriendError:", error);
+      }
+    } catch (error) {
+      console.log("getFriendError:", error);
+    }
+  };
+  const fetchDataFriend = async (fr) => {
+    const idSet = new Set();
+    for (let index = 0; index < fr.length; index++) {
+      const friend = fr[index];
       try {
-        const AsyncStorageValue = await AsyncStorage.getAllKeys();
-        console.log("AsyncStorageValue: ", AsyncStorageValue);
-        const response = await axiosInstance.get("/users/get/friends");
-        if (response.status === 200) {
-          setFriends(response.data.friends);
-          console.log(friends.length)
+        const getChat = await axiosInstance.get(`/chats/${friend.userId}/getLastMessage`);
+        if (getChat.status === 200) {
+          let dataChat;
+          console.log(friend.userId)
+          console.log(getChat.data.data.senderId)
+          if(friend.userId === getChat.data.data.senderId){
+            dataChat = friend.profile?.name ;
+          }else{
+            dataChat = 'Bạn'
+          }
+          if (getChat.data.data.contents[0].type === "text") {
+            dataChat = dataChat + ': ' +getChat.data.data.contents[0].data;
+          } else if (getChat.data.data.contents[0].type === "image") {
+            dataChat =  dataChat +': [Hình ảnh]';
+          } else {
+            dataChat = dataChat +': [Video]';
+          }
+          
+          const newFriend = {
+            friend: friend,
+            chat: dataChat,
+            time: handleGetTime(getChat.data.data.timestamp)
+          };
+          if (!idSet.has(friend.userId)) {
+            setListFriends(prevList => [...prevList, newFriend]);
+            idSet.add(friend.userId);
+          }
+        } else {
+          console.log("Error get chat");
         }
-        else if(response.status === 404){
-          console.log("getFriendError:", error);
-        }
+      } catch (error) {
+        console.log("Error:", error);
+      }
+    }
+  }
+  useEffect(() => {
+    const fetchDataListFriend = async () => {
+      try {
+        await fetchData();
       } catch (error) {
         console.log("getFriendError:", error);
       }
-
-      try {
-        const idSet = new Set();
-        friends.map(async (friend, index) => {
-          const getChat = await axiosInstance.get(`/chats/${friend.userId}/getLastMessage`);
-          if (getChat.status === 200) {
-            const newFriend = {
-              friend: friend,
-              chat: getChat.data.data.contents[0].data,
-            };
-
-            if (!idSet.has(friend.userId)) {
-              setListFriends((prevList) => [...prevList, newFriend]);
-              idSet.add(friend.userId);
-            }
-          } else {
-            console.log("Error get chat");
-          }
-        });
-      } catch (error) {
-        console.log("getFriendChatError:", error);
-      }
     };
-    fetchData();
+    if(!isLoad){
+      fetchDataListFriend();
+      SetIsLoad(true);
+    }
   }, []);
-
   const handleChatItemPress = (item) => {
-    // Chuyển đến trang Message
     navigation.navigate("Message", { user: item.friend });
   };
+  const handleGetTime = (time) => {
+    const currentTime = moment().tz('Asia/Ho_Chi_Minh'); // Lấy thời gian hiện tại ở múi giờ Việt Nam
+    const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh'); // Chuyển đổi thời gian đã cho sang múi giờ Việt Nam
+    const timeDifference = moment.duration(currentTime.diff(vietnamDatetime)); // Tính khoảng cách thời gian
 
-  console.log();
+    const days = Math.floor(timeDifference.asDays()); // Số ngày
+    const hours = Math.abs(timeDifference.hours()); // Số giờ (dương)
+    const minutes = Math.abs(timeDifference.minutes()); // Số phút (dương)
+
+    if (days >= 1) {
+        return `${days} ngày`;
+    }
+    else if(hours>=1){
+      return `${hours} giờ`;
+    }
+    else {
+        return `${minutes} phút`;
+    }
+  };
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <FlatList
         data={listFriends}
         renderItem={({ item }) => (
-          <Pressable onPress={() => handleChatItemPress(item)}>
-            <ChatItem item={item} />
+          <Pressable onPress={() => handleChatItemPress(item)} >
+            <ChatItem item={item}  />
           </Pressable>
         )}
         keyExtractor={(item) => item.url}
@@ -277,6 +323,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginLeft: 40,
   },
+  button: {
+    backgroundColor: '#fff'
+  },
+  pressedButton: {
+    backgroundColor: '#33c4c2'
+  }
 });
 
 export default Chat;
