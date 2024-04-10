@@ -12,12 +12,11 @@ import { FaDatabase } from "react-icons/fa";
 import useLogout from "../../hooks/useLogout";
 import { checkPassword } from "../../utils/validation";
 
-function MenuComponent({ language, setLanguage, typeMenu, showModal }) {
+function MenuComponent({ language, setLanguage, typeMenu, showModal, typeModal }) {
   const [tabSelected, setTabSelected] = useState("");
   const logout = useLogout();
   const user = JSON.parse(localStorage.getItem("authUser"));
   const [isOpenSetup, setIsOpenSetup] = useState(false);
-  const [isOpenSecurity, setIsSecurity] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
 
   const [passwordCurrent, setPasswordCurrent] = useState("");
@@ -41,12 +40,16 @@ function MenuComponent({ language, setLanguage, typeMenu, showModal }) {
     setShowPasswordReNew(!showPasswordReNew);
   };
 
-  const toggleModal = () => {
-    setIsOpenSetup(!isOpenSetup);
+  const toggleModalProfile = () => {
+    // setIsOpenSetup(!isOpenSetup);
+    typeModal("profile");
+    showModal();
   };
 
-  const toggleModalSecurity = () => {
-    setIsSecurity(!isOpenSecurity);
+  const toggleModalSetting = () => {
+    // setIsSecurity(!isOpenSecurity);
+    typeModal("setting");
+    showModal();
   };
 
   const handleLogout = async () => {
@@ -228,7 +231,7 @@ function MenuComponent({ language, setLanguage, typeMenu, showModal }) {
         <div className="row-span-2">
           <div
             className="px-3 py-[10px] w-full flex items-center hover:bg-gray-200 justify-between relative"
-            onClick={showModal}
+            onClick={toggleModalProfile}
           >
             <p className="text-sm w-full ml-2">
               {language == "vi" ? "Hồ sơ của bạn" : "Profile"}
@@ -236,7 +239,7 @@ function MenuComponent({ language, setLanguage, typeMenu, showModal }) {
           </div>
           <div
             className="px-3 py-[10px]  w-full flex items-center hover:bg-gray-200 justify-between relative"
-            onClick={toggleModal}
+            onClick={toggleModalSetting}
           >
             <p className="text-sm w-full ml-2">
               {language == "vi" ? "Cài đặt" : "Setting"}

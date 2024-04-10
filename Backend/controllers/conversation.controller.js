@@ -45,9 +45,7 @@ exports.deleteMessInConver = async (req, res) => {
     const conversationId = req.params.conversationId;
 
     //Xóa theo _id
-    const deleteConversation = await Conversation.findById(
-      conversationId
-    );
+    const deleteConversation = await Conversation.findById(conversationId);
 
     if (!deleteConversation) {
       return res.status(404).json({ message: "Conversation not found" });
@@ -87,15 +85,16 @@ exports.getConversations = async (req, res) => {
     const userId = req.user.user_id;
     const conversations = await Conversation.find({
       participants: userId,
-    }).populate([{
-      path: "participants",
-      select: "phone email profile _id",
-    }, 
-    {
-      path: "lastMessage",
-      select: "senderId receiverId contents timestamp read",
-    }
-  ]);
+    }).populate([
+      {
+        path: "participants",
+        select: "phone email profile _id",
+      },
+      {
+        path: "lastMessage",
+        select: "senderId receiverId contents timestamp read",
+      },
+    ]);
     if (!conversations) {
       return res.status(404).json({ message: "Conversations not found" });
     }
@@ -116,7 +115,7 @@ exports.getConversations = async (req, res) => {
 //     }).populate([{
 //       path: "participants",
 //       select: "phone email profile _id",
-//     }, 
+//     },
 //     {
 //       path: "lastMessage",
 //       select: "senderId receiverId contents timestamp read",
@@ -153,5 +152,23 @@ exports.getConversationByParticipants = async () => {
   } catch (error) {
     console.error("Error getting conversation by participants:", error);
     return null;
+  }
+};
+
+exports.getMessageByConversationId = async (req, res) => {
+  try {
+    const conversationId = req.params.conversationId;
+    const conversation = await Conversation.findById(conversationId).populate(
+      "messages"
+    );
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+    res.status(200).json(conversation.messages);
+  } catch (error) {
+    console.error("Error getting messages:", error);
+    res
+      .status(500)
+      .json({ message: "Failed to get messages", error: error.message });
   }
 };

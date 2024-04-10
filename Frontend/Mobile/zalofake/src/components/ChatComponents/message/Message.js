@@ -56,7 +56,6 @@ const Message = ({ navigation, route }) => {
     try {
       const response = await axiosInstance.get('/users/get/friends');
       setFriends(response.data.friends);
-      console.log(friends)
     } catch (error) {
       console.log(error);
     }
@@ -71,10 +70,10 @@ const Message = ({ navigation, route }) => {
         setChats(reversedChats);
         fetchFriends();
         const lastElement = reversedChats[0]
-        console.log(lastElement)
         setLastTimestamp(lastElement.timestamp)
       } catch (error) {
         console.log(error);
+        return false;
       }
     };
     fetchChats();
@@ -126,7 +125,7 @@ const Message = ({ navigation, route }) => {
       ),
       headerTitle: () => (
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text style={{ fontSize: 20 }}>{user.profile.name}</Text>
+          <Text style={{ fontSize: 20 }}>{user?.profile?.name}</Text>
         </View>
       ),
       headerStyle: {
@@ -594,7 +593,7 @@ const Message = ({ navigation, route }) => {
                             }}
                             style={styles.friendAvatar}
                           />
-                          <Text style={styles.friendName}>{friend.profile.name}</Text>
+                          <Text style={styles.friendName}>{friend?.profile?.name}</Text>
                         </View>
                         <View style={styles.friendActions}>
                           <Pressable onPress={() => chuyenTiepChat(friend)} style={styles.pressCol}>
