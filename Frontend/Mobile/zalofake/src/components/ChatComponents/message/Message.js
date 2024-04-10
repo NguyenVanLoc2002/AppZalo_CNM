@@ -26,8 +26,6 @@ const Message = ({ navigation, route }) => {
   const [textMessage, setTextMessage] = useState(null)
   const [isColorSend, setIsColorSend] = useState(false)
   const { sendMessage, sendImage, sendVideo } = useSendMessage();
-  const [isMessageSent, setIsMessageSent] = useState(false);
-  const [selectedImage, setSelectedImage] = useState();
   const { socket } = useSocketContext()
 
   //truc
@@ -81,6 +79,7 @@ const Message = ({ navigation, route }) => {
     fetchChats()
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollToEnd({ animated: true });
+      console.log("scrollToEnd");
     }
   }
   useEffect(() => {
@@ -92,8 +91,12 @@ const Message = ({ navigation, route }) => {
         console.log("new_message: ", message);
         scrollToEnd()
       });
+      socket.on("delete_message", ({ chatId }) => {
+        scrollToEnd()
+      });
       return () => {
         socket.off("new_message");
+        socket.off("delete_message");
       };
     }
   }, [socket]);
@@ -311,7 +314,7 @@ const Message = ({ navigation, route }) => {
         if (asset.type === 'image') {
           pickerResult.assets.forEach(image => {
             const fileName = image.uri.split('/').pop();
-            formData.append('data', {
+            formData.append('data[]', {
               uri: image.uri,
               name: fileName,
               type: 'image/jpeg',
@@ -324,8 +327,8 @@ const Message = ({ navigation, route }) => {
               setIsLoad(false)
               setChats(
                 chats.concat(response.data.data))
-              console.log("success");
               scrollToEnd()
+              console.log("success");
             }
             else if (response.status === 500) {
               console.log("fail");
@@ -341,7 +344,7 @@ const Message = ({ navigation, route }) => {
           console.log("sendVideo", asset);
           pickerResult.assets.forEach(image => {
             const fileName = image.uri.split('/').pop();
-            formData.append('data', {
+            formData.append('data[]', {
               uri: image.uri,
               name: fileName,
               type: 'video/mp4',
@@ -355,8 +358,8 @@ const Message = ({ navigation, route }) => {
               setIsLoad(false)
               setChats(
                 chats.concat(response.data.data))
-              console.log("success");
               scrollToEnd()
+              console.log("success");
             }
             else if (response.status === 500) {
               console.log("fail");
@@ -395,9 +398,9 @@ const Message = ({ navigation, route }) => {
           setIsLoad(false)
           setChats(
             chats.concat(response.data.data))
+          scrollToEnd()
           console.log("success");
           setTextMessage(null)
-          scrollToEnd()
         }
         else if (response.status === 500) {
           showToastError("Gửi tin nhắn thất bại")
@@ -543,25 +546,25 @@ const Message = ({ navigation, route }) => {
 
                 <Text style={styles.modalButton} >Xóa</Text>
               </Pressable>
-              {messageSelected.senderId===user.userId ? (
-                  <Text></Text>
-                ) : (
-                  <Pressable style={styles.pressCol} onPress={handleDeleteMess}>
-                {isLoadThuHoi ? (
-                  <ActivityIndicator color="black" size="large" />
-                ) : (
-                  <FontAwesome5
-                    name="comment-slash"
-                    size={20}
-                    color="black"
-                    style={{ marginRight: 8 }}
-                  />
-                )}
+              {messageSelected.senderId === user.userId ? (
+                <Text></Text>
+              ) : (
+                <Pressable style={styles.pressCol} onPress={handleDeleteMess}>
+                  {isLoadThuHoi ? (
+                    <ActivityIndicator color="black" size="large" />
+                  ) : (
+                    <FontAwesome5
+                      name="comment-slash"
+                      size={20}
+                      color="black"
+                      style={{ marginRight: 8 }}
+                    />
+                  )}
 
-                <Text style={styles.modalButton}>Thu hồi</Text>
-              </Pressable>
-                )}
-              
+                  <Text style={styles.modalButton}>Thu hồi</Text>
+                </Pressable>
+              )}
+
             </View>
             <View style={styles.modalButtonContainer1}>
               <Pressable style={styles.pressCol}>
