@@ -73,18 +73,8 @@ exports.getHistoryMessage = async (req, resp) => {
 
     let queryCondition = {
       $or: [
-        {
-          $and: [
-            { senderId: currentUserId, receiverId: userId },
-            { $or: [{ status: 0 }, { status: 2 }] },
-          ],
-        },
-        {
-          $and: [
-            { senderId: userId, receiverId: currentUserId },
-            { $or: [{ status: 0 }, { status: 1 }] },
-          ],
-        },
+        { senderId: currentUserId, receiverId: userId },
+        { senderId: userId, receiverId: currentUserId },
       ],
     };
 
