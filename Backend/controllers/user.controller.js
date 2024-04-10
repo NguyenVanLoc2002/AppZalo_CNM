@@ -2,6 +2,8 @@ const cloudinary = require("../configs/Cloudinary.config");
 const User = require("../models/User");
 const { getUserIdFromToken } = require("../utils/generateToken.utils");
 const { io, getReciverSocketId } = require("../socket/socket.io");
+const Conversation = require("../models/Conversation");
+const Chats = require("../models/Chat");
 
 exports.getUserByPhoneOrId = async (req, res) => {
   const uid = req.params.uid;
@@ -387,6 +389,37 @@ exports.unfriend = async (req, res) => {
       (id) => id.toString() !== friend._id.toString()
     );
     friend.friends = friend.friends.filter((id) => id.toString() !== userId);
+
+    // delete conversation between user and friend
+    const conversation = await Conversation.findOne({
+      participants: { $all: [userId, friend._id] },
+    });
+    if (conversation) {
+      await conversation.deleteOne({
+        participants: { $all: [userId, friend._id] },
+      });
+    }
+    const messages = await Chats.find({
+      senderId: userId,
+      receiverId: friend._id,
+    });
+    if (messages) {
+      await Chats.deleteMany({
+        senderId: userId,
+        receiverId: friend._id,
+      });
+    }
+    const messages2 = await Chats.find({
+      senderId: friend._id,
+      receiverId: userId,
+    });
+    if (messages2) {
+      await Chats.deleteMany({
+        senderId: friend._id,
+        receiverId: userId,
+      });
+    }
+
     await user.save();
     await friend.save();
     const reciverSocketId = await getReciverSocketId(friend._id);
@@ -400,6 +433,7 @@ exports.unfriend = async (req, res) => {
     }
     return res.status(200).json({ message: "Unfriend successfully" });
   } catch (error) {
+    console.log(error);
     res.status(400).json({ message: "Can't unfriend" });
   }
 };

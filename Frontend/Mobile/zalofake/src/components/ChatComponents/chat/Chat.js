@@ -11,9 +11,13 @@ import {
 } from "react-native";
 import ChatItem from "./ChatItem";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import axiosInstance from "../../../api/axiosInstance";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 function Chat({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
+  const [friends, setFriends] = useState([]);
+  const [listFriends, setListFriends] = useState([]);
 
   useEffect(() => {
     navigation.setOptions({
@@ -70,91 +74,56 @@ function Chat({ navigation }) {
     });
   }, [navigation]);
 
-  // Mảng dữ liệu mẫu
-  const [users, setUsers] = useState([
-    {
-      ten: "Nguyen Van A",
-      url: "https://randomuser.me/api/portraits/men/68.jpg",
-      tinNhan: "Hello",
-      soTNChuaDoc: 6,
-      thoiGian: 2,
-    },
-    {
-      ten: "Luong thi Tho",
-      url: "https://randomuser.me/api/portraits/men/70.jpg",
-      tinNhan: "Khoe khong",
-      soTNChuaDoc: 0,
-      thoiGian: 6,
-    },
-    {
-      ten: "Nguyen Van Teo",
-      url: "https://randomuser.me/api/portraits/men/80.jpg",
-      tinNhan: "An com chua",
-      soTNChuaDoc: 0,
-      thoiGian: 0,
-    },
-    {
-      ten: "Le Van Ty",
-      url: "https://randomuser.me/api/portraits/men/90.jpg",
-      tinNhan: "Dang lam gi the",
-      soTNChuaDoc: 5,
-      thoiGian: 8,
-    },
-    {
-      ten: "Huynh Quoc Hao",
-      url: "https://randomuser.me/api/portraits/men/10.jpg",
-      tinNhan:
-        "Cupidatat do aliquip excepteur magna Lorem pariatur. Qui aliqua adipisicing dolore sint qui dolor elit cillum. Labore Lorem velit ullamco proident aliquip labore ad ad. Fugiat sunt aute labore dolor et laboris. Consectetur velit Lorem minim anim adipisicing irure. Lorem adipisicing aliquip dolor pariatur dolore velit id sit id incididunt dolore.",
-      soTNChuaDoc: 7,
-      thoiGian: 0,
-    },
-    {
-      ten: "Bui Tri Thuc",
-      url: "https://randomuser.me/api/portraits/men/20.jpg",
-      tinNhan:
-        "Nisi ipsum aute commodo laboris pariatur amet ut. Enim cillum eiusmod ex esse Lorem anim minim pariatur reprehenderit anim reprehenderit commodo. Cillum Lorem voluptate adipisicing Lorem ullamco commodo commodo deserunt sit ullamco culpa ex dolore. Nostrud enim ullamco nostrud occaecat non elit consequat non pariatur nostrud voluptate aute duis. Do ut consequat mollit ipsum consequat ullamco aute aute quis ullamco deserunt enim proident.",
-      soTNChuaDoc: 3,
-      thoiGian: 12,
-    },
-    {
-      ten: "Thanh Tam",
-      url: "https://randomuser.me/api/portraits/men/53.jpg",
-      tinNhan: "lam bai tap chua",
-      soTNChuaDoc: 0,
-      thoiGian: 5,
-    },
-    {
-      ten: "Hung Dung",
-      url: "https://randomuser.me/api/portraits/men/62.jpg",
-      tinNhan: "lam bai tap chua",
-      soTNChuaDoc: 4,
-      thoiGian: 0,
-    },
-    {
-      ten: "Nam",
-      url: "https://randomuser.me/api/portraits/men/26.jpg",
-      tinNhan: "lam bai tap chua",
-      soTNChuaDoc: 7,
-      thoiGian: 2,
-    },
-    {
-      ten: "Hau",
-      url: "https://randomuser.me/api/portraits/men/63.jpg",
-      tinNhan: "lam bai tap chua",
-      soTNChuaDoc: 0,
-      thoiGian: 3,
-    },
-  ]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const AsyncStorageValue = await AsyncStorage.getAllKeys();
+        console.log("AsyncStorageValue: ", AsyncStorageValue);
+        const response = await axiosInstance.get("/users/get/friends");
+        setFriends(response.data.friends);
+        console.log("response.data.friends: ", response.data.friends);
+      } catch (error) {
+        console.log("getFriendError:", error);
+      }
+
+      try {
+        const idSet = new Set();
+        friends.map(async (friend, index) => {
+          const getChat = await axiosInstance.get(
+            `/chats/${friend.userId}/getLastMessage`
+          );
+          if (getChat) {
+            const newFriend = {
+              friend: friend,
+              chat: getChat.data.data.contents[0].data,
+            };
+
+            if (!idSet.has(friend.userId)) {
+              setListFriends((prevList) => [...prevList, newFriend]);
+              idSet.add(friend.userId);
+            }
+          } else {
+            console.log("Error get chat");
+          }
+        });
+      } catch (error) {
+        console.log("getFriendChatError:", error);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handleChatItemPress = (item) => {
     // Chuyển đến trang Message
-    navigation.navigate("Message", { user: item });
+    navigation.navigate("Message", { user: item.friend });
   };
+
+  console.log();
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <FlatList
-        data={users}
+        data={listFriends}
         renderItem={({ item }) => (
           <Pressable onPress={() => handleChatItemPress(item)}>
             <ChatItem item={item} />
