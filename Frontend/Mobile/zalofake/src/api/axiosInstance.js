@@ -12,8 +12,7 @@ axiosInstance.interceptors.request.use(
     try {
       config.headers["User-Agent"] = "Mobile";
       if (!config.url.includes("/auth/login")) {
-        const token = JSON.parse(await AsyncStorage.getItem("accessToken"));
-        // console.log(token);
+        const token = JSON.parse( await AsyncStorage.getItem("accessToken"));
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -53,13 +52,14 @@ axiosInstance.interceptors.response.use(
             refreshToken: refreshToken,
           }
         );
+
         const newAccessToken = refreshedTokenResponse.data.newAccessToken;
-        AsyncStorage.setItem("accessToken", JSON.stringify(newAccessToken));
+        await AsyncStorage.setItem("accessToken", JSON.stringify(newAccessToken));
 
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return axiosInstance(originalRequest);
       } catch (refreshError) {
-        console.error("Refresh token failed:", refreshError);
+        // console.error("Refresh token failed:", refreshError);
         showErrorToast("Your session has expired. Please login again.");
         await AsyncStorage.clear();
         return Promise.reject(refreshError);
