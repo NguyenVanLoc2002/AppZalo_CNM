@@ -8,7 +8,6 @@ const { io, getReciverSocketId } = require("../socket/socket.io.js");
 exports.sendMessage = async (req, resp) => {
   try {
     const senderId = req.user.user_id; // Lấy userId của người gửi từ thông tin đăng nhập (đã được đặt trong middleware auth)
-    console.log("senderId: ", senderId);
     const receiverId = req.params.userId;
     let contents = [];
     // Kiểm tra xem req.body có tồn tại không và có chứa nội dung không
@@ -37,6 +36,8 @@ exports.sendMessage = async (req, resp) => {
     // Tạo và lưu tin nhắn mới vào cơ sở dữ liệu
     const message = new Chat({ senderId, receiverId, contents });
     await message.save();
+
+    
     //Gọi socket và xử lý
     try {
       const receiverSocketId = await getReciverSocketId(receiverId);
