@@ -67,14 +67,7 @@ exports.getHistoryMessage = async (req, resp) => {
   try {
     const userId = req.params.userId; //người nhận lấy từ param
     const currentUserId = req.user.user_id; // người dùng hiện đang đăng nhập
-
     const lastTimestamp = req.query.lastTimestamp; // Lấy tham số lastTimestamp từ query string
-    // let queryCondition = {
-    //   $or: [
-    //     { senderId: currentUserId, receiverId: userId , status: { $in: [0, 2] }},
-    //     { senderId: userId, receiverId: currentUserId , status: { $in: [0, 1] }},
-    //   ],
-    // };
     let queryCondition = {
       $or: [
         {
@@ -89,6 +82,45 @@ exports.getHistoryMessage = async (req, resp) => {
             { $or: [{ status: 0 }, { status: 1 }] },
           ],
         },
+      ],
+    };
+    const totalMessageHistory = await Chat.countDocuments(queryCondition);
+    let messagesHistory;
+    //Lấy 20% tin nhắn khi vượt quá 100 tin nhắn
+    if (totalMessageHistory >= 100) {
+
+      if (lastTimestamp) {
+        queryCondition.timestamp = { $lt: lastTimestamp };//new Date(parseInt(lastTimestamp))
+
+      }
+      messagesHistory = await Chat.find(queryCondition)
+        .sort({
+          timestamp: -1,
+        })
+        .limit(Math.ceil(totalMessageHistory * 0.2));
+
+    } else {
+      //Lấy toàn bộ tin nhắn
+      messagesHistory = await Chat.find(queryCondition).sort({
+        timestamp: -1,
+      });
+    }
+
+    resp.status(200).json({ success: true, data: messagesHistory });
+  } catch (error) {
+    console.error(error);
+    resp.status(500).json({ success: false, massage: "Internal server error" });
+  }
+};
+exports.getHistoryMessageMobile = async (req, resp) => {
+  try {
+    const userId = req.params.userId; //người nhận lấy từ param
+    const currentUserId = req.user.user_id; // người dùng hiện đang đăng nhập
+    const lastTimestamp = req.query.lastTimestamp; // Lấy tham số lastTimestamp từ query string
+    let queryCondition = {
+      $or: [
+        { senderId: currentUserId, receiverId: userId },
+        { senderId: userId, receiverId: currentUserId },
       ],
     };
 
