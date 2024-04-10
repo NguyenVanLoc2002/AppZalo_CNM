@@ -52,7 +52,7 @@ function ChatComponents({ language }) {
       if (receiverId) {
         const response = await axiosInstance.post(
           `chats/${receiverId}/${
-            data.type.startsWith("video/") ? "sendVideo" : "sendMessage"
+            data.type.startsWith("video/") ? "sendVideo" : "sendText"
           }`,
           { data: data },
           {

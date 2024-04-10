@@ -107,16 +107,6 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
     if (container.scrollTop === 0 && !isFetchingMore) {
       setIsFetchingMore(true);
       try {
-        if (socket) {
-          socket.on("new_message", ({ message }) => {
-            setMessages((prevMessages) => [message, ...prevMessages]);
-            console.log("new_message: ", message);
-          });
-          return () => {
-            socket.off("new_message");
-          };
-        }
-        
         const lastMessage = messages[messages.length - 1];
         const firstMessageInChat = await axiosInstance(
           `chats/${userChat.id}/getFirstMessage`
@@ -166,7 +156,7 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
       if (receiverId) {
         if (typeof data === "string") {
           messageType = "sendText";
-        } else if (data[0].type.startsWith("image/")) {
+        } else if (data.type.startsWith("image/")) {
           messageType = "sendImages";
         } else {
           messageType = "sendVideo";
