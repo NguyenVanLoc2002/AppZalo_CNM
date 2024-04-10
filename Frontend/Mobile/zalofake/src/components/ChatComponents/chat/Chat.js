@@ -11,12 +11,13 @@ import {
 } from "react-native";
 import ChatItem from "./ChatItem";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import axiosInstance from "../../../api/axiosInstance"
+import axiosInstance from "../../../api/axiosInstance";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 function Chat({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
   const [friends, setFriends] = useState([]);
-  const [listFriends, setListFriends] = useState([])
+  const [listFriends, setListFriends] = useState([]);
 
   useEffect(() => {
     navigation.setOptions({
@@ -76,6 +77,8 @@ function Chat({ navigation }) {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const AsyncStorageValue = await AsyncStorage.getAllKeys();
+        console.log("AsyncStorageValue: ", AsyncStorageValue);
         const response = await axiosInstance.get("/users/get/friends");
         if (response.status === 200) {
           setFriends(response.data.friends);
@@ -95,30 +98,30 @@ function Chat({ navigation }) {
           if (getChat.status === 200) {
             const newFriend = {
               friend: friend,
-              chat: getChat.data.data.contents[0].data
+              chat: getChat.data.data.contents[0].data,
             };
 
             if (!idSet.has(friend.userId)) {
-              setListFriends(prevList => [...prevList, newFriend]);
+              setListFriends((prevList) => [...prevList, newFriend]);
               idSet.add(friend.userId);
             }
-          }
-          else {
+          } else {
             console.log("Error get chat");
           }
         });
       } catch (error) {
         console.log("getFriendChatError:", error);
       }
-
-    }
-    fetchData()
-  }, [])
+    };
+    fetchData();
+  }, []);
 
   const handleChatItemPress = (item) => {
     // Chuyển đến trang Message
     navigation.navigate("Message", { user: item.friend });
   };
+
+  console.log();
 
   return (
     <SafeAreaView style={{ flex: 1 }}>

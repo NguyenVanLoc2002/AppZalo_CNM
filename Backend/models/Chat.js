@@ -8,7 +8,7 @@ const chatSchema = new mongoose.Schema({
   },
   receiverId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "users",
+    // ref: "users",
     required: true,
   },
   contents: [
@@ -17,19 +17,23 @@ const chatSchema = new mongoose.Schema({
         type: String,
         enum: ["text", "image", "video", "link", "file", "audio"],
         required: true,
-      }, 
-      data: { type: String }, 
+      },
+      data: { type: String },
     },
   ],
   timestamp: { type: Date, default: Date.now },
   read: { type: Boolean, default: false },
-  status:{type: Number, default: 0},
+  status: { type: Number, default: 0 },
+  isGroup: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 chatSchema.post("save", async function (chat, next) {
   try {
     const Conversation = mongoose.model("Conversation");
-    
+
     const conversation = await Conversation.findOne({
       participants: { $all: [chat.senderId, chat.receiverId] },
     });
@@ -42,17 +46,11 @@ chatSchema.post("save", async function (chat, next) {
     // console.log("conversation: ", conversation);
     if (!conversation) {
       const newConversation = new Conversation({
-        participants: [chat.senderId,chat.receiverId],
+        participants: [chat.senderId, chat.receiverId],
         messages: [chat._id],
+        lastMessage: chat._id,
       });
-      try {
-        await newConversation.save();
-      } catch (error) {
-        console.log("Lỗi chà bá: ", error);
-      }
-    } else {
-      conversation.messages.push(chat._id);
-      await conversation.save();
+      await newConversation.save();
     }
     next();
   } catch (error) {
