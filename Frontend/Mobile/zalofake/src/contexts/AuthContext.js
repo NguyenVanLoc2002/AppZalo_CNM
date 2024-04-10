@@ -9,7 +9,7 @@ export const useAuthContext = () => {
   return useContext(AuthContext);
 };
 
-AsyncStorage.clear();
+// AsyncStorage.clear();
 export const AuthContextProvider = ({ children }) => {
   const [authUser, setAuthUser] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
@@ -44,6 +44,7 @@ export const AuthContextProvider = ({ children }) => {
           await AsyncStorage.setItem("authUser", JSON.stringify(authUser));
         }
         if (accessToken) {
+          console.log("save accessToken", accessToken);
           await AsyncStorage.setItem(
             "accessToken",
             JSON.stringify(accessToken)
