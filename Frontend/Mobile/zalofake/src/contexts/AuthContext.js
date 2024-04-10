@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Toast from "react-native-toast-message";
+import axiosInstance from "../api/axiosInstance";
 
 const AuthContext = createContext();
 
@@ -42,6 +44,7 @@ export const AuthContextProvider = ({ children }) => {
           await AsyncStorage.setItem("authUser", JSON.stringify(authUser));
         }
         if (accessToken) {
+          console.log("save accessToken", accessToken);
           await AsyncStorage.setItem(
             "accessToken",
             JSON.stringify(accessToken)
@@ -88,6 +91,23 @@ export const AuthContextProvider = ({ children }) => {
       },
     }));
   };
+
+  const reloadAuthUser = async () => {
+    try {
+      const response = await axiosInstance.get("users/get/me");
+      if (response.status === 200) {
+        setAuthUser(response.data.user);
+        return true;
+      }
+    } catch (error) {
+      console.log(error);
+      Toast.error({
+        text1: "Failed to get user information",
+        type: "error",
+      });
+      return false;
+    }
+  };
   return (
     <AuthContext.Provider
       value={{
@@ -99,6 +119,7 @@ export const AuthContextProvider = ({ children }) => {
         setRefreshToken,
         updateAvatar,
         updateBia,
+        reloadAuthUser,
       }}
     >
       {children}

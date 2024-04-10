@@ -95,7 +95,9 @@ function SearchFriends() {
                 <View style={styles.friendInfo}>
                   <Image
                     source={{
-                      uri: friend?.profile?.avatar?.url,
+                      uri:
+                        friend?.profile?.avatar?.url ||
+                        "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
                     }}
                     style={styles.friendAvatar}
                   />
