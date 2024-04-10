@@ -32,7 +32,29 @@ const useSendMessage = () => {
         }
     }
 
-    return { sendMessage, sendImage }
+ 
+
+    const sendVideo = async (user, message) => {
+        console.log("hihi");
+        try {
+            const response = await axiosInstance.post(`/chats/${user.userId}/sendVideo`,
+                message,
+                {
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                    }
+                }
+
+            )
+            return response;
+            
+        } catch (error) {
+            console.log("error1:", error)
+            return false;
+        }
+    }
+
+    return { sendMessage, sendImage, sendVideo }
 }
 
 export default useSendMessage;
