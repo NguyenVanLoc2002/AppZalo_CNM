@@ -67,7 +67,7 @@ const AddFriends = () => {
     if (userSearch) {
       setSearchedUser(userSearch);
     }
-    setLoading(false);
+    // setLoading(false);
   };
 
   const handleAddFriend = async (friend) => {
