@@ -27,7 +27,7 @@ const ChatItem = ({ item }) => {
           paddingLeft: 20,
         }}
       >
-        <Text style={{ fontSize: 20, marginBottom: 5 }}>{item.friend.profile.name}</Text>
+        <Text style={{ fontSize: 20, marginBottom: 5 }}>{item.friend.profile?.name}</Text>
         <Text
           style={{
             fontSize: 14,
@@ -38,7 +38,7 @@ const ChatItem = ({ item }) => {
           {item.chat}
         </Text>
       </View>
-      {/* <View
+      <View
         style={{
           width: "18%",
           justifyContent: "center",
@@ -46,8 +46,8 @@ const ChatItem = ({ item }) => {
         }}
       >
         <Text style={{ marginBottom: 5 }}>
-          {item.thoiGian === 0 ? "vừa xong" : `${item.thoiGian} phút`}
-        </Text> */}
+          {item.time === 0 ? "vừa xong" : `${item.time} `}
+        </Text> 
         {/* <Text
           style={{
             backgroundColor: "red",
@@ -59,10 +59,10 @@ const ChatItem = ({ item }) => {
             fontWeight: "bold",
             display: item.soTNChuaDoc === 0 ? "none" : "flex",
           }}
-        > */}
+        >
           {/* {item.soTNChuaDoc} */}
         {/* </Text> */}
-      {/* </View> */}
+      </View>
     </View>
   );
 };
