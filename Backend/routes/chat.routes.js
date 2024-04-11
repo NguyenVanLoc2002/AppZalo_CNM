@@ -46,6 +46,16 @@ router.post(
   sendMessage
 );
 
+
+// Gửi file mới cho một người dùng cụ thể
+router.post(
+  "/:userId/sendFiles",
+  multerUploadFile.array("data"),
+  formatBodyData,
+  sendMessage
+);
+
+
 // Xóa tin nhắn cụ thể
 router.post("/:chatId/delete", deleteChat);
 
