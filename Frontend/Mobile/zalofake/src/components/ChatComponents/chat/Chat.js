@@ -178,7 +178,7 @@ function Chat({ navigation }) {
             <ChatItem item={item}  />
           </Pressable>
         )}
-        keyExtractor={(item) => item.url}
+        keyExtractor={(item) => item.friend.userId}
       />
       <Modal
         animationType="none"
