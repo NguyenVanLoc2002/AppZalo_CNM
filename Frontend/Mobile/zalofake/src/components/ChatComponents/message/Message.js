@@ -11,7 +11,6 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import axiosInstance from "../../../api/axiosInstance";
-import { useAuthContext } from "../../../contexts/AuthContext";
 import moment from 'moment-timezone';
 import useMessage from '../../../hooks/useMessage'
 import Toast from "react-native-toast-message";
@@ -24,8 +23,6 @@ const Message = ({ navigation, route }) => {
   [textMessage, setTextMessage] = useState(null)
   const [isColorSend, setIsColorSend] = useState(false)
   const { sendMessage, sendImage, sendVideo } = useSendMessage();
-  const [isMessageSent, setIsMessageSent] = useState(false);
-  const [selectedImage, setSelectedImage] = useState();
 
   //truc
   const [chats, setChats] = useState([]);
@@ -44,7 +41,6 @@ const Message = ({ navigation, route }) => {
   const [isLoadChuyenTiep, setIsLoadChuyenTiep] = useState(false)
   const [isLoadThuHoi, setIsLoadThuHoi] = useState(false)
   const [isLoadXoa, setIsLoadXoa] = useState(false)
-  const { authUser } = useAuthContext();
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
@@ -151,7 +147,6 @@ const Message = ({ navigation, route }) => {
 
   // Khôi phục vị trí cuộn của ScrollView
   const restoreScrollPosition = () => {
-
     if (scrollViewRef.current) {
       scrollViewRef.current.measure((x, y, width, height, pageX, pageY) => {
         scrollViewRef.current.scrollTo({ x: 0, y: height + scrollViewHeight, animated: false });
@@ -199,7 +194,7 @@ const Message = ({ navigation, route }) => {
   };
   const handleDeleteMess = () => {
     setIsLoadThuHoi(true)
-    const deleteChat = async () => {
+    const thuHoi = async () => {
       console.log('id'+messageSelected._id)
       try {
         const response = await axiosInstance.post(`chats/${messageSelected._id}/delete`);
@@ -214,9 +209,10 @@ const Message = ({ navigation, route }) => {
       } catch (error) {
         console.log(error);
         setIsLoadThuHoi(false)
+        toggleModal()
       }
     };
-    deleteChat();
+    thuHoi();
     // setModalVisible(false)
   };
   const handleDeleteMessByStatus = () => {
@@ -234,6 +230,7 @@ const Message = ({ navigation, route }) => {
       } catch (error) {
         console.log(error);
         setIsLoadXoa(false)
+        toggleModal()
       }
     };
     deleteChat();
@@ -310,8 +307,6 @@ const Message = ({ navigation, route }) => {
               console.log("fail");
 
             }
-
-
           } catch (error) {
             console.log(error);
             setIsLoadMess(false)
@@ -347,8 +342,6 @@ const Message = ({ navigation, route }) => {
       }
     }
   }
-
-
 
   useEffect(() => {
     // Update send button color based on textMessage
@@ -517,7 +510,6 @@ const Message = ({ navigation, route }) => {
                     style={{ marginRight: 8 }}
                   />
                 )}
-
                 <Text style={styles.modalButton} >Xóa</Text>
               </Pressable>
               {messageSelected.senderId===user.userId ? (
@@ -534,11 +526,9 @@ const Message = ({ navigation, route }) => {
                     style={{ marginRight: 8 }}
                   />
                 )}
-
                 <Text style={styles.modalButton}>Thu hồi</Text>
               </Pressable>
-                )}
-              
+                )} 
             </View>
             <View style={styles.modalButtonContainer1}>
               <Pressable style={styles.pressCol}>
@@ -557,9 +547,7 @@ const Message = ({ navigation, route }) => {
                 <Text style={styles.modalButton}>HỦY</Text>
               </Pressable>
               <Pressable >
-
                 <Text style={styles.modalButton}>XÁC NHẬN</Text>
-
               </Pressable>
             </View>
           </View>
@@ -591,7 +579,6 @@ const Message = ({ navigation, route }) => {
                     <View key={index} style={styles.friendRow}>
                       <Pressable style={styles.friendItem} >
                         <View style={styles.friendInfo}>
-
                           <Image
                             source={{
                               uri: friend?.profile?.avatar?.url,
@@ -602,15 +589,12 @@ const Message = ({ navigation, route }) => {
                         </View>
                         <View style={styles.friendActions}>
                           <Pressable onPress={() => chuyenTiepChat(friend)} style={styles.pressCol}>
-
-
                             <FontAwesome5
                               name="arrow-right"
                               size={30}
                               color="black"
                               style={{ alignContent: "center", alignItems: "center" }}
                             />
-
                           </Pressable>
                         </View>
                       </Pressable>
@@ -636,7 +620,6 @@ const Message = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -702,14 +685,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   pressCol: {
-    // flexDirection: "column",
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalButtonContainer1: {
-    // flex:1,
-    // height: 300,
-    // width: 450,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: 'center',

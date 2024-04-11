@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Text, Image } from 'react-native';
-// import VideoPlayer from 'react-native-video';
 import { Video } from 'expo-av';
 import Toast from "react-native-toast-message";
 
 const useMessage = () => {
+
   const showToastSuccess = (notice) => {
     Toast.show({
       text1: notice,
@@ -55,9 +55,11 @@ const useMessage = () => {
       return null; // Loại nội dung không được hỗ trợ
     }
   }
+  
+
   return {
     renderMessageContent,
-    showToastError, showToastSuccess
+    showToastError, showToastSuccess,
   };
 };
 
