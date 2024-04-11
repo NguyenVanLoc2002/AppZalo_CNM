@@ -287,7 +287,6 @@ const Message = ({ navigation, route }) => {
   };
 
   //nhi
-
   const openImagePicker = async () => {
     const permissionResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -295,7 +294,6 @@ const Message = ({ navigation, route }) => {
       console.log("Permission to access camera roll is required!");
       return;
     }
-
     const pickerResult = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: false,
@@ -308,17 +306,16 @@ const Message = ({ navigation, route }) => {
     console.log(pickerResult.assets[0])
     if (!pickerResult.canceled) {
       setIsLoadMess(true)
-      const formData = new FormData();
+     
       for (const asset of pickerResult.assets) {
         if (asset.type === 'image') {
-          pickerResult.assets.forEach(image => {
-            const fileName = image.uri.split('/').pop();
+          const formData = new FormData();
+            const fileName = asset.uri.split('/').pop();
             formData.append('data[]', {
-              uri: image.uri,
+              uri: asset.uri,
               name: fileName,
               type: 'image/jpeg',
             });
-          });
           try {
             const response = await sendImage(user, formData)
             if (response.status === 201) {
@@ -331,23 +328,19 @@ const Message = ({ navigation, route }) => {
             }
             else if (response.status === 500) {
               console.log("fail");
-
             }
           } catch (error) {
             console.log(error);
             setIsLoadMess(false)
           }
         } else if (asset.type === 'video') {
-          console.log("sendVideo", asset);
-          pickerResult.assets.forEach(image => {
-            const fileName = image.uri.split('/').pop();
+          const formData = new FormData();
+            const fileName = asset.uri.split('/').pop();
             formData.append('data[]', {
-              uri: image.uri,
+              uri: asset.uri,
               name: fileName,
               type: 'video/mp4',
             });
-          });
-          console.log("formData: ", formData);
           try {
             const response = await sendVideo(user, formData)
             if (response.status === 201) {
