@@ -4,7 +4,7 @@ const useSendMessage = () => {
 
     const sendImage = async (user, message) => {
         try {
-            const response = await axiosInstance.post(`/chats/${user.userId}/sendMessage`, message,
+            const response = await axiosInstance.post(`/chats/${user.userId}/sendImages`, message,
                 {
                     headers: {
                         "Content-Type": "multipart/form-data",
@@ -20,9 +20,8 @@ const useSendMessage = () => {
     }
 
     const sendMessage = async (user, message) => {
-        console.log("message: ", message);
         try {
-            const response = await axiosInstance.post(`/chats/${user.userId}/sendMessage`,
+            const response = await axiosInstance.post(`/chats/${user.userId}/sendText`,
                 { data: message }
             )
             return response;
@@ -35,7 +34,6 @@ const useSendMessage = () => {
  
 
     const sendVideo = async (user, message) => {
-        console.log("hihi");
         try {
             const response = await axiosInstance.post(`/chats/${user.userId}/sendVideo`,
                 message,

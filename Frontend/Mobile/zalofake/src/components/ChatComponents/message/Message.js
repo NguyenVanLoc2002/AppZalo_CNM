@@ -17,12 +17,15 @@ import Toast from "react-native-toast-message";
 import useSendMessage from "../../../hooks/useSendMessage";
 import * as ImagePicker from "expo-image-picker";
 import { FontAwesome5 } from "@expo/vector-icons";
+import { useSocketContext } from "../../../contexts/SocketContext"
+
 const Message = ({ navigation, route }) => {
   const { user } = route.params;
-  //nhi  const 
-  [textMessage, setTextMessage] = useState(null)
+  //nhi  
+  const [textMessage, setTextMessage] = useState(null)
   const [isColorSend, setIsColorSend] = useState(false)
   const { sendMessage, sendImage, sendVideo } = useSendMessage();
+  const { socket } = useSocketContext()
 
   //truc
   const [chats, setChats] = useState([]);
@@ -56,24 +59,45 @@ const Message = ({ navigation, route }) => {
       console.log(error);
     }
   };
+  const fetchChats = async () => {
+    try {
+      const response = await axiosInstance.get(`/chats/getHistoryMessage/${user.userId}`);
+      const reversedChats = response.data.data.reverse();
 
+      setChats(reversedChats);
+      fetchFriends();
+      const lastElement = reversedChats[0]
+      setLastTimestamp(lastElement.timestamp)
+    } catch (error) {
+      console.log(error);
+      return false;
+    }
+  };
+  const scrollToEnd = () => {
+    fetchChats()
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollToEnd({ animated: true });
+      console.log("scrollToEnd");
+    }
+  }
   useEffect(() => {
-    const fetchChats = async () => {
-      try {
-        const response = await axiosInstance.get(`/chats/getHistoryMessage/${user.userId}`);
-        const reversedChats = response.data.data.reverse();
-        setChats(reversedChats);
-        console.log(reversedChats)
-        fetchFriends();
-        const lastElement = reversedChats[0]
-        setLastTimestamp(lastElement.timestamp)
-      } catch (error) {
-        console.log(error);
-        return false;
-      }
-    };
     fetchChats();
-  }, []);
+
+    if (socket) {
+      socket.on("new_message", ({ message }) => {
+        setChats((prevMessages) => [message, ...prevMessages]);
+        console.log("new_message: ", message);
+        scrollToEnd()
+      });
+      socket.on("delete_message", ({ chatId }) => {
+        scrollToEnd()
+      });
+      return () => {
+        socket.off("new_message");
+        socket.off("delete_message");
+      };
+    }
+  }, [socket]);
 
 
   const handleCheckIsSend = (message) => {
@@ -121,7 +145,7 @@ const Message = ({ navigation, route }) => {
       ),
       headerTitle: () => (
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text style={{ fontSize: 20 }}>{user?.profile?.name}</Text>
+          <Text style={{ fontSize: 20, color: "white", fontWeight: 'bold' }}>{user?.profile?.name}</Text>
         </View>
       ),
       headerStyle: {
@@ -263,6 +287,7 @@ const Message = ({ navigation, route }) => {
   };
 
   //nhi
+
   const openImagePicker = async () => {
     const permissionResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -288,7 +313,7 @@ const Message = ({ navigation, route }) => {
         if (asset.type === 'image') {
           pickerResult.assets.forEach(image => {
             const fileName = image.uri.split('/').pop();
-            formData.append('data', {
+            formData.append('data[]', {
               uri: image.uri,
               name: fileName,
               type: 'image/jpeg',
@@ -301,6 +326,7 @@ const Message = ({ navigation, route }) => {
               setIsLoad(false)
               setChats(
                 chats.concat(response.data.data))
+              scrollToEnd()
               console.log("success");
             }
             else if (response.status === 500) {
@@ -315,7 +341,7 @@ const Message = ({ navigation, route }) => {
           console.log("sendVideo", asset);
           pickerResult.assets.forEach(image => {
             const fileName = image.uri.split('/').pop();
-            formData.append('data', {
+            formData.append('data[]', {
               uri: image.uri,
               name: fileName,
               type: 'video/mp4',
@@ -329,6 +355,7 @@ const Message = ({ navigation, route }) => {
               setIsLoad(false)
               setChats(
                 chats.concat(response.data.data))
+              scrollToEnd()
               console.log("success");
             }
             else if (response.status === 500) {
@@ -366,8 +393,9 @@ const Message = ({ navigation, route }) => {
           setIsLoad(false)
           setChats(
             chats.concat(response.data.data))
+          scrollToEnd()
           console.log("success");
-          setTextMessage("")
+          setTextMessage(null)
         }
         else if (response.status === 500) {
           showToastError("Gửi tin nhắn thất bại")
