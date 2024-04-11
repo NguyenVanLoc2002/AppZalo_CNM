@@ -231,6 +231,36 @@ exports.getFirstMessage = async (req, res) => {
   }
 };
 
+//Lấy tin nhắn cuối cùng
+exports.getLastMessage = async (req, res) => {
+  try {
+    const userId = req.params.userId; //người nhận lấy từ param
+    const currentUserId = req.user.user_id; // người dùng hiện đang đăng nhập
+
+    // Tìm tin nhắn đầu tiên trong chat có chatId
+
+    // Tìm tin nhắn đầu tiên trong cuộc trò chuyện giữa currentUserId và userId
+    const firstMessage = await Chat.findOne({
+      $or: [
+        { senderId: currentUserId, receiverId: userId },
+        { senderId: userId, receiverId: currentUserId },
+      ],
+    }).sort({ timestamp: -1 });
+
+    if (!firstMessage) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No message found in this chat" });
+    }
+
+    // Trả về tin nhắn đầu tiên nếu có
+    res.status(200).json({ success: true, data: firstMessage });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
 // Hàm trích xuất public_id từ URL của hình ảnh trên Cloudinary
 function extractPublicId(url) {
   const segments = url.split("/");
@@ -299,32 +329,4 @@ exports.deleteChat = async (req, res) => {
       .json({ message: "An error occurred while deleting the message" });
   }
 };
-//Lấy tin nhắn cuối cùng
-exports.getLastMessage = async (req, res) => {
-  try {
-    const userId = req.params.userId; //người nhận lấy từ param
-    const currentUserId = req.user.user_id; // người dùng hiện đang đăng nhập
 
-    // Tìm tin nhắn đầu tiên trong chat có chatId
-
-    // Tìm tin nhắn đầu tiên trong cuộc trò chuyện giữa currentUserId và userId
-    const firstMessage = await Chat.findOne({
-      $or: [
-        { senderId: currentUserId, receiverId: userId },
-        { senderId: userId, receiverId: currentUserId },
-      ],
-    }).sort({ timestamp: -1 });
-
-    if (!firstMessage) {
-      return res
-        .status(404)
-        .json({ success: false, message: "No message found in this chat" });
-    }
-
-    // Trả về tin nhắn đầu tiên nếu có
-    res.status(200).json({ success: true, data: firstMessage });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Server Error" });
-  }
-};
