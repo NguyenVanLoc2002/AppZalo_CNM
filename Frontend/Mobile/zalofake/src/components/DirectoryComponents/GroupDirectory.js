@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,10 +8,93 @@ import {
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-
-const listFriend = ["Boo", "Anh Yêu", "Trần Thị Yến Nhi", "Lê Ngọc Hân"];
+import axiosInstance from "../../api/axiosInstance";
+import moment from 'moment-timezone';
 
 const GroupDirectory = ({ navigation }) => {
+  const [listConversations, setListConversation] = useState([]);
+  const [lengthGroup, setLengthGroup] = useState(0)
+  const [group, setGroup] = useState()
+
+  const fetchConversations = async () => {
+    try {
+      const response = await axiosInstance.get("/conversations/getConversations");
+      if (response.status === 200) {
+        const newGroups = [];
+        let dem = 0
+        for (const data of response.data) {
+          if (data.participants.length > 2) {
+          dem++;
+          setListConversation(listConversations.concat(data))
+          const nameFriend = [];
+          let memberCount = 0;
+          let nameUserSendLast = null;
+          let lastMessage = null;
+          let userSendLast = data?.lastMessage?.senderId
+          let timestamp = data?.lastMessage?.timestamp
+          for (const participant of data.participants) {
+            if (participant._id === userSendLast) {
+              nameUserSendLast = participant.profile.name
+              if(data?.lastMessage?.contents[0].type === 'text'){
+                lastMessage = data?.lastMessage?.contents[0]?.data
+              } else if(data?.lastMessage?.contents[0].type === 'image'){
+                lastMessage = "đã gửi ảnh"
+              } else {
+                lastMessage = "đã gửi video"
+              }
+            }
+
+            if (memberCount < 4) {
+              nameFriend.push(participant.profile.name)
+              memberCount++;
+            } else {
+              break;
+            }
+          }
+          const group = {
+            idGroup: data._id,
+            userSendLast: nameUserSendLast,
+            lastMessage: lastMessage,
+            participants: nameFriend.join(", "),
+            time : handleGetTime(timestamp)
+          }
+          newGroups.push(group);
+          }
+        }
+        setGroup(newGroups);
+        setLengthGroup(dem)
+      }
+      else if (response.status === 500) {
+        console.log("FetchConversationError");
+      }
+    } catch (error) {
+      console.log("FetchConversationError:", error);
+    }
+  }
+  const handleGetTime = (time) => {
+    const currentTime = moment().tz('Asia/Ho_Chi_Minh'); // Lấy thời gian hiện tại ở múi giờ Việt Nam
+    const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh'); // Chuyển đổi thời gian đã cho sang múi giờ Việt Nam
+    const timeDifference = moment.duration(currentTime.diff(vietnamDatetime)); // Tính khoảng cách thời gian
+
+    const days = Math.floor(timeDifference.asDays()); // Số ngày
+    const hours = Math.abs(timeDifference.hours()); // Số giờ (dương)
+    const minutes = Math.abs(timeDifference.minutes()); // Số phút (dương)
+
+    if (days >= 1) {
+        return `${days} ngày`;
+    }
+    else if(hours>=1){
+      return `${hours} giờ`;
+    }
+    else {
+        return `${minutes} phút`;
+    }
+  };
+  useEffect(() => {
+    fetchConversations()
+  }, [])
+
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.section}>
@@ -27,7 +110,7 @@ const GroupDirectory = ({ navigation }) => {
 
       <View style={styles.section}>
         <View style={styles.groupHeader}>
-          <Text style={styles.groupHeaderText}>Nhóm đang tham gia (176)</Text>
+          <Text style={styles.groupHeaderText}>Nhóm đang tham gia ({lengthGroup})</Text>
           <Pressable style={styles.sortButton}>
             <Ionicons
               name={"ios-swap-vertical-outline"}
@@ -37,18 +120,22 @@ const GroupDirectory = ({ navigation }) => {
             <Text style={styles.sortButtonText}>Sắp xếp</Text>
           </Pressable>
         </View>
-        {listFriend.map((friend, index) => (
-          <View key={index} style={styles.groupItem}>
+        {group?.map((friend, index) => (
+          <Pressable key={index} style={styles.groupItem}>
             <Image
               style={styles.avatar}
               source={require("../../../assets/meomeo.jpg")}
             />
             <View style={styles.groupTextContainer}>
-              <Text style={styles.groupTitle}>{friend}</Text>
-              <Text style={styles.groupDescription}>{friend}: hihi cuti</Text>
+              <Text style={styles.groupTitle}>{friend.participants}</Text>
+              <Text style={styles.groupDescription}>
+                {friend.userSendLast ? `${friend.userSendLast}: ${friend.lastMessage}` : "Chưa có tin nhắn"}
+              </Text>
             </View>
-            <Text style={styles.timeText}>1 giờ</Text>
-          </View>
+            {friend.time !== "0 phút" && (
+              <Text style={styles.timeText}>{friend.time}</Text>
+            )}
+          </Pressable>
         ))}
       </View>
     </ScrollView>
@@ -146,6 +233,8 @@ const styles = StyleSheet.create({
   groupTitle: {
     fontSize: 16,
     fontWeight: "bold",
+    height: 30,
+    paddingRight: 20,
   },
   groupDescription: {
     fontSize: 14,
