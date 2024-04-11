@@ -1,5 +1,6 @@
 const Chats = require("../models/Chat");
 const Conversation = require("../models/Conversation");
+const { deleteChat } = require("./chat.controller");
 
 exports.createConversation = async (req, res) => {
   try {
@@ -40,18 +41,29 @@ exports.deleteConversation = async (req, res) => {
       .json({ message: "Failed to delete conversation", error: error.message });
   }
 };
+
 exports.deleteMessInConver = async (req, res) => {
   try {
     const conversationId = req.params.conversationId;
+    const chatIdToDelete = req.params.chatId;
+    console.log("chatIdToDelete: ", chatIdToDelete);
 
-    //Xóa theo _id
-    const deleteConversation = await Conversation.findById(conversationId);
+    await deleteChat(req, res, chatIdToDelete);
 
-    if (!deleteConversation) {
-      return res.status(404).json({ message: "Conversation not found" });
+    // Nếu deleteChat gặp lỗi và gửi phản hồi lỗi, không cần thiết phải tiếp tục thực hiện lệnh tiếp theo
+    if (res.headersSent) {
+      return;
     }
 
-    // await Chats.deleteMany({ _id: { $in: deleteConversation.messages } });
+    // Xóa chatIdToDelete cũng như cập nhật trường "messages" của tài liệu "Conversation"
+    const deleteChatInMessOfConver = await Conversation.findByIdAndUpdate(
+      conversationId,
+      { $pull: { messages: chatIdToDelete } }
+    );
+
+    if (!deleteChatInMessOfConver) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
 
     // Trả về phản hồi thành công
     res.status(200).json({ message: "Conversation deleted successfully" });
@@ -62,6 +74,7 @@ exports.deleteMessInConver = async (req, res) => {
       .json({ message: "Failed to delete conversation", error: error.message });
   }
 };
+
 exports.getConversation = async (req, res) => {
   try {
     const conversationId = req.params.conversationId;
@@ -107,32 +120,6 @@ exports.getConversations = async (req, res) => {
   }
 };
 
-// exports.getConversations = async (req, res) => {
-//   try {
-//     const userId = req.user.user_id;
-//     const conversations = await Conversation.find({
-//       participants: userId,
-//     }).populate([{
-//       path: "participants",
-//       select: "phone email profile _id",
-//     },
-//     {
-//       path: "lastMessage",
-//       select: "senderId receiverId contents timestamp read",
-//     }
-//   ]);
-//     if (!conversations) {
-//       return res.status(404).json({ message: "Conversations not found" });
-//     }
-//     res.status(200).json(conversations);
-//   } catch (error) {
-//     console.error("Error getting conversations:", error);
-//     res
-//       .status(500)
-//       .json({ message: "Failed to get conversations", error: error.message });
-//   }
-// };
-
 // get conversation by participants every time a new message is sent
 exports.getConversationByParticipants = async () => {
   try {
@@ -170,5 +157,69 @@ exports.getMessageByConversationId = async (req, res) => {
     res
       .status(500)
       .json({ message: "Failed to get messages", error: error.message });
+  }
+};
+
+exports.deleteOnMySelf = async (req, res) => {
+  try {
+    const conversationId = req.params.conversationId;
+    const chatIdToDelete = req.params.chatId;
+
+    const userIdCurrent = req.user.user_id; // người dùng hiện đang đăng nhập
+
+    const chat = await Chats.findById(chatIdToDelete);
+    if (!chat) {
+      return res.status(404).json({ error: "Not Found" });
+    }
+
+    if (chat.senderId.equals(userIdCurrent)) {
+      if (chat.status === 0 || chat.status === null) {
+        chat.status = 1;
+        await chat.save();
+        res.status(200).json({ message: "Update status success" });
+      } else {
+        try {
+          await Chats.findByIdAndDelete(chatIdToDelete);
+          const deleteChatInMessOfConver = await Conversation.findByIdAndUpdate(
+            conversationId,
+            { $pull: { messages: chatIdToDelete } }
+          );
+          if (!deleteChatInMessOfConver) {
+            return res.status(404).json({ message: "Conversation not found" });
+          }
+
+          res.status(200).json({ message: "Update status success" });
+        } catch (error) {
+          console.log("Error delete: ", error);
+        }
+      }
+    } else {
+      if (chat.status === 0 || chat.status === null) {
+        console.log("Đang đổi status");
+        chat.status = 2;
+        await chat.save();
+        res.status(200).json({ message: "Update status success" });
+      } else {
+        console.log("Đang xóa");
+        try {
+          await Chats.findByIdAndDelete(chatIdToDelete);
+          const deleteChatInMessOfConver = await Conversation.findByIdAndUpdate(
+            conversationId,
+            { $pull: { messages: chatIdToDelete } }
+          );
+          if (!deleteChatInMessOfConver) {
+            return res.status(404).json({ message: "Conversation not found" });
+          }
+          res.status(200).json({ message: "Update status success" });
+        } catch (error) {
+          console.log("Error delete: ", error);
+        }
+      }
+    }
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while processing the request: " });
   }
 };

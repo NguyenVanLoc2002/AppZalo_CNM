@@ -2,6 +2,7 @@ const cloudinary = require("../configs/Cloudinary.config.js");
 const Chats = require("../models/Chat.js");
 const Chat = require("../models/Chat.js");
 const Conversation = require("../models/Conversation.js");
+const User = require("../models/User.js");
 const { io, getReciverSocketId } = require("../socket/socket.io.js");
 
 //Gửi tin nhắn mới cho một người dùng cụ thể.
@@ -9,6 +10,11 @@ exports.sendMessage = async (req, resp) => {
   try {
     const senderId = req.user.user_id; // Lấy userId của người gửi từ thông tin đăng nhập (đã được đặt trong middleware auth)
     const receiverId = req.params.userId;
+    // Thêm biến này từ FE khi chọn conversation để trò chuyện nếu là Group thì truyền đi isGroup là true
+    //Còn là chat single thì không cần truyền chỉ cần truyền data nha FE 
+    const isGroup = req.body.isGroup || false; 
+    console.log("isGroup: ",isGroup);
+
     let contents = [];
     // Kiểm tra xem req.body có tồn tại không và có chứa nội dung không
     if (Object.keys(req.body).length) {
@@ -34,17 +40,26 @@ exports.sendMessage = async (req, resp) => {
     }
 
     // Tạo và lưu tin nhắn mới vào cơ sở dữ liệu
-    const message = new Chat({ senderId, receiverId, contents });
+    const message = new Chat({ senderId, receiverId, contents, isGroup });
     await message.save();
 
-    
     //Gọi socket và xử lý
     try {
-      const receiverSocketId = await getReciverSocketId(receiverId);
-      if (receiverSocketId) {
-        io.to(receiverSocketId.socket_id).emit("new_message", {
-          message,
-        });
+      if (isGroup) {
+        const groupMembers = await User.find({ _id: { $in: receiverId } });
+        for (const member of groupMembers) {
+          const receiverSocketId = await getReciverSocketId(member._id);
+          if (receiverSocketId) {
+            io.to(receiverSocketId.socket_id).emit("new_message", { message });
+          }
+        }
+      } else {
+        const receiverSocketId = await getReciverSocketId(receiverId);
+        if (receiverSocketId) {
+          io.to(receiverSocketId.socket_id).emit("new_message", {
+            message,
+          });
+        }
       }
     } catch (error) {
       console.error("Error sending message:", error);
@@ -71,28 +86,23 @@ exports.getHistoryMessage = async (req, resp) => {
     const lastTimestamp = req.query.lastTimestamp; // Lấy tham số lastTimestamp từ query string
     let queryCondition = {
       $or: [
-        { senderId: currentUserId, receiverId: userId},
+        { senderId: currentUserId, receiverId: userId },
         { senderId: userId, receiverId: currentUserId },
       ],
     };
-   
-
 
     const totalMessageHistory = await Chat.countDocuments(queryCondition);
     let messagesHistory;
     //Lấy 20% tin nhắn khi vượt quá 100 tin nhắn
     if (totalMessageHistory >= 100) {
-
       if (lastTimestamp) {
-        queryCondition.timestamp = { $lt: lastTimestamp };//new Date(parseInt(lastTimestamp))
-
+        queryCondition.timestamp = { $lt: lastTimestamp }; //new Date(parseInt(lastTimestamp))
       }
       messagesHistory = await Chat.find(queryCondition)
         .sort({
           timestamp: -1,
         })
         .limit(Math.ceil(totalMessageHistory * 0.2));
-
     } else {
       //Lấy toàn bộ tin nhắn
       messagesHistory = await Chat.find(queryCondition).sort({
@@ -135,22 +145,18 @@ exports.getHistoryMessageMobile = async (req, resp) => {
       ],
     };
 
-
     const totalMessageHistory = await Chat.countDocuments(queryCondition);
     let messagesHistory;
     //Lấy 20% tin nhắn khi vượt quá 100 tin nhắn
     if (totalMessageHistory >= 100) {
-
       if (lastTimestamp) {
-        queryCondition.timestamp = { $lt: lastTimestamp };//new Date(parseInt(lastTimestamp))
-
+        queryCondition.timestamp = { $lt: lastTimestamp }; //new Date(parseInt(lastTimestamp))
       }
       messagesHistory = await Chat.find(queryCondition)
         .sort({
           timestamp: -1,
         })
         .limit(Math.ceil(totalMessageHistory * 0.2));
-
     } else {
       //Lấy toàn bộ tin nhắn
       messagesHistory = await Chat.find(queryCondition).sort({
@@ -251,8 +257,8 @@ function extractPublicId(url) {
   return publicId;
 }
 
-exports.deleteChat = async (req, res) => {
-  const { chatId } = req.params;
+exports.deleteChat = async (req, res, chatId) => {
+  console.log("chatId: ",chatId);
 
   try {
     const chat = await Chat.findById(chatId);
