@@ -101,8 +101,8 @@ function Chat({ navigation }) {
         const getChat = await axiosInstance.get(`/chats/${friend.userId}/getLastMessage`);
         if (getChat.status === 200) {
           let dataChat;
-          console.log(friend.userId)
-          console.log(getChat.data.data.senderId)
+          // console.log(friend.userId)
+          // console.log(getChat.data.data.senderId)
           if(friend.userId === getChat.data.data.senderId){
             dataChat = friend.profile?.name ;
           }else{
