@@ -152,9 +152,11 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
     try {
       if (!data || data.trim === "") return;
       let messageType;
+      console.log("data: ", data);
+    
 
       if (receiverId) {
-        if (typeof data === "string") {
+        if ( data.type === "text") {
           messageType = "sendText";
         } else if (data[0].type.startsWith("image/")) {
           messageType = "sendImages";
