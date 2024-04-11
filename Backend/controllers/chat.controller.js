@@ -7,13 +7,14 @@ const { io, getReciverSocketId } = require("../socket/socket.io.js");
 
 //Gửi tin nhắn mới cho một người dùng cụ thể.
 exports.sendMessage = async (req, resp) => {
+  console.log("req.files: ", req.files);
   try {
     const senderId = req.user.user_id; // Lấy userId của người gửi từ thông tin đăng nhập (đã được đặt trong middleware auth)
     const receiverId = req.params.userId;
     // Thêm biến này từ FE khi chọn conversation để trò chuyện nếu là Group thì truyền đi isGroup là true
-    //Còn là chat single thì không cần truyền chỉ cần truyền data nha FE 
-    const isGroup = req.body.isGroup || false; 
-    console.log("isGroup: ",isGroup);
+    //Còn là chat single thì không cần truyền chỉ cần truyền data nha FE
+    const isGroup = req.body.isGroup || false;
+    console.log("isGroup: ", isGroup);
 
     let contents = [];
     // Kiểm tra xem req.body có tồn tại không và có chứa nội dung không
@@ -29,7 +30,11 @@ exports.sendMessage = async (req, resp) => {
     if (req.files) {
       for (const file of req.files) {
         contents.push({
-          type: file.mimetype.startsWith("image/") ? "image" : "video",
+          type: file.mimetype.startsWith("image/")
+            ? "image"
+            : file.mimetype.startsWith("video/")
+            ? "video"
+            : "file",
           data: file.path,
         });
       }
@@ -258,7 +263,7 @@ function extractPublicId(url) {
 }
 
 exports.deleteChat = async (req, res, chatId) => {
-  console.log("chatId: ",chatId);
+  console.log("chatId: ", chatId);
 
   try {
     const chat = await Chat.findById(chatId);
