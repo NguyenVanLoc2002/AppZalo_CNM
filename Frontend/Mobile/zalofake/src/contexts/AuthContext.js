@@ -91,7 +91,6 @@ export const AuthContextProvider = ({ children }) => {
       },
     }));
   };
-
   const reloadAuthUser = async () => {
     try {
       const response = await axiosInstance.get("users/get/me");

@@ -156,7 +156,7 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
       if (receiverId) {
         if (typeof data === "string") {
           messageType = "sendText";
-        } else if (data[0].type.startsWith("image/")) {
+        } else if (data.type.startsWith("image/")) {
           messageType = "sendImages";
         } else {
           messageType = "sendVideo";
