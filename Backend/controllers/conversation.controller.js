@@ -73,7 +73,6 @@ exports.deleteMessInConver = async (req, res) => {
       .json({ message: "Failed to delete conversation", error: error.message });
   }
 };
-
 exports.getConversation = async (req, res) => {
   try {
     const conversationId = req.params.conversationId;
