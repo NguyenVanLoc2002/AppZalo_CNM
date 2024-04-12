@@ -52,6 +52,7 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
   const [showPicker, setShowPicker] = useState(false);
   const { getConversations } = useConversation();
 
+  console.log("userChat: ",userChat);
   // Đảo ngược mảng tin nhắn và lưu vào biến mới
   const reversedMessages = [...messages].reverse();
 
@@ -160,8 +161,10 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
           messageType = "sendText";
         } else if (data[0].type.startsWith("image/")) {
           messageType = "sendImages";
-        } else {
+        } else if (data[0].type.startsWith("video/")){
           messageType = "sendVideo";
+        }else{
+          messageType = "sendFiles";
         }
 
         const response = await axiosInstance.post(
