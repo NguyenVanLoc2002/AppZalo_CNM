@@ -7,17 +7,13 @@ import App from "./App";
 import { SocketContextProvider } from "./contexts/SocketContext";
 import { Toaster } from "react-hot-toast";
 
-
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <Router>
-      <AuthContextProvider>
-        <SocketContextProvider>
-          <App />
-        </SocketContextProvider>
-      </AuthContextProvider>
-      <Toaster />
-
-    </Router>
-  </React.StrictMode>
+  <Router>
+    <AuthContextProvider>
+      <SocketContextProvider>
+        <App />
+      </SocketContextProvider>
+    </AuthContextProvider>
+    <Toaster />
+  </Router>
 );

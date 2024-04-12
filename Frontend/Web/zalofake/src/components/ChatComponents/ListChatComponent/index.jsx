@@ -34,9 +34,11 @@ function ListChatComponent({ language, showModal, userChat, friends }) {
       const friend = conversation.participants.find(
         (participant) => participant.phone !== authUser.phone
       );
+      console.log("conversation", conversation);
 
       return {
         id: friend._id,
+        conversationId: conversation.id,
         name: friend.profile.name,
         avatar: friend.profile.avatar?.url || "/zalo.svg",
         unread: conversation.messages.some(
