@@ -30,8 +30,6 @@ const uploadVideo = new CloudinaryStorage({
 const uploadFile = new CloudinaryStorage({
   cloudinary,
   params: {
-    // folder: "Zalo_Fake_App",
-    allowed_formats: ["docx", "pdf", "xlsx", "xls"],
     resource_type: "auto",
     public_id: (req, file) => {
       return `zaloFake_${file.fieldname}_${Date.now()}_${req.user.user_id}`;
