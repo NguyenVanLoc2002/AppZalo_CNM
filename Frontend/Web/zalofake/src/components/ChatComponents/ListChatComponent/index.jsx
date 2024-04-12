@@ -23,8 +23,6 @@ function ListChatComponent({ language, showModal, userChat, friends }) {
   const { authUser } = useAuthContext();
   const { socket } = useSocketContext();
 
-  
-
   useEffect(() => {
     getConversations();
     setOriginalFriendList(friends);
@@ -36,11 +34,13 @@ function ListChatComponent({ language, showModal, userChat, friends }) {
       const friend = conversation.participants.find(
         (participant) => participant.phone !== authUser.phone
       );
+
       return {
         id: friend._id,
         conversationId: conversation.id,
         name: friend.profile.name,
         avatar: friend.profile.avatar?.url || "/zalo.svg",
+        background: friend.profile.background?.url || "/zalo.svg",
         unread: conversation.messages.some(
           (message) => message.receiver === authUser.phone && !message.isRead
         ),
@@ -68,7 +68,6 @@ function ListChatComponent({ language, showModal, userChat, friends }) {
       setShowUnread(false);
     }
   };
-  
 
   //Lọc dữ liệu tên bạn bè
   const handleInputChange = (e) => {

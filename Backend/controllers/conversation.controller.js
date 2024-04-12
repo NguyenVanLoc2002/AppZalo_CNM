@@ -47,7 +47,7 @@ exports.deleteMessInConver = async (req, res) => {
     const conversationId = req.params.conversationId;
     const chatIdToDelete = req.params.chatId;
 
-    await deleteChat(req, res, chatIdToDelete);
+    await deleteChat(req, res);
 
     // Nếu deleteChat gặp lỗi và gửi phản hồi lỗi, không cần thiết phải tiếp tục thực hiện lệnh tiếp theo
     if (res.headersSent) {
