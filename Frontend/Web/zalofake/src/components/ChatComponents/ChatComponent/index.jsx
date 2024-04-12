@@ -52,7 +52,7 @@ function ChatComponents({ language }) {
       let messageType;
       console.log("data jef: ", data);
     
-
+      
       if (receiverId) {
         if ( data.type === "text") {
           messageType = "sendText";
