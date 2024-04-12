@@ -26,22 +26,21 @@ router.get("/:userId/getFirstMessage", getFirstMessage);
 // Lấy tin nhắn cuối cùng với một người dùng cụ thể với userId là người nhận
 router.get("/:userId/getLastMessage", getLastMessage);
 
-// Gửi tin nhắn mới cho một người dùng cụ thể bao gồm text và image
+// Gửi image mới cho một người dùng cụ thể
 router.post(
   "/:userId/sendImages",
-  multerUploadImage.array("data[]")
-  ,
+  multerUploadImage.array("data[]"),
   formatBodyData,
   sendMessage
 );
 
-// Gửi text mới cho một người dùng cụ thể 
+// Gửi text mới cho một người dùng cụ thể
 router.post(
   "/:userId/sendText",
+  multerUploadImage.array("data"),
   formatBodyData,
   sendMessage
 );
-
 
 // Gửi video mới cho một người dùng cụ thể
 router.post(
@@ -51,9 +50,18 @@ router.post(
   sendMessage
 );
 
+
+// Gửi file mới cho một người dùng cụ thể
+router.post(
+  "/:userId/sendFiles",
+  multerUploadFile.array("data[]"),
+  formatBodyData,
+  sendMessage
+);
+
+
 // Xóa tin nhắn cụ thể
 router.post("/:chatId/delete", deleteChat);
-
 
 //Cập nhật status theo chatId
 router.post("/updateStatus/:chatId", setStatusMessage);
