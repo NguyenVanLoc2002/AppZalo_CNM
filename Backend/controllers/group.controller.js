@@ -43,7 +43,7 @@ exports.createGroup = async (req, res) => {
       }
     });
 
-    return res.status(201).json({ group });
+    return res.status(201).json( group );
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Something went wrong" });
@@ -57,7 +57,7 @@ exports.getGroup = async (req, res) => {
     if (!group) {
       return res.status(404).json({ error: "Group not found" });
     }
-    return res.status(200).json({ group });
+    return res.status(200).json( group );
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Something went wrong" });
@@ -72,7 +72,7 @@ exports.getAllGroup = async (req, res) => {
       "conversation"
     );
     if (groups) {
-      return res.status(200).json({ groups });
+      return res.status(200).json(groups);
     } else {
       groups = await Group.aggregate([
         {
@@ -86,11 +86,12 @@ exports.getAllGroup = async (req, res) => {
         {
           $match: {
             "conversation.participants": {
-              $in: [user._id],
+              $in: [user.user_id],
             },
           },
         },
       ]);
+      return res.status(200).json(groups);
     }
   } catch (error) {
     console.error(error);
@@ -118,7 +119,7 @@ exports.updateGroup = async (req, res) => {
       group.avatar.public_id = result.public_id;
     }
     await group.save();
-    return res.status(200).json({ group });
+    return res.status(200).json( group );
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Something went wrong" });
@@ -136,7 +137,7 @@ exports.deleteGroup = async (req, res) => {
       return res.status(404).json({ error: "Group not found" });
     }
     if (group.createBy.toString() !== uid.user_id) {
-      return res.status(401).json({ error: "You are not authorized" });
+      return res.status(403).json({ error: "You are not authorized" });
     }
     await group.deleteOne();
     await Conversation.findByIdAndDelete(group.conversation);
@@ -225,7 +226,7 @@ exports.removeMember = async (req, res) => {
       return res.status(404).json({ error: "Group not found" });
     }
     if (group.createBy.toString() !== uid.user_id) {
-      return res.status(401).json({ error: "You are not authorized" });
+      return res.status(403).json({ error: "You are not authorized" });
     }
     if (!members || members.length < 1) {
       return res.status(400).json({ error: "Members is required" });
@@ -256,7 +257,7 @@ exports.removeMember = async (req, res) => {
     }
 
     await group.conversation.save();
-    return res.status(200).json({ group });
+    return res.status(200).json( group );
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Something went wrong" });
