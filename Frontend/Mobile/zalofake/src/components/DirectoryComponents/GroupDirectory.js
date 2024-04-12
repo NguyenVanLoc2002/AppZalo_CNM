@@ -8,13 +8,13 @@ import {
   StyleSheet,
   Modal,
   TextInput,
-  ActivityIndicator 
+  ActivityIndicator
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import axiosInstance from "../../api/axiosInstance";
 import moment from 'moment-timezone';
-import RadioButton from "react-native-radio-buttons-group";
 import Toast from "react-native-toast-message";
+import useCreateGroup from "../../hooks/useCreateGroup";
 
 const GroupDirectory = ({ navigation }) => {
   const [listConversations, setListConversation] = useState([]);
@@ -29,63 +29,39 @@ const GroupDirectory = ({ navigation }) => {
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [isLoading, setIsLoading] = useState(false)
   const [isHidden, setIsHidden] = useState(false)
+  const [groupAll, setGroupAll] = useState([])
+  const { getAllGroup, getConversationById, getConversations } = useCreateGroup()
 
-  const fetchConversations = async () => {
+  const fetchGroup = async () => {
     try {
-      const response = await axiosInstance.get("/conversations/getConversations");
-      if (response.status === 200) {
-        const newGroups = [];
+      const allGr = await getAllGroup();
+      if (allGr) {
+        const group = []
         let dem = 0
-        for (const data of response.data) {
-          if (data.participants.length > 2) {
-            dem++;
-            setListConversation(listConversations.concat(data))
-            const nameFriend = [];
-            let memberCount = 0;
-            let nameUserSendLast = null;
-            let lastMessage = null;
-
-            for (const participant of data.participants) {
-              if (participant._id === data?.lastMessage?.senderId) {
-                nameUserSendLast = participant.profile.name
-                if (data?.lastMessage?.contents[0].type === 'text') {
-                  lastMessage = data?.lastMessage?.contents[0]?.data
-                } else if (data?.lastMessage?.contents[0].type === 'image') {
-                  lastMessage = "đã gửi ảnh"
-                } else {
-                  lastMessage = "đã gửi video"
-                }
-              }
-
-              if (memberCount < 4) {
-                nameFriend.push(participant.profile.name)
-                memberCount++;
-              } else {
-                break;
-              }
-            }
-            const group = {
-              idGroup: data._id,
-              userSendLast: nameUserSendLast,
-              lastMessage: lastMessage,
-              participants: nameFriend.join(", "),
-              time: handleGetTime(data?.lastMessage?.timestamp),
-              createAt: handleGetTime(data?.createdAt)
-            }
-            newGroups.push(group);
+        for (const gr of allGr) {
+          dem++;
+          const conversation = await getConversations(gr.conversation._id)
+          const newGroup = {
+            idGroup: gr._id,
+            nameGroup: gr.groupName,
+            avatarGroup: gr.avatar?.url,
+            createAt: handleGetTime(gr.createAt),
+            createBy: gr.createBy,
+            conversation: gr.conversation._id,
+            lastMessage: conversation.lastMessage,
+            userSendLast: conversation.userSend,
+            sendTime: handleGetTime(conversation.sendTime)
           }
+          group.push(newGroup)
         }
-        setGroup(newGroups);
+        setGroupAll(group)
         setLengthGroup(dem)
       }
-      else if (response.status === 500) {
-        console.log("FetchConversationError");
-      }
     } catch (error) {
-      console.log("FetchConversationError:", error);
+      console.log("FetchGroupError: ", error);
     }
-
   }
+
   const handleGetTime = (time) => {
     const currentTime = moment().tz('Asia/Ho_Chi_Minh'); // Lấy thời gian hiện tại ở múi giờ Việt Nam
     const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh'); // Chuyển đổi thời gian đã cho sang múi giờ Việt Nam
@@ -130,8 +106,8 @@ const GroupDirectory = ({ navigation }) => {
   }
 
   useEffect(() => {
-    fetchConversations()
     fetchFriend()
+    fetchGroup()
   }, [])
 
   const showToastError = (notice) => {
@@ -223,31 +199,39 @@ const GroupDirectory = ({ navigation }) => {
   )
   const handleCreate = async () => {
     setIsLoading(true)
-    console.log("selectFriend:", selectedFriends);
-    let idUser = [];
-    for(const id of selectedFriends){
-        idUser.push(id.id)
-    }
-    console.log("id:",idUser);
-    try {
-      const response = await axiosInstance.post("/conversations/newConversation", {
-        participants : idUser
-      })
-      if(response.status === 201){
-        console.log("Create conversation success");
-        setIsLoading(false)
-        setModalCreateGr(false)
-        fetchConversations()
-      }
-      else if(response.status === 500){
-        console.log("Create conversation fail");
-        setIsLoading(false)
-
-      }
-    } catch (error) {
-      console.log("CreateGroupError:",error);
+    if (!nameGroup) {
+      showToastError("Vui lòng đặt tên nhóm")
       setIsLoading(false)
+      return;
+    }
+    else {
+      console.log("selectFriend:", selectedFriends);
+      let idUser = [];
+      for (const id of selectedFriends) {
+        idUser.push(id.id)
+      }
+      console.log("id:", idUser);
+      try {
+        const response = await axiosInstance.post("/groups/create", {
+          name : nameGroup,
+          members: idUser
+        })
+        if (response.status === 201) {
+          console.log("Create group success");
+          setIsLoading(false)
+          setModalCreateGr(false)
+          fetchGroup()
+        }
+        else if (response.status === 500) {
+          console.log("Create group fail");
+          setIsLoading(false)
 
+        }
+      } catch (error) {
+        console.log("CreateGroupError:", error);
+        setIsLoading(false)
+
+      }
     }
   }
 
@@ -278,22 +262,22 @@ const GroupDirectory = ({ navigation }) => {
               <Text style={styles.sortButtonText}>Sắp xếp</Text>
             </Pressable>
           </View>
-          {group?.map((friend, index) => (
+          {groupAll?.map((group, index) => (
             <Pressable key={index} style={styles.groupItem}>
               <Image
                 style={styles.avatar}
-                source={{ uri : "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png"}}
+                source={{ uri: group.avatarGroup ? group.avatarGroup : "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}
               />
               <View style={styles.groupTextContainer}>
-                <Text style={styles.groupTitle}>{friend.participants}</Text>
+                <Text style={styles.groupTitle}>{group.nameGroup}</Text>
                 <Text style={styles.groupDescription}>
-                  {friend.userSendLast ? `${friend.userSendLast}: ${friend.lastMessage}` : "Chưa có tin nhắn"}
+                  {group.userSendLast ? `${group.userSendLast}: ${group.lastMessage}` : "Chưa có tin nhắn"}
                 </Text>
               </View>
-              {friend.time !== "0 phút" ? (
-                <Text style={styles.timeText}>{friend.time}</Text>
+              {group?.sendTime ? (
+                <Text style={styles.timeText}>{group.createAt}</Text>
               ) : (
-                <Text style={styles.timeText}>{friend.createAt}</Text>
+                <Text style={styles.timeText}>{group.sendTime}</Text>
               )}
             </Pressable>
           ))}
@@ -304,7 +288,7 @@ const GroupDirectory = ({ navigation }) => {
         animationType="slide"
         transparent={true}
         visible={modalCreateGr}
-        >
+      >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Toast />
