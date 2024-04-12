@@ -16,7 +16,7 @@ const ChatItem = ({ item }) => {
         style={{ width: "15%", justifyContent: "center", alignItems: "center" }}
       >
         <Image
-          source={{  uri: item.friend?.profile?.avatar?.url, }}
+          source={{  uri: item.image, }}
           style={{ width: 55, height: 55, borderRadius: 25 }}
         />
       </View>
@@ -27,7 +27,7 @@ const ChatItem = ({ item }) => {
           paddingLeft: 20,
         }}
       >
-        <Text style={{ fontSize: 20, marginBottom: 5 }}>{item.friend.profile?.name}</Text>
+        <Text style={{ fontSize: 20, marginBottom: 5 }}>{item.name}</Text>
         <Text
           style={{
             fontSize: 14,
@@ -35,7 +35,7 @@ const ChatItem = ({ item }) => {
           }}
           numberOfLines={1}
         >
-          {item.chat}
+          {item.dataChat}
         </Text>
       </View>
       <View

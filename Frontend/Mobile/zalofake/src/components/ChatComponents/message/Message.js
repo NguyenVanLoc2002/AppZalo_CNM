@@ -20,7 +20,8 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import { useSocketContext } from "../../../contexts/SocketContext"
 
 const Message = ({ navigation, route }) => {
-  const { user } = route.params;
+  const { conver,user} = route.params;
+  // const {user} = conver.user;
   //nhi  
   const [textMessage, setTextMessage] = useState(null)
   const [isColorSend, setIsColorSend] = useState(false)
@@ -44,7 +45,7 @@ const Message = ({ navigation, route }) => {
   const [isLoadChuyenTiep, setIsLoadChuyenTiep] = useState(false)
   const [isLoadThuHoi, setIsLoadThuHoi] = useState(false)
   const [isLoadXoa, setIsLoadXoa] = useState(false)
-
+  
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
   };
@@ -61,9 +62,9 @@ const Message = ({ navigation, route }) => {
   };
   const fetchChats = async () => {
     try {
-      const response = await axiosInstance.get(`/chats/getHistoryMessage/${user.userId}`);
-      const reversedChats = response.data.data.reverse();
-
+      const response = await axiosInstance.get(`/conversations/get/messages/${conver._id}`);
+      const reversedChats = response.data; //.reverse();
+      console.log(reversedChats)
       setChats(reversedChats);
       fetchFriends();
       const lastElement = reversedChats[0]
@@ -101,7 +102,7 @@ const Message = ({ navigation, route }) => {
 
 
   const handleCheckIsSend = (message) => {
-    if (message.senderId === user.userId) {
+    if (message.senderId === user._id) {
       return false;
     } else {
       return true;
@@ -182,14 +183,15 @@ const Message = ({ navigation, route }) => {
     setIsLoading(true)
     const fetchChats = async () => {
       try {
-        const response = await axiosInstance.get(`/chats/getHistoryMessage/${user.userId}?lastTimestamp=${lastTimestamp}`);
-        const reversedChats = response.data.data.reverse();
-        if (reversedChats && reversedChats.length > 0) {
-          setChats(prevChats => [...reversedChats, ...prevChats]);
-          restoreScrollPosition();
-          const lastElement = reversedChats[0]
-          setLastTimestamp(lastElement.timestamp)
-        }
+        // const response = await axiosInstance.get(`/chats/getHistoryMessage/${user._id}?lastTimestamp=${lastTimestamp}`);
+        const response = await axiosInstance.get(`/conversations/get/messages/${conver._id}`);
+        const reversedChats = response.data;//.reverse();
+        // if (reversedChats && reversedChats.length > 0) {
+        //   setChats(prevChats => [...reversedChats, ...prevChats]);
+        //   restoreScrollPosition();
+        //   const lastElement = reversedChats[0]
+        //   setLastTimestamp(lastElement.timestamp)
+        // }
         setIsLoading(false)
 
       } catch (error) {
@@ -239,6 +241,9 @@ const Message = ({ navigation, route }) => {
     thuHoi();
     // setModalVisible(false)
   };
+
+
+
   const handleDeleteMessByStatus = () => {
     setIsLoadXoa(true)
     const deleteChat = async () => {
@@ -384,7 +389,7 @@ const Message = ({ navigation, route }) => {
         if (response.status === 201) {
           setIsLoadMess(false)
           setIsLoad(false)
-          setChats(
+          setChats( 
             chats.concat(response.data.data))
           scrollToEnd()
           console.log("success");
@@ -533,7 +538,7 @@ const Message = ({ navigation, route }) => {
                 )}
                 <Text style={styles.modalButton} >Xóa</Text>
               </Pressable>
-              {messageSelected.senderId===user.userId ? (
+              {messageSelected.senderId===user._id ? (
                   <Text></Text>
                 ) : (
                   <Pressable style={styles.pressCol} onPress={handleDeleteMess}>
@@ -552,7 +557,7 @@ const Message = ({ navigation, route }) => {
                 )} 
             </View>
             <View style={styles.modalButtonContainer1}>
-              <Pressable style={styles.pressCol}>
+              <Pressable style={styles.pressCol} >
                 <FontAwesome5
                   name="list"
                   size={20}
