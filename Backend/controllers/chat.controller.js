@@ -258,7 +258,6 @@ function extractPublicId(url) {
   const segments = url.split("/");
   const publicIdWithExtension = segments.pop(); // Lấy phần cuối cùng của đường dẫn
   const publicId = publicIdWithExtension.split(".")[0]; // Loại bỏ phần mở rộng tệp
-  console.log("publicIdWithExtension: ", publicIdWithExtension);
   return publicId;
 }
 
@@ -283,6 +282,7 @@ exports.deleteChat = async (req, res, chatId) => {
     await Promise.all(
       mediaFiles.map(async (media) => {
         const publicId = extractPublicId(media.data);
+        console.log("publicId: ", publicId);
         try {
           await cloudinary.uploader.destroy(publicId);
         } catch (error) {
@@ -290,7 +290,6 @@ exports.deleteChat = async (req, res, chatId) => {
         }
       })
     );
-    await Chat.findByIdAndDelete(chatId);
 
     const conversation = await Conversation.findOne({
       participants: { $all: [chat.senderId, chat.receiverId] },
@@ -312,7 +311,7 @@ exports.deleteChat = async (req, res, chatId) => {
         chatId,
       });
     }
-
+    await Chat.findByIdAndDelete(chatId);
     res.status(200).json({ message: "Success deleted" });
   } catch (error) {
     console.error("Error deleting message:", error);
