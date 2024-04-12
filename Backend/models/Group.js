@@ -8,7 +8,7 @@ const groupSchema = new mongoose.Schema({
   },
   createAt: { type: Date, default: Date.now() },
   createBy: { type: mongoose.Schema.Types.ObjectId, ref: "users" }, // new field
-  conversationId: { type: mongoose.Schema.Types.ObjectId, ref: "Conversation" }, // new field
+  conversation: { type: mongoose.Schema.Types.ObjectId, ref: "Conversation" }, // new field
 });
 
 const Group = mongoose.model("groups", groupSchema);
