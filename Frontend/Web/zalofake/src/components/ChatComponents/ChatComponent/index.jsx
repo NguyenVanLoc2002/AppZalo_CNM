@@ -42,9 +42,6 @@ function ChatComponents({ language }) {
   const [valueSearch, setValueSearch] = useState("");
   const [originalFriendList, setOriginalFriendList] = useState([]);
   const [selectedFriends, setSelectedFriends] = useState([]);
-
-  console.log("shareMessage", shareMessage);
-
   const sendMessage = async (data, receiverId) => {
     try {
       if (!data || data.trim === "") return;
@@ -167,8 +164,6 @@ function ChatComponents({ language }) {
     }
   };
 
-  console.log("selectedFriends: ", selectedFriends);
-
   const buttons = [
     "Tất cả",
     "Khách hàng",
@@ -192,10 +187,10 @@ function ChatComponents({ language }) {
 
   const handleSendButtonClick = () => {
     if (selectedFriends.length === 0) {
-      console.log('Please select friends to send message to.');
+      console.log("Please select friends to send message to.");
       return;
     }
-    console.log("Nội dung:",shareMessage.contents[0]);
+    console.log("Nội dung:", shareMessage.contents[0]);
     sendMessageToSelectedFriends(shareMessage.contents[0]);
     setIsShowModal(false);
   };
