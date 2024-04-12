@@ -52,23 +52,23 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
   const [showPicker, setShowPicker] = useState(false);
   const { getConversations } = useConversation();
 
-  console.log("userChat: ",userChat);
+ 
   // Đảo ngược mảng tin nhắn và lưu vào biến mới
-  const reversedMessages = [...messages].reverse();
+  // const reversedMessages = [...messages].reverse();
 
   useEffect(() => {
-    const fetchMessageHistory = async (userId) => {
-      if (!userId) return; // Kiểm tra userId trước khi gọi API
+    const fetchMessageHistory = async (converId) => {
+      if (!converId) return; // Kiểm tra userId trước khi gọi API
 
       setLoading(true);
       try {
-        const response = await axiosInstance.get(`chats/${userId}`);
-
-        const { data } = response; // Truy cập vào dữ liệu từ phản hồi
-        if (data.success) {
-          setMessages(data.data);
+        const response = await axiosInstance.get(`conversations/get/messages/${converId}`);
+       
+       
+        if (response.statusText==="OK") {
+          setMessages(response.data);
         } else {
-          throw new Error(data.data || "Failed to fetch message history");
+          throw new Error(response.data || "Failed to fetch message history");
         }
       } catch (error) {
         console.error(error);
@@ -77,8 +77,8 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
       }
     };
 
-    if (userChat && userChat.id) {
-      fetchMessageHistory(userChat.id);
+    if (userChat && userChat.conversationId) {
+      fetchMessageHistory(userChat?.conversationId);
     }
 
     if (socket) {
@@ -89,10 +89,10 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
           console.log("message.sender: ", message.senderId);
           return;
         }
-        setMessages((prevMessages) => [message, ...prevMessages]);
+        setMessages((prevMessages) => [...prevMessages,message]);
       });
       socket.on("delete_message", ({ chatId }) => {
-        fetchMessageHistory(userChat.id);
+        fetchMessageHistory(userChat.conversationId);
       });
       return () => {
         socket.off("new_message");
@@ -176,7 +176,7 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
             },
           }
         );
-        setMessages((prevMessages) => [response.data.data, ...prevMessages]);
+        setMessages((prevMessages) => [...prevMessages,response.data.data ]);
         setContent("");
         setIsAddingMessages(false);
       }
@@ -257,12 +257,13 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
 
   const deleteChat = async (chatId) => {
     try {
-      const response = await axiosInstance.post(`chats/${chatId}/delete`);
+      const converId = userChat?.conversationId;
+      const response = await axiosInstance.post(`conversations/deletedMess/${converId}/${chatId}`);
       if (response.status === 200) {
         const updatedMessagesResponse = await axiosInstance.get(
-          `chats/${userChat.id}`
+          `conversations/get/messages/${converId}`
         );
-        const dataUpdate = updatedMessagesResponse.data.data;
+        const dataUpdate = updatedMessagesResponse.data;
         setMessages(dataUpdate);
       }
     } catch (error) {
@@ -284,8 +285,9 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
     console.log("chatId: ", chatId);
     console.log("dang delete");
     try {
-      const response = await axiosInstance.post(`chats/updateStatus/${chatId}`);
-      console.log(response);
+      console.log(userChat?.conversationId);
+      const response = await axiosInstance.post(`conversations/deleteOnMySelf/${userChat?.conversationId}/${chatId}`);
+      console.log("Xoa chi phia toi",response);
       const updatedMessages = messages.filter(
         (message) => message._id !== chatId
       );
@@ -379,9 +381,9 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
             <div
               className="flex flex-col p-2 h-[75vh] bg-slate-50 overflow-y-auto"
               ref={scrollRef}
-              onScroll={handleScroll}
+              // onScroll={handleScroll}
             >
-              {reversedMessages.map((message, index) => {
+              {messages.map((message, index) => {
                 if (message.senderId !== userChat.id) {
                   // Lấy những tin nhắn có status là 0 hoặc 2
                   if (message.status === 0 || message.status === 2) {
@@ -538,8 +540,9 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
 
                             <div
                               className="flex p-2 text-red-400 items-center rounded-xl border-b border-gray-100 hover:bg-gray-100"
-                              onClick={() =>
-                                handleDeleteOnlyMySide(message._id)
+                              onClick={() =>{
+                                console.log("message: ", message);
+                                handleDeleteOnlyMySide(message._id)}
                               }
                             >
                               <BsTrash3

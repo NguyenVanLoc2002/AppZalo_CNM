@@ -46,7 +46,6 @@ exports.deleteMessInConver = async (req, res) => {
   try {
     const conversationId = req.params.conversationId;
     const chatIdToDelete = req.params.chatId;
-    console.log("chatIdToDelete: ", chatIdToDelete);
 
     await deleteChat(req, res, chatIdToDelete);
 
@@ -186,6 +185,8 @@ exports.deleteOnMySelf = async (req, res) => {
           );
           if (!deleteChatInMessOfConver) {
             return res.status(404).json({ message: "Conversation not found" });
+          } else {
+            return res.status(200).json({ message: "Delete mess success" });
           }
 
           res.status(200).json({ message: "Update status success" });
@@ -209,6 +210,8 @@ exports.deleteOnMySelf = async (req, res) => {
           );
           if (!deleteChatInMessOfConver) {
             return res.status(404).json({ message: "Conversation not found" });
+          } else {
+            return res.status(200).json({ message: "Delete mess success" });
           }
           res.status(200).json({ message: "Update status success" });
         } catch (error) {
