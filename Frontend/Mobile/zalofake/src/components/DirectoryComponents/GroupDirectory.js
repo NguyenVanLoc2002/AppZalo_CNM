@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Modal,
   TextInput,
+  ActivityIndicator 
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import axiosInstance from "../../api/axiosInstance";
@@ -25,6 +26,9 @@ const GroupDirectory = ({ navigation }) => {
   const [textSearch, setTextSearch] = useState(null)
   const [radioButton, setRadioButton] = useState([]);
   const [listSearch, setListSearch] = useState([])
+  const [selectedFriends, setSelectedFriends] = useState([]);
+  const [isLoading, setIsLoading] = useState(false)
+  const [isHidden, setIsHidden] = useState(false)
 
   const fetchConversations = async () => {
     try {
@@ -166,23 +170,87 @@ const GroupDirectory = ({ navigation }) => {
     }
   }
 
+  const handleFriendSelection = (item) => {
+    if (selectedFriends.includes(item)) {
+      setSelectedFriends(prevState => prevState.filter(friend => friend.id !== item.id));
+    } else {
+      setSelectedFriends(prevState => [...prevState, item]);
+    }
+    setIsHidden(true)
+  };
+  const isFriendSelected = (friend) => {
+    return selectedFriends.includes(friend);
+  };
+  const handleDeleteFriendSelected = (item) => {
+    setSelectedFriends(selectedFriends.filter(friend => friend.id !== item.id));
+  }
+  useEffect(() => {
+    if (selectedFriends.length === 0) {
+      setIsHidden(false);
+    }
+  }, [selectedFriends]);
+
   const renderListItem = (item, index) => (
-    <View key={index} style={{ flexDirection: 'row', alignItems: 'center' }}>
-      <RadioButton
-        radioButtons={[{ id: item.id }]}
-        // onPress={(value) => setUsGender(value)}
-        // selectedId={usGender}
-        labelStyle={{ fontSize: 20 }}
-        containerStyle={{ alignItems: 'flex-start' }}
-      />
-      <View style={{ padding: 10 }}>
-        <Image
-          source={{ uri: item.avatar ? item.avatar : "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}
-          style={{ width: 50, height: 50, borderRadius: 25 }}
-        /></View>
-      <Text style={{ fontSize: 20 }}>{item.name}</Text>
-    </View>
-  );
+    <Pressable key={index} style={{ width: "100%", flexDirection: "row", alignItems: "center" }}>
+      <View style={{ height: 45, width: 45, borderRadius: 50 }}></View>
+      <View style={{ width: "75%", flexDirection: 'row', alignItems: 'center' }}>
+
+        <View style={{ padding: 10 }}>
+          <Image
+            source={{ uri: item.avatar ? item.avatar : "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}
+            style={{ width: 50, height: 50, borderRadius: 25 }}
+          /></View>
+        <Text style={{ fontWeight: "500", marginLeft: 0 }}>{item.name}</Text>
+      </View>
+      <Pressable
+        onPress={() => {
+          handleFriendSelection(item)
+        }}
+      >
+        <View style={{ padding: 13, width: 24, height: 24, backgroundColor: '#F3F5F6', borderRadius: 50, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#37333A' }}>
+          {isFriendSelected(item) ? (
+            <Pressable style={{ width: 25, height: 25, backgroundColor: '#0091FF', borderRadius: 50, alignItems: 'center', justifyContent: 'center' }} onPress={
+              () => handleDeleteFriendSelected(item)
+            }>
+              <Ionicons color='white' size={27} name="checkmark-circle" />
+            </Pressable>
+          ) : (
+            <View></View>
+          )}
+        </View>
+      </Pressable>
+    </Pressable>
+  )
+  const handleCreate = async () => {
+    setIsLoading(true)
+    console.log("selectFriend:", selectedFriends);
+    let idUser = [];
+    for(const id of selectedFriends){
+        idUser.push(id.id)
+    }
+    console.log("id:",idUser);
+    try {
+      const response = await axiosInstance.post("/conversations/newConversation", {
+        participants : idUser
+      })
+      if(response.status === 201){
+        console.log("Create conversation success");
+        setIsLoading(false)
+        setModalCreateGr(false)
+        fetchConversations()
+      }
+      else if(response.status === 500){
+        console.log("Create conversation fail");
+        setIsLoading(false)
+
+      }
+    } catch (error) {
+      console.log("CreateGroupError:",error);
+      setIsLoading(false)
+
+    }
+  }
+
 
   return (
     <View style={styles.container}>
@@ -214,7 +282,7 @@ const GroupDirectory = ({ navigation }) => {
             <Pressable key={index} style={styles.groupItem}>
               <Image
                 style={styles.avatar}
-                source={require("../../../assets/meomeo.jpg")}
+                source={{ uri : "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png"}}
               />
               <View style={styles.groupTextContainer}>
                 <Text style={styles.groupTitle}>{friend.participants}</Text>
@@ -236,9 +304,7 @@ const GroupDirectory = ({ navigation }) => {
         animationType="slide"
         transparent={true}
         visible={modalCreateGr}
-        onRequestClose={() => {
-          setModalXacNhan(false);
-        }}>
+        >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Toast />
@@ -277,12 +343,32 @@ const GroupDirectory = ({ navigation }) => {
             </View>
             <View style={styles.viewScroll}>
               <ScrollView>
-                {textSearch === null ? (
+                {textSearch === null || textSearch.trim() === '' ? (
                   radioButton.map(renderListItem)
                 ) : (
                   listSearch.map(renderListItem)
                 )}
               </ScrollView>
+              {isHidden ? (
+                <View style={{ width: '95%', alignItems: 'flex-end', justifyContent: 'center', marginBottom: 50 }}>
+                  <Pressable
+                    style={
+                      { width: 70, height: 70, borderRadius: 35, justifyContent: "center", alignItems: "center", backgroundColor: "#0091FF" }}
+                    onPress={handleCreate}
+                  >
+                    {isLoading ? (
+                      <ActivityIndicator color="white" />
+                    ) : (
+                      <Image
+                        style={{ width: 50, height: 50, }}
+                        source={require("../../../assets/arrow.png")}
+                      />
+                    )}
+                  </Pressable>
+                </View>
+              ) : (
+                <View></View>
+              )}
             </View>
           </View>
         </View>
@@ -296,10 +382,10 @@ const GroupDirectory = ({ navigation }) => {
 const styles = StyleSheet.create({
   viewScroll: {
     paddingTop: 15,
-    width: '90%',
+    width: '100%',
     height: '75%',
     justifyContent: 'flex-start',
-    alignItems: 'flex-start'
+    alignItems: 'flex-start',
   },
   viewSearch: {
     flexDirection: 'row',
