@@ -262,7 +262,8 @@ function extractPublicId(url) {
   return publicId;
 }
 
-exports.deleteChat = async (req, res, chatId) => {
+exports.deleteChat = async (req, res) => {
+  const chatId = req.params.chatId;
   console.log("chatId: ", chatId);
 
   try {

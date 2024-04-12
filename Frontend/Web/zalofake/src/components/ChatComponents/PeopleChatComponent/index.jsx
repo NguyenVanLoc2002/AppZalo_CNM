@@ -52,8 +52,6 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
   const [showPicker, setShowPicker] = useState(false);
   const { getConversations } = useConversation();
 
-  console.log("userChat: ",userChat);
-  // Đảo ngược mảng tin nhắn và lưu vào biến mới
   const reversedMessages = [...messages].reverse();
 
   useEffect(() => {
@@ -154,16 +152,15 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
       if (!data || data.trim === "") return;
       let messageType;
       console.log("data: ", data);
-    
 
       if (receiverId) {
-        if ( data.type === "text") {
+        if (data.type === "text") {
           messageType = "sendText";
-        } else if (data.type.startsWith("image/")) {
+        } else if (data?.file?.type.startsWith("image/")) {
           messageType = "sendImages";
-        } else if (data[0].type.startsWith("video/")){
+        } else if (data[0].type.startsWith("video/")) {
           messageType = "sendVideo";
-        }else{
+        } else {
           messageType = "sendFiles";
         }
 
@@ -316,7 +313,7 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
               <img
                 src={userChat?.avatar}
                 alt="avatar"
-                className="w-full h-[80%] object-cover rounded-full border mr-3"
+                className="w-14 h-14 object-cover rounded-full border mx-3"
               />
             </div>
             <div className="flex-col items-center mr-auto ml-2">
@@ -357,13 +354,13 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                 )}
               </p>
 
-              <div className="flex flex-col items-center border rounded-xl shadow-md w-96 h-[65%] mt-5 ">
+              <div className="flex flex-col items-center w-96 h-[45%] mt-5 p-1">
                 <img
                   src={userChat?.background}
                   alt="background's friend"
-                  className="object-cover w-full px-3 h-2/3 rounded-lg mt-3"
+                  className="object-cover w-full h-2/3 rounded-lg mt-1 shadow-lg"
                 />
-                <div className="flex p-3 mt-5 rounded-lg border shadow-lg w-full h-full">
+                <div className="flex p-3 -mt-3 rounded-lg border shadow-lg w-full h-full bg-gray-100">
                   <img
                     src={userChat?.avatar}
                     alt="avatar"

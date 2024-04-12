@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const { connectDB } = require("./configs/connectDBConfig.config");
 const userRoute = require("./routes/user.routes");
 const authRoute = require("./routes/auth.routes");
+const groupRoute = require("./routes/group.routes");
 const { app, server } = require("./socket/socket.io");
 const authMiddleware = require("./middlewares/authMiddleware");
 const chatRouter = require("./routes/chat.routes");
@@ -30,6 +31,7 @@ app.get("/api/terms_of_service", (req, res) => {
 //routes
 app.use("/api/users", userRoute);
 app.use("/api/auth", authRoute);
+app.use("/api/groups", groupRoute);
 app.use("/api/chats", authMiddleware.protect, chatRouter);
 app.use("/api/conversations", authMiddleware.protect, conversationRouter);
 
