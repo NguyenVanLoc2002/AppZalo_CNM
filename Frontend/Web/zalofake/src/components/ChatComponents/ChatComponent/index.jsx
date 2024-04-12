@@ -180,8 +180,6 @@ function ChatComponents({ language }) {
     }
   };
 
-  console.log("selectedFriends: ", selectedFriends);
-
   const buttons = [
     "Tất cả",
     "Khách hàng",
@@ -205,10 +203,10 @@ function ChatComponents({ language }) {
 
   const handleSendButtonClick = () => {
     if (selectedFriends.length === 0) {
-      console.log('Please select friends to send message to.');
+      console.log("Please select friends to send message to.");
       return;
     }
-    console.log("Nội dung:",shareMessage.contents[0]);
+    console.log("Nội dung:", shareMessage.contents[0]);
     sendMessageToSelectedFriends(shareMessage.contents[0]);
     setIsShowModal(false);
   };
@@ -481,7 +479,7 @@ function ChatComponents({ language }) {
                   onClick={handleSearch}
                 >
                   <p className="text-lg font-semibold">
-                    {language == "vi" ? "Tìm Kiếm" : "Search"}
+                    {language == "vi" ? "Tạo nhóm" : "Create group"}
                   </p>
                 </button>
               </div>
