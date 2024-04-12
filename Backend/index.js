@@ -23,6 +23,7 @@ app.use(express.static("public"));
 
 //connect DB
 connectDB();
+
 app.get("/api/terms_of_service", (req, res) => {
   res.sendFile(__dirname + "/public/resources/terms_of_services.html");
 });
