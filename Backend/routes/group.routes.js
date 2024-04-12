@@ -1,0 +1,31 @@
+const express = require("express");
+const router = express.Router();
+
+const {
+  createGroup,
+  getGroup,
+  getAllGroup,
+  updateGroup,
+  addMember,
+  removeMember,
+  deleteGroup,
+} = require("../controllers/group.controller");
+const { multerUploadImage } = require("../middlewares/multerMiddleware");
+const { protect } = require("../middlewares/authMiddleware");
+
+router.get("/get/:groupId", protect, getGroup);
+router.get("/all", protect, getAllGroup);
+
+router.post("/create", protect, createGroup);
+router.post("/addMembers/:groupId", protect, addMember);
+router.post("/removeMembers/:groupId", protect, removeMember);
+
+router.put(
+  "/update/:groupId",
+  protect,
+  multerUploadImage.single("avatar"),
+  updateGroup
+);
+router.delete("/delete/:groupId", protect, deleteGroup);
+
+module.exports = router;
