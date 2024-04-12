@@ -23,6 +23,8 @@ function ListChatComponent({ language, showModal, userChat, friends }) {
   const { authUser } = useAuthContext();
   const { socket } = useSocketContext();
 
+  
+
   useEffect(() => {
     getConversations();
     setOriginalFriendList(friends);
@@ -66,6 +68,7 @@ function ListChatComponent({ language, showModal, userChat, friends }) {
       setShowUnread(false);
     }
   };
+  
 
   //Lọc dữ liệu tên bạn bè
   const handleInputChange = (e) => {

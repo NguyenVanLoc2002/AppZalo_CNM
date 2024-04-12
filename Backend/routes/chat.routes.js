@@ -50,7 +50,7 @@ router.post(
 // Gửi file mới cho một người dùng cụ thể
 router.post(
   "/:userId/sendFiles",
-  multerUploadFile.array("data"),
+  multerUploadFile.array("data[]"),
   formatBodyData,
   sendMessage
 );
