@@ -144,9 +144,13 @@ exports.getConversationByParticipants = async () => {
 exports.getMessageByConversationId = async (req, res) => {
   try {
     const conversationId = req.params.conversationId;
-    const conversation = await Conversation.findById(conversationId).populate(
-      "messages"
-    );
+    const conversation = await Conversation.findById(conversationId).populate({
+      path: "messages",
+      populate: {
+        path: "replyMessageId",
+        model: "chats",
+      },
+    });
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });
     }
