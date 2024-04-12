@@ -48,6 +48,7 @@ exports.sendMessage = async (req, resp) => {
     const message = new Chat({ senderId, receiverId, contents, isGroup });
     await message.save();
 
+    
     //Gọi socket và xử lý
     try {
       if (isGroup) {
@@ -141,10 +142,12 @@ exports.getHistoryMessage= async (req, resp) => {
       ],
     };
 
+
     const totalMessageHistory = await Chat.countDocuments(queryCondition);
     let messagesHistory;
     //Lấy 20% tin nhắn khi vượt quá 100 tin nhắn
     if (totalMessageHistory >= 100) {
+
       if (lastTimestamp) {
         queryCondition.timestamp = { $lt: lastTimestamp }; //new Date(parseInt(lastTimestamp))
       }
@@ -153,6 +156,7 @@ exports.getHistoryMessage= async (req, resp) => {
           timestamp: -1,
         })
         .limit(Math.ceil(totalMessageHistory * 0.2));
+
     } else {
       //Lấy toàn bộ tin nhắn
       messagesHistory = await Chat.find(queryCondition).sort({
