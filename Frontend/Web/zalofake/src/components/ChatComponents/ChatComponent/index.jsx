@@ -42,18 +42,30 @@ function ChatComponents({ language }) {
   const [valueSearch, setValueSearch] = useState("");
   const [originalFriendList, setOriginalFriendList] = useState([]);
   const [selectedFriends, setSelectedFriends] = useState([]);
+  const [forwardeMessages,setForwardeMessages]=useState("");
 
   console.log("shareMessage", shareMessage);
 
   const sendMessage = async (data, receiverId) => {
     try {
       if (!data || data.trim === "") return;
-      // console.log("data: ", data);
+      let messageType;
+      console.log("data jef: ", data);
+    
+
       if (receiverId) {
+        if ( data.type === "text") {
+          messageType = "sendText";
+        } else if (data.type ==="image") {
+          messageType = "sendImages";
+        } else if (data.type ==="video"){
+          messageType = "sendVideo";
+        }else{
+          messageType = "sendFiles";
+        }
+
         const response = await axiosInstance.post(
-          `chats/${receiverId}/${
-            data.type.startsWith("video/") ? "sendVideo" : "sendMessage"
-          }`,
+          `chats/${receiverId}/${messageType}`,
           { data: data },
           {
             headers: {
@@ -61,7 +73,8 @@ function ChatComponents({ language }) {
             },
           }
         );
-        console.log("response 1: ", response.data.data);
+        console.log("response: ", response.data.data);
+        setForwardeMessages(response.data.data);
       }
     } catch (error) {
       console.error("Error sending message:", error);
