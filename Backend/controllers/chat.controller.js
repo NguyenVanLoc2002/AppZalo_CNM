@@ -14,7 +14,9 @@ exports.sendMessage = async (req, resp) => {
     // Thêm biến này từ FE khi chọn conversation để trò chuyện nếu là Group thì truyền đi isGroup là true
     //Còn là chat single thì không cần truyền chỉ cần truyền data nha FE
     const isGroup = req.body.isGroup || false;
+    const replyMessageId = req.body.replyMessageId || null;
     console.log("isGroup: ", isGroup);
+    console.log("replyMessageId: ", replyMessageId);
 
     let contents = [];
     // Kiểm tra xem req.body có tồn tại không và có chứa nội dung không
@@ -45,7 +47,7 @@ exports.sendMessage = async (req, resp) => {
     }
 
     // Tạo và lưu tin nhắn mới vào cơ sở dữ liệu
-    const message = new Chat({ senderId, receiverId, contents, isGroup });
+    const message = new Chat({ senderId, receiverId, contents, isGroup,replyMessageId});
     await message.save();
 
     //Gọi socket và xử lý
@@ -246,7 +248,8 @@ function extractPublicId(url) {
 }
 
 exports.deleteChat = async (req, res) => {
-  const { chatId } = req.params;
+  const chatId = req.params.chatId;
+  console.log("chatId deltee: ", chatId);
 
   try {
     const chat = await Chat.findById(chatId);

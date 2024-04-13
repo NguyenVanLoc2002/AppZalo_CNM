@@ -46,9 +46,8 @@ exports.deleteMessInConver = async (req, res) => {
   try {
     const conversationId = req.params.conversationId;
     const chatIdToDelete = req.params.chatId;
-    console.log("chatIdToDelete: ", chatIdToDelete);
 
-    await deleteChat(req, res, chatIdToDelete);
+    await deleteChat(req, res);
 
     // Nếu deleteChat gặp lỗi và gửi phản hồi lỗi, không cần thiết phải tiếp tục thực hiện lệnh tiếp theo
     if (res.headersSent) {
@@ -145,9 +144,13 @@ exports.getConversationByParticipants = async () => {
 exports.getMessageByConversationId = async (req, res) => {
   try {
     const conversationId = req.params.conversationId;
-    const conversation = await Conversation.findById(conversationId).populate(
-      "messages"
-    );
+    const conversation = await Conversation.findById(conversationId).populate({
+      path: "messages",
+      populate: {
+        path: "replyMessageId",
+        model: "chats",
+      },
+    });
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });
     }
@@ -186,6 +189,8 @@ exports.deleteOnMySelf = async (req, res) => {
           );
           if (!deleteChatInMessOfConver) {
             return res.status(404).json({ message: "Conversation not found" });
+          } else {
+            return res.status(200).json({ message: "Delete mess success" });
           }
 
           res.status(200).json({ message: "Update status success" });
@@ -209,6 +214,8 @@ exports.deleteOnMySelf = async (req, res) => {
           );
           if (!deleteChatInMessOfConver) {
             return res.status(404).json({ message: "Conversation not found" });
+          } else {
+            return res.status(200).json({ message: "Delete mess success" });
           }
           res.status(200).json({ message: "Update status success" });
         } catch (error) {
