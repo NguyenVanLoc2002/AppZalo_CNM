@@ -1,4 +1,3 @@
-import { faker } from "@faker-js/faker";
 import { useEffect, useState } from "react";
 import { AiOutlineUserAdd, AiOutlineUsergroupAdd } from "react-icons/ai";
 import { CiSearch } from "react-icons/ci";
@@ -6,6 +5,7 @@ import { FaSortDown } from "react-icons/fa";
 import { IoIosMore } from "react-icons/io";
 
 import useConversation from "../../../hooks/useConversation";
+import useGroup from "../../../hooks/useGroup";
 import { useAuthContext } from "../../../contexts/AuthContext";
 import { useSocketContext } from "../../../contexts/SocketContext";
 
@@ -20,6 +20,7 @@ function ListChatComponent({ language, showModal, userChat, friends }) {
   const [listChatCurrent, setListChatCurrent] = useState([]);
   const [isChatSelected, setIsChatSelected] = useState("");
   const { conversations, getConversations } = useConversation();
+  const { groups, getGroups } = useGroup();
   const { authUser } = useAuthContext();
   const { socket } = useSocketContext();
 
@@ -27,6 +28,7 @@ function ListChatComponent({ language, showModal, userChat, friends }) {
 
   useEffect(() => {
     getConversations();
+    getGroups();
     setOriginalFriendList(friends);
     setFriendList(friends);
   }, [friends]);
@@ -37,26 +39,39 @@ function ListChatComponent({ language, showModal, userChat, friends }) {
         (participant) => participant.phone !== authUser.phone
       );
       return {
-        id: friend._id,
+        id: friend?._id,
         conversationId: conversation.id,
-        name: friend.profile.name,
-        avatar: friend.profile.avatar?.url || "/zalo.svg",
-        background: friend.profile.background?.url || "/zalo.svg",
+        name: friend?.profile.name,
+        avatar: friend?.profile.avatar?.url || "/zalo.svg",
+        background: friend?.profile.background?.url || "/zalo.svg",
         unread: conversation.messages.some(
           (message) => message.receiver === authUser.phone && !message.isRead
         ),
         lastMessage: conversation.lastMessage,
+        tag: conversation.tag,
       };
     });
-    setListChatCurrent(listChat);
 
+    const listGroup = groups.map((group) => {
+      return {
+        id: group._id,
+        conversationId: group.conversation._id,
+        name: group.groupName,
+        avatar: group.avatar.url,
+        background: group.avatar.url,
+        lastMessage: group.conversation.lastMessage,
+        tag: group.conversation.tag,
+      };
+    });
+
+    listChat.push(...listGroup);
+    setListChatCurrent(listChat);
     if (socket) {
       socket.on("new_message", ({ message }) => {
-        console.log("new_message form list", message);
         getConversations();
       });
     }
-  }, [conversations || socket]);
+  }, [conversations, socket, groups]);
 
   const changeTab = (tab) => {
     setActiveTab(tab);
@@ -281,22 +296,22 @@ function ListChatComponent({ language, showModal, userChat, friends }) {
                   </div>
                   <div className="flex-col mr-auto ml-2 p-1">
                     <p className="font-semibold ">
-                      {friend.name.length > 15
-                        ? `${friend.name.slice(0, 15)}...`
-                        : friend.name}
+                      {friend?.name?.length > 15
+                        ? `${friend?.name.slice(0, 15)}...`
+                        : friend?.name}
                     </p>
                     <p
                       className="text-gray-600 mt-auto "
                       style={{ fontSize: 14 }}
                     >
-                      {friend.lastMessage?.senderId === authUser._id
+                      {friend?.lastMessage?.senderId === authUser._id
                         ? "Bạn: "
                         : ""}
-                      {friend.lastMessage?.contents[0].type === "text"
-                        ? friend.lastMessage?.contents[0].data
+                      {friend?.lastMessage?.contents[0].type === "text"
+                        ? friend?.lastMessage?.contents[0].data
                         : "File: "}
 
-                      {friend.unread ? (
+                      {friend?.unread ? (
                         <span className="text-blue-500"> (1)</span>
                       ) : (
                         ""

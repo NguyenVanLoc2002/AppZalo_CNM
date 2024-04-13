@@ -49,25 +49,22 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
   const scrollRef = useRef(null);
   const { socket } = useSocketContext();
   const [isFetchingMore, setIsFetchingMore] = useState(false);
-  const [isAddingMessages, setIsAddingMessages] = useState(false); //Flag để scroll bottom
+  const [isAddingMessages, setIsAddingMessages] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const { getConversations } = useConversation();
-  const [contentReply, setContentReply] = useState("");
-  const [messageReplyId, setMessageReplyId] = useState("");
-  // Đảo ngược mảng tin nhắn và lưu vào biến mới
-  // const reversedMessages = [...messages].reverse();
-  console.log("messages: ", messages);
-
+  console.log("userChat: ", userChat);
   useEffect(() => {
     const fetchMessageHistory = async (converId) => {
-      if (!converId) return; // Kiểm tra userId trước khi gọi API
+      if (!converId) {
+        setMessages([]);
+        return;
+      }
 
       setLoading(true);
       try {
         const response = await axiosInstance.get(
           `conversations/get/messages/${converId}`
         );
-        // console.log("response ne:",response.data[19].replyMessageId);
         if (response.statusText === "OK") {
           setMessages(response.data);
         } else {
@@ -75,6 +72,11 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
         }
       } catch (error) {
         console.error(error);
+        if (error.response.status === 404) {
+          console.log("Không tìm thấy tin nhắn 1");
+          setMessages([]);
+        }
+        setLoading(false);
       } finally {
         setLoading(false);
       }
@@ -90,10 +92,8 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
 
     if (socket) {
       socket.on("new_message", ({ message }) => {
-        console.log("new_message: ", message);
         getConversations();
         if (message.senderId !== userChat?.id) {
-          console.log("message.sender: ", message.senderId);
           return;
         }
         setMessages((prevMessages) => [...prevMessages, message]);
@@ -106,42 +106,8 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
         socket.off("delete_message");
       };
     }
-  }, [userChat || socket]);
+  }, [userChat, socket]);
 
-  const handleScroll = async (event) => {
-    const container = event.target;
-
-    const lastScrollPosition = container.scrollHeight - container.clientHeight;
-    if (container.scrollTop === 0 && !isFetchingMore) {
-      setIsFetchingMore(true);
-      try {
-        const lastMessage = messages[messages.length - 1];
-        const firstMessageInChat = await axiosInstance(
-          `chats/${userChat.id}/getFirstMessage`
-        );
-
-        if (lastMessage.timestamp !== firstMessageInChat.data.data.timestamp) {
-          setIsAddingMessages(true);
-          const response = await axiosInstance(
-            `chats/${userChat.id}?lastTimestamp=${lastMessage.timestamp}`
-          );
-          const { data } = response;
-          if (data.success) {
-            setMessages((prevMessages) => [...prevMessages, ...data.data]);
-            container.scrollTop = lastScrollPosition;
-          } else {
-            throw new Error(
-              data.data || "Failed to fetch more message history"
-            );
-          }
-        }
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setIsFetchingMore(false);
-      }
-    }
-  };
 
   const scrollToBottom = () => {
     if (scrollRef.current) {
@@ -160,7 +126,6 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
     try {
       if (!data || data.trim === "") return;
       let messageType;
-      console.log("data: ", data);
 
       if (receiverId) {
         if (data.type === "text") {
@@ -182,7 +147,11 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
             },
           }
         );
-        setMessages((prevMessages) => [...prevMessages, response.data.data]);
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          response.data.data.message,
+        ]);
+        userChat.conversationId = response.data.data.conversationId;
         setContent("");
         setContentReply("");
         setMessageReplyId("");
@@ -197,15 +166,7 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
-      if (messageReplyId) {
-        sendMessage(
-          { type: "text", data: content },
-          userChat?.id,
-          messageReplyId
-        );
-      } else {
-        sendMessage({ type: "text", data: content }, userChat?.id, null);
-      }
+      sendMessage({ type: "text", data: content, tag: userChat.tag }, userChat?.id);
     }
   };
 
@@ -274,15 +235,20 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
   const deleteChat = async (chatId) => {
     try {
       const converId = userChat?.conversationId;
-      const response = await axiosInstance.post(
-        `conversations/deletedMess/${converId}/${chatId}`
-      );
+      const response = await axiosInstance.post(`/chats/${chatId}/delete`);
       if (response.status === 200) {
-        const updatedMessagesResponse = await axiosInstance.get(
-          `conversations/get/messages/${converId}`
-        );
-        const dataUpdate = updatedMessagesResponse.data;
-        setMessages(dataUpdate);
+        if (messages.length === 1) {
+          setMessages([]);
+        } else {
+          const updatedMessagesResponse = await axiosInstance.get(
+            `conversations/get/messages/${converId}`
+          );
+          if (updatedMessagesResponse.status === 200) {
+            const dataUpdate = updatedMessagesResponse.data;
+            setMessages(dataUpdate);
+          }
+          setContextMenuStates({});
+        }
       }
     } catch (error) {
       console.error("Lỗi khi xóa tin nhắn:", error);
@@ -292,6 +258,12 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
             ? "Bạn không được phép xóa tin nhắn này"
             : "You are not authorized to delete this message"
         );
+      } else if (
+        error.response.status === 404 &&
+        error.config.url.includes("conversations/get/messages")
+      ) {
+        console.log("Không tìm thấy tin nhắn 2");
+        setMessages([]);
       }
 
       throw error;
@@ -1001,7 +973,9 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                   }
                 }
               })}
-              {isFetchingMore && <div>Loading...</div>}
+              {isFetchingMore && (
+                <span className="loading loading-spinner loading-lg"></span>
+              )}
               {loadingMedia && (
                 <p className="flex flex-col justify-end mr-2 mb-2">
                   Loading....

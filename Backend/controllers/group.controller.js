@@ -4,6 +4,7 @@ const Group = require("../models/Group");
 const User = require("../models/User");
 const { io, getReciverSocketId } = require("../socket/socket.io");
 const cloudinary = require("../configs/Cloudinary.config");
+const mongoose = require("mongoose");
 
 exports.createGroup = async (req, res) => {
   try {
@@ -43,7 +44,7 @@ exports.createGroup = async (req, res) => {
       }
     });
 
-    return res.status(201).json( group );
+    return res.status(201).json(group);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Something went wrong" });
@@ -53,11 +54,16 @@ exports.createGroup = async (req, res) => {
 exports.getGroup = async (req, res) => {
   try {
     const { groupId } = req.params;
-    const group = await Group.findById(groupId).populate("conversation");
+    const group = await Group.findById(groupId).populate(
+      [
+        { path: "conversation" },
+        { path: "createBy", select: "profile.name" },
+      ]
+    );
     if (!group) {
       return res.status(404).json({ error: "Group not found" });
     }
-    return res.status(200).json( group );
+    return res.status(200).json(group);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Something went wrong" });
@@ -68,10 +74,13 @@ exports.getAllGroup = async (req, res) => {
   try {
     const token = req.headers.authorization.split(" ")[1];
     const user = jwt.verify(token, process.env.JWT_SECRET);
-    let groups = await Group.find({ createdBy: user._id }).populate(
-      "conversation"
-    );
-    if (groups) {
+    let groups = await Group.find({ createdBy: user.user_id }).populate([
+      { path: "conversation" },
+      { path: "createBy", select: "profile.name" },
+    ]);
+
+    if (groups.length > 0) {
+      console.log("groups", groups);
       return res.status(200).json(groups);
     } else {
       groups = await Group.aggregate([
@@ -84,13 +93,33 @@ exports.getAllGroup = async (req, res) => {
           },
         },
         {
+          $lookup: {
+            from: "users",
+            localField: "createBy",
+            foreignField: "_id",
+            as: "createBy",
+          },
+          
+
+        },
+        {
           $match: {
             "conversation.participants": {
-              $in: [user.user_id],
-            },
+              $in: [new mongoose.Types.ObjectId(user.user_id)],
+            }
           },
         },
-      ]);
+        {
+          $project: {
+            groupName: 1,
+            avatar: 1,
+            createBy: { $arrayElemAt: ["$createBy.profile.name", 0] },
+            conversation: { $arrayElemAt: ["$conversation", 0] },
+          },
+        },
+      ])
+
+
       return res.status(200).json(groups);
     }
   } catch (error) {
@@ -119,7 +148,7 @@ exports.updateGroup = async (req, res) => {
       group.avatar.public_id = result.public_id;
     }
     await group.save();
-    return res.status(200).json( group );
+    return res.status(200).json(group);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Something went wrong" });
@@ -257,7 +286,7 @@ exports.removeMember = async (req, res) => {
     }
 
     await group.conversation.save();
-    return res.status(200).json( group );
+    return res.status(200).json(group);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Something went wrong" });
