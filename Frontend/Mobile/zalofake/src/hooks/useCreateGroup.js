@@ -83,7 +83,7 @@ const useCreateGroup = () => {
             })
             if (response.status === 201) {
               console.log("Create group success");
-              return response.data._id;
+              return response.data;
             }
             else if (response.status === 500) {
               console.log("Create group fail");

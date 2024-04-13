@@ -17,10 +17,8 @@ import Toast from "react-native-toast-message";
 import useCreateGroup from "../../hooks/useCreateGroup";
 
 const GroupDirectory = ({ navigation }) => {
-  const [listConversations, setListConversation] = useState([]);
   const [listFriends, setListFriends] = useState([])
   const [lengthGroup, setLengthGroup] = useState(0)
-  const [group, setGroup] = useState()
   const [modalCreateGr, setModalCreateGr] = useState(false)
   const [nameGroup, setNameGroup] = useState(null)
   const [textSearch, setTextSearch] = useState(null)
@@ -42,9 +40,9 @@ const GroupDirectory = ({ navigation }) => {
           dem++;
           const conversation = await getConversations(gr.conversation._id)
           const newGroup = {
-            idGroup: gr._id,
-            nameGroup: gr.groupName,
-            avatarGroup: gr.avatar?.url,
+            _id: gr._id,
+            groupName: gr.groupName,
+            avatar: gr.avatar?.url,
             createAt: handleGetTime(gr.createAt),
             createBy: gr.createBy,
             conversation: gr.conversation,
@@ -55,7 +53,6 @@ const GroupDirectory = ({ navigation }) => {
           group.push(newGroup)
         }
         setGroupAll(group)
-        console.log("groupAll", group);
         setLengthGroup(dem)
       }
     } catch (error) {
@@ -218,7 +215,7 @@ const GroupDirectory = ({ navigation }) => {
           setTextSearch(null)
           setModalCreateGr(false)
           fetchGroup()
-          // navigation.navigate("Message", response)
+          navigation.navigate("Message", { conver: response.conversation , user: response})
         } 
       } catch (error) {
         console.log("CreateGroupError:", error);
@@ -255,13 +252,13 @@ const GroupDirectory = ({ navigation }) => {
             </Pressable>
           </View>
           {groupAll?.map((group, index) => (
-            <Pressable key={index} style={styles.groupItem} onPress={() => navigation.navigate("Message", group.conversation)}>
+            <Pressable key={index} style={styles.groupItem} onPress={() => navigation.navigate("Message", { conver: group.conversation , user: group})}>
               <Image
                 style={styles.avatar}
-                source={{ uri: group.avatarGroup ? group.avatarGroup : "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}
+                source={{ uri: group.avatar ? group.avatar : "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}
               />
               <View style={styles.groupTextContainer}>
-                <Text style={styles.groupTitle}>{group.nameGroup}</Text>
+                <Text style={styles.groupTitle}>{group.groupName}</Text>
                 <Text style={styles.groupDescription}>
                   {group.userSendLast ? `${group.userSendLast}: ${group.lastMessage}` : "Chưa có tin nhắn"}
                 </Text>
