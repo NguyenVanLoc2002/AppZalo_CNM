@@ -30,7 +30,7 @@ const GroupDirectory = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [isHidden, setIsHidden] = useState(false)
   const [groupAll, setGroupAll] = useState([])
-  const { getAllGroup, getConversationById, getConversations } = useCreateGroup()
+  const { getAllGroup, getConversationById, getConversations, createGroup } = useCreateGroup()
 
   const fetchGroup = async () => {
     try {
@@ -47,7 +47,7 @@ const GroupDirectory = ({ navigation }) => {
             avatarGroup: gr.avatar?.url,
             createAt: handleGetTime(gr.createAt),
             createBy: gr.createBy,
-            conversation: gr.conversation._id,
+            conversation: gr.conversation,
             lastMessage: conversation.lastMessage,
             userSendLast: conversation.userSend,
             sendTime: handleGetTime(conversation.sendTime)
@@ -55,6 +55,7 @@ const GroupDirectory = ({ navigation }) => {
           group.push(newGroup)
         }
         setGroupAll(group)
+        console.log("groupAll", group);
         setLengthGroup(dem)
       }
     } catch (error) {
@@ -205,32 +206,23 @@ const GroupDirectory = ({ navigation }) => {
       return;
     }
     else {
-      console.log("selectFriend:", selectedFriends);
       let idUser = [];
       for (const id of selectedFriends) {
         idUser.push(id.id)
       }
-      console.log("id:", idUser);
       try {
-        const response = await axiosInstance.post("/groups/create", {
-          name : nameGroup,
-          members: idUser
-        })
-        if (response.status === 201) {
-          console.log("Create group success");
+        const response = await createGroup(nameGroup,idUser)
+        if(response){
           setIsLoading(false)
+          setNameGroup(null)
+          setTextSearch(null)
           setModalCreateGr(false)
           fetchGroup()
-        }
-        else if (response.status === 500) {
-          console.log("Create group fail");
-          setIsLoading(false)
-
-        }
+          // navigation.navigate("Message", response)
+        } 
       } catch (error) {
         console.log("CreateGroupError:", error);
         setIsLoading(false)
-
       }
     }
   }
@@ -263,7 +255,7 @@ const GroupDirectory = ({ navigation }) => {
             </Pressable>
           </View>
           {groupAll?.map((group, index) => (
-            <Pressable key={index} style={styles.groupItem}>
+            <Pressable key={index} style={styles.groupItem} onPress={() => navigation.navigate("Message", group.conversation)}>
               <Image
                 style={styles.avatar}
                 source={{ uri: group.avatarGroup ? group.avatarGroup : "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}

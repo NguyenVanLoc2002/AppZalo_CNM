@@ -49,9 +49,9 @@ const useCreateGroup = () => {
                                 if (data?.lastMessage?.contents[0].type === 'text') {
                                     lastMessage = data?.lastMessage?.contents[0]?.data
                                 } else if (data?.lastMessage?.contents[0].type === 'image') {
-                                    lastMessage = "đã gửi ảnh"
+                                    lastMessage = ": [Hình ảnh]"
                                 } else {
-                                    lastMessage = "đã gửi video"
+                                    lastMessage = ": [Video]"
                                 }
                             }
                         }
@@ -75,7 +75,27 @@ const useCreateGroup = () => {
         }
     }
 
-    return { getAllGroup, getConversationById, getConversations }
+    const createGroup = async (nameGroup, idUser) => {
+        try {
+            const response = await axiosInstance.post("/groups/create", {
+              name : nameGroup,
+              members: idUser
+            })
+            if (response.status === 201) {
+              console.log("Create group success");
+              return response.data._id;
+            }
+            else if (response.status === 500) {
+              console.log("Create group fail");
+            return null;
+            }
+          } catch (error) {
+            console.log("CreateGroupError:", error);
+            return null;
+          }
+    }
+
+    return { getAllGroup, getConversationById, getConversations, createGroup }
 }
 
 export default useCreateGroup
