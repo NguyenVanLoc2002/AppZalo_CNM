@@ -47,7 +47,7 @@ const useGroup = () => {
     try {
       const response = await axiosInstance.get("/groups/all");
       const { data, status } = response;
-      console.log("data", data);
+      // console.log("data", data);
 
       if (status === 200) {
         setGroups(data);

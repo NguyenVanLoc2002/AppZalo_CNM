@@ -47,7 +47,13 @@ exports.sendMessage = async (req, resp) => {
     }
 
     // Tạo và lưu tin nhắn mới vào cơ sở dữ liệu
-    const message = new Chat({ senderId, receiverId, contents, isGroup,replyMessageId});
+    const message = new Chat({
+      senderId,
+      receiverId,
+      contents,
+      isGroup,
+      replyMessageId,
+    });
     await message.save();
 
     //Gọi socket và xử lý

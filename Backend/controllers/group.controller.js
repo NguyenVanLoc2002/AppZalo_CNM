@@ -5,6 +5,7 @@ const User = require("../models/User");
 const { io, getReciverSocketId } = require("../socket/socket.io");
 const cloudinary = require("../configs/Cloudinary.config");
 const mongoose = require("mongoose");
+const Chats = require("../models/Chat");
 
 exports.createGroup = async (req, res) => {
   try {
@@ -37,14 +38,35 @@ exports.createGroup = async (req, res) => {
       createBy: uid.user_id,
     });
 
+    const initLastMessage = new Chats({
+      senderId: uid.user_id,
+      receiverId: group._id,
+      type: "text",
+      contents: [{ data: `Welcome to ${name} group`, type: "text" }],
+      isGroup: true,
+    });
+
+    await initLastMessage.save();
+
+    conversation.lastMessage = initLastMessage._id;
+    await conversation.save();
+
+    const returnGroup = await Group.findById(group._id).populate([
+      { path: "conversation" },
+      { path: "createBy", select: "profile.name" },
+    ]);
+
     members.forEach(async (member) => {
       const memderSocketId = await getReciverSocketId(member);
+
       if (memderSocketId) {
-        io.to(memderSocketId.socket_id).emit("add-to-group", { group });
+        io.to(memderSocketId.socket_id).emit("add-to-group", {
+          group: returnGroup,
+        });
       }
     });
 
-    return res.status(201).json(group);
+    return res.status(201).json({ group: returnGroup });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Something went wrong" });
@@ -54,12 +76,10 @@ exports.createGroup = async (req, res) => {
 exports.getGroup = async (req, res) => {
   try {
     const { groupId } = req.params;
-    const group = await Group.findById(groupId).populate(
-      [
-        { path: "conversation" },
-        { path: "createBy", select: "profile.name" },
-      ]
-    );
+    const group = await Group.findById(groupId).populate([
+      { path: "conversation" },
+      { path: "createBy", select: "profile.name" },
+    ]);
     if (!group) {
       return res.status(404).json({ error: "Group not found" });
     }
@@ -99,26 +119,39 @@ exports.getAllGroup = async (req, res) => {
             foreignField: "_id",
             as: "createBy",
           },
-          
-
+        },
+        {
+          $unwind: "$conversation",
+        },
+        {
+          $lookup: {
+            from: "chats",
+            localField: "conversation.lastMessage",
+            foreignField: "_id",
+            as: "lastMessage",
+          },
+        },
+        {
+          $unwind: "$lastMessage",
         },
         {
           $match: {
             "conversation.participants": {
               $in: [new mongoose.Types.ObjectId(user.user_id)],
-            }
+            },
           },
         },
+
         {
           $project: {
             groupName: 1,
             avatar: 1,
             createBy: { $arrayElemAt: ["$createBy.profile.name", 0] },
-            conversation: { $arrayElemAt: ["$conversation", 0] },
+            conversation: 1,
+            lastMessage: 1,
           },
         },
-      ])
-
+      ]);
 
       return res.status(200).json(groups);
     }
