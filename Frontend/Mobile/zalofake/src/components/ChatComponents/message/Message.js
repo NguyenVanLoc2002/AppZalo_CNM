@@ -21,14 +21,14 @@ import { useSocketContext } from "../../../contexts/SocketContext"
 
 
 const Message = ({ navigation, route }) => {
-  const { conver} = route.params;
+  const { conver } = route.params;
   // const {user} = conver.user;
   //nhi  
   const [textMessage, setTextMessage] = useState(null)
   const [isColorSend, setIsColorSend] = useState(false)
   const { sendMessage, sendImage, sendVideo } = useSendMessage();
   const { socket } = useSocketContext()
-  
+
   //truc
   const [chats, setChats] = useState([]);
   const scrollViewRef = useRef();
@@ -46,7 +46,7 @@ const Message = ({ navigation, route }) => {
   const [isLoadChuyenTiep, setIsLoadChuyenTiep] = useState(false)
   const [isLoadThuHoi, setIsLoadThuHoi] = useState(false)
   const [isLoadXoa, setIsLoadXoa] = useState(false)
-  
+
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
   };
@@ -63,9 +63,9 @@ const Message = ({ navigation, route }) => {
   };
   const fetchChats = async () => {
     try {
-      if(conver.conversationId === null ||conver.conversationId === undefined ){
+      if (conver.conversationId === null || conver.conversationId === undefined) {
         showToastSuccess('Chưa có tin nhắn')
-      }else{
+      } else {
         const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversationId}`);
         const reversedChats = response.data; //.reverse();
         console.log(reversedChats)
@@ -74,7 +74,7 @@ const Message = ({ navigation, route }) => {
         // const lastElement = reversedChats[0]
         // setLastTimestamp(lastElement.timestamp)
       }
-      
+
     } catch (error) {
       console.log(error);
       return false;
@@ -227,13 +227,12 @@ const Message = ({ navigation, route }) => {
   const handleDeleteMess = () => {
     setIsLoadThuHoi(true)
     const thuHoi = async () => {
-      console.log('id'+messageSelected._id)
+      console.log('id' + messageSelected._id)
       try {
-        const response = await axiosInstance.post(`chats/${messageSelected._id}/delete`);
+        const response = await axiosInstance.post(`conversations/deletedMess/${conver.conversationId}/${messageSelected._id}`);
         console.log(response)
         if (response.status === 200) {
-          const newArray = removeItemById(chats, messageSelected._id);
-          setChats(newArray)
+          fetchChats();
           showToastSuccess("Thu hồi thành công")
           toggleModal()
           setIsLoadThuHoi(false)
@@ -245,19 +244,15 @@ const Message = ({ navigation, route }) => {
       }
     };
     thuHoi();
-    // setModalVisible(false)
   };
-
-
 
   const handleDeleteMessByStatus = () => {
     setIsLoadXoa(true)
     const deleteChat = async () => {
       try {
-        const response = await axiosInstance.post(`chats/updateStatus/${messageSelected._id}`);
+        const response = await axiosInstance.post(`conversations/deleteOnMySelf/${conver.conversationId}/${messageSelected._id}`);
         if (response.status === 200) {
-          const newArray = removeItemById(chats, messageSelected._id);
-          setChats(newArray)
+          fetchChats();
           showToastSuccess("Xóa thành công")
           toggleModal()
           setIsLoadXoa(false)
@@ -269,7 +264,6 @@ const Message = ({ navigation, route }) => {
       }
     };
     deleteChat();
-    // setModalVisible(false)
   };
   const handleGetModalFriend = () => {
     toggleModal();
@@ -317,23 +311,22 @@ const Message = ({ navigation, route }) => {
     console.log(pickerResult.assets[0])
     if (!pickerResult.canceled) {
       setIsLoadMess(true)
-     
+
       for (const asset of pickerResult.assets) {
         if (asset.type === 'image') {
           const formData = new FormData();
-            const fileName = asset.uri.split('/').pop();
-            formData.append('data[]', {
-              uri: asset.uri,
-              name: fileName,
-              type: 'image/jpeg',
-            });
+          const fileName = asset.uri.split('/').pop();
+          formData.append('data[]', {
+            uri: asset.uri,
+            name: fileName,
+            type: 'image/jpeg',
+          });
           try {
             const response = await sendImage(conver.id, formData)
             if (response.status === 201) {
               setIsLoadMess(false)
               setIsLoad(false)
-              setChats(
-                chats.concat(response.data.data))
+              fetchChats();
               scrollToEnd()
               console.log("success");
             }
@@ -346,19 +339,18 @@ const Message = ({ navigation, route }) => {
           }
         } else if (asset.type === 'video') {
           const formData = new FormData();
-            const fileName = asset.uri.split('/').pop();
-            formData.append('data[]', {
-              uri: asset.uri,
-              name: fileName,
-              type: 'video/mp4',
-            });
+          const fileName = asset.uri.split('/').pop();
+          formData.append('data[]', {
+            uri: asset.uri,
+            name: fileName,
+            type: 'video/mp4',
+          });
           try {
             const response = await sendVideo(conver.id, formData)
             if (response.status === 201) {
               setIsLoadMess(false)
               setIsLoad(false)
-              setChats(
-                chats.concat(response.data.data))
+              fetchChats();
               scrollToEnd()
               console.log("success");
             }
@@ -434,24 +426,24 @@ const Message = ({ navigation, route }) => {
           }}
         >
           <View style={{ flex: 1, justifyContent: "flex-start" }}>
-            {chats.length>0 ?
-            
-            (chats.map((message, index) => (
-              <View key={index} style={{ justifyContent: 'space-around', borderRadius: 10, backgroundColor: handleCheckIsSend(message) ? "#7debf5" : "#d9d9d9", margin: 5, alignItems: handleCheckIsSend(message) ? "flex-end" : "flex-start", alignSelf: handleCheckIsSend(message) ? "flex-end" : "flex-start" }}>
-                {message.contents.map((content, i) => (
-                  <Pressable key={i}
-                    onPress={() => handlePressIn(message)}
-                  >
-                    <View>
-                      {renderMessageContent(content)}
-                      <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTime(message.timestamp)}</Text></View>
-                    </View>
-                  </Pressable>
+            {chats.length > 0 ?
 
-                ))}
+              (chats.map((message, index) => (
+                <View key={index} style={{ justifyContent: 'space-around', borderRadius: 10, backgroundColor: handleCheckIsSend(message) ? "#7debf5" : "#d9d9d9", margin: 5, alignItems: handleCheckIsSend(message) ? "flex-end" : "flex-start", alignSelf: handleCheckIsSend(message) ? "flex-end" : "flex-start" }}>
+                  {message.contents.map((content, i) => (
+                    <Pressable key={i}
+                      onPress={() => handlePressIn(message)}
+                    >
+                      <View>
+                        {renderMessageContent(content)}
+                        <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTime(message.timestamp)}</Text></View>
+                      </View>
+                    </Pressable>
 
-              </View>
-            ))) :(<View><Text>Chưa có tin nhắn nào!!!</Text></View>)}
+                  ))}
+
+                </View>
+              ))) : (<View><Text>Chưa có tin nhắn nào!!!</Text></View>)}
           </View>
         </ScrollView>
       </View >
@@ -547,23 +539,23 @@ const Message = ({ navigation, route }) => {
                 )}
                 <Text style={styles.modalButton} >Xóa</Text>
               </Pressable>
-              {messageSelected.senderId===conver.id ? (
-                  <Text></Text>
-                ) : (
-                  <Pressable style={styles.pressCol} onPress={handleDeleteMess}>
-                {isLoadThuHoi ? (
-                  <ActivityIndicator color="black" size="large" />
-                ) : (
-                  <FontAwesome5
-                    name="comment-slash"
-                    size={20}
-                    color="black"
-                    style={{ marginRight: 8 }}
-                  />
-                )}
-                <Text style={styles.modalButton}>Thu hồi</Text>
-              </Pressable>
-                )} 
+              {messageSelected.senderId === conver.id ? (
+                <Text></Text>
+              ) : (
+                <Pressable style={styles.pressCol} onPress={handleDeleteMess}>
+                  {isLoadThuHoi ? (
+                    <ActivityIndicator color="black" size="large" />
+                  ) : (
+                    <FontAwesome5
+                      name="comment-slash"
+                      size={20}
+                      color="black"
+                      style={{ marginRight: 8 }}
+                    />
+                  )}
+                  <Text style={styles.modalButton}>Thu hồi</Text>
+                </Pressable>
+              )}
             </View>
             <View style={styles.modalButtonContainer1}>
               <Pressable style={styles.pressCol} >
