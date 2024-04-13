@@ -30,6 +30,7 @@ const chatSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  replyMessageId: { type: mongoose.Schema.Types.ObjectId, ref: "users", default:null },
 });
 
 chatSchema.post("save", async function (chat, next) {

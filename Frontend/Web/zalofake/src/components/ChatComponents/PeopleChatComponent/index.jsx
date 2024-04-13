@@ -11,7 +11,7 @@ import {
   FaVideo,
 } from "react-icons/fa";
 import { FiCheckSquare } from "react-icons/fi";
-import { IoIosLink } from "react-icons/io";
+import { IoIosLink, IoMdShareAlt } from "react-icons/io";
 import {
   IoImageOutline,
   IoTrashOutline,
@@ -38,6 +38,7 @@ import { format, previousMonday } from "date-fns";
 import { useSocketContext } from "../../../contexts/SocketContext";
 import EmojiPicker from "emoji-picker-react";
 import useConversation from "../../../hooks/useConversation";
+import { Document, Page } from "react-pdf";
 
 function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
   const [content, setContent] = useState("");
@@ -121,7 +122,7 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
     }
   }, [messages, isAddingMessages]);
 
-  const sendMessage = async (data, receiverId) => {
+  const sendMessage = async (data, receiverId, replyMessageId) => {
     setLoadingMedia(true);
     try {
       if (!data || data.trim === "") return;
@@ -140,7 +141,7 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
 
         const response = await axiosInstance.post(
           `chats/${receiverId}/${messageType}`,
-          { data: data },
+          { data: data, replyMessageId },
           {
             headers: {
               "Content-Type": "multipart/form-data",
@@ -153,6 +154,8 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
         ]);
         userChat.conversationId = response.data.data.conversationId;
         setContent("");
+        setContentReply("");
+        setMessageReplyId("");
         setIsAddingMessages(false);
       }
     } catch (error) {
@@ -164,7 +167,15 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
-      sendMessage({ type: "text", data: content, tag: userChat.tag }, userChat?.id);
+      if (messageReplyId) {
+        sendMessage(
+          { type: "text", data: content },
+          userChat?.id,
+          messageReplyId
+        );
+      } else {
+        sendMessage({ type: "text", data: content }, userChat?.id, null);
+      }
     }
   };
 
@@ -296,6 +307,16 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
     setContent((prevInput) => prevInput + emojiObject.emoji);
     setShowPicker(false);
   };
+
+  const [truncatedContent, setTruncatedContent] = useState("");
+
+  useEffect(() => {
+    if (contentReply.data && contentReply.data.length > 40) {
+      setTruncatedContent(contentReply.data.substring(0, 40) + "...");
+    } else {
+      setTruncatedContent(contentReply.data);
+    }
+  }, [contentReply]);
   return (
     <>
       {userChat && (
@@ -304,11 +325,11 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
           onClick={handleHideContextMenu}
         >
           <div className="h-[10vh] bg-white flex justify-between items-center border-b">
-            <div className="flex items-center w-14 h-14 mr-3 ">
+            <div className="flex items-center w-14 h-14 mr-3 pl-2">
               <img
                 src={userChat?.avatar}
                 alt="avatar"
-                className="w-14 h-14 object-cover rounded-full border mx-3"
+                className="w-12 h-12 object-cover rounded-full border "
               />
             </div>
             <div className="flex-col items-center mr-auto ml-2">
@@ -338,7 +359,11 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
 
           {/*Content Chat */}
           {messages.length === 0 ? (
-            <div className="flex flex-col justify-center items-center  h-[75vh] bg-slate-50 overflow-y-auto">
+            <div
+              className={`flex flex-col justify-center items-center bg-slate-50 overflow-y-auto ${
+                contentReply ? "h-[58vh]" : "h-[74vh]"
+              }`}
+            >
               <p className="text-lg text-center">
                 {language === "vi" ? (
                   <span>
@@ -369,7 +394,9 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
             </div>
           ) : (
             <div
-              className="flex flex-col p-2 h-[75vh] bg-slate-50 overflow-y-auto"
+              className={`flex flex-col justify-center  bg-slate-50 overflow-y-auto  ${
+                contentReply ? "h-[58vh]" : "h-[74vh]"
+              }`}
               ref={scrollRef}
               // onScroll={handleScroll}
             >
@@ -389,19 +416,103 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                       >
                         {userChat.id === message.senderId && (
                           <div className="chat-image avatar">
-                            <div className="w-10 rounded-full">
+                            <div className="ml-2 w-10 rounded-full">
                               <img alt="avatar" src={userChat.avatar} />
                             </div>
                           </div>
                         )}
 
                         <div
-                          className={`flex chat-bubble ${
+                          className={`flex flex-col chat-bubble ${
                             userChat.id === message.senderId
                               ? "bg-white"
                               : "bg-[#e5efff]"
-                          }`}
+                          } `}
                         >
+                          {message.replyMessageId && (
+                            <div className="h-16 m-2 rounded-lg bg-sky-200 p-2 text-black">
+                              <div className="flex flex-col border-l-2 border-sky-500">
+                                {message.replyMessageId.contents[0].type ===
+                                "text" ? (
+                                  <div>
+                                    <p className="ml-2 text-base font-semibold">
+                                      {userChat.name}
+                                    </p>
+                                    <p className="ml-2 text-sm">
+                                      {message.replyMessageId.contents[0].data}
+                                    </p>
+                                  </div>
+                                ) : message.replyMessageId.contents[0].type ===
+                                  "image" ? (
+                                  <div className="flex items-center">
+                                    <img
+                                      src={
+                                        message.replyMessageId.contents[0].data
+                                      }
+                                      alt="Image"
+                                      className="ml-2 h-10 w-10"
+                                    />
+                                    <div className="flex flex-col">
+                                      <p className="ml-2 text-base font-semibold">
+                                        {userChat.name}
+                                      </p>
+
+                                      <p className="ml-2 text-sm">[Hình ảnh]</p>
+                                    </div>
+                                  </div>
+                                ) : message.replyMessageId.contents[0].type ===
+                                  "video" ? (
+                                  <div className="flex items-center">
+                                    <video controls className="ml-2 h-10 w-10">
+                                      <source
+                                        src={
+                                          message.replyMessageId.contents[0]
+                                            .data
+                                        }
+                                        type="video/mp4"
+                                      />
+                                      Your browser does not support the video
+                                      tag.
+                                    </video>
+                                    <div className="flex flex-col">
+                                      <p className="ml-2 text-base font-semibold">
+                                        {userChat.name}
+                                      </p>
+
+                                      <p className="ml-2 text-sm">[Hình ảnh]</p>
+                                    </div>
+                                  </div>
+                                ) : message.replyMessageId.contents[0].type ===
+                                  "file" ? (
+                                  <div className="flex items-center">
+                                    <a
+                                      href={contentReply.data}
+                                      className="ml-2 text-sm"
+                                      download
+                                    >
+                                      {contentReply.filename}
+                                    </a>
+                                    <div className="flex flex-col">
+                                      <div className="flex items-center ml-2">
+                                        <RiDoubleQuotesR
+                                          className="mr-2"
+                                          size={15}
+                                          color="gray"
+                                        />
+                                        <p>Trả lời</p>
+                                      </div>
+                                      <p className="ml-2 text-sm">[File]</p>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <p className="ml-2 text-sm">
+                                    {message.replyMessageId.contents[0].data}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
                           {message.contents.map((content, contentIndex) => {
                             const maxImagesPerRow = 3;
                             const imagesCount = message.contents.filter(
@@ -442,12 +553,15 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                                       height: imageHeight,
                                     }}
                                   />
-                                ) : (
+                                ) : content.type === "video" ? (
                                   <div>
                                     <video
                                       controls
                                       className="pr-2 pb-2"
-                                      style={{ width: "auto", height: "250px" }}
+                                      style={{
+                                        width: "auto",
+                                        height: "250px",
+                                      }}
                                     >
                                       <source
                                         src={content.data}
@@ -480,6 +594,14 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                                       {isoStringToTime(message.timestamp)}
                                     </time>
                                   </div>
+                                ) : (
+                                  <div>
+                                    <div>
+                                      <Document file={content.data}>
+                                        <Page pageNumber={1} />
+                                      </Document>
+                                    </div>
+                                  </div>
                                 )}
                               </div>
                             );
@@ -499,8 +621,10 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                             <div
                               className="flex p-2 text-black items-center rounded-xl border-b border-gray-100 hover:bg-gray-100"
                               onClick={() => {
-                                shareMessage(message);
-                                showModal("share");
+                                setContentReply(message.contents[0]);
+                                setMessageReplyId(message._id);
+                                console.log("messageReplyId: ", messageReplyId);
+                                console.log("message: ", message);
                               }}
                             >
                               <RiDoubleQuotesR
@@ -508,6 +632,25 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                                 size={14}
                                 color="black"
                               />
+                              <p>{language === "vi" ? "Trả lời" : "Reply"}</p>
+                            </div>
+                            <div
+                              className="flex p-2 text-black items-center rounded-xl border-b border-gray-100 hover:bg-gray-100"
+                              onClick={() => {
+                                shareMessage(message);
+                                showModal("share");
+                              }}
+                            >
+                              <IoMdShareAlt
+                                className="mr-3"
+                                size={14}
+                                color="black"
+                              />
+                              {/* <RiDoubleQuotesR
+                                className="mr-3"
+                                size={14}
+                                color="black"
+                              /> */}
                               <p>
                                 {language === "vi" ? "Chuyển tiếp" : "Forward"}
                               </p>
@@ -560,25 +703,109 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                         className={
                           userChat.id === message.senderId
                             ? "chat chat-start w-fit  max-w-[50%]"
-                            : "chat chat-end "
+                            : "chat chat-end"
                         }
                         onContextMenu={(e) => handleContextMenu(e, message._id)}
                       >
                         {userChat.id === message.senderId && (
                           <div className="chat-image avatar">
-                            <div className="w-10 rounded-full">
+                            <div className="ml-2 w-10 rounded-full">
                               <img alt="avatar" src={userChat.avatar} />
                             </div>
                           </div>
                         )}
 
                         <div
-                          className={`flex chat-bubble ${
+                          className={`flex flex-col chat-bubble w-64 ${
                             userChat.id === message.senderId
                               ? "bg-white"
                               : "bg-[#e5efff]"
                           }`}
                         >
+                          {message.replyMessageId && (
+                            <div className="h-16 m-2 rounded-lg bg-sky-200 p-2 text-black">
+                              <div className="flex flex-col border-l-2 border-sky-500">
+                                {message.replyMessageId.contents[0].type ===
+                                "text" ? (
+                                  <div>
+                                    <p className="ml-2 text-base font-semibold">
+                                      {userChat.name}
+                                    </p>
+                                    <p className="ml-2 text-sm">
+                                      {message.replyMessageId.contents[0].data}
+                                    </p>
+                                  </div>
+                                ) : message.replyMessageId.contents[0].type ===
+                                  "image" ? (
+                                  <div className="flex items-center">
+                                    <img
+                                      src={
+                                        message.replyMessageId.contents[0].data
+                                      }
+                                      alt="Image"
+                                      className="ml-2 h-10 w-10"
+                                    />
+                                    <div className="flex flex-col">
+                                      <p className="ml-2 text-base font-semibold">
+                                        {userChat.name}
+                                      </p>
+
+                                      <p className="ml-2 text-sm">[Hình ảnh]</p>
+                                    </div>
+                                  </div>
+                                ) : message.replyMessageId.contents[0].type ===
+                                  "video" ? (
+                                  <div className="flex items-center">
+                                    <video controls className="ml-2 h-10 w-10">
+                                      <source
+                                        src={
+                                          message.replyMessageId.contents[0]
+                                            .data
+                                        }
+                                        type="video/mp4"
+                                      />
+                                      Your browser does not support the video
+                                      tag.
+                                    </video>
+                                    <div className="flex flex-col">
+                                      <p className="ml-2 text-base font-semibold">
+                                        {userChat.name}
+                                      </p>
+
+                                      <p className="ml-2 text-sm">[Hình ảnh]</p>
+                                    </div>
+                                  </div>
+                                ) : message.replyMessageId.contents[0].type ===
+                                  "file" ? (
+                                  <div className="flex items-center">
+                                    <a
+                                      href={contentReply.data}
+                                      className="ml-2 text-sm"
+                                      download
+                                    >
+                                      {contentReply.filename}
+                                    </a>
+                                    <div className="flex flex-col">
+                                      <div className="flex items-center ml-2">
+                                        <RiDoubleQuotesR
+                                          className="mr-2"
+                                          size={15}
+                                          color="gray"
+                                        />
+                                        <p>Trả lời</p>
+                                      </div>
+                                      <p className="ml-2 text-sm">[File]</p>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <p className="ml-2 text-sm">
+                                    {message.replyMessageId.contents[0].data}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
                           {message.contents.map((content, contentIndex) => {
                             const maxImagesPerRow = 3;
                             const imagesCount = message.contents.filter(
@@ -619,12 +846,15 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                                       height: imageHeight,
                                     }}
                                   />
-                                ) : (
+                                ) : content.type === "video" ? (
                                   <div>
                                     <video
                                       controls
                                       className="pr-2 pb-2"
-                                      style={{ width: "auto", height: "250px" }}
+                                      style={{
+                                        width: "auto",
+                                        height: "250px",
+                                      }}
                                     >
                                       <source
                                         src={content.data}
@@ -657,6 +887,14 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                                       {isoStringToTime(message.timestamp)}
                                     </time>
                                   </div>
+                                ) : (
+                                  <div>
+                                    <div>
+                                      <Document file={content.data}>
+                                        <Page pageNumber={1} />
+                                      </Document>
+                                    </div>
+                                  </div>
                                 )}
                               </div>
                             );
@@ -676,11 +914,26 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                             <div
                               className="flex p-2 text-black items-center rounded-xl border-b border-gray-100 hover:bg-gray-100"
                               onClick={() => {
+                                setContentReply(message.contents[0]);
+                                setMessageReplyId(message._id);
+                                console.log("message: ", message);
+                              }}
+                            >
+                              <RiDoubleQuotesR
+                                className="mr-3"
+                                size={14}
+                                color="black"
+                              />
+                              <p>{language === "vi" ? "Trả lời" : "Reply"}</p>
+                            </div>
+                            <div
+                              className="flex p-2 text-black items-center rounded-xl border-b border-gray-100 hover:bg-gray-100"
+                              onClick={() => {
                                 shareMessage(message);
                                 showModal("share");
                               }}
                             >
-                              <RiDoubleQuotesR
+                              <IoMdShareAlt
                                 className="mr-3"
                                 size={14}
                                 color="black"
@@ -740,8 +993,16 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
             </div>
           )}
 
-          <div className="h-[15vh] bg-white flex-col border-t">
-            <div className="h-[40%] bg-white flex justify-between items-center border-b p-1">
+          <div
+            className={`${
+              contentReply ? "h-[31vh]" : "h-[15vh]"
+            } bg-white flex-col border-t`}
+          >
+            <div
+              className={`${
+                contentReply ? "h-[20%]" : "h-[40%]"
+              } bg-white flex justify-between items-center border-b p-1`}
+            >
               <button
                 className="hover:bg-gray-300 p-2 rounded"
                 onClick={togglePicker}
@@ -793,28 +1054,120 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                 <BsThreeDots size={20} />
               </button>
             </div>
-            <div className="h-[60%] flex items-center justify-between">
-              <input
-                type="text"
-                placeholder="Nhập @, tin nhắn tới"
-                className="w-full outline-none p-3"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                onKeyPress={handleKeyPress}
-              />
-              <div className="flex items-center mr-2">
-                <button className="hover:bg-gray-300 p-2 rounded">
-                  <RiBatteryChargeLine size={20} />
-                </button>
-                <button className="hover:bg-gray-300 p-2 rounded">
-                  <BiSmile size={20} />
-                </button>
-                <button className="hover:bg-gray-300 p-2 rounded text-2xl mb-1">
-                  @
-                </button>
-                <button className="hover:bg-gray-300 p-2 rounded">
-                  <AiFillLike size={20} color="rgb(252 186 3)" />
-                </button>
+            <div className={`${contentReply ? "h-[80%]" : "h-[60%]"} flex `}>
+              <div className="flex flex-col w-full justify-between">
+                {contentReply && (
+                  <div className="flex h-16 m-2 rounded-lg bg-gray-200 p-2 justify-between">
+                    <div className="flex flex-col border-l-2 border-sky-500">
+                      {contentReply.type === "text" ? (
+                        <div>
+                          <div className="flex items-center ml-2">
+                            <RiDoubleQuotesR
+                              className="mr-2"
+                              size={15}
+                              color="gray"
+                            />
+                            <p>Trả lời</p>
+                          </div>
+                          <p className="ml-2 text-sm">{truncatedContent}</p>
+                        </div>
+                      ) : contentReply.type === "image" ? (
+                        <div className="flex items-center">
+                          <img
+                            src={contentReply.data}
+                            alt="Image"
+                            className="ml-2 h-10 w-10"
+                          />
+                          <div className="flex flex-col">
+                            <div className="flex items-center ml-2">
+                              <RiDoubleQuotesR
+                                className="mr-2"
+                                size={15}
+                                color="gray"
+                              />
+                              <p>Trả lời</p>
+                            </div>
+                            <p className="ml-2 text-sm">[Hình ảnh]</p>
+                          </div>
+                        </div>
+                      ) : contentReply.type === "video" ? (
+                        <div className="flex items-center">
+                          <video controls className="ml-2 h-10 w-10">
+                            <source src={contentReply.data} type="video/mp4" />
+                            Your browser does not support the video tag.
+                          </video>
+                          <div className="flex flex-col">
+                            <div className="flex items-center ml-2">
+                              <RiDoubleQuotesR
+                                className="mr-2"
+                                size={15}
+                                color="gray"
+                              />
+                              <p>Trả lời</p>
+                            </div>
+                            <p className="ml-2 text-sm">[Video]</p>
+                          </div>
+                        </div>
+                      ) : contentReply.type === "file" ? (
+                        <div className="flex items-center">
+                          <a
+                            href={contentReply.data}
+                            className="ml-2 text-sm"
+                            download
+                          >
+                            {contentReply.filename}
+                          </a>
+                          <div className="flex flex-col">
+                            <div className="flex items-center ml-2">
+                              <RiDoubleQuotesR
+                                className="mr-2"
+                                size={15}
+                                color="gray"
+                              />
+                              <p>Trả lời</p>
+                            </div>
+                            <p className="ml-2 text-sm">[File]</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="ml-2 text-sm">{truncatedContent}</p>
+                      )}
+                    </div>
+                    <button
+                      className="flex mr-3 text-lg font-semibold"
+                      onClick={() => {
+                        setContentReply("");
+                        setMessageReplyId("");
+                      }}
+                    >
+                      x
+                    </button>
+                  </div>
+                )}
+                <div className="flex items-center mb-2">
+                  <input
+                    type="text"
+                    placeholder="Nhập @, tin nhắn tới"
+                    className="w-full outline-none p-2 "
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                  />
+                  <div className="flex items-center mr-2">
+                    <button className="hover:bg-gray-300 p-2 rounded">
+                      <RiBatteryChargeLine size={20} />
+                    </button>
+                    <button className="hover:bg-gray-300 p-2 rounded">
+                      <BiSmile size={20} />
+                    </button>
+                    <button className="hover:bg-gray-300 p-2 rounded text-2xl mb-1">
+                      @
+                    </button>
+                    <button className="hover:bg-gray-300 p-2 rounded">
+                      <AiFillLike size={20} color="rgb(252 186 3)" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
             <input
