@@ -19,7 +19,7 @@ router.get("/get/messages/:conversationId", getMessageByConversationId);
 
 router.post("/newConversation", createConversation);
 router.post("/deleted/:conversationId", deleteConversation);
-router.post("/deletedMess/:conversationId/:chatId", deleteMessInConver);
+// router.post("/deletedMess/:conversationId/:chatId", deleteMessInConver);
 router.post("/deleteOnMySelf/:conversationId/:chatId", deleteOnMySelf);
 
 module.exports = router;

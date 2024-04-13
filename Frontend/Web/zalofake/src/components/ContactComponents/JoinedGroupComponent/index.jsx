@@ -3,25 +3,21 @@ import { RiGroupLine } from "react-icons/ri";
 import { CiSearch } from "react-icons/ci";
 import { TbArrowsSort } from "react-icons/tb";
 import { CiFilter } from "react-icons/ci";
-import { faker } from "@faker-js/faker";
 import { IoIosMore } from "react-icons/io";
+import useGroup from "../../../hooks/useGroup";
 
 function JoinedGroupComponent({ language }) {
-  const [friendList, setFriendList] = useState([]);
+  const [groupList, setGroupList] = useState([]);
   const [sortDirection, setSortDirection] = useState("asc");
-
-  var newFriendList = [];
+  const { getGroups, groups, loading } = useGroup();
 
   useEffect(() => {
-    for (let i = 0; i < 20; i++) {
-      newFriendList.push({
-        id: faker.string.uuid(),
-        name: faker.internet.userName(),
-        avatar: faker.image.avatar(),
-      });
-    }
-    setFriendList(newFriendList);
+    getGroups();
   }, []);
+
+  useEffect(() => {
+    setGroupList(groups);
+  }, [groups]);
   return (
     <>
       <div className="h-[70px] w-full flex items-center bg-white border-b fixed">
@@ -34,8 +30,8 @@ function JoinedGroupComponent({ language }) {
         <div className="h-[calc(100%-70px)] w-full my-6 px-6">
           <p className="font-semibold">
             {language
-              ? `Nhóm (${friendList.length})`
-              : `Groups (${friendList.length})`}
+              ? `Nhóm (${groupList.length})`
+              : `Groups (${groupList.length})`}
           </p>
         </div>
 
@@ -88,25 +84,34 @@ function JoinedGroupComponent({ language }) {
             </div>
           </div>
           <div className="w-full">
-            {friendList
+            {loading && (
+              <div className="w-full flex items-center justify-center">
+                <span className="loading loading-spinner text-blue-400"></span>
+              </div>
+            )}
+            {groupList
               .sort(
                 sortDirection == "asc"
-                  ? (a, b) => a.name.localeCompare(b.name)
-                  : (a, b) => b.name.localeCompare(a.name)
+                  ? (a, b) => a.groupName.localeCompare(b.groupName)
+                  : (a, b) => b.groupName.localeCompare(a.groupName)
               )
-              .map((friend) => (
+              .map((group) => (
                 <div
-                  key={friend.id}
+                  key={group._id}
                   className="my-5 flex items-center justify-between px-6 py-5 border-b hover:bg-gray-100"
                 >
                   <div className="flex items-center">
                     <img
-                      src={friend.avatar}
+                      src={group.avatar?.url || "/zalo.svg"}
                       className="w-10 h-10 rounded-full"
                     />
                     <div className="ml-3">
-                      <p className="font-semibold">{friend.name}</p>
-                      <p className="text-sm text-gray-500">{friend.name}</p>
+                      <p className="font-semibold">{group.groupName}</p>
+                      <p className="text-sm text-gray-500">
+                        {language == "vi"
+                          ? `Quản trị viên: ${group.createBy} - Thành viên: ${group.conversation.participants?.length}`
+                          : `Admin: ${group.createBy} - Members: ${group.conversation.participants?.length}`}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center">
