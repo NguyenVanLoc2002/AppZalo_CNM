@@ -1,10 +1,10 @@
 const jwt = require("jsonwebtoken");
+const mongoose = require('mongoose')
 const Conversation = require("../models/Conversation");
 const Group = require("../models/Group");
 const User = require("../models/User");
 const { io, getReciverSocketId } = require("../socket/socket.io");
 const cloudinary = require("../configs/Cloudinary.config");
-
 exports.createGroup = async (req, res) => {
   try {
     const { name, members } = req.body;
@@ -68,10 +68,13 @@ exports.getAllGroup = async (req, res) => {
   try {
     const token = req.headers.authorization.split(" ")[1];
     const user = jwt.verify(token, process.env.JWT_SECRET);
-    let groups = await Group.find({ createdBy: user._id }).populate(
-      "conversation"
-    );
-    if (groups) {
+    let groups = await Group.find({ createdBy: user.user_id }).populate([
+      { path: "conversation" },
+      { path: "createBy", select: "profile.name" },
+    ]);
+
+    if (groups.length > 0) {
+      console.log("groups", groups);
       return res.status(200).json(groups);
     } else {
       groups = await Group.aggregate([
@@ -84,13 +87,46 @@ exports.getAllGroup = async (req, res) => {
           },
         },
         {
+          $lookup: {
+            from: "users",
+            localField: "createBy",
+            foreignField: "_id",
+            as: "createBy",
+          },
+        },
+        {
+          $unwind: "$conversation",
+        },
+        {
+          $lookup: {
+            from: "chats",
+            localField: "conversation.lastMessage",
+            foreignField: "_id",
+            as: "lastMessage",
+          },
+        },
+        {
+          $unwind: "$lastMessage",
+        },
+        {
           $match: {
             "conversation.participants": {
-              $in: [user.user_id],
+              $in: [new mongoose.Types.ObjectId(user.user_id)],
             },
           },
         },
+
+        {
+          $project: {
+            groupName: 1,
+            avatar: 1,
+            createBy: { $arrayElemAt: ["$createBy.profile.name", 0] },
+            conversation: 1,
+            lastMessage: 1,
+          },
+        },
       ]);
+
       return res.status(200).json(groups);
     }
   } catch (error) {

@@ -19,15 +19,16 @@ import * as ImagePicker from "expo-image-picker";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useSocketContext } from "../../../contexts/SocketContext"
 
+
 const Message = ({ navigation, route }) => {
-  const { conver,user} = route.params;
+  const { conver} = route.params;
   // const {user} = conver.user;
   //nhi  
   const [textMessage, setTextMessage] = useState(null)
   const [isColorSend, setIsColorSend] = useState(false)
   const { sendMessage, sendImage, sendVideo } = useSendMessage();
   const { socket } = useSocketContext()
-
+  
   //truc
   const [chats, setChats] = useState([]);
   const scrollViewRef = useRef();
@@ -62,13 +63,18 @@ const Message = ({ navigation, route }) => {
   };
   const fetchChats = async () => {
     try {
-      const response = await axiosInstance.get(`/conversations/get/messages/${conver._id}`);
-      const reversedChats = response.data; //.reverse();
-      console.log(reversedChats)
-      setChats(reversedChats);
-      fetchFriends();
-      const lastElement = reversedChats[0]
-      setLastTimestamp(lastElement.timestamp)
+      if(conver.conversationId === null ||conver.conversationId === undefined ){
+        showToastSuccess('Chưa có tin nhắn')
+      }else{
+        const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversationId}`);
+        const reversedChats = response.data; //.reverse();
+        console.log(reversedChats)
+        setChats(reversedChats);
+        fetchFriends();
+        // const lastElement = reversedChats[0]
+        // setLastTimestamp(lastElement.timestamp)
+      }
+      
     } catch (error) {
       console.log(error);
       return false;
@@ -102,7 +108,7 @@ const Message = ({ navigation, route }) => {
 
 
   const handleCheckIsSend = (message) => {
-    if (message.senderId === user._id) {
+    if (message.senderId === conver.id) {
       return false;
     } else {
       return true;
@@ -133,7 +139,7 @@ const Message = ({ navigation, route }) => {
             style={{ padding: 5, marginRight: 10 }}
           />
           <Pressable
-            onPress={() => navigation.navigate("MessageSettings", { user })}
+            onPress={() => navigation.navigate("MessageSettings", { conver })}
           >
             <Ionicons
               name="list-outline"
@@ -146,7 +152,7 @@ const Message = ({ navigation, route }) => {
       ),
       headerTitle: () => (
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text style={{ fontSize: 20, color: "white", fontWeight: 'bold' }}>{user?.profile?.name}</Text>
+          <Text style={{ fontSize: 20, color: "white", fontWeight: 'bold' }}>{conver.name}</Text>
         </View>
       ),
       headerStyle: {
@@ -184,7 +190,7 @@ const Message = ({ navigation, route }) => {
     const fetchChats = async () => {
       try {
         // const response = await axiosInstance.get(`/chats/getHistoryMessage/${user._id}?lastTimestamp=${lastTimestamp}`);
-        const response = await axiosInstance.get(`/conversations/get/messages/${conver._id}`);
+        const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversationId}`);
         const reversedChats = response.data;//.reverse();
         // if (reversedChats && reversedChats.length > 0) {
         //   setChats(prevChats => [...reversedChats, ...prevChats]);
@@ -322,7 +328,7 @@ const Message = ({ navigation, route }) => {
               type: 'image/jpeg',
             });
           try {
-            const response = await sendImage(user, formData)
+            const response = await sendImage(conver.id, formData)
             if (response.status === 201) {
               setIsLoadMess(false)
               setIsLoad(false)
@@ -347,7 +353,7 @@ const Message = ({ navigation, route }) => {
               type: 'video/mp4',
             });
           try {
-            const response = await sendVideo(user, formData)
+            const response = await sendVideo(conver.id, formData)
             if (response.status === 201) {
               setIsLoadMess(false)
               setIsLoad(false)
@@ -384,13 +390,14 @@ const Message = ({ navigation, route }) => {
     else {
       setIsLoadMess(true)
       try {
-        const response = await sendMessage(user,
+        const response = await sendMessage(conver.id,
           { type: 'text', data: textMessage })
         if (response.status === 201) {
           setIsLoadMess(false)
           setIsLoad(false)
-          setChats( 
-            chats.concat(response.data.data))
+          // setChats( 
+          //   chats.concat(response.data.data))
+          fetchChats()
           scrollToEnd()
           console.log("success");
           setTextMessage(null)
@@ -427,7 +434,9 @@ const Message = ({ navigation, route }) => {
           }}
         >
           <View style={{ flex: 1, justifyContent: "flex-start" }}>
-            {chats.map((message, index) => (
+            {chats.length>0 ?
+            
+            (chats.map((message, index) => (
               <View key={index} style={{ justifyContent: 'space-around', borderRadius: 10, backgroundColor: handleCheckIsSend(message) ? "#7debf5" : "#d9d9d9", margin: 5, alignItems: handleCheckIsSend(message) ? "flex-end" : "flex-start", alignSelf: handleCheckIsSend(message) ? "flex-end" : "flex-start" }}>
                 {message.contents.map((content, i) => (
                   <Pressable key={i}
@@ -442,7 +451,7 @@ const Message = ({ navigation, route }) => {
                 ))}
 
               </View>
-            ))}
+            ))) :(<View><Text>Chưa có tin nhắn nào!!!</Text></View>)}
           </View>
         </ScrollView>
       </View >
@@ -538,7 +547,7 @@ const Message = ({ navigation, route }) => {
                 )}
                 <Text style={styles.modalButton} >Xóa</Text>
               </Pressable>
-              {messageSelected.senderId===user._id ? (
+              {messageSelected.senderId===conver.id ? (
                   <Text></Text>
                 ) : (
                   <Pressable style={styles.pressCol} onPress={handleDeleteMess}>

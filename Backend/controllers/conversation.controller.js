@@ -1,7 +1,7 @@
 const Chats = require("../models/Chat");
 const Conversation = require("../models/Conversation");
 const { deleteChat } = require("./chat.controller");
-
+const jwt = require("jsonwebtoken");
 exports.createConversation = async (req, res) => {
   try {
     console.log("req.body: ", req.body);
@@ -121,21 +121,43 @@ exports.getConversations = async (req, res) => {
 };
 
 // get conversation by participants every time a new message is sent
-exports.getConversationByParticipants = async () => {
+exports.getConversationByParticipants = async (req, res) => {
   try {
-    const participants = req.body.participants;
+   console.log( req.body)
+    let participants = req.body.participants;
+    console.log(participants)
+    const token = req.headers.authorization.split(" ")[1];
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    participants = [...participants, user.user_id];
     if (!participants) {
       return res.status(400).json({ message: "Participants are required" });
     }
 
+
     const conversation = await Conversation.findOne({
       participants: { $all: participants },
-    });
+    }).populate([
+      {
+        path: "participants",
+        select: "phone email profile _id",
+      },
+      {
+        path: "lastMessage",
+        select: "senderId receiverId contents timestamp read",
+      },
+      {
+        path: "messages",
+        populate: {
+          path: "replyMessageId",
+          model: "chats",
+        },
+      },
+    ]);
 
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });
     }
-    return conversation;
+    return res.status(200).json(conversation);
   } catch (error) {
     console.error("Error getting conversation by participants:", error);
     return null;
