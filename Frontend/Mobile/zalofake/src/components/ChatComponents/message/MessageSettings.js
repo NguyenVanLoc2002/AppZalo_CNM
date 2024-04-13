@@ -8,7 +8,7 @@ import {
 import { Switch } from "react-native";
 
 const MessageSettings = ({ navigation, route }) => {
-  const { user } = route.params;
+  const { conver } = route.params;
   const [isMarkAsCloseFriend, setMarkAsCloseFriend] = useState(false);
   const [isPinChat, setPinChat] = useState(false);
   const [isHideChat, setHideChat] = useState(false);
@@ -46,13 +46,13 @@ const MessageSettings = ({ navigation, route }) => {
           paddingTop: 10,
           backgroundColor: "white",
         }}
-        onPress={() => navigation.navigate("FriendProfile", { user })}
+        onPress={() => navigation.navigate("FriendProfile", { conver })}
       >
         <Image
-          source={{ uri: user?.profile?.avatar?.url }}
+          source={{ uri: conver.avatar }}
           style={{ width: 100, height: 100, borderRadius: 50 }}
         />
-        <Text style={{ fontSize: 20, fontWeight: "bold" }}>{user.profile.name}</Text>
+        <Text style={{ fontSize: 20, fontWeight: "bold" }}>{conver.name}</Text>
       </Pressable>
       <View
         style={{
@@ -289,7 +289,7 @@ const MessageSettings = ({ navigation, route }) => {
           style={{ marginHorizontal: 15 }}
         />
         <Text style={{ textAlign: "center", color: "black" }}>
-          {`Tạo nhóm với ${user.ten}`}
+          {`Tạo nhóm với ${conver.name}`}
         </Text>
       </Pressable>
       <View
@@ -307,7 +307,7 @@ const MessageSettings = ({ navigation, route }) => {
           style={{ marginHorizontal: 15 }}
         />
         <Text style={{ textAlign: "center", color: "black" }}>
-          {`Thêm ${user.ten} vào nhóm`}
+          {`Thêm ${conver.name} vào nhóm`}
         </Text>
       </View>
       <View

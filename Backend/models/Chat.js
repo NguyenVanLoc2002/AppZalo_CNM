@@ -30,13 +30,20 @@ const chatSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  replyMessageId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "users",
+    default: null,
+  },
 });
 
 chatSchema.post("save", async function (chat, next) {
   try {
+    console.log("conversation not found: ", chat);
     if (!chat.isGroup) {
       const conversation = await Conversation.findOne({
         participants: { $all: [chat.senderId, chat.receiverId] },
+        tag : 'friend'
       });
 
       if (!conversation) {

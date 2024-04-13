@@ -16,7 +16,7 @@ const ChatItem = ({ item }) => {
         style={{ width: "15%", justifyContent: "center", alignItems: "center" }}
       >
         <Image
-          source={{  uri: item.image, }}
+          source={{  uri: item.conver.avatar, }}
           style={{ width: 55, height: 55, borderRadius: 25 }}
         />
       </View>
@@ -27,7 +27,7 @@ const ChatItem = ({ item }) => {
           paddingLeft: 20,
         }}
       >
-        <Text style={{ fontSize: 20, marginBottom: 5 }}>{item.name}</Text>
+        <Text style={{ fontSize: 20, marginBottom: 5 }}>{item.conver.name}</Text>
         <Text
           style={{
             fontSize: 14,
