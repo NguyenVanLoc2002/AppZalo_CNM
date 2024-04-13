@@ -19,10 +19,13 @@ const useSendMessage = () => {
         }
     }
 
-    const sendMessage = async (user, message) => {
+    const sendMessage = async (user, message, isGroup) => {
         try {
             const response = await axiosInstance.post(`/chats/${user._id}/sendText`,
-                { data: message }
+                {
+                    data: message,
+                    isGroup: true
+                }
             )
             return response;
         } catch (error) {
@@ -31,7 +34,7 @@ const useSendMessage = () => {
         }
     }
 
- 
+
 
     const sendVideo = async (user, message) => {
         try {
@@ -45,7 +48,7 @@ const useSendMessage = () => {
 
             )
             return response;
-            
+
         } catch (error) {
             console.log("error1:", error)
             return false;

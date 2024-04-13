@@ -83,8 +83,9 @@ const FriendDirectory = ({ navigation }) => {
 
 
 
-  const handleFriendMessage = (friend) => {
-    navigation.navigate("Message",{ user :friend });
+  const handleFriendMessage = async (friend) => {
+    console.log("friend: ", friend);
+    navigation.navigate("Message",{ user : friend });
   };
   
 
