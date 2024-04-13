@@ -42,15 +42,30 @@ function ChatComponents({ language }) {
   const [valueSearch, setValueSearch] = useState("");
   const [originalFriendList, setOriginalFriendList] = useState([]);
   const [selectedFriends, setSelectedFriends] = useState([]);
+  const [forwardeMessages,setForwardeMessages]=useState("");
+
+  console.log("shareMessage", shareMessage);
+
   const sendMessage = async (data, receiverId) => {
     try {
       if (!data || data.trim === "") return;
-      // console.log("data: ", data);
+      let messageType;
+      console.log("data jef: ", data);
+    
+      
       if (receiverId) {
+        if ( data.type === "text") {
+          messageType = "sendText";
+        } else if (data.type ==="image") {
+          messageType = "sendImages";
+        } else if (data.type ==="video"){
+          messageType = "sendVideo";
+        }else{
+          messageType = "sendFiles";
+        }
+
         const response = await axiosInstance.post(
-          `chats/${receiverId}/${
-            data.type.startsWith("video/") ? "sendVideo" : "sendText"
-          }`,
+          `chats/${receiverId}/${messageType}`,
           { data: data },
           {
             headers: {
@@ -58,7 +73,8 @@ function ChatComponents({ language }) {
             },
           }
         );
-        console.log("response 1: ", response.data.data);
+        console.log("response: ", response.data.data);
+        setForwardeMessages(response.data.data);
       }
     } catch (error) {
       console.error("Error sending message:", error);
@@ -354,7 +370,7 @@ function ChatComponents({ language }) {
           </div>
         )}
         {isShowModal === "addGroup" && (
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-60 w-3/5 h-[90%] bg-white rounded-lg shadow-lg ">
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/5 h-[90%] bg-white rounded-lg shadow-lg ">
             <div className=" flex items-center justify-between p-4 border-b text-lg font-semibold h-[10%]">
               <p>Tạo nhóm</p>
               <button
@@ -463,7 +479,7 @@ function ChatComponents({ language }) {
                   onClick={handleSearch}
                 >
                   <p className="text-lg font-semibold">
-                    {language == "vi" ? "Tìm Kiếm" : "Search"}
+                    {language == "vi" ? "Tạo nhóm" : "Create group"}
                   </p>
                 </button>
               </div>
