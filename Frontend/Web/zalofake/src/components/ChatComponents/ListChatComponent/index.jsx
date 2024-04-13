@@ -3,6 +3,7 @@ import { AiOutlineUserAdd, AiOutlineUsergroupAdd } from "react-icons/ai";
 import { CiSearch } from "react-icons/ci";
 import { FaSortDown } from "react-icons/fa";
 import { IoIosMore } from "react-icons/io";
+import toast from "react-hot-toast";
 
 import useConversation from "../../../hooks/useConversation";
 import useGroup from "../../../hooks/useGroup";
@@ -58,7 +59,7 @@ function ListChatComponent({ language, showModal, userChat, friends }) {
         name: group.groupName,
         avatar: group.avatar.url,
         background: group.avatar.url,
-        lastMessage: group.conversation.lastMessage,
+        lastMessage: group.lastMessage,
         tag: group.conversation.tag,
       };
     });
@@ -69,7 +70,40 @@ function ListChatComponent({ language, showModal, userChat, friends }) {
       socket.on("new_message", ({ message }) => {
         getConversations();
       });
+      socket.on("add-to-group", ({ group }) => {
+        toast.success(
+          language === "vi"
+            ? `Bạn đã được thêm vào nhóm ${group.groupName}`
+            : `You have been added to the group ${group.groupName}`,
+
+          {
+            duration: 3000,
+            position: "top-right",
+          }
+        );
+        // push new group to listChatCurrent
+        setListChatCurrent((prev) => {
+          const newList = [...prev];
+          newList.push({
+            id: group._id,
+            conversationId: group.conversation._id,
+            name: group.groupName,
+            avatar: group.avatar.url,
+            background: group.avatar.url,
+            lastMessage: group.lastMessage,
+            tag: group.conversation.tag,
+          });
+          return newList;
+        });
+      });
     }
+
+    return () => {
+      if (socket) {
+        socket.off("new_message");
+        socket.off("add-to-group");
+      }
+    };
   }, [conversations, socket, groups]);
 
   const changeTab = (tab) => {
@@ -305,9 +339,20 @@ function ListChatComponent({ language, showModal, userChat, friends }) {
                       {friend?.lastMessage?.senderId === authUser._id
                         ? "Bạn: "
                         : ""}
-                      {friend?.lastMessage?.contents[0].type === "text"
-                        ? friend?.lastMessage?.contents[0].data
-                        : "File: "}
+                      {friend?.lastMessage?.contents
+                        ? friend.lastMessage.contents[0]?.type === "text"
+                          ? friend?.lastMessage?.contents.length > 15
+                            ? `${friend?.lastMessage?.contents[0].data.slice(
+                                0,
+                                15
+                              )}...`
+                            : friend?.lastMessage?.contents[0].data
+                          : friend?.lastMessage?.contents[0]?.type === "image"
+                          ? "Hình ảnh"
+                          : "Tệp đính kèm"
+                        : language === "vi"
+                        ? "Chưa có tin nhắn"
+                        : "No message yet"}
 
                       {friend?.unread ? (
                         <span className="text-blue-500"> (1)</span>

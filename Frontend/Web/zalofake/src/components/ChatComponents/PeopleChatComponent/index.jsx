@@ -52,7 +52,8 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
   const [isAddingMessages, setIsAddingMessages] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const { getConversations } = useConversation();
-  console.log("userChat: ", userChat);
+  const [contentReply, setContentReply] = useState("");
+  const [messageReplyId, setMessageReplyId] = useState("");
   useEffect(() => {
     const fetchMessageHistory = async (converId) => {
       if (!converId) {
@@ -394,7 +395,7 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
             </div>
           ) : (
             <div
-              className={`flex flex-col justify-center  bg-slate-50 overflow-y-auto  ${
+              className={`flex flex-col bg-slate-50 overflow-y-auto  ${
                 contentReply ? "h-[58vh]" : "h-[74vh]"
               }`}
               ref={scrollRef}
