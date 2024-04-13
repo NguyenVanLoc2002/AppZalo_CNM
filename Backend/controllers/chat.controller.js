@@ -70,10 +70,16 @@ exports.sendMessage = async (req, resp) => {
       console.error("Error sending message:", error);
     }
 
-    // Trả về phản hồi thành công
-    resp
-      .status(201)
-      .json({ message: "Message sent successfully", data: message });
+    const conversation = await Conversation.findOne({
+      participants: { $all: [senderId, receiverId] },
+    });
+    resp.status(201).json({
+      message: "Message sent successfully",
+      data: {
+        message,
+        conversationId: conversation._id,
+      },
+    });
   } catch (error) {
     console.log("Error sending message:", error);
     resp
@@ -263,7 +269,6 @@ function extractPublicId(url) {
 
 exports.deleteChat = async (req, res) => {
   const chatId = req.params.chatId;
-  console.log("chatId deltee: ", chatId);
 
   try {
     const chat = await Chat.findById(chatId);

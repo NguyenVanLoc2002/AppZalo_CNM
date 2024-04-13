@@ -42,37 +42,39 @@ exports.deleteConversation = async (req, res) => {
   }
 };
 
-exports.deleteMessInConver = async (req, res) => {
-  try {
-    const conversationId = req.params.conversationId;
-    const chatIdToDelete = req.params.chatId;
+// exports.deleteMessInConver = async (req, res) => {
+//   try {
+//     const conversationId = req.params.conversationId;
+//     const chatIdToDelete = req.params.chatId;
 
-    await deleteChat(req, res);
+//     await deleteChat(req, res);
 
-    // Nếu deleteChat gặp lỗi và gửi phản hồi lỗi, không cần thiết phải tiếp tục thực hiện lệnh tiếp theo
-    if (res.headersSent) {
-      return;
-    }
+//     // Nếu deleteChat gặp lỗi và gửi phản hồi lỗi, không cần thiết phải tiếp tục thực hiện lệnh tiếp theo
+//     if (res.headersSent) {
+//       return;
+//     }
 
-    // Xóa chatIdToDelete cũng như cập nhật trường "messages" của tài liệu "Conversation"
-    const deleteChatInMessOfConver = await Conversation.findByIdAndUpdate(
-      conversationId,
-      { $pull: { messages: chatIdToDelete } }
-    );
+//     // Xóa chatIdToDelete cũng như cập nhật trường "messages" của tài liệu "Conversation"
+//     const deleteChatInMessOfConver = await Conversation.findByIdAndUpdate(
+//       conversationId,
+//       { $pull: { messages: chatIdToDelete } }
+//     );
 
-    if (!deleteChatInMessOfConver) {
-      return res.status(404).json({ message: "Conversation not found" });
-    }
+//     console.log("deleteChatInMessOfConver: ", deleteChatInMessOfConver);
 
-    // Trả về phản hồi thành công
-    res.status(200).json({ message: "Conversation deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting conversation:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to delete conversation", error: error.message });
-  }
-};
+//     if (!deleteChatInMessOfConver) {
+//       return res.status(404).json({ message: "Conversation not found" });
+//     }
+
+//     // Trả về phản hồi thành công
+//     res.status(200).json({ message: "Conversation deleted successfully" });
+//   } catch (error) {
+//     console.error("Error deleting conversation:", error);
+//     res
+//       .status(500)
+//       .json({ message: "Failed to delete conversation", error: error.message });
+//   }
+// };
 
 exports.getConversation = async (req, res) => {
   try {
@@ -97,6 +99,7 @@ exports.getConversations = async (req, res) => {
     const userId = req.user.user_id;
     const conversations = await Conversation.find({
       participants: userId,
+      tag: { $ne: "group" },
     }).populate([
       {
         path: "participants",

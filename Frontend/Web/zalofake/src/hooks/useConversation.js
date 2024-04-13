@@ -18,6 +18,7 @@ const useConversation = () => {
             participants: conversation.participants,
             messages: conversation.messages,
             lastMessage: conversation.lastMessage,
+            tag : conversation.tag
           };
         });
         setConversations(newConversationList);
