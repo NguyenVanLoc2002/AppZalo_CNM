@@ -288,7 +288,6 @@ exports.deleteChat = async (req, res) => {
     await Promise.all(
       mediaFiles.map(async (media) => {
         const publicId = extractPublicId(media.data);
-        console.log("publicId: ", publicId);
         try {
           await cloudinary.uploader.destroy(publicId);
         } catch (error) {
@@ -304,7 +303,7 @@ exports.deleteChat = async (req, res) => {
       conversation.messages = conversation.messages.filter(
         (message) => message.toString() !== chatId
       );
-      if (conversation.messages.length === 0) {
+      if (conversation.messages.length === 0 && conversation.tag !== "group") {
         await conversation.deleteOne({
           participants: { $all: [chat.senderId, chat.receiverId] },
         });
