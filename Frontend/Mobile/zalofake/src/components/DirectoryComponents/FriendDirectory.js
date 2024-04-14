@@ -14,8 +14,11 @@ import Toast from "react-native-toast-message";
 import axiosInstance from "../../api/axiosInstance";
 import { useAuthContext } from "../../contexts/AuthContext";
 import useFriend from "../../hooks/useFriend";
+import useConversation from "../../hooks/useConversation";
 
 const FriendDirectory = ({ navigation }) => {
+  const { getConversationsByParticipants } = useConversation();
+  // const [conversation, setConversation] = useState();
   const {
     recommendedFriends,
     loading,
@@ -82,12 +85,24 @@ const FriendDirectory = ({ navigation }) => {
   };
 
 
+  const handleFriendMessage  =async (friend) => { 
+    let conversation ;
+    conversation = await getConversationsByParticipants(friend.userId);
 
-  const handleFriendMessage = async (friend) => {
-    console.log("friend: ", friend);
-    navigation.navigate("Message",{ user : friend });
+    console.log(conversation);
+    const conversationNew = {
+      id: friend.userId,
+      conversationId: conversation._id,
+      name: friend?.profile.name,
+      avatar: friend?.profile.avatar?.url,
+      background: friend?.profile.background?.url,
+      lastMessage: conversation.lastMessage,
+      tag: conversation.tag,
+    };
+    console.log(conversationNew);
+    navigation.navigate("Message",{ conver :conversationNew });
   };
-  
+
 
   return (
     <ScrollView style={styles.container}>

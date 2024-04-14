@@ -4,7 +4,7 @@ const useSendMessage = () => {
 
     const sendImage = async (user, message) => {
         try {
-            const response = await axiosInstance.post(`/chats/${user._id}/sendImages`, message,
+            const response = await axiosInstance.post(`/chats/${user}/sendImages`, message,
                 {
                     headers: {
                         "Content-Type": "multipart/form-data",
@@ -21,11 +21,8 @@ const useSendMessage = () => {
 
     const sendMessage = async (user, message, isGroup) => {
         try {
-            const response = await axiosInstance.post(`/chats/${user._id}/sendText`,
-                {
-                    data: message,
-                    isGroup : true
-                }
+            const response = await axiosInstance.post(`/chats/${user}/sendText`,
+                { data: message }
             )
             return response;
         } catch (error) {
@@ -38,7 +35,7 @@ const useSendMessage = () => {
 
     const sendVideo = async (user, message) => {
         try {
-            const response = await axiosInstance.post(`/chats/${user._id}/sendVideo`,
+            const response = await axiosInstance.post(`/chats/${user}/sendVideo`,
                 message,
                 {
                     headers: {
