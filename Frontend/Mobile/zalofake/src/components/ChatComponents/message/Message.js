@@ -91,7 +91,7 @@ const Message = ({ navigation, route }) => {
       if (conver.conversation._id === null || conver.conversation._id === undefined) {
       } else {
         const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversation._id}`);
-        const reversedChats = response.data; 
+        const reversedChats = response.data;
         // console.log(reversedChats)
 
         let data = [];
@@ -528,19 +528,30 @@ const Message = ({ navigation, route }) => {
                       {message.sender.name}
                     </Text>
                     {message.chat.replyMessageId === null ? (<View></View>) :
-                      (<View style={{ backgroundColor: '#f5c4f2', display: 'flex', marginLeft: 10, flexDirection: 'row', justifyContent: 'space-between', borderLeftWidth: 2, borderColor: 'blue' }}>
+                      (<View style={{ backgroundColor: '#89D5FB', display: 'flex', marginLeft: 10, borderLeftWidth: 2, borderColor: '#0072AB' }}>
 
                         {message.chat.replyMessageId.contents.map((content, i) => (
-                          <View key={i} style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                            {renderMessageContentReply(content)}
-                            <View>
-                              <Text style={{ paddingLeft: 15, fontSize: 13, color: '#000' }}>
-                                {message.nameReply}
-                              </Text>
-                              <Text style={{ paddingLeft: 15, fontSize: 13, color: '#000' }}>
-                                [{content.type}]
-                              </Text>
-                            </View>
+                          <View key={i} style={{ display: 'flex', paddingVertical: 10, alignItems: 'center', paddingRight: 5 }}>
+                            {content.type === 'text' ? (
+                              <View>
+                                <Text style={{ fontSize: 13, fontWeight: 'bold', paddingLeft: 15 }}>
+                                  {message.nameReply}
+                                </Text>
+                                {renderMessageContentReply(content)}
+                              </View>
+                            ) : (
+                              <View style={{display: 'flex', paddingVertical: 5, alignItems: 'center', paddingRight: 5, flexDirection: 'row'}}>
+                                {renderMessageContentReply(content)}
+                                <View>
+                                  <Text style={{ paddingLeft: 10, fontSize: 13, fontWeight: 'bold' }}>
+                                    {message.nameReply}
+                                  </Text>
+                                  <Text style={{ paddingLeft: 10, fontSize: 13, color: '#000' }}>
+                                    [{content.type}]
+                                  </Text>
+                                </View>
+                              </View>
+                            )}
                           </View>
                         ))}
 
