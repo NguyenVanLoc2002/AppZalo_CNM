@@ -3,13 +3,20 @@ import { AiOutlineUserAdd, AiOutlineUsergroupAdd } from "react-icons/ai";
 import { CiSearch } from "react-icons/ci";
 import { FaSortDown } from "react-icons/fa";
 import { IoIosMore } from "react-icons/io";
+import toast from "react-hot-toast";
 
 import useConversation from "../../../hooks/useConversation";
 import useGroup from "../../../hooks/useGroup";
 import { useAuthContext } from "../../../contexts/AuthContext";
 import { useSocketContext } from "../../../contexts/SocketContext";
 
-function ListChatComponent({ language, showModal, userChat, friends }) {
+function ListChatComponent({
+  language,
+  showModal,
+  userChat,
+  friends,
+  conversations,
+}) {
   const [valueSearch, setValueSearch] = useState("");
   const [isHovered, setIsHovered] = useState(false);
   const [friendList, setFriendList] = useState([]);
@@ -19,15 +26,15 @@ function ListChatComponent({ language, showModal, userChat, friends }) {
   const [originalFriendList, setOriginalFriendList] = useState([]);
   const [listChatCurrent, setListChatCurrent] = useState([]);
   const [isChatSelected, setIsChatSelected] = useState("");
-  const { conversations, getConversations } = useConversation();
   const { groups, getGroups } = useGroup();
   const { authUser } = useAuthContext();
   const { socket } = useSocketContext();
+  const { getConversationByID, getConversationByParticipants } =
+    useConversation();
 
   
 
   useEffect(() => {
-    getConversations();
     getGroups();
     setOriginalFriendList(friends);
     setFriendList(friends);
@@ -59,8 +66,9 @@ function ListChatComponent({ language, showModal, userChat, friends }) {
         name: group.groupName,
         avatar: group.avatar.url,
         background: group.avatar.url,
-        lastMessage: group.conversation.lastMessage,
+        lastMessage: group.lastMessage,
         tag: group.conversation.tag,
+        admin: group.createBy,
       };
     });
 
@@ -68,9 +76,115 @@ function ListChatComponent({ language, showModal, userChat, friends }) {
     setListChatCurrent(listChat);
     if (socket) {
       socket.on("new_message", ({ message }) => {
-        getConversations();
+        getConversationByID(message.conversationId).then((conversation) => {
+          const friend = conversation.participants.find(
+            (participant) => participant.phone !== authUser.phone
+          );
+          const newChat = {
+            id: friend?._id,
+            conversationId: conversation._id,
+            name: friend?.profile.name,
+            avatar: friend?.profile.avatar?.url || "/zalo.svg",
+            background: friend?.profile.background?.url || "/zalo.svg",
+            unread: message.receiver === authUser.phone ? true : false,
+            lastMessage: message.retrunMessage,
+            tag: conversation.tag,
+          };
+
+          setListChatCurrent((prev) => {
+            const newList = [...prev];
+            const index = newList.findIndex((chat) => chat.id === newChat.id);
+            if (index !== -1) {
+              newList.splice(index, 1);
+            }
+            newList.unshift(newChat);
+            return newList;
+          });
+        });
+      });
+
+      socket.on("add-to-group", ({ group, addMembers }) => {
+        if (addMembers.includes(authUser._id)) {
+          toast.success(
+            language === "vi"
+              ? `Bạn đã tham gia nhóm ${group.name}`
+              : `You have joined the group ${group.name}`
+          );
+        }
+
+        setListChatCurrent((prev) => {
+          const newList = [...prev];
+          const newGroup = {
+            id: group._id,
+            conversationId: group.conversation._id,
+            name: group.groupName,
+            avatar: group.avatar.url,
+            background: group.avatar.url,
+            lastMessage: group.lastMessage,
+            tag: group.conversation.tag,
+            admin: group.createBy,
+          };
+          const index = newList.findIndex((chat) => chat.id === newGroup.id);
+          if (index !== -1) {
+            newList.splice(index, 1);
+          }
+          newList.unshift(newGroup);
+          return newList;
+        });
+      });
+
+      socket.on("remove-from-group", ({ group }) => {
+        if (group.removeMember?.includes(authUser._id)) {
+          if (authUser._id === group.createBy) {
+            toast.error(
+              language === "vi"
+                ? `Bạn đã rời khỏi nhóm ${group.name}`
+                : `You have left the group ${group.name}`
+            );
+          } else {
+            toast.error(
+              language === "vi"
+                ? `Bạn đã bị loại khỏi nhóm ${group.name}`
+                : `You have been removed from the group ${group.name}`
+            );
+          }
+        }
+
+        setListChatCurrent((prev) => {
+          const newList = [...prev];
+          const index = newList.findIndex((chat) => chat.id === group._id);
+          if (index !== -1) {
+            newList.splice(index, 1);
+          }
+          return newList;
+        });
+      });
+
+      socket.on("delete-group", ({ group }) => {
+        toast.success(
+          language === "vi"
+            ? `Nhóm ${group.name} đã bị xóa`
+            : `Group ${group.name} has been deleted`
+        );
+        setListChatCurrent((prev) => {
+          const newList = [...prev];
+          const index = newList.findIndex((chat) => chat.id === group.id);
+          if (index !== -1) {
+            newList.splice(index, 1);
+          }
+          return newList;
+        });
       });
     }
+
+    return () => {
+      if (socket) {
+        socket.off("new_message");
+        socket.off("add-to-group");
+        socket.off("remove-from-group");
+        socket.off("delete-group");
+      }
+    };
   }, [conversations, socket, groups]);
 
   const changeTab = (tab) => {
@@ -99,6 +213,22 @@ function ListChatComponent({ language, showModal, userChat, friends }) {
       );
       setFriendList(filteredFriends);
     }
+  };
+
+  const selectedFriendToChat = (friend) => {
+    const conversation = conversations.find((conversation) =>
+      conversation.participants.some(
+        (participant) => participant._id === friend.id
+      )
+    );
+    if (conversation) {
+      friend.conversationId = conversation.id;
+    } else {
+      getConversationByParticipants([friend.id]).then((conversation) => {
+        friend.conversationId = conversation._id;
+      });
+    }
+    userChat(friend);
   };
 
   return (
@@ -199,7 +329,7 @@ function ListChatComponent({ language, showModal, userChat, friends }) {
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
                 onClick={() => {
-                  userChat(friend);
+                  selectedFriendToChat(friend);
                   setListChatCurrent((prev) => {
                     const newList = [...prev];
                     const index = newList.findIndex(
@@ -307,9 +437,20 @@ function ListChatComponent({ language, showModal, userChat, friends }) {
                       {friend?.lastMessage?.senderId === authUser._id
                         ? "Bạn: "
                         : ""}
-                      {friend?.lastMessage?.contents[0].type === "text"
-                        ? friend?.lastMessage?.contents[0].data
-                        : "File: "}
+                      {friend?.lastMessage?.contents
+                        ? friend.lastMessage.contents[0]?.type === "text"
+                          ? friend?.lastMessage?.contents.length > 15
+                            ? `${friend?.lastMessage?.contents[0].data.slice(
+                                0,
+                                15
+                              )}...`
+                            : friend?.lastMessage?.contents[0].data
+                          : friend?.lastMessage?.contents[0]?.type === "image"
+                          ? "Hình ảnh"
+                          : "Tệp đính kèm"
+                        : language === "vi"
+                        ? "Chưa có tin nhắn"
+                        : "No message yet"}
 
                       {friend?.unread ? (
                         <span className="text-blue-500"> (1)</span>

@@ -1,6 +1,5 @@
 const Chats = require("../models/Chat");
 const Conversation = require("../models/Conversation");
-const { deleteChat } = require("./chat.controller");
 const jwt = require("jsonwebtoken");
 exports.createConversation = async (req, res) => {
   try {
@@ -42,46 +41,22 @@ exports.deleteConversation = async (req, res) => {
   }
 };
 
-// exports.deleteMessInConver = async (req, res) => {
-//   try {
-//     const conversationId = req.params.conversationId;
-//     const chatIdToDelete = req.params.chatId;
-
-//     await deleteChat(req, res);
-
-//     // Nếu deleteChat gặp lỗi và gửi phản hồi lỗi, không cần thiết phải tiếp tục thực hiện lệnh tiếp theo
-//     if (res.headersSent) {
-//       return;
-//     }
-
-//     // Xóa chatIdToDelete cũng như cập nhật trường "messages" của tài liệu "Conversation"
-//     const deleteChatInMessOfConver = await Conversation.findByIdAndUpdate(
-//       conversationId,
-//       { $pull: { messages: chatIdToDelete } }
-//     );
-
-//     console.log("deleteChatInMessOfConver: ", deleteChatInMessOfConver);
-
-//     if (!deleteChatInMessOfConver) {
-//       return res.status(404).json({ message: "Conversation not found" });
-//     }
-
-//     // Trả về phản hồi thành công
-//     res.status(200).json({ message: "Conversation deleted successfully" });
-//   } catch (error) {
-//     console.error("Error deleting conversation:", error);
-//     res
-//       .status(500)
-//       .json({ message: "Failed to delete conversation", error: error.message });
-//   }
-// };
-
 exports.getConversation = async (req, res) => {
   try {
     const conversationId = req.params.conversationId;
-    const conversation = await Conversation.findById(conversationId).populate(
-      "participants"
-    );
+    const conversation = await Conversation.findById(conversationId).populate([
+      {
+        path: "participants",
+        select: "profile _id",
+      },
+      {
+        path: "messages",
+        populate: {
+          path: "replyMessageId",
+          model: "chats",
+        },
+      }
+    ]);
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });
     }
@@ -125,9 +100,7 @@ exports.getConversations = async (req, res) => {
 // get conversation by participants every time a new message is sent
 exports.getConversationByParticipants = async (req, res) => {
   try {
-   console.log( req.body)
     let participants = req.body.participants;
-    console.log(participants)
     const token = req.headers.authorization.split(" ")[1];
     const user = jwt.verify(token, process.env.JWT_SECRET);
     participants = [...participants, user.user_id];

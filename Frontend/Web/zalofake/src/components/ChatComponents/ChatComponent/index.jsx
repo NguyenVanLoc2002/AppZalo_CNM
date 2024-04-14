@@ -11,6 +11,8 @@ import { toast } from "react-hot-toast";
 import { useAuthContext } from "../../../contexts/AuthContext";
 import useGroup from "../../../hooks/useGroup";
 import axiosInstance from "../../../api/axiosInstance";
+import useConversation from "../../../hooks/useConversation";
+import { useSocketContext } from "../../../contexts/SocketContext";
 
 function ChatComponents({ language }) {
   const [userChat, setUserChat] = useState(null);
@@ -24,8 +26,8 @@ function ChatComponents({ language }) {
     addFriend,
   } = useFriend();
   const { authUser, reloadAuthUser } = useAuthContext();
-  const { createGroup } = useGroup();
-  const grLoading = useGroup().loading;
+  const { socket } = useSocketContext();
+  const { createGroup, addMember, grLoading } = useGroup();
 
   const [phone, setPhone] = useState("");
   const [nameGroup, setNameGroup] = useState("");
@@ -37,9 +39,12 @@ function ChatComponents({ language }) {
   const [friendToAdd, setFriendToAdd] = useState("");
   const [isShowModal, setIsShowModal] = useState("");
   const [shareMessage, setShareMessage] = useState();
+  const [addMembersToGroup, setAddMembersToGroup] = useState(null);
   const [valueSearch, setValueSearch] = useState("");
   const [originalFriendList, setOriginalFriendList] = useState([]);
   const [selectedFriends, setSelectedFriends] = useState([]);
+  const { conversations, getConversations } = useConversation();
+  const [listChatCurrent, setListChatCurrent] = useState([]);
 
   const [members, setMembers] = useState([]);
 
@@ -58,7 +63,7 @@ function ChatComponents({ language }) {
           messageType = "sendFiles";
         }
 
-        const response = await axiosInstance.post(
+        await axiosInstance.post(
           `chats/${receiverId}/${messageType}`,
           { data: data },
           {
@@ -88,17 +93,33 @@ function ChatComponents({ language }) {
       await getRecommendedFriends();
     };
     fetchFriends();
+    getConversations();
   }, [authUser]);
 
   useEffect(() => {
     setFriendList(friends);
     setOriginalFriendList(friends);
     setRecommentFriendList(recommendedFriends);
-  }, [friends, recommendedFriends]);
+    setListChatCurrent(conversations);
+  }, [friends, recommendedFriends, conversations]);
 
   const changeShowModal = (modal) => {
     setIsShowModal(modal);
   };
+
+  useEffect(() => {
+    if (socket) {
+      socket.on("delete-group", ({ group }) => {
+        setUserChat(null);
+      });
+    }
+
+    return () => {
+      if (socket) {
+        socket.off("delete-group");
+      }
+    };
+  }, [socket]);
 
   const handleSearch = async () => {
     if (phone === "") {
@@ -149,7 +170,6 @@ function ChatComponents({ language }) {
     for (const receiverId of selectedFriends) {
       try {
         await sendMessage(content, receiverId);
-        console.log(`Sent message to user ${receiverId} successfully.`);
       } catch (error) {
         console.error(`Error sending message to user ${receiverId}:`, error);
       }
@@ -158,10 +178,8 @@ function ChatComponents({ language }) {
 
   const handleSendButtonClick = () => {
     if (selectedFriends.length === 0) {
-      console.log("Please select friends to send message to.");
       return;
     }
-    console.log("Nội dung:", shareMessage.contents[0]);
     sendMessageToSelectedFriends(shareMessage.contents[0]);
     setIsShowModal(false);
   };
@@ -172,6 +190,14 @@ function ChatComponents({ language }) {
         language == "vi"
           ? "Tạo nhóm cần có thêm ít nhất 2 thành viên"
           : "Creating a group requires at least 2 members"
+      );
+      return;
+    }
+    if (nameGroup === "") {
+      toast.error(
+        language == "vi"
+          ? "Vui lòng nhập tên nhóm để tiếp tục"
+          : "Please enter a group name to continue"
       );
       return;
     }
@@ -190,6 +216,34 @@ function ChatComponents({ language }) {
     }
   };
 
+  const handleAddMemberToGroup = async () => {
+    if (members.length < 1) {
+      toast.error(
+        language == "vi"
+          ? "Vui lòng chọn ít nhất 1 thành viên để thêm vào nhóm"
+          : "Please select at least 1 member to add to the group"
+      );
+      return;
+    }
+    const groupData = {
+      groupId: addMembersToGroup,
+      members: members.map((member) => member.id),
+    };
+    const rs = await addMember(addMembersToGroup, groupData);
+    if (rs) {
+      setIsShowModal("");
+      setMembers([]);
+      toast.success(
+        language == "vi"
+          ? "Thêm thành viên vào nhóm thành công"
+          : "Add members to group successfully"
+      );
+      rs?.forEach((message) => {
+        toast.success(message);
+      });
+    }
+  };
+
   return (
     <>
       <div className="relative bg-gray-100 h-screen w-full flex">
@@ -199,6 +253,7 @@ function ChatComponents({ language }) {
             userChat={setUserChat}
             showModal={changeShowModal}
             friends={friendList}
+            conversations={listChatCurrent}
           />
         </div>
         <PeopleChatComponent
@@ -206,6 +261,7 @@ function ChatComponents({ language }) {
           userChat={userChat}
           showModal={changeShowModal}
           shareMessage={setShareMessage}
+          addMembersToGroup={setAddMembersToGroup}
         />
         {isShowModal === "addFriend" && (
           <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/5 h-[90%] bg-white rounded-lg shadow-lg ">
@@ -357,7 +413,15 @@ function ChatComponents({ language }) {
         {isShowModal === "addGroup" && (
           <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/5 h-[90%] bg-white rounded-lg shadow-lg ">
             <div className="relative flex items-center justify-between p-4 border-b text-lg font-semibold h-[10%]">
-              <p>{language == "vi" ? "Tạo nhóm" : "Create a group"}</p>
+              <p>
+                {addMembersToGroup
+                  ? language == "vi"
+                    ? "Thêm thành viên"
+                    : "Add members"
+                  : language == "vi"
+                  ? "Tạo nhóm"
+                  : "Create group"}
+              </p>
               <button
                 onClick={() => {
                   setIsShowModal("");
@@ -369,30 +433,34 @@ function ChatComponents({ language }) {
                 x
               </button>
             </div>
-            <div className=" flex items-center justify-between pl-4 pr-4 pt-2 h-[10%]">
-              <button className="flex rounded-full border p-3">
-                <MdCameraAlt size={25} fill="gray" />
-              </button>
-              <div
-                className={`${
-                  isInputFocusGroup === true
-                    ? "flex border-b mr-auto ml-6 w-full border-blue-500  "
-                    : "flex  border-b mr-auto ml-6 w-full "
-                } `}
-              >
-                <input
-                  type="text"
-                  className="h-9 w-full outline-none "
-                  placeholder={
-                    language == "vi" ? "Nhập tên nhóm" : "Enter the group name"
-                  }
-                  value={nameGroup}
-                  onChange={(e) => setNameGroup(e.target.value)}
-                  onFocus={() => setIsInputFocusGroup(true)}
-                  onBlur={() => setIsInputFocusGroup(false)}
-                />
+            {!addMembersToGroup && (
+              <div className=" flex items-center justify-between pl-4 pr-4 pt-2 h-[10%]">
+                <button className="flex rounded-full border p-3">
+                  <MdCameraAlt size={25} fill="gray" />
+                </button>
+                <div
+                  className={`${
+                    isInputFocusGroup === true
+                      ? "flex border-b mr-auto ml-6 w-full border-blue-500  "
+                      : "flex  border-b mr-auto ml-6 w-full "
+                  } `}
+                >
+                  <input
+                    type="text"
+                    className="h-9 w-full outline-none "
+                    placeholder={
+                      language == "vi"
+                        ? "Nhập tên nhóm"
+                        : "Enter the group name"
+                    }
+                    value={nameGroup}
+                    onChange={(e) => setNameGroup(e.target.value)}
+                    onFocus={() => setIsInputFocusGroup(true)}
+                    onBlur={() => setIsInputFocusGroup(false)}
+                  />
+                </div>
               </div>
-            </div>
+            )}
             <div
               className={` h-[6%] flex items-center rounded-full border  m-4 mt-2 mb-2 ${
                 isInputFocusGroup === true ? " border-blue-500 " : ""
@@ -423,8 +491,11 @@ function ChatComponents({ language }) {
               />
             </div>
             <div className=" h-[15%] grid grid-cols-3 gap-3 px-4 pb-4 overflow-x-auto  w-full border-b">
-              {members.map((member) => (
-                <div className="relative flex items-center justify-between p-2 border rounded-3xl max-h-16 w-full">
+              {members.map((member, index) => (
+                <div
+                  key={index}
+                  className="relative flex items-center justify-between p-2 border rounded-3xl max-h-16 w-full"
+                >
                   <div className="w-14 h-10 ">
                     <img
                       className="rounded-full w-10 h-10"
@@ -516,14 +587,34 @@ function ChatComponents({ language }) {
                     {language == "vi" ? "Hủy" : "Cancel"}
                   </p>
                 </button>
-                <button
-                  className="rounded-lg bg-primaryHover p-3 pl-6 pr-6 mr-3 hover:bg-primary"
-                  onClick={handleAddGroup}
-                >
-                  <p className="text-lg font-semibold text-white">
-                    {language == "vi" ? "Tạo nhóm" : "Create group"}
-                  </p>
-                </button>
+                {addMembersToGroup ? (
+                  <button
+                    className="rounded-lg bg-primaryHover p-3 pl-6 pr-6 mr-3 hover:bg-primary"
+                    onClick={handleAddMemberToGroup}
+                  >
+                    {grLoading ? (
+                      <span className="loading loading-spinner"></span>
+                    ) : (
+                      <p className="text-lg font-semibold text-white">
+                        {language == "vi" ? "Thêm thành viên" : "Add members"}
+                      </p>
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    className="rounded-lg bg-primaryHover p-3 pl-6 pr-6 mr-3 hover:bg-primary"
+                    onClick={handleAddGroup}
+                    disabled={grLoading}
+                  >
+                    {grLoading ? (
+                      <span className="loading loading-spinner"></span>
+                    ) : (
+                      <p className="text-lg font-semibold text-white">
+                        {language == "vi" ? "Tạo nhóm" : "Create group"}
+                      </p>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           </div>
