@@ -15,10 +15,9 @@ exports.sendMessage = async (req, resp) => {
     //Còn là chat single thì không cần truyền chỉ cần truyền data nha FE
     const isGroup = req.body.isGroup || false;
     const replyMessageId = req.body.replyMessageId || null;
-
     let contents = [];
     // Kiểm tra xem req.body có tồn tại không và có chứa nội dung không
-    if (Object.keys(req.body).length) {
+    if (req.body.data) {
       // Nếu có nội dung, thêm vào mảng contents
       contents.push({
         type: req.body.data.type,
@@ -60,7 +59,6 @@ exports.sendMessage = async (req, resp) => {
 
     const group = await Group.findOne({ _id: receiverId });
 
-
     let conversation;
     if (group) {
       conversation = await Conversation.findOne({
@@ -74,7 +72,6 @@ exports.sendMessage = async (req, resp) => {
       });
     }
 
-   
     if (isGroup) {
       const groupMembers = await User.find({ _id: { $in: receiverId } });
       for (const member of groupMembers) {
