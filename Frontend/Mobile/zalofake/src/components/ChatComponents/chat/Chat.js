@@ -104,7 +104,7 @@ function Chat({ navigation }) {
       );
 
       return {
-        id: friend?._id,
+        _id: friend?._id,
         conversation: conversation,
         name: friend?.profile.name,
         avatar: friend?.profile.avatar?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
@@ -120,7 +120,7 @@ function Chat({ navigation }) {
 
     const listGroup = groups.map((group) => {
       return {
-        id: group._id,
+        _id: group._id,
         conversation: group.conversation,
         name: group.groupName,
         avatar: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
@@ -136,6 +136,7 @@ function Chat({ navigation }) {
 
   useEffect(() => {
     fetchDataChat();
+    console.log("listFriend:", JSON.stringify(listFriends));
   }, [conversations, groups]);
 
   const fetchDataConver = async (listChat) => {
@@ -204,7 +205,7 @@ function Chat({ navigation }) {
     // navigation.navigate("Message", { conver: item.conver});
   };
   const removeItemById = (array, idToRemove) => {
-    const indexToRemove = array.findIndex(item => item.id === idToRemove);
+    const indexToRemove = array.findIndex(item => item._id === idToRemove);
     if (indexToRemove !== -1) {
       array.splice(indexToRemove, 1);
     }
@@ -256,7 +257,6 @@ function Chat({ navigation }) {
       return `${minutes} phút`;
     }
   };
-
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <Toast />
