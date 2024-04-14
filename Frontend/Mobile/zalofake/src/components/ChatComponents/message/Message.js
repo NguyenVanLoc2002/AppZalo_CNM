@@ -18,17 +18,18 @@ import useSendMessage from "../../../hooks/useSendMessage";
 import * as ImagePicker from "expo-image-picker";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useSocketContext } from "../../../contexts/SocketContext"
-
-
+import useCreateGroup from "../../../hooks/useCreateGroup";
+import { useAuthContext } from "../../../contexts/AuthContext";
 const Message = ({ navigation, route }) => {
   const { conver } = route.params;
-  // console.log("conver:", JSON.stringify(conver));
+  const { getUserById, getAllGroup } = useCreateGroup()
+  const { authUser } = useAuthContext();
   //nhi  
   const [textMessage, setTextMessage] = useState(null)
   const [isColorSend, setIsColorSend] = useState(false)
   const { sendMessage, sendImage, sendVideo } = useSendMessage();
   const { socket } = useSocketContext()
-  
+
   //truc
   const [chats, setChats] = useState([]);
   const scrollViewRef = useRef();
@@ -53,12 +54,37 @@ const Message = ({ navigation, route }) => {
     setIsModalFriendVisible(!isModalFriendVisible);
   };
   const fetchFriends = async () => {
+    let data = []
     try {
       const response = await axiosInstance.get('/users/get/friends');
-      setFriends(response.data.friends);
+      const newFriend = await Promise.all(response.data.friends.map(async (friend) => {
+        return {
+          _id: friend.userId,
+          name: friend.profile.name,
+          avatar: friend.profile.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+          tag: 'friend'
+        }
+      }))
+      data.push(...newFriend)
     } catch (error) {
-      console.log(error);
+      console.log("FetchGroupError: ", error);
     }
+    try {
+      const allGr = await getAllGroup();
+      const newGroup = await Promise.all(allGr.map(async (group) => {
+        return {
+          _id: group._id,
+          name: group.groupName,
+          avatar: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+          tag: group.conversation.tag
+        }
+      }))
+      data.push(...newGroup)
+    } catch (error) {
+      console.log("FetchGroupError: ", error);
+    }
+    setFriends(data)
+
   };
   const fetchChats = async () => {
     try {
@@ -67,8 +93,21 @@ const Message = ({ navigation, route }) => {
       } else {
         const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversation._id}`);
         const reversedChats = response.data; //.reverse();
-        // console.log(reversedChats)
-        setChats(reversedChats);
+        console.log(reversedChats)
+
+        let data = [];
+        let int = reversedChats.length;
+        for (let index = 0; index < int; index++) {
+          const chat = reversedChats[index];
+          const getUser = await getUserById(chat.senderId)
+          const chatNew = {
+            chat: chat,
+            sender: getUser.user.profile,
+
+          }
+          data.push(chatNew);
+        }
+        setChats(data);
         fetchFriends();
         // const lastElement = reversedChats[0]
         // setLastTimestamp(lastElement.timestamp)
@@ -106,13 +145,7 @@ const Message = ({ navigation, route }) => {
   }, [socket]);
 
 
-  const handleCheckIsSend = (message) => {
-    if (message.senderId === conver.id) {
-      return false;
-    } else {
-      return true;
-    }
-  };
+
   const handleGetTime = (time) => {
     const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss');
     const dateObject = new Date(vietnamDatetime)
@@ -150,7 +183,7 @@ const Message = ({ navigation, route }) => {
         </View>
       ),
       headerTitle: () => (
-        <View style={{ flexDirection: "row", alignItems: "center" , width: '55%', marginRight: 100}}>
+        <View style={{ flexDirection: "row", alignItems: "center", width: '55%', marginRight: 100 }}>
           <Text style={{ fontSize: 20, color: "white", fontWeight: 'bold' }}>{conver.name}</Text>
         </View>
       ),
@@ -191,6 +224,7 @@ const Message = ({ navigation, route }) => {
         // const response = await axiosInstance.get(`/chats/getHistoryMessage/${user._id}?lastTimestamp=${lastTimestamp}`);
         const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversation._id}`);
         const reversedChats = response.data;//.reverse();
+
         // if (reversedChats && reversedChats.length > 0) {
         //   setChats(prevChats => [...reversedChats, ...prevChats]);
         //   restoreScrollPosition();
@@ -226,9 +260,8 @@ const Message = ({ navigation, route }) => {
   const handleDeleteMess = () => {
     setIsLoadThuHoi(true)
     const thuHoi = async () => {
-      console.log('id' + messageSelected._id)
       try {
-        const response = await axiosInstance.post(`conversations/deletedMess/${conver.conversation._id}/${messageSelected._id}`);
+        const response = await axiosInstance.post(`/chats/${messageSelected.chat._id}/delete`);
         console.log(response)
         if (response.status === 200) {
           fetchChats();
@@ -244,12 +277,11 @@ const Message = ({ navigation, route }) => {
     };
     thuHoi();
   };
-
   const handleDeleteMessByStatus = () => {
     setIsLoadXoa(true)
     const deleteChat = async () => {
       try {
-        const response = await axiosInstance.post(`conversations/deleteOnMySelf/${conver.conversation._id}/${messageSelected._id}`);
+        const response = await axiosInstance.post(`conversations/deleteOnMySelf/${conver.conversation._id}/${messageSelected.chat._id}`);
         if (response.status === 200) {
           fetchChats();
           showToastSuccess("Xóa thành công")
@@ -273,7 +305,13 @@ const Message = ({ navigation, route }) => {
     setIsLoadChuyenTiep(true)
     const handleSendMessage = async () => {
       try {
-        const send = await sendMessage(friend, messageSelected.contents[0])
+        let isGroup;
+        if(friend.tag==='group'){
+          isGroup=true;
+        }else{
+          isGroup=false;
+        }
+        const send = await sendMessage(friend._id, messageSelected.chat.contents[0],isGroup )
         if (send) {
           showToastSuccess("Chuyển tiếp thành công")
           setIsLoadChuyenTiep(false)
@@ -311,9 +349,9 @@ const Message = ({ navigation, route }) => {
     if (!pickerResult.canceled) {
       setIsLoadMess(true)
       let isGroup = false
-      if(conver.tag === "group"){
+      if (conver.tag === "group") {
         isGroup = true
-      } 
+      }
       for (const asset of pickerResult.assets) {
         if (asset.type === 'image') {
           const formData = new FormData();
@@ -390,10 +428,10 @@ const Message = ({ navigation, route }) => {
     else {
       setIsLoadMess(true)
       let isGroup = false
-      if(conver.tag === "group"){
+      if (conver.tag === "group") {
         isGroup = true
         console.log("tag", conver.tag);
-      } 
+      }
       try {
         console.log("isGroup:", isGroup);
         const response = await sendMessage(conver._id,
@@ -418,6 +456,16 @@ const Message = ({ navigation, route }) => {
     }
   }
 
+  const handleCheckIsSend = (message) => {
+    // const getUser = await getUserById(message.senderId)
+    if (authUser.profile.name === message.sender.name) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+
   return (
     <View style={{ flex: 1, backgroundColor: "#E5E9EB" }}>
       <View style={{ flex: 1, justifyContent: "center" }}>
@@ -437,25 +485,39 @@ const Message = ({ navigation, route }) => {
             setContentHeight(height);
           }}
         >
-          <View style={{ flex: 1, justifyContent: "flex-start" }}>
+          <View style={{ flex: 1 }}>
             {chats.length > 0 ?
-
               (chats.map((message, index) => (
-                <View key={index} style={{ justifyContent: 'space-around', borderRadius: 10, backgroundColor: handleCheckIsSend(message) ? "#7debf5" : "#d9d9d9", margin: 5, alignItems: handleCheckIsSend(message) ? "flex-end" : "flex-start", alignSelf: handleCheckIsSend(message) ? "flex-end" : "flex-start" }}>
-                  {message.contents.map((content, i) => (
-                    <Pressable key={i}
-                      onPress={() => handlePressIn(message)}
-                    >
-                      <View>
-                        {renderMessageContent(content)}
-                        <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTime(message.timestamp)}</Text></View>
-                      </View>
-                    </Pressable>
+                <View key={index} style={{ display: 'flex', flexDirection: 'row', alignItems: "center", justifyContent: handleCheckIsSend(message) ? "flex-end" : "flex-start" }} >
+                  {handleCheckIsSend(message) ?
+                    (<View></View>) :
+                    (<View
+                      style={{ width: 35, height: 35, justifyContent: "center", alignItems: "center", marginLeft: 10, marginRight: 10 }} >
+                      <Image
+                        source={{ uri: message.sender.avatar?.url }}
+                        style={{ width: 35, height: 35, borderRadius: 25 }} />
+                    </View>)}
+                  <View style={[
+                    handleCheckIsSend(message) ? styles.styleSender : styles.styleRecive
+                  ]}>
+                    <Text style={{ paddingLeft: 15, fontSize: 12, color: 'gray' }}>
+                      {message.sender.name}
+                    </Text>
 
-                  ))}
+                    {message.chat.contents.map((content, i) => (
+                      <Pressable key={i}
+                        onPress={() => handlePressIn(message)}>
+                        <View>
+                          {renderMessageContent(content)}
+                          <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTime(message.timestamp)}</Text></View>
+                        </View>
+                      </Pressable>
+                    ))}
+                  </View>
 
                 </View>
-              ))) : (<View><Text style={{fontSize: 16, fontWeight: '600', textAlign: 'center', paddingVertical: 10}}>Chưa có tin nhắn nào!</Text></View>)}
+              ))) : (<View><Text style={{ fontSize: 16, fontWeight: '600', textAlign: 'center', paddingVertical: 10 }}>Chưa có tin nhắn nào!</Text></View>)}
+
           </View>
         </ScrollView>
       </View >
@@ -551,23 +613,26 @@ const Message = ({ navigation, route }) => {
                 )}
                 <Text style={styles.modalButton} >Xóa</Text>
               </Pressable>
-              {messageSelected.senderId === conver.id ? (
-                <Text></Text>
-              ) : (
-                <Pressable style={styles.pressCol} onPress={handleDeleteMess}>
-                  {isLoadThuHoi ? (
-                    <ActivityIndicator color="black" size="large" />
+              {
+                messageSelected.sender?.name === authUser.profile.name
+                  ? (
+                    <Pressable style={styles.pressCol} onPress={handleDeleteMess}>
+                      {isLoadThuHoi ? (
+                        <ActivityIndicator color="black" size="large" />
+                      ) : (
+                        <FontAwesome5
+                          name="comment-slash"
+                          size={20}
+                          color="black"
+                          style={{ marginRight: 8 }}
+                        />
+                      )}
+                      <Text style={styles.modalButton}>Thu hồi</Text>
+                    </Pressable>
+
                   ) : (
-                    <FontAwesome5
-                      name="comment-slash"
-                      size={20}
-                      color="black"
-                      style={{ marginRight: 8 }}
-                    />
+                    <Text></Text>
                   )}
-                  <Text style={styles.modalButton}>Thu hồi</Text>
-                </Pressable>
-              )}
             </View>
             <View style={styles.modalButtonContainer1}>
               <Pressable style={styles.pressCol} >
@@ -620,11 +685,11 @@ const Message = ({ navigation, route }) => {
                         <View style={styles.friendInfo}>
                           <Image
                             source={{
-                              uri: friend?.profile?.avatar?.url,
+                              uri: friend.avatar
                             }}
                             style={styles.friendAvatar}
                           />
-                          <Text style={styles.friendName}>{friend?.profile?.name}</Text>
+                          <Text style={styles.friendName}>{friend.name}</Text>
                         </View>
                         <View style={styles.friendActions}>
                           <Pressable onPress={() => chuyenTiepChat(friend)} style={styles.pressCol}>
@@ -733,5 +798,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20
   },
+  styleSender: {
+    marginTop: 10,
+    justifyContent: 'space-around',
+    borderRadius: 10,
+    backgroundColor: "#7debf5",
+    alignItems: "flex-end",
+    alignSelf: "flex-end",
+  },
+  styleRecive: {
+    marginTop: 10,
+    backgroundColor: "#d9d9d9",
+    alignItems: "flex-start",
+    alignSelf: "flex-start",
+    justifyContent: 'space-around',
+    borderRadius: 10,
+  },
+
 });
 export default Message;

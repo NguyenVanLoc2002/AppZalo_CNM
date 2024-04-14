@@ -39,7 +39,6 @@ const chatSchema = new mongoose.Schema({
 
 chatSchema.post("save", async function (chat, next) {
   try {
-    console.log("conversation not found: ", chat);
     if (!chat.isGroup) {
       const conversation = await Conversation.findOne({
         participants: { $all: [chat.senderId, chat.receiverId] },
@@ -78,7 +77,6 @@ chatSchema.post("save", async function (chat, next) {
     next(error);
   }
 });
-
 const Chats = mongoose.model("chats", chatSchema);
 
 module.exports = Chats;
