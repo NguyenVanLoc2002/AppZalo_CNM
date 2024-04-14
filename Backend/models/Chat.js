@@ -30,6 +30,11 @@ const chatSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  replyMessageId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "users",
+    default: null,
+  },
 });
 
 chatSchema.post("save", async function (chat, next) {
@@ -37,6 +42,7 @@ chatSchema.post("save", async function (chat, next) {
     if (!chat.isGroup) {
       const conversation = await Conversation.findOne({
         participants: { $all: [chat.senderId, chat.receiverId] },
+        tag : 'friend'
       });
 
       if (!conversation) {
@@ -45,9 +51,9 @@ chatSchema.post("save", async function (chat, next) {
           messages: [chat._id],
           lastMessage: chat._id,
         });
+
         await newConversation.save();
       } else {
-        // console.log("conversation: ", conversation);
         conversation.messages.push(chat._id);
         conversation.lastMessage = chat._id;
         await conversation.save();
