@@ -55,7 +55,11 @@ exports.getConversation = async (req, res) => {
           path: "replyMessageId",
           model: "chats",
         },
-      }
+      },
+      {
+        path: "lastMessage",
+        select: "contents senderId",
+      },
     ]);
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });
@@ -107,7 +111,6 @@ exports.getConversationByParticipants = async (req, res) => {
     if (!participants) {
       return res.status(400).json({ message: "Participants are required" });
     }
-
 
     const conversation = await Conversation.findOne({
       participants: { $all: participants },

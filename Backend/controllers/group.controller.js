@@ -293,7 +293,7 @@ exports.addMember = async (req, res) => {
         io.to(memderSocketId.socket_id).emit("add-to-group", {
           data: {
             group: group,
-            addMembers: members,
+            addMembers: newMembers,
           },
         });
       }
