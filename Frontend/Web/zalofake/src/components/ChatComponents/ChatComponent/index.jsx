@@ -12,7 +12,6 @@ import { useAuthContext } from "../../../contexts/AuthContext";
 import useGroup from "../../../hooks/useGroup";
 import axiosInstance from "../../../api/axiosInstance";
 import useConversation from "../../../hooks/useConversation";
-import { useSocketContext } from "../../../contexts/SocketContext";
 
 function ChatComponents({ language }) {
   const [userChat, setUserChat] = useState(null);
@@ -26,7 +25,6 @@ function ChatComponents({ language }) {
     addFriend,
   } = useFriend();
   const { authUser, reloadAuthUser } = useAuthContext();
-  const { socket } = useSocketContext();
   const { createGroup, addMember, grLoading } = useGroup();
 
   const [phone, setPhone] = useState("");
@@ -106,20 +104,6 @@ function ChatComponents({ language }) {
   const changeShowModal = (modal) => {
     setIsShowModal(modal);
   };
-
-  useEffect(() => {
-    if (socket) {
-      socket.on("delete-group", ({ group }) => {
-        setUserChat(null);
-      });
-    }
-
-    return () => {
-      if (socket) {
-        socket.off("delete-group");
-      }
-    };
-  }, [socket]);
 
   const handleSearch = async () => {
     if (phone === "") {
@@ -251,6 +235,7 @@ function ChatComponents({ language }) {
           <ListChatComponent
             language={language}
             userChat={setUserChat}
+            changeUserChat={setUserChat}
             showModal={changeShowModal}
             friends={friendList}
             conversations={listChatCurrent}

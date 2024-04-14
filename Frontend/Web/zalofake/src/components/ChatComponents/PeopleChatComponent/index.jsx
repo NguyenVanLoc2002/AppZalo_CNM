@@ -44,8 +44,7 @@ function PeopleChatComponent({
   const { socket } = useSocketContext();
   const { authUser } = useAuthContext();
   const { getConversationByID, conversation } = useConversation();
-  const { updateGroup, addMember, removeMember, deleteGroup, loading } =
-    useGroup();
+  const { updateGroup, removeMember, deleteGroup, loading } = useGroup();
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [isAddingMessages, setIsAddingMessages] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
@@ -57,6 +56,9 @@ function PeopleChatComponent({
   const [name, setName] = useState("");
 
   useEffect(() => {
+    if (!userChat) {
+      setSidebarVisible(false);
+    }
     if (userChat) {
       if (userChat.admin?._id === authUser._id) {
         setIsGroupAdmin(true);
@@ -85,13 +87,14 @@ function PeopleChatComponent({
         getConversationByID(userChat.conversationId);
       });
 
-      socket.on("add-to-group", ({ group }) => {
-        if (group._id === userChat.id) {
+      socket.on("add-to-group", ({ data }) => {
+        if (data?.group._id === userChat.id) {
           getConversationByID(userChat.conversationId);
         }
       });
 
       socket.on("remove-from-group", ({ group }) => {
+        console.log(group);
         if (group.removeMember?.includes(authUser._id)) {
           if (authUser._id === group.createBy) {
             toast.error(
@@ -99,17 +102,12 @@ function PeopleChatComponent({
                 ? `Bạn đã rời khỏi nhóm ${group.name}`
                 : `You have left the group ${group.name}`
             );
-          } 
-        }
-
-        setListChatCurrent((prev) => {
-          const newList = [...prev];
-          const index = newList.findIndex((chat) => chat.id === group._id);
-          if (index !== -1) {
-            newList.splice(index, 1);
           }
-          return newList;
-        });
+        } else {
+          conversation?.participants?.filter((p) => {
+            group.removeMember?.includes(p._id);
+          });
+        }
       });
 
       return () => {
