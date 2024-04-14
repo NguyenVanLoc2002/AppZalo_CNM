@@ -89,11 +89,10 @@ const Message = ({ navigation, route }) => {
   const fetchChats = async () => {
     try {
       if (conver.conversation._id === null || conver.conversation._id === undefined) {
-        // showToastSuccess('Chưa có tin nhắn')
       } else {
         const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversation._id}`);
-        const reversedChats = response.data; //.reverse();
-        console.log(reversedChats)
+        const reversedChats = response.data; 
+        // console.log(reversedChats)
 
         let data = [];
         let int = reversedChats.length;
@@ -345,7 +344,7 @@ const Message = ({ navigation, route }) => {
       videoExportPreset: ImagePicker.VideoExportPreset.Passthrough,
       videoMaxDuration: 10
     });
-    console.log(pickerResult.assets[0])
+
     if (!pickerResult.canceled) {
       setIsLoadMess(true)
       let isGroup = false
@@ -364,8 +363,6 @@ const Message = ({ navigation, route }) => {
           });
           formData.append('isGroup', isGroup);
           try {
-            console.log("formData",formData);
-        
             const response = await sendImage(conver._id, formData)
             if (response.status === 201) {
               setIsLoadMess(false)
@@ -430,10 +427,8 @@ const Message = ({ navigation, route }) => {
       let isGroup = false
       if (conver.tag === "group") {
         isGroup = true
-        console.log("tag", conver.tag);
       }
       try {
-        console.log("isGroup:", isGroup);
         const response = await sendMessage(conver._id,
           { type: 'text', data: textMessage }, isGroup)
         if (response.status === 201) {
@@ -464,7 +459,6 @@ const Message = ({ navigation, route }) => {
       return false;
     }
   };
-
 
   return (
     <View style={{ flex: 1, backgroundColor: "#E5E9EB" }}>
@@ -500,7 +494,7 @@ const Message = ({ navigation, route }) => {
                   <View style={[
                     handleCheckIsSend(message) ? styles.styleSender : styles.styleRecive
                   ]}>
-                    <Text style={{ paddingLeft: 15, fontSize: 12, color: 'gray' }}>
+                    <Text style={{ paddingHorizontal: 10, fontSize: 12, color: 'gray', fontWeight: '700' }}>
                       {message.sender.name}
                     </Text>
 
@@ -726,7 +720,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "#e2e8f1",
   },
   modalContent: {
     backgroundColor: "#fff",
@@ -802,17 +796,19 @@ const styles = StyleSheet.create({
     marginTop: 10,
     justifyContent: 'space-around',
     borderRadius: 10,
-    backgroundColor: "#7debf5",
+    backgroundColor: "#cff0fe",
     alignItems: "flex-end",
     alignSelf: "flex-end",
+    paddingTop: 5,
   },
   styleRecive: {
     marginTop: 10,
-    backgroundColor: "#d9d9d9",
+    backgroundColor: "white",
     alignItems: "flex-start",
     alignSelf: "flex-start",
     justifyContent: 'space-around',
     borderRadius: 10,
+    paddingTop: 5
   },
 
 });
