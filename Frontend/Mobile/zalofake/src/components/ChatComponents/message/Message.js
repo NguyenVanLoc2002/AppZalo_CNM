@@ -6,46 +6,49 @@ import {
   TextInput,
   Pressable,
   StyleSheet,
-  ScrollView, ActivityIndicator, Modal,
-  Image
+  ScrollView,
+  ActivityIndicator,
+  Modal,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import axiosInstance from "../../../api/axiosInstance";
-import moment from 'moment-timezone';
-import useMessage from '../../../hooks/useMessage'
+import moment from "moment-timezone";
+import useMessage from "../../../hooks/useMessage";
 import Toast from "react-native-toast-message";
 import useSendMessage from "../../../hooks/useSendMessage";
 import * as ImagePicker from "expo-image-picker";
 import { FontAwesome5 } from "@expo/vector-icons";
-import { useSocketContext } from "../../../contexts/SocketContext"
+import { useSocketContext } from "../../../contexts/SocketContext";
 
 const Message = ({ navigation, route }) => {
-  const { conver,user} = route.params;
-  // const {user} = conver.user;
-  //nhi  
-  const [textMessage, setTextMessage] = useState(null)
-  const [isColorSend, setIsColorSend] = useState(false)
+  const { group, user } = route.params;
+  // const {user} = group.user;
+  //nhi
+  const [textMessage, setTextMessage] = useState(null);
+  const [isColorSend, setIsColorSend] = useState(false);
   const { sendMessage, sendImage, sendVideo } = useSendMessage();
-  const { socket } = useSocketContext()
+  const { socket } = useSocketContext();
 
   //truc
   const [chats, setChats] = useState([]);
   const scrollViewRef = useRef();
   const [contentHeight, setContentHeight] = useState(0);
   const [scrollViewHeight, setScrollViewHeight] = useState(0);
-  const [lastTimestamp, setLastTimestamp] = useState("")
+  const [lastTimestamp, setLastTimestamp] = useState("");
   const [isLoad, setIsLoad] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { renderMessageContent, showToastSuccess, showToastError } = useMessage();
+  const { renderMessageContent, showToastSuccess, showToastError } =
+    useMessage();
   const [isModalVisible, setModalVisible] = useState(false);
   const [messageSelected, setMessageSelected] = useState("");
   const [isModalFriendVisible, setIsModalFriendVisible] = useState(false);
   const [friends, setFriends] = useState([]);
-  const [isLoadMess, setIsLoadMess] = useState(false)
-  const [isLoadChuyenTiep, setIsLoadChuyenTiep] = useState(false)
-  const [isLoadThuHoi, setIsLoadThuHoi] = useState(false)
-  const [isLoadXoa, setIsLoadXoa] = useState(false)
-  
+  const [isLoadMess, setIsLoadMess] = useState(false);
+  const [isLoadChuyenTiep, setIsLoadChuyenTiep] = useState(false);
+  const [isLoadThuHoi, setIsLoadThuHoi] = useState(false);
+  const [isLoadXoa, setIsLoadXoa] = useState(false);
+
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
   };
@@ -54,7 +57,7 @@ const Message = ({ navigation, route }) => {
   };
   const fetchFriends = async () => {
     try {
-      const response = await axiosInstance.get('/users/get/friends');
+      const response = await axiosInstance.get("/users/get/friends");
       setFriends(response.data.friends);
     } catch (error) {
       console.log(error);
@@ -62,25 +65,26 @@ const Message = ({ navigation, route }) => {
   };
   const fetchChats = async () => {
     try {
-      const response = await axiosInstance.get(`/conversations/get/messages/${conver._id}`);
+      const response = await axiosInstance.get(
+        `/conversations/get/messages/${group.conversation?._id}`
+      );
       const reversedChats = response.data; //.reverse();
-      console.log(reversedChats)
       setChats(reversedChats);
       fetchFriends();
-      const lastElement = reversedChats[0]
-      setLastTimestamp(lastElement.timestamp)
+      const lastElement = reversedChats[0];
+      setLastTimestamp(lastElement?.timestamp);
     } catch (error) {
       console.log(error);
       return false;
     }
   };
   const scrollToEnd = () => {
-    fetchChats()
+    fetchChats();
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollToEnd({ animated: true });
       console.log("scrollToEnd");
     }
-  }
+  };
   useEffect(() => {
     fetchChats();
 
@@ -88,10 +92,10 @@ const Message = ({ navigation, route }) => {
       socket.on("new_message", ({ message }) => {
         setChats((prevMessages) => [message, ...prevMessages]);
         console.log("new_message: ", message);
-        scrollToEnd()
+        scrollToEnd();
       });
       socket.on("delete_message", ({ chatId }) => {
-        scrollToEnd()
+        scrollToEnd();
       });
       return () => {
         socket.off("new_message");
@@ -100,53 +104,46 @@ const Message = ({ navigation, route }) => {
     }
   }, [socket]);
 
-
   const handleCheckIsSend = (message) => {
-    if (message.senderId === user._id) {
+    if (message.senderId === user?._id) {
       return false;
     } else {
       return true;
     }
   };
   const handleGetTime = (time) => {
-    const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss');
-    const dateObject = new Date(vietnamDatetime)
-    return `${dateObject.getHours()}:${dateObject.getMinutes()}`
+    const vietnamDatetime = moment(time)
+      .tz("Asia/Ho_Chi_Minh")
+      .format("YYYY-MM-DD HH:mm:ss");
+    const dateObject = new Date(vietnamDatetime);
+    return `${dateObject.getHours()}:${dateObject.getMinutes()}`;
   };
 
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <View style={{ flexDirection: "row" }}>
-          <Pressable onPress={() => console.log("Pressed call")}>
-            <Ionicons
-              name="call-outline"
-              size={27}
-              color="white"
-              style={{ padding: 5, paddingStart: 15, marginRight: 10 }}
-            />
-          </Pressable>
-          <Ionicons
-            name="videocam-outline"
-            size={27}
-            color="white"
-            style={{ padding: 5, marginRight: 10 }}
-          />
-          <Pressable
-            onPress={() => navigation.navigate("MessageSettings", { user })}
-          >
-            <Ionicons
-              name="list-outline"
-              size={27}
-              color="white"
-              style={{ padding: 5 }}
-            />
-          </Pressable>
+          {group && (
+            <Pressable
+              onPress={() => {
+                navigation.navigate("MessageSettings", { group });
+              }}
+            >
+              <Ionicons
+                name="list-outline"
+                size={27}
+                color="white"
+                style={{ padding: 5 }}
+              />
+            </Pressable>
+          )}
         </View>
       ),
       headerTitle: () => (
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text style={{ fontSize: 20, color: "white", fontWeight: 'bold' }}>{user?.profile?.name}</Text>
+          <Text style={{ fontSize: 20, color: "white", fontWeight: "bold" }}>
+            {user?.profile?.name || group?.nameGroup}
+          </Text>
         </View>
       ),
       headerStyle: {
@@ -164,42 +161,44 @@ const Message = ({ navigation, route }) => {
   useEffect(() => {
     if (scrollViewRef.current && contentHeight > scrollViewHeight && !isLoad) {
       const offset = contentHeight - scrollViewHeight;
-      setIsLoad(true)
+      setIsLoad(true);
       scrollViewRef.current.scrollTo({ x: 0, y: offset, animated: true });
     }
   }, [contentHeight, scrollViewHeight]);
-
 
   // Khôi phục vị trí cuộn của ScrollView
   const restoreScrollPosition = () => {
     if (scrollViewRef.current) {
       scrollViewRef.current.measure((x, y, width, height, pageX, pageY) => {
-        scrollViewRef.current.scrollTo({ x: 0, y: height + scrollViewHeight, animated: false });
-
+        scrollViewRef.current.scrollTo({
+          x: 0,
+          y: height + scrollViewHeight,
+          animated: false,
+        });
       });
     }
   };
   const handleScrollToTop = () => {
-    setIsLoading(true)
+    setIsLoading(true);
     const fetchChats = async () => {
       try {
         // const response = await axiosInstance.get(`/chats/getHistoryMessage/${user._id}?lastTimestamp=${lastTimestamp}`);
-        const response = await axiosInstance.get(`/conversations/get/messages/${conver._id}`);
-        const reversedChats = response.data;//.reverse();
+        const response = await axiosInstance.get(
+          `/conversations/get/messages/${group.conversation?._id}`
+        );
+        const reversedChats = response.data; //.reverse();
         // if (reversedChats && reversedChats.length > 0) {
         //   setChats(prevChats => [...reversedChats, ...prevChats]);
         //   restoreScrollPosition();
         //   const lastElement = reversedChats[0]
         //   setLastTimestamp(lastElement.timestamp)
         // }
-        setIsLoading(false)
-
+        setIsLoading(false);
       } catch (error) {
         console.log(error);
       }
     };
     fetchChats();
-
   };
   const handleScroll = (event) => {
     const { y } = event.nativeEvent.contentOffset;
@@ -208,58 +207,58 @@ const Message = ({ navigation, route }) => {
     }
   };
   const handlePressIn = (message) => {
-    setMessageSelected(message)
-    setModalVisible(true)
+    setMessageSelected(message);
+    setModalVisible(true);
   };
   const removeItemById = (array, idToRemove) => {
-    const indexToRemove = array.findIndex(item => item._id === idToRemove);
+    const indexToRemove = array.findIndex((item) => item._id === idToRemove);
     if (indexToRemove !== -1) {
       array.splice(indexToRemove, 1);
     }
     return array;
   };
   const handleDeleteMess = () => {
-    setIsLoadThuHoi(true)
+    setIsLoadThuHoi(true);
     const thuHoi = async () => {
-      console.log('id'+messageSelected._id)
       try {
-        const response = await axiosInstance.post(`chats/${messageSelected._id}/delete`);
-        console.log(response)
+        const response = await axiosInstance.post(
+          `chats/${messageSelected._id}/delete`
+        );
         if (response.status === 200) {
           const newArray = removeItemById(chats, messageSelected._id);
-          setChats(newArray)
-          showToastSuccess("Thu hồi thành công")
-          toggleModal()
-          setIsLoadThuHoi(false)
+          setChats(newArray);
+          showToastSuccess("Thu hồi thành công");
+          toggleModal();
+          setIsLoadThuHoi(false);
         }
       } catch (error) {
         console.log(error);
-        setIsLoadThuHoi(false)
-        toggleModal()
+        setIsLoadThuHoi(false);
+        toggleModal();
       }
     };
     thuHoi();
     // setModalVisible(false)
   };
 
-
-
   const handleDeleteMessByStatus = () => {
-    setIsLoadXoa(true)
+    setIsLoadXoa(true);
     const deleteChat = async () => {
       try {
-        const response = await axiosInstance.post(`chats/updateStatus/${messageSelected._id}`);
+        const response = await axiosInstance.post(
+          `chats/updateStatus/${messageSelected._id}`
+        );
         if (response.status === 200) {
           const newArray = removeItemById(chats, messageSelected._id);
-          setChats(newArray)
-          showToastSuccess("Xóa thành công")
-          toggleModal()
-          setIsLoadXoa(false)
+          setChats(newArray);
+          showToastSuccess("Xóa thành công");
+          toggleModal();
+          setIsLoadXoa(false);
         }
       } catch (error) {
         console.log(error);
-        setIsLoadXoa(false)
-        toggleModal()
+        setIsLoadXoa(false);
+        toggleModal();
       }
     };
     deleteChat();
@@ -271,23 +270,23 @@ const Message = ({ navigation, route }) => {
   };
 
   const chuyenTiepChat = (friend) => {
-    setIsLoadChuyenTiep(true)
+    setIsLoadChuyenTiep(true);
     const handleSendMessage = async () => {
       try {
-        const send = await sendMessage(friend, messageSelected.contents[0])
+        const send = await sendMessage(friend, messageSelected.contents[0]);
         if (send) {
-          showToastSuccess("Chuyển tiếp thành công")
-          setIsLoadChuyenTiep(false)
+          showToastSuccess("Chuyển tiếp thành công");
+          setIsLoadChuyenTiep(false);
         } else {
-          showToastError("Chuyển tiếp thất bại")
+          showToastError("Chuyển tiếp thất bại");
         }
       } catch (error) {
-        console.log("error1:", error)
-        setIsLoadChuyenTiep(false)
+        console.log("error1:", error);
+        setIsLoadChuyenTiep(false);
         return false;
       }
       toggleModalFriend();
-    }
+    };
     handleSendMessage();
   };
 
@@ -306,67 +305,63 @@ const Message = ({ navigation, route }) => {
       allowsMultipleSelection: true,
       selectionLimit: 20,
       videoExportPreset: ImagePicker.VideoExportPreset.Passthrough,
-      videoMaxDuration: 10
+      videoMaxDuration: 10,
     });
-    console.log(pickerResult.assets[0])
+    console.log("picker", pickerResult.assets[0]);
     if (!pickerResult.canceled) {
-      setIsLoadMess(true)
-     
+      setIsLoadMess(true);
+
       for (const asset of pickerResult.assets) {
-        if (asset.type === 'image') {
+        if (asset.type === "image") {
           const formData = new FormData();
-            const fileName = asset.uri.split('/').pop();
-            formData.append('data[]', {
-              uri: asset.uri,
-              name: fileName,
-              type: 'image/jpeg',
-            });
+          const fileName = asset.uri.split("/").pop();
+          formData.append("data[]", {
+            uri: asset.uri,
+            name: fileName,
+            type: "image/jpeg",
+          });
           try {
-            const response = await sendImage(user, formData)
+            const response = await sendImage(user, formData);
             if (response.status === 201) {
-              setIsLoadMess(false)
-              setIsLoad(false)
-              setChats(
-                chats.concat(response.data.data))
-              scrollToEnd()
+              setIsLoadMess(false);
+              setIsLoad(false);
+              setChats(chats.concat(response.data.data));
+              scrollToEnd();
               console.log("success");
-            }
-            else if (response.status === 500) {
+            } else if (response.status === 500) {
               console.log("fail");
             }
           } catch (error) {
             console.log(error);
-            setIsLoadMess(false)
+            setIsLoadMess(false);
           }
-        } else if (asset.type === 'video') {
+        } else if (asset.type === "video") {
           const formData = new FormData();
-            const fileName = asset.uri.split('/').pop();
-            formData.append('data[]', {
-              uri: asset.uri,
-              name: fileName,
-              type: 'video/mp4',
-            });
+          const fileName = asset.uri.split("/").pop();
+          formData.append("data[]", {
+            uri: asset.uri,
+            name: fileName,
+            type: "video/mp4",
+          });
           try {
-            const response = await sendVideo(user, formData)
+            const response = await sendVideo(user, formData);
             if (response.status === 201) {
-              setIsLoadMess(false)
-              setIsLoad(false)
-              setChats(
-                chats.concat(response.data.data))
-              scrollToEnd()
+              setIsLoadMess(false);
+              setIsLoad(false);
+              setChats(chats.concat(response.data.data));
+              scrollToEnd();
               console.log("success");
-            }
-            else if (response.status === 500) {
+            } else if (response.status === 500) {
               console.log("fail");
             }
           } catch (error) {
             console.log(error);
-            setIsLoadMess(false)
+            setIsLoadMess(false);
           }
         }
       }
     }
-  }
+  };
 
   useEffect(() => {
     // Update send button color based on textMessage
@@ -380,32 +375,30 @@ const Message = ({ navigation, route }) => {
   const handleSendMessage = async () => {
     if (!textMessage) {
       console.log("message rỗng");
-    }
-    else {
-      setIsLoadMess(true)
+    } else {
+      setIsLoadMess(true);
       try {
-        const response = await sendMessage(user,
-          { type: 'text', data: textMessage })
+        const response = await sendMessage(user, {
+          type: "text",
+          data: textMessage,
+        });
         if (response.status === 201) {
-          setIsLoadMess(false)
-          setIsLoad(false)
-          setChats( 
-            chats.concat(response.data.data))
-          scrollToEnd()
+          setIsLoadMess(false);
+          setIsLoad(false);
+          setChats(chats.concat(response.data.data));
+          scrollToEnd();
           console.log("success");
-          setTextMessage(null)
-        }
-        else if (response.status === 500) {
-          showToastError("Gửi tin nhắn thất bại")
+          setTextMessage(null);
+        } else if (response.status === 500) {
+          showToastError("Gửi tin nhắn thất bại");
           console.log("fail");
         }
-
       } catch (error) {
         console.log(error);
-        setIsLoadMess(false)
+        setIsLoadMess(false);
       }
     }
-  }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#E5E9EB" }}>
@@ -416,7 +409,8 @@ const Message = ({ navigation, route }) => {
           <View></View>
         )}
         <Toast />
-        <ScrollView ref={scrollViewRef}
+        <ScrollView
+          ref={scrollViewRef}
           onScroll={handleScroll}
           scrollEventThrottle={16}
           onLayout={(event) => {
@@ -428,24 +422,46 @@ const Message = ({ navigation, route }) => {
         >
           <View style={{ flex: 1, justifyContent: "flex-start" }}>
             {chats.map((message, index) => (
-              <View key={index} style={{ justifyContent: 'space-around', borderRadius: 10, backgroundColor: handleCheckIsSend(message) ? "#7debf5" : "#d9d9d9", margin: 5, alignItems: handleCheckIsSend(message) ? "flex-end" : "flex-start", alignSelf: handleCheckIsSend(message) ? "flex-end" : "flex-start" }}>
+              <View
+                key={index}
+                style={{
+                  justifyContent: "space-around",
+                  borderRadius: 10,
+                  backgroundColor: handleCheckIsSend(message)
+                    ? "#7debf5"
+                    : "#d9d9d9",
+                  margin: 5,
+                  alignItems: handleCheckIsSend(message)
+                    ? "flex-end"
+                    : "flex-start",
+                  alignSelf: handleCheckIsSend(message)
+                    ? "flex-end"
+                    : "flex-start",
+                }}
+              >
                 {message.contents.map((content, i) => (
-                  <Pressable key={i}
-                    onPress={() => handlePressIn(message)}
-                  >
+                  <Pressable key={i} onPress={() => handlePressIn(message)}>
                     <View>
                       {renderMessageContent(content)}
-                      <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTime(message.timestamp)}</Text></View>
+                      <View
+                        style={{
+                          paddingLeft: 15,
+                          paddingRight: 15,
+                          paddingBottom: 5,
+                        }}
+                      >
+                        <Text style={{ fontSize: 14 }}>
+                          {handleGetTime(message?.timestamp)}
+                        </Text>
+                      </View>
                     </View>
                   </Pressable>
-
                 ))}
-
               </View>
             ))}
           </View>
         </ScrollView>
-      </View >
+      </View>
       <View
         style={{
           flexDirection: "row",
@@ -459,7 +475,7 @@ const Message = ({ navigation, route }) => {
           <Ionicons name="happy-outline" size={30} color="black" />
         </Pressable>
 
-        <View style={{ width: '54%' }}>
+        <View style={{ width: "54%" }}>
           <TextInput
             value={textMessage}
             onChangeText={setTextMessage}
@@ -468,13 +484,19 @@ const Message = ({ navigation, route }) => {
               height: 40,
               borderColor: "gray",
               borderRadius: 5,
-              fontSize: 17
+              fontSize: 17,
             }}
             placeholder="Tin nhắn"
           />
         </View>
 
-        <View style={{ flexDirection: 'row', width: '35%', justifyContent: 'space-between' }}>
+        <View
+          style={{
+            flexDirection: "row",
+            width: "35%",
+            justifyContent: "space-between",
+          }}
+        >
           <TouchableOpacity onPress={() => console.log("Pressed menu")}>
             <Ionicons
               name="ellipsis-horizontal-outline"
@@ -484,11 +506,7 @@ const Message = ({ navigation, route }) => {
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => console.log("Pressed microphone")}>
-            <Ionicons
-              name="mic-outline"
-              size={30}
-              color="black"
-            />
+            <Ionicons name="mic-outline" size={30} color="black" />
           </TouchableOpacity>
 
           <TouchableOpacity onPress={openImagePicker}>
@@ -512,9 +530,7 @@ const Message = ({ navigation, route }) => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalHeaderText}>
-              Choose
-            </Text>
+            <Text style={styles.modalHeaderText}>Choose</Text>
             <View style={styles.modalButtonContainer1}>
               <Pressable style={styles.pressCol} onPress={handleGetModalFriend}>
                 <FontAwesome5
@@ -525,7 +541,10 @@ const Message = ({ navigation, route }) => {
                 />
                 <Text style={styles.modalButton}>Chuyển tiếp</Text>
               </Pressable>
-              <Pressable style={styles.pressCol} onPress={handleDeleteMessByStatus}>
+              <Pressable
+                style={styles.pressCol}
+                onPress={handleDeleteMessByStatus}
+              >
                 {isLoadXoa ? (
                   <ActivityIndicator color="black" size="large" />
                 ) : (
@@ -536,43 +555,42 @@ const Message = ({ navigation, route }) => {
                     style={{ marginRight: 8 }}
                   />
                 )}
-                <Text style={styles.modalButton} >Xóa</Text>
+                <Text style={styles.modalButton}>Xóa</Text>
               </Pressable>
-              {messageSelected.senderId===user._id ? (
-                  <Text></Text>
-                ) : (
-                  <Pressable style={styles.pressCol} onPress={handleDeleteMess}>
-                {isLoadThuHoi ? (
-                  <ActivityIndicator color="black" size="large" />
-                ) : (
-                  <FontAwesome5
-                    name="comment-slash"
-                    size={20}
-                    color="black"
-                    style={{ marginRight: 8 }}
-                  />
-                )}
-                <Text style={styles.modalButton}>Thu hồi</Text>
-              </Pressable>
-                )} 
+              {messageSelected.senderId === user?._id ? (
+                <Text></Text>
+              ) : (
+                <Pressable style={styles.pressCol} onPress={handleDeleteMess}>
+                  {isLoadThuHoi ? (
+                    <ActivityIndicator color="black" size="large" />
+                  ) : (
+                    <FontAwesome5
+                      name="comment-slash"
+                      size={20}
+                      color="black"
+                      style={{ marginRight: 8 }}
+                    />
+                  )}
+                  <Text style={styles.modalButton}>Thu hồi</Text>
+                </Pressable>
+              )}
             </View>
             <View style={styles.modalButtonContainer1}>
-              <Pressable style={styles.pressCol} >
+              <Pressable style={styles.pressCol}>
                 <FontAwesome5
                   name="list"
                   size={20}
                   color="black"
-                  style={{ margin: 'auto' }}
+                  style={{ margin: "auto" }}
                 />
                 <Text style={styles.modalButton}>Chọn nhiều</Text>
               </Pressable>
-
             </View>
             <View style={styles.modalButtonContainer}>
               <Pressable onPress={toggleModal}>
                 <Text style={styles.modalButton}>HỦY</Text>
               </Pressable>
-              <Pressable >
+              <Pressable>
                 <Text style={styles.modalButton}>XÁC NHẬN</Text>
               </Pressable>
             </View>
@@ -587,9 +605,7 @@ const Message = ({ navigation, route }) => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalHeaderText}>
-              Choose
-            </Text>
+            <Text style={styles.modalHeaderText}>Choose</Text>
             <View style={styles.modalButtonContainer}>
               <ScrollView>
                 <View style={styles.friendList}>
@@ -603,7 +619,7 @@ const Message = ({ navigation, route }) => {
                   </View>
                   {friends.map((friend, index) => (
                     <View key={index} style={styles.friendRow}>
-                      <Pressable style={styles.friendItem} >
+                      <Pressable style={styles.friendItem}>
                         <View style={styles.friendInfo}>
                           <Image
                             source={{
@@ -611,15 +627,23 @@ const Message = ({ navigation, route }) => {
                             }}
                             style={styles.friendAvatar}
                           />
-                          <Text style={styles.friendName}>{friend?.profile?.name}</Text>
+                          <Text style={styles.friendName}>
+                            {friend?.profile?.name}
+                          </Text>
                         </View>
                         <View style={styles.friendActions}>
-                          <Pressable onPress={() => chuyenTiepChat(friend)} style={styles.pressCol}>
+                          <Pressable
+                            onPress={() => chuyenTiepChat(friend)}
+                            style={styles.pressCol}
+                          >
                             <FontAwesome5
                               name="arrow-right"
                               size={30}
                               color="black"
-                              style={{ alignContent: "center", alignItems: "center" }}
+                              style={{
+                                alignContent: "center",
+                                alignItems: "center",
+                              }}
                             />
                           </Pressable>
                         </View>
@@ -633,14 +657,14 @@ const Message = ({ navigation, route }) => {
               <Pressable onPress={toggleModalFriend}>
                 <Text style={styles.modalButton}>HỦY</Text>
               </Pressable>
-              <Pressable >
+              <Pressable>
                 <Text style={styles.modalButton}>XÁC NHẬN</Text>
               </Pressable>
             </View>
           </View>
         </View>
       </Modal>
-    </View >
+    </View>
   );
 };
 const styles = StyleSheet.create({
@@ -667,7 +691,7 @@ const styles = StyleSheet.create({
   modalButtonContainer: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginTop: 20
+    marginTop: 20,
   },
   modalButton: {
     fontWeight: "bold",
@@ -711,14 +735,14 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   pressCol: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalButtonContainer1: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: 'center',
-    marginTop: 20
+    alignItems: "center",
+    marginTop: 20,
   },
 });
 export default Message;
