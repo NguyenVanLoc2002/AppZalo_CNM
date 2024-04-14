@@ -23,7 +23,7 @@ import axiosInstance from "../../../api/axiosInstance";
 import { format } from "date-fns";
 import { useSocketContext } from "../../../contexts/SocketContext";
 import EmojiPicker from "emoji-picker-react";
-import { Document, Page } from "react-pdf";
+import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
 import { useAuthContext } from "../../../contexts/AuthContext";
 import useConversation from "../../../hooks/useConversation";
 import useGroup from "../../../hooks/useGroup";
@@ -146,6 +146,7 @@ function PeopleChatComponent({
     try {
       if (!data || data.trim === "") return;
       let messageType;
+      console.log("Upload File in send: ", data);
 
       if (receiverId) {
         if (data.type === "text") {
@@ -238,8 +239,21 @@ function PeopleChatComponent({
 
   const handleUpload = async (event) => {
     const files = event.target.files;
+    console.log("Upload File: ", files);
     try {
-      await sendMessage(files, userChat?.id);
+      if (userChat.tag === "friend") {
+        if (messageReplyId) {
+          await sendMessage(files, userChat?.id, messageReplyId, false);
+        } else {
+          await sendMessage(files, userChat?.id, null, false);
+        }
+      } else {
+        if (messageReplyId) {
+          await sendMessage(files, userChat?.id, messageReplyId, true);
+        } else {
+          await sendMessage(files, userChat?.id, null, true);
+        }
+      }
     } catch (error) {
       console.error("Error sending message:", error);
     }
@@ -490,16 +504,15 @@ function PeopleChatComponent({
               ref={scrollRef}
             >
               {messages?.map((message, index) => {
-                if (message.senderId !== userChat.id) {
+                if (message.senderId === authUser._id) {
                   if (message.status === 0 || message.status === 2) {
                     return (
                       <div
                         key={index}
                         className={
                           authUser._id === message.senderId
-                            ? "chat chat-end  "
-                            : "chat chat-start w-fit max-w-[50%]"
-                          // : userChat.id === message.receiverId
+                            ? "chat chat-end"
+                            : "chat chat-start w-fit"
                         }
                         onContextMenu={(e) => handleContextMenu(e, message._id)}
                       >
@@ -613,7 +626,6 @@ function PeopleChatComponent({
                             );
                             const imageWidth = `calc(100% / ${imagesPerRow})`;
                             const imageHeight = "auto";
-
                             return (
                               <div
                                 key={contentIndex}
@@ -685,11 +697,11 @@ function PeopleChatComponent({
                                   </div>
                                 ) : (
                                   <div>
-                                    <div>
-                                      <Document file={content.data}>
-                                        <Page pageNumber={1} />
-                                      </Document>
-                                    </div>
+                                    <DocViewer
+                                      documents={[{ uri: content.data }]}
+                                      pluginRenderers={DocViewerRenderers}
+                                      style={{ height: "400px" }}
+                                    />
                                   </div>
                                 )}
                               </div>
@@ -784,7 +796,7 @@ function PeopleChatComponent({
                         className={
                           authUser._id === message.senderId
                             ? "chat chat-end"
-                            : "chat chat-start w-fit max-w-[50%]"
+                            : "chat chat-start"
                         }
                         onContextMenu={(e) => handleContextMenu(e, message._id)}
                       >
@@ -797,7 +809,7 @@ function PeopleChatComponent({
                         )}
 
                         <div
-                          className={`flex flex-col chat-bubble w-64 ${
+                          className={`flex flex-col chat-bubble${
                             authUser._id === message.senderId
                               ? "bg-[#e5efff]"
                               : "bg-white"
@@ -970,11 +982,11 @@ function PeopleChatComponent({
                                   </div>
                                 ) : (
                                   <div>
-                                    <div>
-                                      <Document file={content.data}>
-                                        <Page pageNumber={1} />
-                                      </Document>
-                                    </div>
+                                    <DocViewer
+                                      documents={[{ uri: content.data }]}
+                                      pluginRenderers={DocViewerRenderers}
+                                      style={{ height: "400px" }}
+                                    />
                                   </div>
                                 )}
                               </div>
