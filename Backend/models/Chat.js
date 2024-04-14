@@ -39,7 +39,6 @@ const chatSchema = new mongoose.Schema({
 
 chatSchema.post("save", async function (chat, next) {
   try {
-    console.log("conversation not found: ", chat);
     if (!chat.isGroup) {
       const conversation = await Conversation.findOne({
         participants: { $all: [chat.senderId, chat.receiverId] },
@@ -52,9 +51,9 @@ chatSchema.post("save", async function (chat, next) {
           messages: [chat._id],
           lastMessage: chat._id,
         });
+
         await newConversation.save();
       } else {
-        // console.log("conversation: ", conversation);
         conversation.messages.push(chat._id);
         conversation.lastMessage = chat._id;
         await conversation.save();
@@ -63,8 +62,10 @@ chatSchema.post("save", async function (chat, next) {
       const group = await Group.findOne({ _id: chat.receiverId });
 
       const groupConversation = await Conversation.findOne({
-        _id: group.conversationId,
+        _id: group.conversation,
+        tag : 'group'
       });
+
       if (groupConversation) {
         groupConversation.messages.push(chat._id);
         groupConversation.lastMessage = chat._id;
@@ -76,7 +77,6 @@ chatSchema.post("save", async function (chat, next) {
     next(error);
   }
 });
-
 const Chats = mongoose.model("chats", chatSchema);
 
 module.exports = Chats;
