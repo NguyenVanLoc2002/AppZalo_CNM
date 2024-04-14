@@ -29,6 +29,7 @@ exports.createGroup = async (req, res) => {
       tag: "group",
     });
 
+
     const group = await Group.create({
       groupName: name,
       avatar: {
