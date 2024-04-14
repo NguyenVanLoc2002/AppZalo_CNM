@@ -20,6 +20,8 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import { useSocketContext } from "../../../contexts/SocketContext"
 import useCreateGroup from "../../../hooks/useCreateGroup";
 import { useAuthContext } from "../../../contexts/AuthContext";
+import * as DocumentPicker from 'expo-document-picker';
+
 const Message = ({ navigation, route }) => {
   const { conver } = route.params;
   const { getUserById, getAllGroup } = useCreateGroup()
@@ -27,7 +29,7 @@ const Message = ({ navigation, route }) => {
   //nhi  
   const [textMessage, setTextMessage] = useState(null)
   const [isColorSend, setIsColorSend] = useState(false)
-  const { sendMessage, sendImage, sendVideo } = useSendMessage();
+  const { sendMessage, sendImage, sendVideo, sendFiles } = useSendMessage();
   const { socket } = useSocketContext()
 
   //truc
@@ -46,7 +48,62 @@ const Message = ({ navigation, route }) => {
   const [isLoadChuyenTiep, setIsLoadChuyenTiep] = useState(false)
   const [isLoadThuHoi, setIsLoadThuHoi] = useState(false)
   const [isLoadXoa, setIsLoadXoa] = useState(false)
-  const [replyChat, setReplyChat] = useState(null)
+  const [replyChat, setReplyChat] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+
+  const pickFile = async () => {
+    try {
+      const file = await DocumentPicker.getDocumentAsync();
+      if (file.canceled === false) {
+        setSelectedFile(file);
+
+        setIsLoadMess(true)
+        let isGroup = false
+        if (conver.tag === "group") {
+          isGroup = true
+        }
+        let replyId = null;
+        if (replyChat !== null) {
+          replyId = replyChat.chat._id
+        }
+        for (const asset of file.assets) {
+
+          const formData = new FormData();
+          const fileName = asset.uri.split('/').pop();
+          formData.append('data[]', {
+            uri: asset.uri,
+            name: fileName,
+            type: 'file/pdf', // Sử dụng 'application/pdf' cho loại tệp PDF
+          });
+
+          formData.append('isGroup', isGroup);
+          formData.append('replyMessageId', replyId);
+          console.log(formData);
+          try {
+            const response = await sendFiles(conver._id, formData)
+            if (response.status === 201) {
+              setIsLoadMess(false)
+              setIsLoad(false)
+              fetchChats();
+              scrollToEnd();
+              setReplyChat(null);
+              console.log("send file success");
+            }
+            else if (response.status === 500) {
+              console.log("send file fail");
+            }
+          } catch (error) {
+            console.log(error);
+            setIsLoadMess(false)
+          }
+
+        }
+
+      }
+    } catch (error) {
+      console.error('Error picking file:', error);
+    }
+  };
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
   };
@@ -491,6 +548,7 @@ const Message = ({ navigation, route }) => {
     }
   };
   const handleReplyChat = () => {
+    console.log(selectedFile)
     setReplyChat(messageSelected);
     toggleModal();
   };
@@ -619,7 +677,7 @@ const Message = ({ navigation, route }) => {
         </View>
 
         <View style={{ flexDirection: 'row', width: '35%', justifyContent: 'space-between' }}>
-          <TouchableOpacity onPress={() => console.log("Pressed menu")}>
+          <TouchableOpacity onPress={pickFile}>
             <Ionicons
               name="ellipsis-horizontal-outline"
               size={30}

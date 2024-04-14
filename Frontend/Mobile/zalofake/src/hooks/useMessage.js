@@ -2,9 +2,12 @@ import React from 'react';
 import { View, Text, Image } from 'react-native';
 import { Video } from 'expo-av';
 import Toast from "react-native-toast-message";
-
+// import Pdf from 'react-native-pdf';
+// import { openDocumentAsync } from 'expo-document-viewer';
+// import { WebView } from 'react-native-webview';
+import PDFReader from 'rn-pdf-reader-js';
 const useMessage = () => {
-  
+
   const showToastSuccess = (notice) => {
     Toast.show({
       text1: notice,
@@ -39,7 +42,7 @@ const useMessage = () => {
       );
     } else if (content.type === 'video') {
       return (
-        <View style={{ paddingLeft: 15, paddingRight:15 }}>
+        <View style={{ paddingLeft: 15, paddingRight: 15 }}>
           <Video
             source={{ uri: content.data }}
 
@@ -50,6 +53,18 @@ const useMessage = () => {
 
           />
         </View>
+      );
+    } else if (content.type === 'file') {
+      return (
+
+        <View style={{ paddingLeft: 15, paddingRight: 15 }}>
+          {console.log(content)}
+          <PDFReader
+            // source={{ uri: "file:///C:/Users/tranb/Downloads/TranBaoTruc_20072261_Tuan3.pdf" }}
+          source={{ uri: content.data }}
+           />
+        </View>
+
       );
     } else {
       return null; // Loại nội dung không được hỗ trợ
@@ -73,7 +88,7 @@ const useMessage = () => {
       );
     } else if (content.type === 'video') {
       return (
-        <View style={{ paddingLeft: 30, marginBottom:-15, marginTop:-10 }}>
+        <View style={{ paddingLeft: 30, marginBottom: -15, marginTop: -10 }}>
           <Video
             source={{ uri: content.data }}
 
@@ -85,15 +100,30 @@ const useMessage = () => {
           />
         </View>
       );
-    } else {
+    }
+    else if (content.type === 'file') {
+      return (
+        <WebView
+          source={{ uri: content.data }}
+          style={{ flex: 1 }}
+        />
+        // <Video
+        // source={{ uri: content.data  }}
+        // resizeMode="contain"
+        // useNativeControls
+        // style={{ flex: 1 }}
+        // />
+      );
+    }
+    else {
       return null; // Loại nội dung không được hỗ trợ
     }
   }
-  
+
 
   return {
     renderMessageContent,
-    showToastError, showToastSuccess,renderMessageContentReply
+    showToastError, showToastSuccess, renderMessageContentReply
   };
 };
 
