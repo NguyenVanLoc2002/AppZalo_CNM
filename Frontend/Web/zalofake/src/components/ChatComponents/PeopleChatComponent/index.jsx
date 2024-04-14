@@ -56,6 +56,9 @@ function PeopleChatComponent({
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState("");
 
+  console.log("authUser: ", authUser);
+  console.log("userChat: ", userChat);
+  console.log("message Group: ", messages);
   useEffect(() => {
     if (!userChat || userChat?.tag !== "group") {
       setSidebarVisible(false);
@@ -153,8 +156,9 @@ function PeopleChatComponent({
     }
   }, [messages, isAddingMessages]);
 
-  const sendMessage = async (data, receiverId, replyMessageId) => {
+  const sendMessage = async (data, receiverId, replyMessageId, isGroup) => {
     setLoadingMedia(true);
+    console.log("isGroup: ", isGroup);
     try {
       if (!data || data.trim === "") return;
       let messageType;
@@ -172,7 +176,7 @@ function PeopleChatComponent({
 
         const response = await axiosInstance.post(
           `chats/${receiverId}/${messageType}`,
-          { data: data, replyMessageId },
+          { data: data, replyMessageId, isGroup },
           {
             headers: {
               "Content-Type": "multipart/form-data",
@@ -183,7 +187,7 @@ function PeopleChatComponent({
           ...prevMessages,
           response.data.data.message,
         ]);
-        userChat.conversationId = response.data.data.conversationId;
+        // userChat.conversationId = response.data.data.conversationId;
         setContent("");
         setContentReply("");
         setMessageReplyId("");
@@ -198,14 +202,38 @@ function PeopleChatComponent({
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
-      if (messageReplyId) {
-        sendMessage(
-          { type: "text", data: content },
-          userChat?.id,
-          messageReplyId
-        );
+      if (userChat.tag === "friend") {
+        if (messageReplyId) {
+          sendMessage(
+            { type: "text", data: content },
+            userChat?.id,
+            messageReplyId,
+            false
+          );
+        } else {
+          sendMessage(
+            { type: "text", data: content },
+            userChat?.id,
+            null,
+            false
+          );
+        }
       } else {
-        sendMessage({ type: "text", data: content }, userChat?.id, null);
+        if (messageReplyId) {
+          sendMessage(
+            { type: "text", data: content },
+            userChat?.id,
+            messageReplyId,
+            true
+          );
+        } else {
+          sendMessage(
+            { type: "text", data: content },
+            userChat?.id,
+            null,
+            true
+          );
+        }
       }
     }
   };
@@ -479,13 +507,14 @@ function PeopleChatComponent({
                       <div
                         key={index}
                         className={
-                          userChat.id === message.senderId
-                            ? "chat chat-start w-fit  max-w-[50%]"
-                            : "chat chat-end "
+                          authUser._id === message.senderId
+                            ? "chat chat-end  "
+                            : "chat chat-start w-fit max-w-[50%]"
+                          // : userChat.id === message.receiverId
                         }
                         onContextMenu={(e) => handleContextMenu(e, message._id)}
                       >
-                        {userChat.id === message.senderId && (
+                        {authUser._id !== message.senderId && (
                           <div className="chat-image avatar">
                             <div className="ml-2 w-10 rounded-full">
                               <img alt="avatar" src={userChat.avatar} />
@@ -495,9 +524,9 @@ function PeopleChatComponent({
 
                         <div
                           className={`flex flex-col chat-bubble ${
-                            userChat.id === message.senderId
-                              ? "bg-white"
-                              : "bg-[#e5efff]"
+                            authUser._id === message.senderId
+                              ? "bg-[#e5efff]"
+                              : "bg-white"
                           } `}
                         >
                           {message.replyMessageId && (
@@ -720,7 +749,7 @@ function PeopleChatComponent({
                                 {language === "vi" ? "Chuyển tiếp" : "Forward"}
                               </p>
                             </div>
-                            {message.senderId !== userChat.id && (
+                            {message.senderId === authUser._id && (
                               <div
                                 className="flex p-2 text-red-400 items-center rounded-xl border-b border-gray-100 hover:bg-gray-100"
                                 onClick={() => deleteChat(message._id)}
@@ -764,13 +793,13 @@ function PeopleChatComponent({
                       <div
                         key={index}
                         className={
-                          userChat.id === message.senderId
-                            ? "chat chat-start w-fit  max-w-[50%]"
-                            : "chat chat-end"
+                          authUser._id === message.senderId
+                            ? "chat chat-end"
+                            : "chat chat-start w-fit max-w-[50%]"
                         }
                         onContextMenu={(e) => handleContextMenu(e, message._id)}
                       >
-                        {userChat.id === message.senderId && (
+                        {authUser._id !== message.senderId && (
                           <div className="chat-image avatar">
                             <div className="ml-2 w-10 rounded-full">
                               <img alt="avatar" src={userChat.avatar} />
@@ -780,9 +809,9 @@ function PeopleChatComponent({
 
                         <div
                           className={`flex flex-col chat-bubble w-64 ${
-                            userChat.id === message.senderId
-                              ? "bg-white"
-                              : "bg-[#e5efff]"
+                            authUser._id === message.senderId
+                              ? "bg-[#e5efff]"
+                              : "bg-white"
                           }`}
                         >
                           {message.replyMessageId && (
