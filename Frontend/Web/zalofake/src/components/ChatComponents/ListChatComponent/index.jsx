@@ -14,6 +14,7 @@ function ListChatComponent({
   language,
   showModal,
   userChat,
+  changeUserChat,
   friends,
   conversations,
 }) {
@@ -102,8 +103,11 @@ function ListChatComponent({
         });
       });
 
-      socket.on("add-to-group", ({ group, addMembers }) => {
-        if (addMembers.includes(authUser._id)) {
+      socket.on("add-to-group", ({ data }) => {
+        console.log("add-to-group", data);
+        const group = data.group;
+
+        if (data?.addMembers?.includes(authUser._id)) {
           toast.success(
             language === "vi"
               ? `Bạn đã tham gia nhóm ${group.name}`
@@ -128,6 +132,7 @@ function ListChatComponent({
             newList.splice(index, 1);
           }
           newList.unshift(newGroup);
+          console.log("newList", newList);
           return newList;
         });
       });
@@ -173,6 +178,8 @@ function ListChatComponent({
           }
           return newList;
         });
+
+        changeUserChat(null);
       });
     }
 
