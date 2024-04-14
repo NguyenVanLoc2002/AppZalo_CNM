@@ -29,7 +29,6 @@ exports.createGroup = async (req, res) => {
       tag: "group",
     });
 
-
     const group = await Group.create({
       groupName: name,
       avatar: {
@@ -78,7 +77,12 @@ exports.getGroup = async (req, res) => {
   try {
     const { groupId } = req.params;
     const group = await Group.findById(groupId).populate([
-      { path: "conversation" },
+      {
+        path: "conversation",
+        populate: {
+          path: "participants",
+        },
+      },
       { path: "createBy", select: "profile.name" },
     ]);
     if (!group) {
@@ -289,7 +293,8 @@ exports.addMember = async (req, res) => {
       const memderSocketId = await getReciverSocketId(member);
       if (memderSocketId) {
         io.to(memderSocketId.socket_id).emit("add-to-group", {
-          group, addMembers: members,
+          group,
+          addMembers: members,
         });
       }
     });
