@@ -738,7 +738,7 @@ function PeopleChatComponent({
                                 {language === "vi" ? "Chuyển tiếp" : "Forward"}
                               </p>
                             </div>
-                            {message.senderId !== userChat.id && (
+                            {message.senderId === authUser._id && (
                               <div
                                 className="flex p-2 text-red-400 items-center rounded-xl border-b border-gray-100 hover:bg-gray-100"
                                 onClick={() => deleteChat(message._id)}
