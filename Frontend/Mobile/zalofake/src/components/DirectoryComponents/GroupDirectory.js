@@ -8,19 +8,18 @@ import {
   StyleSheet,
   Modal,
   TextInput,
-  ActivityIndicator 
+  ActivityIndicator
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import axiosInstance from "../../api/axiosInstance";
 import moment from 'moment-timezone';
-import RadioButton from "react-native-radio-buttons-group";
 import Toast from "react-native-toast-message";
+import useCreateGroup from "../../hooks/useCreateGroup";
+import { useAuthContext } from "../../contexts/AuthContext";
 
 const GroupDirectory = ({ navigation }) => {
-  const [listConversations, setListConversation] = useState([]);
   const [listFriends, setListFriends] = useState([])
   const [lengthGroup, setLengthGroup] = useState(0)
-  const [group, setGroup] = useState()
   const [modalCreateGr, setModalCreateGr] = useState(false)
   const [nameGroup, setNameGroup] = useState(null)
   const [textSearch, setTextSearch] = useState(null)
@@ -29,63 +28,51 @@ const GroupDirectory = ({ navigation }) => {
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [isLoading, setIsLoading] = useState(false)
   const [isHidden, setIsHidden] = useState(false)
+  const [groupAll, setGroupAll] = useState([])
+  const { getAllGroup, getConversationById, createGroup, getUserById} = useCreateGroup()
+  const { authUser } = useAuthContext();
 
-  const fetchConversations = async () => {
+  const fetchGroup = async () => {
     try {
-      const response = await axiosInstance.get("/conversations/getConversations");
-      if (response.status === 200) {
-        const newGroups = [];
-        let dem = 0
-        for (const data of response.data) {
-          if (data.participants.length > 2) {
-            dem++;
-            setListConversation(listConversations.concat(data))
-            const nameFriend = [];
-            let memberCount = 0;
-            let nameUserSendLast = null;
-            let lastMessage = null;
-
-            for (const participant of data.participants) {
-              if (participant._id === data?.lastMessage?.senderId) {
-                nameUserSendLast = participant.profile.name
-                if (data?.lastMessage?.contents[0].type === 'text') {
-                  lastMessage = data?.lastMessage?.contents[0]?.data
-                } else if (data?.lastMessage?.contents[0].type === 'image') {
-                  lastMessage = "đã gửi ảnh"
-                } else {
-                  lastMessage = "đã gửi video"
-                }
-              }
-
-              if (memberCount < 4) {
-                nameFriend.push(participant.profile.name)
-                memberCount++;
-              } else {
-                break;
-              }
-            }
-            const group = {
-              idGroup: data._id,
-              userSendLast: nameUserSendLast,
-              lastMessage: lastMessage,
-              participants: nameFriend.join(", "),
-              time: handleGetTime(data?.lastMessage?.timestamp),
-              createAt: handleGetTime(data?.createdAt)
-            }
-            newGroups.push(group);
-          }
+      const allGr = await getAllGroup();
+      let dem = 0
+      let sender
+      const newGroup = await Promise.all(allGr.map(async (group) => {
+        dem++;
+        let lastMessage;
+        if (group?.lastMessage?.contents[0].type === 'text') {
+          lastMessage = group?.lastMessage?.contents[0].data
+        } else if (data?.lastMessage?.contents[0].type === 'image') {
+          lastMessage = " [Hình ảnh]"
+        } else {
+          lastMessage = " [Video]"
         }
-        setGroup(newGroups);
-        setLengthGroup(dem)
-      }
-      else if (response.status === 500) {
-        console.log("FetchConversationError");
-      }
-    } catch (error) {
-      console.log("FetchConversationError:", error);
-    }
+        const getUser = await getUserById(group?.lastMessage?.senderId)
+        if (authUser.profile.name === getUser.user.profile.name) {
+          sender = "Bạn"
+        } else {
+          sender = getUser.user.profile.name
+        }
 
+        return {
+          id: group._id,
+          name: group.groupName,
+          avatar: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+          conversation: group.conversation,
+          createBy: group.createBy,
+          lastMessage: lastMessage,
+          sender: sender,
+          timeSend: handleGetTime(group?.lastMessage.timestamp),
+          tag : group.conversation.tag
+        }
+      }))
+      setGroupAll(newGroup)
+      setLengthGroup(dem)
+    } catch (error) {
+      console.log("FetchGroupError: ", error);
+    }
   }
+
   const handleGetTime = (time) => {
     const currentTime = moment().tz('Asia/Ho_Chi_Minh'); // Lấy thời gian hiện tại ở múi giờ Việt Nam
     const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh'); // Chuyển đổi thời gian đã cho sang múi giờ Việt Nam
@@ -130,14 +117,13 @@ const GroupDirectory = ({ navigation }) => {
   }
 
   useEffect(() => {
-    fetchConversations()
     fetchFriend()
+    fetchGroup()
   }, [])
-
-  const showToastError = (notice) => {
+  const showToast = (notice, type) => {
     Toast.show({
       text1: notice,
-      type: "error",
+      type: type,
       topOffset: 0,
       position: "top",
 
@@ -146,7 +132,7 @@ const GroupDirectory = ({ navigation }) => {
   const handleSearch = () => {
     console.log("press");
     if (!textSearch) {
-      showToastError("Bạn chưa nhập")
+      showToast("Bạn chưa nhập","error")
     }
     else {
       const filteredFriends = listFriends.filter((friend) => {
@@ -165,7 +151,7 @@ const GroupDirectory = ({ navigation }) => {
         }
         setListSearch(newRadioButtons);
       } else {
-        showToastError("Không tìm thấy")
+        showToast("Không tìm thấy","error")
       }
     }
   }
@@ -221,39 +207,57 @@ const GroupDirectory = ({ navigation }) => {
       </Pressable>
     </Pressable>
   )
+
   const handleCreate = async () => {
     setIsLoading(true)
-    console.log("selectFriend:", selectedFriends);
-    let idUser = [];
-    for(const id of selectedFriends){
-        idUser.push(id.id)
-    }
-    console.log("id:",idUser);
-    try {
-      const response = await axiosInstance.post("/conversations/newConversation", {
-        participants : idUser
-      })
-      if(response.status === 201){
-        console.log("Create conversation success");
-        setIsLoading(false)
-        setModalCreateGr(false)
-        fetchConversations()
-      }
-      else if(response.status === 500){
-        console.log("Create conversation fail");
-        setIsLoading(false)
-
-      }
-    } catch (error) {
-      console.log("CreateGroupError:",error);
+    if (!nameGroup) {
+      showToast("Vui lòng đặt tên nhóm","error")
       setIsLoading(false)
-
+      return;
+    }
+    else {
+      let idUser = [];
+      for (const id of selectedFriends) {
+        idUser.push(id.id)
+      }
+      if (idUser.length < 2) {
+        showToast("Group phải từ 2 người trở lên","error")
+        setIsLoading(false)
+      } else {
+        try {
+          const response = await createGroup(nameGroup, idUser)
+          if (response) {
+            setIsLoading(false)
+            setNameGroup(null)
+            setTextSearch(null)
+            setIsHidden(false)
+            setSelectedFriends([])
+            setModalCreateGr(false)
+            fetchGroup()
+            // const conversation = {
+            //   _id: response.conversation
+            // }
+            // const group = {
+            //   id: response._id,
+            //   name: response.groupName,
+            //   avatar: response.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+            //   conversation: conversation
+            // }
+            // navigation.navigate("Message", { conver: group })
+            // showToast("Tạo group thành công","success")
+          }
+        } catch (error) {
+          console.log("CreateGroupError:", error);
+          setIsLoading(false)
+        }
+      }
     }
   }
 
 
   return (
     <View style={styles.container}>
+      {/* <Toast/> */}
       <ScrollView>
         <View style={styles.section}>
           <Pressable style={styles.item} onPress={() => setModalCreateGr(true)}>
@@ -278,23 +282,19 @@ const GroupDirectory = ({ navigation }) => {
               <Text style={styles.sortButtonText}>Sắp xếp</Text>
             </Pressable>
           </View>
-          {group?.map((friend, index) => (
-            <Pressable key={index} style={styles.groupItem}>
+          {groupAll?.map((group, index) => (
+            <Pressable key={index} style={styles.groupItem} onPress={() => navigation.navigate("Message", { conver: group })}>
               <Image
                 style={styles.avatar}
-                source={{ uri : "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png"}}
+                source={{ uri: group.avatar }}
               />
               <View style={styles.groupTextContainer}>
-                <Text style={styles.groupTitle}>{friend.participants}</Text>
+                <Text style={styles.groupTitle}>{group.name}</Text>
                 <Text style={styles.groupDescription}>
-                  {friend.userSendLast ? `${friend.userSendLast}: ${friend.lastMessage}` : "Chưa có tin nhắn"}
+                  {group.sender ? `${group.sender}: ${group.lastMessage}` : "Chưa có tin nhắn nào"}
                 </Text>
               </View>
-              {friend.time !== "0 phút" ? (
-                <Text style={styles.timeText}>{friend.time}</Text>
-              ) : (
-                <Text style={styles.timeText}>{friend.createAt}</Text>
-              )}
+              <Text style={styles.timeText}>{group.timeSend === "0 phút" ? "vừa xong" : `${group.timeSend} `}</Text>
             </Pressable>
           ))}
         </View>
@@ -304,7 +304,7 @@ const GroupDirectory = ({ navigation }) => {
         animationType="slide"
         transparent={true}
         visible={modalCreateGr}
-        >
+      >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Toast />
@@ -315,7 +315,7 @@ const GroupDirectory = ({ navigation }) => {
             </View>
             <View style={styles.viewClose}>
               <Text style={{ fontWeight: '600', fontSize: 20 }}>Nhóm mới</Text>
-              <Text style={{ color: '#979797', fontWeight: '600' }}>Đã chọn: 0</Text>
+              {/* <Text style={{ color: '#979797', fontWeight: '600' }}>Đã chọn: 0</Text> */}
             </View>
             <View style={{ height: '7%', width: '80%', justifyContent: 'center' }}>
               <TextInput

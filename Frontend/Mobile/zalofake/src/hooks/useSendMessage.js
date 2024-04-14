@@ -2,9 +2,13 @@ import axiosInstance from "../api/axiosInstance";
 
 const useSendMessage = () => {
 
-    const sendImage = async (user, message) => {
+    const sendImage = async (user, message, isGroup) => {
         try {
-            const response = await axiosInstance.post(`/chats/${user}/sendImages`, message,
+            const response = await axiosInstance.post(`/chats/${user}/sendImages`,
+                {
+                     message,
+                    isGroup: isGroup
+                },
                 {
                     headers: {
                         "Content-Type": "multipart/form-data",
@@ -19,10 +23,13 @@ const useSendMessage = () => {
         }
     }
 
-    const sendMessage = async (user, message) => {
+    const sendMessage = async (user, message, isGroup) => {
         try {
             const response = await axiosInstance.post(`/chats/${user}/sendText`,
-                { data: message }
+                {
+                    data: message,
+                    isGroup: isGroup
+                }
             )
             return response;
         } catch (error) {
@@ -31,12 +38,16 @@ const useSendMessage = () => {
         }
     }
 
- 
 
-    const sendVideo = async (user, message) => {
+
+    const sendVideo = async (user, message, isGroup) => {
+      
         try {
             const response = await axiosInstance.post(`/chats/${user}/sendVideo`,
-                message,
+                {
+                    message,
+                    isGroup: isGroup
+                },
                 {
                     headers: {
                         "Content-Type": "multipart/form-data",
@@ -45,7 +56,7 @@ const useSendMessage = () => {
 
             )
             return response;
-            
+
         } catch (error) {
             console.log("error1:", error)
             return false;
