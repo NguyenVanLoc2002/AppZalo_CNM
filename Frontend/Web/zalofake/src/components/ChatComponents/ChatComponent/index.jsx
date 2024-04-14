@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { FaCaretDown } from "react-icons/fa";
 import { PiUserSwitchThin } from "react-icons/pi";
+import { AiOutlineUsergroupAdd } from "react-icons/ai";
 import ListChatComponent from "../ListChatComponent";
 import PeopleChatComponent from "../PeopleChatComponent";
 import { MdCameraAlt } from "react-icons/md";
@@ -8,8 +9,10 @@ import { HiMagnifyingGlass } from "react-icons/hi2";
 import useFriend from "../../../hooks/useFriend";
 import { toast } from "react-hot-toast";
 import { useAuthContext } from "../../../contexts/AuthContext";
-import { FaBullseye } from "react-icons/fa6";
+import useGroup from "../../../hooks/useGroup";
 import axiosInstance from "../../../api/axiosInstance";
+import useConversation from "../../../hooks/useConversation";
+import { useSocketContext } from "../../../contexts/SocketContext";
 
 function ChatComponents({ language }) {
   const [userChat, setUserChat] = useState(null);
@@ -21,12 +24,10 @@ function ChatComponents({ language }) {
     getFriendByPhone,
     getRecommendedFriends,
     addFriend,
-    acceptFriend,
-    unFriend,
-    rejectFriend,
-    cancelFriendRequest,
   } = useFriend();
   const { authUser, reloadAuthUser } = useAuthContext();
+  const { socket } = useSocketContext();
+  const { createGroup, addMember, grLoading } = useGroup();
 
   const [phone, setPhone] = useState("");
   const [nameGroup, setNameGroup] = useState("");
@@ -34,23 +35,36 @@ function ChatComponents({ language }) {
   const [isInputFocusGroup, setIsInputFocusGroup] = useState(false);
   const [friendList, setFriendList] = useState([]);
   const [showAllNewFriends, setShowAllNewFriends] = useState(false);
-  const [activeButton, setActiveButton] = useState("Tất cả");
   const [recommentFriendList, setRecommentFriendList] = useState();
   const [friendToAdd, setFriendToAdd] = useState("");
   const [isShowModal, setIsShowModal] = useState("");
   const [shareMessage, setShareMessage] = useState();
+  const [addMembersToGroup, setAddMembersToGroup] = useState(null);
   const [valueSearch, setValueSearch] = useState("");
   const [originalFriendList, setOriginalFriendList] = useState([]);
   const [selectedFriends, setSelectedFriends] = useState([]);
+  const { conversations, getConversations } = useConversation();
+  const [listChatCurrent, setListChatCurrent] = useState([]);
+
+  const [members, setMembers] = useState([]);
+
   const sendMessage = async (data, receiverId) => {
     try {
       if (!data || data.trim === "") return;
-      // console.log("data: ", data);
+      let messageType;
       if (receiverId) {
-        const response = await axiosInstance.post(
-          `chats/${receiverId}/${
-            data.type.startsWith("video/") ? "sendVideo" : "sendText"
-          }`,
+        if (data.type === "text") {
+          messageType = "sendText";
+        } else if (data.type === "image") {
+          messageType = "sendImages";
+        } else if (data.type === "video") {
+          messageType = "sendVideo";
+        } else {
+          messageType = "sendFiles";
+        }
+
+        await axiosInstance.post(
+          `chats/${receiverId}/${messageType}`,
           { data: data },
           {
             headers: {
@@ -58,7 +72,6 @@ function ChatComponents({ language }) {
             },
           }
         );
-        console.log("response 1: ", response.data.data);
       }
     } catch (error) {
       console.error("Error sending message:", error);
@@ -66,8 +79,13 @@ function ChatComponents({ language }) {
   };
 
   const visibleFriends = showAllNewFriends
-    ? recommentFriendList
-    : recommentFriendList?.slice(0, 3);
+    ? isShowModal === "addFriend"
+      ? recommentFriendList
+      : friendList
+    : (isShowModal === "addFriend" ? recommentFriendList : friendList).slice(
+        0,
+        3
+      );
 
   useEffect(() => {
     const fetchFriends = async () => {
@@ -75,27 +93,33 @@ function ChatComponents({ language }) {
       await getRecommendedFriends();
     };
     fetchFriends();
+    getConversations();
   }, [authUser]);
 
   useEffect(() => {
     setFriendList(friends);
     setOriginalFriendList(friends);
     setRecommentFriendList(recommendedFriends);
-  }, [friends, recommendedFriends]);
-
-  const handleRadioChange = (friendId) => {
-    setFriendList((prevList) =>
-      prevList.map((friend) =>
-        friend.id === friendId
-          ? { ...friend, isChecked: !friend.isChecked }
-          : friend
-      )
-    );
-  };
+    setListChatCurrent(conversations);
+  }, [friends, recommendedFriends, conversations]);
 
   const changeShowModal = (modal) => {
     setIsShowModal(modal);
   };
+
+  useEffect(() => {
+    if (socket) {
+      socket.on("delete-group", ({ group }) => {
+        setUserChat(null);
+      });
+    }
+
+    return () => {
+      if (socket) {
+        socket.off("delete-group");
+      }
+    };
+  }, [socket]);
 
   const handleSearch = async () => {
     if (phone === "") {
@@ -121,30 +145,8 @@ function ChatComponents({ language }) {
     await reloadAuthUser();
   };
 
-  const handleAcceptFriend = async (friend) => {
-    await acceptFriend(friend.phone);
-    await reloadAuthUser();
-  };
-
-  const handleUnFriend = async (friend) => {
-    await unFriend(friend.phone);
-    await reloadAuthUser();
-  };
-
-  const handleRejectFriend = async (friend) => {
-    await rejectFriend(friend.phone);
-    await reloadAuthUser();
-  };
-
-  const handleCancelFriendRequest = async (friend) => {
-    await cancelFriendRequest(friend.phone);
-    await reloadAuthUser();
-  };
-
   const handleInputChange = (e) => {
     const searchTerm = e.target.value;
-    console.log("searchTerm", searchTerm);
-    console.log("originalFriendList", originalFriendList);
     setValueSearch(searchTerm);
     if (searchTerm.trim() === "") {
       setFriendList(originalFriendList);
@@ -164,21 +166,10 @@ function ChatComponents({ language }) {
     }
   };
 
-  const buttons = [
-    "Tất cả",
-    "Khách hàng",
-    "Gia đình",
-    "Công việc",
-    "Bạn bè",
-    "Trả lời sau",
-    "Đồng nghiệp",
-  ];
-
   const sendMessageToSelectedFriends = async (content) => {
     for (const receiverId of selectedFriends) {
       try {
         await sendMessage(content, receiverId);
-        console.log(`Sent message to user ${receiverId} successfully.`);
       } catch (error) {
         console.error(`Error sending message to user ${receiverId}:`, error);
       }
@@ -187,12 +178,70 @@ function ChatComponents({ language }) {
 
   const handleSendButtonClick = () => {
     if (selectedFriends.length === 0) {
-      console.log("Please select friends to send message to.");
       return;
     }
-    console.log("Nội dung:", shareMessage.contents[0]);
     sendMessageToSelectedFriends(shareMessage.contents[0]);
     setIsShowModal(false);
+  };
+
+  const handleAddGroup = async () => {
+    if (members.length < 2) {
+      toast.error(
+        language == "vi"
+          ? "Tạo nhóm cần có thêm ít nhất 2 thành viên"
+          : "Creating a group requires at least 2 members"
+      );
+      return;
+    }
+    if (nameGroup === "") {
+      toast.error(
+        language == "vi"
+          ? "Vui lòng nhập tên nhóm để tiếp tục"
+          : "Please enter a group name to continue"
+      );
+      return;
+    }
+    const groupData = {
+      name: nameGroup,
+      members: members.map((member) => member.id),
+    };
+    const rs = await createGroup(groupData);
+    if (rs) {
+      setIsShowModal("");
+      setMembers([]);
+      setNameGroup("");
+      toast.success(
+        language == "vi" ? "Tạo nhóm thành công" : "Create group successfully"
+      );
+    }
+  };
+
+  const handleAddMemberToGroup = async () => {
+    if (members.length < 1) {
+      toast.error(
+        language == "vi"
+          ? "Vui lòng chọn ít nhất 1 thành viên để thêm vào nhóm"
+          : "Please select at least 1 member to add to the group"
+      );
+      return;
+    }
+    const groupData = {
+      groupId: addMembersToGroup,
+      members: members.map((member) => member.id),
+    };
+    const rs = await addMember(addMembersToGroup, groupData);
+    if (rs) {
+      setIsShowModal("");
+      setMembers([]);
+      toast.success(
+        language == "vi"
+          ? "Thêm thành viên vào nhóm thành công"
+          : "Add members to group successfully"
+      );
+      rs?.forEach((message) => {
+        toast.success(message);
+      });
+    }
   };
 
   return (
@@ -204,6 +253,7 @@ function ChatComponents({ language }) {
             userChat={setUserChat}
             showModal={changeShowModal}
             friends={friendList}
+            conversations={listChatCurrent}
           />
         </div>
         <PeopleChatComponent
@@ -211,11 +261,12 @@ function ChatComponents({ language }) {
           userChat={userChat}
           showModal={changeShowModal}
           shareMessage={setShareMessage}
+          addMembersToGroup={setAddMembersToGroup}
         />
         {isShowModal === "addFriend" && (
           <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/5 h-[90%] bg-white rounded-lg shadow-lg ">
-            <div className=" flex items-center justify-between p-4 border-b text-lg font-semibold h-[10%]">
-              <p>Thêm bạn </p>
+            <div className="relative flex items-center justify-between p-4 border-b text-lg font-semibold h-[10%]">
+              <p>{language == "vi" ? "Thêm Bạn" : "Add Friend"}</p>
               <button
                 onClick={() => {
                   setIsShowModal("");
@@ -223,6 +274,7 @@ function ChatComponents({ language }) {
                   setRecommentFriendList(recommendedFriends);
                   setPhone("");
                 }}
+                className="absolute flex justify-center items-center top-2 right-2 cursor-pointer border rounded-full p-2 hover:bg-gray-200 w-10 h-10 "
               >
                 x
               </button>
@@ -255,6 +307,8 @@ function ChatComponents({ language }) {
                   }
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  onFocus={() => setIsInputFocus(true)}
+                  onBlur={() => setIsInputFocus(false)}
                 />
               </div>
             </div>
@@ -335,7 +389,10 @@ function ChatComponents({ language }) {
               <div className="flex ml-auto mb-auto mt-3">
                 <button
                   className="rounded-lg bg-gray-300 p-3 pl-6 pr-6 mr-3 hover:bg-gray-500"
-                  onClick={() => setIsShowModal("")}
+                  onClick={() => {
+                    setShowAllNewFriends(false);
+                    setIsShowModal("");
+                  }}
                 >
                   <p className="text-lg font-semibold">
                     {language == "vi" ? "Hủy" : "Cancel"}
@@ -354,84 +411,142 @@ function ChatComponents({ language }) {
           </div>
         )}
         {isShowModal === "addGroup" && (
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-60 w-3/5 h-[90%] bg-white rounded-lg shadow-lg ">
-            <div className=" flex items-center justify-between p-4 border-b text-lg font-semibold h-[10%]">
-              <p>Tạo nhóm</p>
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/5 h-[90%] bg-white rounded-lg shadow-lg ">
+            <div className="relative flex items-center justify-between p-4 border-b text-lg font-semibold h-[10%]">
+              <p>
+                {addMembersToGroup
+                  ? language == "vi"
+                    ? "Thêm thành viên"
+                    : "Add members"
+                  : language == "vi"
+                  ? "Tạo nhóm"
+                  : "Create group"}
+              </p>
               <button
                 onClick={() => {
                   setIsShowModal("");
                   setShowAllNewFriends(false);
+                  setMembers([]);
                 }}
+                className="absolute flex justify-center items-center top-2 right-2 cursor-pointer border rounded-full p-2 hover:bg-gray-200 w-10 h-10 "
               >
                 x
               </button>
             </div>
-            <div className=" flex items-center justify-between pl-4 pr-4 pt-2 h-[10%]">
-              <button className="flex rounded-full border p-3">
-                <MdCameraAlt size={25} fill="gray" />
-              </button>
-              <div
-                className={`${
-                  isInputFocusGroup === true
-                    ? "flex border-b mr-auto ml-6 w-full border-blue-500  "
-                    : "flex  border-b mr-auto ml-6 w-full "
-                } `}
-              >
-                <input
-                  type="text"
-                  className="h-9 w-full outline-none "
-                  placeholder="Tên nhóm"
-                  value={nameGroup}
-                  onChange={(e) => setNameGroup(e.target.nameGroup)}
-                  onFocus={() => setIsInputFocusGroup(true)}
-                  onBlur={() => setIsInputFocusGroup(false)}
-                />
+            {!addMembersToGroup && (
+              <div className=" flex items-center justify-between pl-4 pr-4 pt-2 h-[10%]">
+                <button className="flex rounded-full border p-3">
+                  <MdCameraAlt size={25} fill="gray" />
+                </button>
+                <div
+                  className={`${
+                    isInputFocusGroup === true
+                      ? "flex border-b mr-auto ml-6 w-full border-blue-500  "
+                      : "flex  border-b mr-auto ml-6 w-full "
+                  } `}
+                >
+                  <input
+                    type="text"
+                    className="h-9 w-full outline-none "
+                    placeholder={
+                      language == "vi"
+                        ? "Nhập tên nhóm"
+                        : "Enter the group name"
+                    }
+                    value={nameGroup}
+                    onChange={(e) => setNameGroup(e.target.value)}
+                    onFocus={() => setIsInputFocusGroup(true)}
+                    onBlur={() => setIsInputFocusGroup(false)}
+                  />
+                </div>
               </div>
-            </div>
+            )}
             <div
-              className={` h-[8%] flex items-center rounded-full border  m-4 mt-2 mb-2 ${
+              className={` h-[6%] flex items-center rounded-full border  m-4 mt-2 mb-2 ${
                 isInputFocusGroup === true ? " border-blue-500 " : ""
               } `}
             >
               <HiMagnifyingGlass size={18} className="ml-2" />
               <input
                 type="text"
-                className="h-[97%] w-[89%] outline-none ml-2 "
-                placeholder="Nhập tên, số điện thoại hoặc danh sách số điện thoại"
-                value={nameGroup}
-                onChange={(e) => setNameGroup(e.target.nameGroup)}
+                className="w-[89%] outline-none ml-2 "
+                placeholder={
+                  language == "vi" ? "Tìm kiếm bạn bè" : "Search for friends"
+                }
+                value={valueSearch}
+                onChange={handleInputChange}
                 onFocus={() => setIsInputFocusGroup(true)}
                 onBlur={() => setIsInputFocusGroup(false)}
               />
             </div>
-            <div className=" h-[15%] flex items-center  pl-4 pr-4 pb-4 overflow-x-auto  w-full border-b">
-              {buttons.map((label, index) => (
-                <button
+            <div className="flex justify-start items-center mb-3">
+              <p className="col-span-2 font-semibold mx-5">
+                {language == "vi" ? "Danh sách thành viên" : "List of members"}
+              </p>
+              <AiOutlineUsergroupAdd
+                size={22}
+                fill="green"
+                onClick={() => setIsShowModal("addFriend")}
+                className="cursor-pointer"
+              />
+            </div>
+            <div className=" h-[15%] grid grid-cols-3 gap-3 px-4 pb-4 overflow-x-auto  w-full border-b">
+              {members.map((member, index) => (
+                <div
                   key={index}
-                  className={`"flex rounded-2xl  p-1 pl-3 pr-3 mr-3 whitespace-nowrap ${
-                    activeButton === label
-                      ? "bg-blue-600  hover:bg-blue-800 text-white"
-                      : "bg-gray-300  hover:bg-gray-400"
-                  } "`}
-                  onClick={() => setActiveButton(label)}
+                  className="relative flex items-center justify-between p-2 border rounded-3xl max-h-16 w-full"
                 >
-                  {label}
-                </button>
+                  <div className="w-14 h-10 ">
+                    <img
+                      className="rounded-full w-10 h-10"
+                      src={member.avatar || "/zalo.svg"}
+                      alt="cloud"
+                    />
+                  </div>
+                  <div className="flex mr-auto ml-2 p-1">
+                    <p className="text-sm font-semibold">{member?.name}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setMembers((prev) => prev.filter((i) => i !== member));
+                    }}
+                    className="cursor-pointer absolute bg-red-300 hover:bg-red-500  flex items-center justify-center h-5 w-5 rounded-full hover:scale-110 transition-transform duration-300 ease-in-out top-0 right-0"
+                  >
+                    <span className="text-gray-600 hover:text-white">x</span>
+                  </button>
+                </div>
               ))}
             </div>
             <div className=" h-[42%] flex-col pt-2 p-4 items-center overflow-y-auto">
-              <p className="font-semibold">Trò chuyện gần đây</p>
+              <p className="font-semibold">
+                {language == "vi" ? "Danh sách bạn bè" : "List of friends"}
+              </p>
               <div className="flex-col max-h-44 mt-2">
-                {friendList.map((friend) => (
+                {visibleFriends.map((friend) => (
                   <div
                     key={friend.id}
-                    className="flex items-center  justify-between hover:bg-gray-200 transition-colors duration-300 ease-in-out p-2"
+                    onClick={() => {
+                      setMembers((prev) => {
+                        if (prev.includes(friend)) {
+                          return prev.filter((i) => i !== friend);
+                        }
+                        return [...prev, friend];
+                      });
+                    }}
+                    className="cursor-pointer flex items-center  justify-between hover:bg-gray-200 transition-colors duration-300 ease-in-out p-2"
                   >
                     <input
-                      type="radio"
+                      type="checkbox"
                       className="mr-2"
-                      checked={friend.isChecked}
-                      onChange={() => handleRadioChange(friend.id)}
+                      checked={members.includes(friend)}
+                      onChange={() => {
+                        setMembers((prev) => {
+                          if (prev.includes(friend)) {
+                            return prev.filter((i) => i !== friend);
+                          }
+                          return [...prev, friend];
+                        });
+                      }}
                     />
                     <div className="bg-blue w-10 ">
                       <img
@@ -446,39 +561,74 @@ function ChatComponents({ language }) {
                   </div>
                 ))}
               </div>
+              {!showAllNewFriends &&
+                visibleFriends.length <= 3 &&
+                friendList.length > 3 && (
+                  <button
+                    className="text-blue-500 hover:underline"
+                    onClick={() => setShowAllNewFriends(true)}
+                  >
+                    Xem thêm
+                  </button>
+                )}
             </div>
 
-            <div className="flex items-center border-t h-[15%]">
-              <div className="flex ml-auto mb-auto mt-1">
+            <div className="flex items-center border-t h-[10%]">
+              <div className="flex ml-auto mt-1">
                 <button
-                  className="rounded-lg bg-gray-300 p-3 pl-6 pr-6 mr-3 hover:bg-gray-500"
-                  onClick={() => setIsShowModal("")}
+                  className="rounded-lg bg-gray-200 p-3 pl-6 pr-6 mr-3 hover:bg-gray-300"
+                  onClick={() => {
+                    setIsShowModal("");
+                    setShowAllNewFriends(false);
+                    setMembers([]);
+                  }}
                 >
                   <p className="text-lg font-semibold">
                     {language == "vi" ? "Hủy" : "Cancel"}
                   </p>
                 </button>
-                <button
-                  className="rounded-lg bg-blue-500 p-3 pl-6 pr-6 mr-3 hover:bg-blue-800"
-                  onClick={handleSearch}
-                >
-                  <p className="text-lg font-semibold">
-                    {language == "vi" ? "Tìm Kiếm" : "Search"}
-                  </p>
-                </button>
+                {addMembersToGroup ? (
+                  <button
+                    className="rounded-lg bg-primaryHover p-3 pl-6 pr-6 mr-3 hover:bg-primary"
+                    onClick={handleAddMemberToGroup}
+                  >
+                    {grLoading ? (
+                      <span className="loading loading-spinner"></span>
+                    ) : (
+                      <p className="text-lg font-semibold text-white">
+                        {language == "vi" ? "Thêm thành viên" : "Add members"}
+                      </p>
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    className="rounded-lg bg-primaryHover p-3 pl-6 pr-6 mr-3 hover:bg-primary"
+                    onClick={handleAddGroup}
+                    disabled={grLoading}
+                  >
+                    {grLoading ? (
+                      <span className="loading loading-spinner"></span>
+                    ) : (
+                      <p className="text-lg font-semibold text-white">
+                        {language == "vi" ? "Tạo nhóm" : "Create group"}
+                      </p>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           </div>
         )}
         {isShowModal === "share" && (
           <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/5 h-[90%] bg-white rounded-lg shadow-lg ">
-            <div className=" flex items-center justify-between p-4 border-b text-lg font-semibold h-[10%]">
-              <p>Chia sẻ</p>
+            <div className="relative flex items-center justify-between p-4 border-b text-lg font-semibold h-[10%]">
+              <p>{language == "vi" ? "Chia Sẻ" : "Share"}</p>
               <button
                 onClick={() => {
                   setIsShowModal("");
                   setShowAllNewFriends(false);
                 }}
+                className="absolute flex justify-center items-center top-2 right-2 cursor-pointer border rounded-full p-2 hover:bg-gray-200 w-10 h-10 "
               >
                 x
               </button>
@@ -592,7 +742,10 @@ function ChatComponents({ language }) {
               <div className="flex ml-auto mb-auto mt-1">
                 <button
                   className="rounded-lg bg-gray-300 p-2 pl-6 pr-6 mr-3 hover:bg-gray-500"
-                  onClick={() => setIsShowModal("")}
+                  onClick={() => {
+                    setShowAllNewFriends(false);
+                    setIsShowModal("");
+                  }}
                 >
                   <p className="text-lg font-semibold">
                     {language == "vi" ? "Hủy" : "Cancel"}

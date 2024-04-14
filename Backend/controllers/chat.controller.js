@@ -2,23 +2,22 @@ const cloudinary = require("../configs/Cloudinary.config.js");
 const Chats = require("../models/Chat.js");
 const Chat = require("../models/Chat.js");
 const Conversation = require("../models/Conversation.js");
+const Group = require("../models/Group.js");
 const User = require("../models/User.js");
 const { io, getReciverSocketId } = require("../socket/socket.io.js");
 
 //Gửi tin nhắn mới cho một người dùng cụ thể.
 exports.sendMessage = async (req, resp) => {
-  console.log("req.files: ", req.files);
   try {
     const senderId = req.user.user_id; // Lấy userId của người gửi từ thông tin đăng nhập (đã được đặt trong middleware auth)
     const receiverId = req.params.userId;
     // Thêm biến này từ FE khi chọn conversation để trò chuyện nếu là Group thì truyền đi isGroup là true
     //Còn là chat single thì không cần truyền chỉ cần truyền data nha FE
     const isGroup = req.body.isGroup || false;
-    console.log("isGroup: ", isGroup);
-
+    const replyMessageId = req.body.replyMessageId || null;
     let contents = [];
     // Kiểm tra xem req.body có tồn tại không và có chứa nội dung không
-    if (Object.keys(req.body).length) {
+    if (req.body.data) {
       // Nếu có nội dung, thêm vào mảng contents
       contents.push({
         type: req.body.data.type,
@@ -45,35 +44,60 @@ exports.sendMessage = async (req, resp) => {
     }
 
     // Tạo và lưu tin nhắn mới vào cơ sở dữ liệu
-    const message = new Chat({ senderId, receiverId, contents, isGroup });
+    const message = new Chat({
+      senderId,
+      receiverId,
+      contents,
+      isGroup,
+      replyMessageId,
+    });
     await message.save();
+    const retrunMessage = await Chat.findById(message._id).populate({
+      path: "replyMessageId",
+      model: "chats",
+    });
 
-    //Gọi socket và xử lý
-    try {
-      if (isGroup) {
-        const groupMembers = await User.find({ _id: { $in: receiverId } });
-        for (const member of groupMembers) {
-          const receiverSocketId = await getReciverSocketId(member._id);
-          if (receiverSocketId) {
-            io.to(receiverSocketId.socket_id).emit("new_message", { message });
-          }
-        }
-      } else {
-        const receiverSocketId = await getReciverSocketId(receiverId);
+    const group = await Group.findOne({ _id: receiverId });
+
+    let conversation;
+    if (group) {
+      conversation = await Conversation.findOne({
+        _id: group.conversation,
+        tag: "group",
+      });
+    } else {
+      conversation = await Conversation.findOne({
+        participants: { $all: [senderId, receiverId] },
+        tag: "friend",
+      });
+    }
+
+    if (isGroup) {
+      const groupMembers = await User.find({ _id: { $in: receiverId } });
+      for (const member of groupMembers) {
+        const receiverSocketId = await getReciverSocketId(member._id);
         if (receiverSocketId) {
           io.to(receiverSocketId.socket_id).emit("new_message", {
-            message,
+            message: { retrunMessage, conversationId: conversation._id },
           });
         }
       }
-    } catch (error) {
-      console.error("Error sending message:", error);
-    }
+    } else {
+      const receiverSocketId = await getReciverSocketId(receiverId);
 
-    // Trả về phản hồi thành công
-    resp
-      .status(201)
-      .json({ message: "Message sent successfully", data: message });
+      if (receiverSocketId) {
+        io.to(receiverSocketId.socket_id).emit("new_message", {
+          message: { retrunMessage, conversationId: conversation._id },
+        });
+      }
+    }
+    resp.status(201).json({
+      message: "Message sent successfully",
+      data: {
+        message: retrunMessage,
+        conversationId: conversation._id,
+      },
+    });
   } catch (error) {
     console.log("Error sending message:", error);
     resp
@@ -237,36 +261,6 @@ exports.getFirstMessage = async (req, res) => {
   }
 };
 
-//Lấy tin nhắn cuối cùng
-exports.getLastMessage = async (req, res) => {
-  try {
-    const userId = req.params.userId; //người nhận lấy từ param
-    const currentUserId = req.user.user_id; // người dùng hiện đang đăng nhập
-
-    // Tìm tin nhắn đầu tiên trong chat có chatId
-
-    // Tìm tin nhắn đầu tiên trong cuộc trò chuyện giữa currentUserId và userId
-    const firstMessage = await Chat.findOne({
-      $or: [
-        { senderId: currentUserId, receiverId: userId },
-        { senderId: userId, receiverId: currentUserId },
-      ],
-    }).sort({ timestamp: -1 });
-
-    if (!firstMessage) {
-      return res
-        .status(404)
-        .json({ success: false, message: "No message found in this chat" });
-    }
-
-    // Trả về tin nhắn đầu tiên nếu có
-    res.status(200).json({ success: true, data: firstMessage });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Server Error" });
-  }
-};
-
 // Hàm trích xuất public_id từ URL của hình ảnh trên Cloudinary
 function extractPublicId(url) {
   const segments = url.split("/");
@@ -276,7 +270,7 @@ function extractPublicId(url) {
 }
 
 exports.deleteChat = async (req, res) => {
-  const { chatId } = req.params;
+  const chatId = req.params.chatId;
 
   try {
     const chat = await Chat.findById(chatId);
@@ -296,7 +290,6 @@ exports.deleteChat = async (req, res) => {
     await Promise.all(
       mediaFiles.map(async (media) => {
         const publicId = extractPublicId(media.data);
-        console.log("publicId: ", publicId);
         try {
           await cloudinary.uploader.destroy(publicId);
         } catch (error) {
@@ -305,18 +298,26 @@ exports.deleteChat = async (req, res) => {
       })
     );
 
-    const conversation = await Conversation.findOne({
+    const conversations = await Conversation.find({
       participants: { $all: [chat.senderId, chat.receiverId] },
     });
-    if (conversation) {
-      conversation.messages = conversation.messages.filter(
-        (message) => message.toString() !== chatId
-      );
-      if (conversation.messages.length === 0) {
-        await conversation.deleteOne({
-          participants: { $all: [chat.senderId, chat.receiverId] },
-        });
-      } else await conversation.save();
+    if (conversations.length > 0) {
+      conversations.forEach(async (conversation) => {
+        conversation.messages = conversation.messages.filter(
+          (message) => message.toString() !== chatId
+        );
+        console.log(conversation.messages.length);
+        console.log(conversation.tag);
+
+        if (
+          conversation.messages.length === 0 &&
+          conversation.tag !== "group"
+        ) {
+          await conversation.deleteOne({
+            participants: { $all: [chat.senderId, chat.receiverId] },
+          });
+        } else await conversation.save();
+      });
     }
 
     const receiverSocketId = await getReciverSocketId(chat.receiverId);

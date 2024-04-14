@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import axiosInstance from "../api/axiosInstance";
 const useConversation = () => {
   const [conversations, setConversations] = useState([]);
+  const [conversation, setConversation] = useState({});
   const [loading, setLoading] = useState(true);
 
   const getConversations = async () => {
@@ -18,6 +19,7 @@ const useConversation = () => {
             participants: conversation.participants,
             messages: conversation.messages,
             lastMessage: conversation.lastMessage,
+            tag: conversation.tag,
           };
         });
         setConversations(newConversationList);
@@ -46,8 +48,8 @@ const useConversation = () => {
 
   const getConversationByParticipants = async (participants) => {
     try {
-      const response = await axiosInstance.get(
-        "conversations/get/getByParticipants",
+      const response = await axiosInstance.post(
+        "conversations/getByParticipants",
         {
           participants,
         }
@@ -61,11 +63,30 @@ const useConversation = () => {
     }
   };
 
+  const getConversationByID = async (conversationId) => {
+    setLoading(true);
+    try {
+      const response = await axiosInstance.get(
+        `conversations/get/${conversationId}`
+      );
+      if (response.status === 200) {
+        setConversation(response.data);
+        setLoading(false);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to get conversation");
+      setLoading(false);
+    }
+  };
+
   return {
     conversations,
+    conversation,
     loading,
     getConversations,
     deleteConversation,
+    getConversationByID,
     getConversationByParticipants,
   };
 };

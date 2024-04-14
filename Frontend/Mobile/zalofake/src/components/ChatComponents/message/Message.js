@@ -28,13 +28,12 @@ const Message = ({ navigation, route }) => {
   const [isColorSend, setIsColorSend] = useState(false)
   const { sendMessage, sendImage, sendVideo } = useSendMessage();
   const { socket } = useSocketContext()
-
+  
   //truc
   const [chats, setChats] = useState([]);
   const scrollViewRef = useRef();
   const [contentHeight, setContentHeight] = useState(0);
   const [scrollViewHeight, setScrollViewHeight] = useState(0);
-  const [lastTimestamp, setLastTimestamp] = useState("")
   const [isLoad, setIsLoad] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { renderMessageContent, showToastSuccess, showToastError } = useMessage();
@@ -63,10 +62,10 @@ const Message = ({ navigation, route }) => {
   };
   const fetchChats = async () => {
     try {
-      if (conver.conversationId === null || conver.conversationId === undefined) {
-        showToastSuccess('Chưa có tin nhắn')
+      if (conver.conversation._id === null || conver.conversation._id === undefined) {
+        // showToastSuccess('Chưa có tin nhắn')
       } else {
-        const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversationId}`);
+        const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversation._id}`);
         const reversedChats = response.data; //.reverse();
         console.log(reversedChats)
         setChats(reversedChats);
@@ -151,7 +150,7 @@ const Message = ({ navigation, route }) => {
         </View>
       ),
       headerTitle: () => (
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <View style={{ flexDirection: "row", alignItems: "center" , width: '55%', marginRight: 100}}>
           <Text style={{ fontSize: 20, color: "white", fontWeight: 'bold' }}>{conver.name}</Text>
         </View>
       ),
@@ -190,7 +189,7 @@ const Message = ({ navigation, route }) => {
     const fetchChats = async () => {
       try {
         // const response = await axiosInstance.get(`/chats/getHistoryMessage/${user._id}?lastTimestamp=${lastTimestamp}`);
-        const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversationId}`);
+        const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversation._id}`);
         const reversedChats = response.data;//.reverse();
         // if (reversedChats && reversedChats.length > 0) {
         //   setChats(prevChats => [...reversedChats, ...prevChats]);
@@ -229,7 +228,7 @@ const Message = ({ navigation, route }) => {
     const thuHoi = async () => {
       console.log('id' + messageSelected._id)
       try {
-        const response = await axiosInstance.post(`conversations/deletedMess/${conver.conversationId}/${messageSelected._id}`);
+        const response = await axiosInstance.post(`conversations/deletedMess/${conver.conversation._id}/${messageSelected._id}`);
         console.log(response)
         if (response.status === 200) {
           fetchChats();
@@ -250,7 +249,7 @@ const Message = ({ navigation, route }) => {
     setIsLoadXoa(true)
     const deleteChat = async () => {
       try {
-        const response = await axiosInstance.post(`conversations/deleteOnMySelf/${conver.conversationId}/${messageSelected._id}`);
+        const response = await axiosInstance.post(`conversations/deleteOnMySelf/${conver.conversation._id}/${messageSelected._id}`);
         if (response.status === 200) {
           fetchChats();
           showToastSuccess("Xóa thành công")
@@ -322,16 +321,20 @@ const Message = ({ navigation, route }) => {
             type: 'image/jpeg',
           });
           try {
-            const response = await sendImage(conver.id, formData)
+            let isGroup = false
+            if(conver.tag === "group"){
+              isGroup = true
+            } 
+            const response = await sendImage(conver.id, formData, isGroup)
             if (response.status === 201) {
               setIsLoadMess(false)
               setIsLoad(false)
               fetchChats();
               scrollToEnd()
-              console.log("success");
+              console.log("send image success");
             }
             else if (response.status === 500) {
-              console.log("fail");
+              console.log("send image fail");
             }
           } catch (error) {
             console.log(error);
@@ -346,16 +349,20 @@ const Message = ({ navigation, route }) => {
             type: 'video/mp4',
           });
           try {
-            const response = await sendVideo(conver.id, formData)
+            let isGroup = false
+            if(conver.tag === "group"){
+              isGroup = true
+            } 
+            const response = await sendVideo(conver.id, formData, isGroup)
             if (response.status === 201) {
               setIsLoadMess(false)
               setIsLoad(false)
               fetchChats();
               scrollToEnd()
-              console.log("success");
+              console.log("send video success");
             }
             else if (response.status === 500) {
-              console.log("fail");
+              console.log("send video fail");
             }
           } catch (error) {
             console.log(error);
@@ -381,22 +388,26 @@ const Message = ({ navigation, route }) => {
     }
     else {
       setIsLoadMess(true)
+      let isGroup = false
+      if(conver.tag === "group"){
+        isGroup = true
+        console.log("tag", conver.tag);
+      } 
       try {
+        console.log("isGroup:", isGroup);
         const response = await sendMessage(conver.id,
-          { type: 'text', data: textMessage })
+          { type: 'text', data: textMessage }, isGroup)
         if (response.status === 201) {
           setIsLoadMess(false)
           setIsLoad(false)
-          // setChats( 
-          //   chats.concat(response.data.data))
           fetchChats()
           scrollToEnd()
-          console.log("success");
+          console.log("send text success");
           setTextMessage(null)
         }
         else if (response.status === 500) {
           showToastError("Gửi tin nhắn thất bại")
-          console.log("fail");
+          console.log("send text fail");
         }
 
       } catch (error) {
@@ -443,7 +454,7 @@ const Message = ({ navigation, route }) => {
                   ))}
 
                 </View>
-              ))) : (<View><Text>Chưa có tin nhắn nào!!!</Text></View>)}
+              ))) : (<View><Text style={{fontSize: 16, fontWeight: '600', textAlign: 'center', paddingVertical: 10}}>Chưa có tin nhắn nào!</Text></View>)}
           </View>
         </ScrollView>
       </View >
