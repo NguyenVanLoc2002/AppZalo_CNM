@@ -2,6 +2,7 @@ const cloudinary = require("../configs/Cloudinary.config.js");
 const Chats = require("../models/Chat.js");
 const Chat = require("../models/Chat.js");
 const Conversation = require("../models/Conversation.js");
+const Group = require("../models/Group.js");
 const User = require("../models/User.js");
 const { io, getReciverSocketId } = require("../socket/socket.io.js");
 
@@ -56,11 +57,24 @@ exports.sendMessage = async (req, resp) => {
       path: "replyMessageId",
       model: "chats",
     });
-    const conversation = await Conversation.findOne({
-      participants: { $all: [senderId, receiverId] },
-      tag: isGroup ? "group" : "friend",
-    });
 
+    const group = await Group.findOne({ _id: receiverId });
+
+
+    let conversation;
+    if (group) {
+      conversation = await Conversation.findOne({
+        _id: group.conversation,
+        tag: "group",
+      });
+    } else {
+      conversation = await Conversation.findOne({
+        participants: { $all: [senderId, receiverId] },
+        tag: "friend",
+      });
+    }
+
+   
     if (isGroup) {
       const groupMembers = await User.find({ _id: { $in: receiverId } });
       for (const member of groupMembers) {
@@ -73,6 +87,7 @@ exports.sendMessage = async (req, resp) => {
       }
     } else {
       const receiverSocketId = await getReciverSocketId(receiverId);
+
       if (receiverSocketId) {
         io.to(receiverSocketId.socket_id).emit("new_message", {
           message: { retrunMessage, conversationId: conversation._id },
