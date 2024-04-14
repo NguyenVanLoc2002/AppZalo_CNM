@@ -6,7 +6,6 @@ const useCreateGroup = () => {
             const response = await axiosInstance.get("/groups/all");
             if (response.status === 200) {
                 return response.data;
-
             } else if (response.status === 500) {
                 console.log("getAllGrEr");
                 return null;
@@ -33,48 +32,6 @@ const useCreateGroup = () => {
         }
     }
 
-    const getConversations = async (idConversation) => {
-        try {
-            const response = await axiosInstance.get("/conversations/getConversations");
-            if (response.status === 200) {
-                const group = [];
-                let lastMessage = null;
-                let nameUserSendLast = null;
-
-                for (const data of response.data) {
-                    if (data._id === idConversation) {
-                        for (const participant of data.participants) {
-                            if (participant._id === data?.lastMessage?.senderId) {
-                                nameUserSendLast = participant.profile.name
-                                if (data?.lastMessage?.contents[0].type === 'text') {
-                                    lastMessage = data?.lastMessage?.contents[0]?.data
-                                } else if (data?.lastMessage?.contents[0].type === 'image') {
-                                    lastMessage = ": [Hình ảnh]"
-                                } else {
-                                    lastMessage = ": [Video]"
-                                }
-                            }
-                        }
-                    }
-                    const newGroup = {
-                        lastMessage: lastMessage,
-                        sendTime: data?.lastMessage?.timestamp,
-                        userSend: nameUserSendLast
-                    }
-                    group.push(newGroup)
-                }
-                return group;
-            } else if (response.status === 500) {
-                console.log("getAllConversationsErr");
-                return null;
-            }
-
-        } catch (error) {
-            console.log("getAllConversationsErr: ", error);
-            return null;
-        }
-    }
-
     const createGroup = async (nameGroup, idUser) => {
         try {
             const response = await axiosInstance.post("/groups/create", {
@@ -94,8 +51,17 @@ const useCreateGroup = () => {
             return null;
           }
     }
-
-    return { getAllGroup, getConversationById, getConversations, createGroup }
+    const getUserById = async (id) => {
+        try {
+            const response = await axiosInstance.get(`/users/get/uid/${id}`)
+            if(response.status === 200){
+                return response.data;
+            } 
+        } catch (error) {
+            console.log("GetUserError",error);
+        }
+    }
+    return { getAllGroup, getConversationById, createGroup, getUserById }
 }
 
 export default useCreateGroup

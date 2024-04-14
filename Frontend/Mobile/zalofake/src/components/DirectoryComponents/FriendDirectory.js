@@ -92,7 +92,7 @@ const FriendDirectory = ({ navigation }) => {
     console.log(conversation);
     const conversationNew = {
       id: friend.userId,
-      conversationId: conversation._id,
+      conversation: conversation,
       name: friend?.profile.name,
       avatar: friend?.profile.avatar?.url,
       background: friend?.profile.background?.url,

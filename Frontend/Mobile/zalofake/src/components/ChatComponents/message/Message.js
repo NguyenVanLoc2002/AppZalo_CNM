@@ -34,7 +34,6 @@ const Message = ({ navigation, route }) => {
   const scrollViewRef = useRef();
   const [contentHeight, setContentHeight] = useState(0);
   const [scrollViewHeight, setScrollViewHeight] = useState(0);
-  const [lastTimestamp, setLastTimestamp] = useState("")
   const [isLoad, setIsLoad] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { renderMessageContent, showToastSuccess, showToastError } = useMessage();
@@ -63,10 +62,10 @@ const Message = ({ navigation, route }) => {
   };
   const fetchChats = async () => {
     try {
-      if (conver.conversationId === null || conver.conversationId === undefined) {
-        showToastSuccess('Chưa có tin nhắn')
+      if (conver.conversation._id === null || conver.conversation._id === undefined) {
+        // showToastSuccess('Chưa có tin nhắn')
       } else {
-        const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversationId}`);
+        const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversation._id}`);
         const reversedChats = response.data; //.reverse();
         console.log(reversedChats)
         setChats(reversedChats);
@@ -151,7 +150,7 @@ const Message = ({ navigation, route }) => {
         </View>
       ),
       headerTitle: () => (
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <View style={{ flexDirection: "row", alignItems: "center" , width: '55%', marginRight: 100}}>
           <Text style={{ fontSize: 20, color: "white", fontWeight: 'bold' }}>{conver.name}</Text>
         </View>
       ),
@@ -190,7 +189,7 @@ const Message = ({ navigation, route }) => {
     const fetchChats = async () => {
       try {
         // const response = await axiosInstance.get(`/chats/getHistoryMessage/${user._id}?lastTimestamp=${lastTimestamp}`);
-        const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversationId}`);
+        const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversation._id}`);
         const reversedChats = response.data;//.reverse();
         // if (reversedChats && reversedChats.length > 0) {
         //   setChats(prevChats => [...reversedChats, ...prevChats]);
@@ -229,7 +228,7 @@ const Message = ({ navigation, route }) => {
     const thuHoi = async () => {
       console.log('id' + messageSelected._id)
       try {
-        const response = await axiosInstance.post(`conversations/deletedMess/${conver.conversationId}/${messageSelected._id}`);
+        const response = await axiosInstance.post(`conversations/deletedMess/${conver.conversation._id}/${messageSelected._id}`);
         console.log(response)
         if (response.status === 200) {
           fetchChats();
@@ -250,7 +249,7 @@ const Message = ({ navigation, route }) => {
     setIsLoadXoa(true)
     const deleteChat = async () => {
       try {
-        const response = await axiosInstance.post(`conversations/deleteOnMySelf/${conver.conversationId}/${messageSelected._id}`);
+        const response = await axiosInstance.post(`conversations/deleteOnMySelf/${conver.conversation._id}/${messageSelected._id}`);
         if (response.status === 200) {
           fetchChats();
           showToastSuccess("Xóa thành công")
@@ -443,7 +442,7 @@ const Message = ({ navigation, route }) => {
                   ))}
 
                 </View>
-              ))) : (<View><Text>Chưa có tin nhắn nào!!!</Text></View>)}
+              ))) : (<View><Text style={{fontSize: 16, fontWeight: '600', textAlign: 'center', paddingVertical: 10}}>Chưa có tin nhắn nào!</Text></View>)}
           </View>
         </ScrollView>
       </View >
