@@ -725,7 +725,7 @@ function PeopleChatComponent({
 
                         {contextMenuStates[message._id] && (
                           <div
-                            className="flex flex-col z-10 fixed top-1/2 transform -translate-x-40 -translate-y-30 w-52  bg-white rounded-2xl shadow shadow-gray-300 "
+                            className="flex flex-col z-10 fixed top-1/2 transform -translate-x-40 -translate-y-40 w-52  bg-white rounded-2xl shadow shadow-gray-300 "
                             style={{
                               top: contextMenuPosition.y,
                               left: contextMenuPosition.x,
@@ -1027,7 +1027,7 @@ function PeopleChatComponent({
 
                         {contextMenuStates[message._id] && (
                           <div
-                            className="flex flex-col z-10 fixed top-1/2 transform -translate-x-40 -translate-y-30 w-52  bg-white rounded-2xl shadow shadow-gray-300 "
+                            className="flex flex-col z-10 fixed top-1/2 transform -translate-x-40 -translate-y-40 w-52  bg-white rounded-2xl shadow shadow-gray-300 "
                             style={{
                               top: contextMenuPosition.y,
                               left: contextMenuPosition.x,
@@ -1065,7 +1065,7 @@ function PeopleChatComponent({
                                 {language === "vi" ? "Chuyển tiếp" : "Forward"}
                               </p>
                             </div>
-                            {message.senderId !== userChat.id && (
+                            {message.senderId === authUser._id && (
                               <div
                                 className="flex p-2 text-red-400 items-center rounded-xl border-b border-gray-100 hover:bg-gray-100"
                                 onClick={() => deleteChat(message._id)}
