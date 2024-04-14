@@ -145,6 +145,7 @@ function PeopleChatComponent({
       if (!data || data.trim === "") return;
       let messageType;
       console.log("Upload File in send: ", data);
+      
 
       if (receiverId) {
         if (data.type === "text") {
