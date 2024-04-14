@@ -15,7 +15,7 @@ const useConversation = () => {
         if (response.status === 200) {
           const newConversationList = response.data.map((conversation) => {
             return {
-              id: conversation._id,
+              _id: conversation._id,
               participants: conversation.participants,
               messages: conversation.messages,
               lastMessage: conversation.lastMessage,

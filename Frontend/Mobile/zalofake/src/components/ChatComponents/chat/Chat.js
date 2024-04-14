@@ -34,13 +34,10 @@ function Chat({ navigation }) {
   const { socket } = useSocketContext();
   const [isModalVisibleXoa, setModalVisibleXoa] = useState(false);
   const [isLoadXoa, setIsLoadXoa] = useState(false)
-  const [itemCurrent, setItemCurrent] = useState()
+
   const { showToastSuccess, showToastError } = useMessage();
   const { getUserById } = useCreateGroup()
 
-  const toggleModal = () => {
-    setModalVisibleXoa(!isModalVisibleXoa);
-  };
 
   useEffect(() => {
     navigation.setOptions({
@@ -104,7 +101,7 @@ function Chat({ navigation }) {
       );
 
       return {
-        id: friend?._id,
+        _id: friend?._id,
         conversation: conversation,
         name: friend?.profile.name,
         avatar: friend?.profile.avatar?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
@@ -117,10 +114,9 @@ function Chat({ navigation }) {
       };
     });
 
-
     const listGroup = groups.map((group) => {
       return {
-        id: group._id,
+        _id: group._id,
         conversation: group.conversation,
         name: group.groupName,
         avatar: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
@@ -197,46 +193,10 @@ function Chat({ navigation }) {
     }
   }, []);
   const handleChatItemPress = (item) => {
-
-    setItemCurrent(item);
-    // fetchDataConver();
-    toggleModal();
-    // navigation.navigate("Message", { conver: item.conver});
-  };
-  const removeItemById = (array, idToRemove) => {
-    const indexToRemove = array.findIndex(item => item.id === idToRemove);
-    if (indexToRemove !== -1) {
-      array.splice(indexToRemove, 1);
-    }
-    return array;
-  };
-  const handleDelete = () => {
-    setIsLoadXoa(true)
-    const deleteChat = async () => {
-      try {
-        const response = await axiosInstance.post(`/conversations/deleted/${itemCurrent.conver.conversation._id}`);
-        console.log(response)
-        if (response.status === 200) {
-          removeItemById(conversations, itemCurrent.conver.conversation._id);
-          fetchDataChat();
-          showToastSuccess("Xóa thành công")
-          toggleModal()
-          setIsLoadXoa(false)
-        }
-      } catch (error) {
-        console.log(error);
-        setIsLoadXoa(false)
-        toggleModal()
-      }
-    };
-    deleteChat();
+    navigation.navigate("Message", { conver: item.conver});
   };
 
-  const handleView = () => {
-    toggleModal();
-    console.log('1')
-    navigation.navigate("Message", { conver: itemCurrent.conver });
-  };
+
   const handleGetTime = (time) => {
     const currentTime = moment().tz('Asia/Ho_Chi_Minh'); // Lấy thời gian hiện tại ở múi giờ Việt Nam
     const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh'); // Chuyển đổi thời gian đã cho sang múi giờ Việt Nam
@@ -267,7 +227,7 @@ function Chat({ navigation }) {
             <ChatItem item={item} />
           </Pressable>
         )}
-      // keyExtractor={(item) => item.conver.conversationId}
+      keyExtractor={(item) => item.conver.conversation._id}
       />
       <Modal
         animationType="none"
@@ -386,57 +346,7 @@ function Chat({ navigation }) {
           </View>
         </Pressable>
       </Modal>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isModalVisibleXoa}
-        onRequestClose={toggleModal}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalHeaderText}>
-              {/* {itemCurrent.conver.name} */}
-            </Text>
-            <View style={styles.modalButtonContainer1}>
-
-              <Pressable style={styles.pressCol} onPress={handleDelete}>
-                {isLoadXoa ? (
-                  <ActivityIndicator color="black" size="large" />
-                ) : (
-                  <FontAwesome5
-                    name="trash"
-                    size={20}
-                    color="black"
-                    style={{ marginRight: 8 }}
-                  />
-                )}
-                <Text style={styles.modalButton} >Xóa trò chuyện</Text>
-              </Pressable>
-
-            </View>
-            <View style={styles.modalButtonContainer1} >
-              <Pressable style={styles.pressCol} onPress={handleView}>
-                <FontAwesome5
-                  name="list"
-                  size={20}
-                  color="black"
-                  style={{ margin: 'auto' }}
-                />
-                <Text style={styles.modalButton}>Xem trò chuyện</Text>
-              </Pressable>
-
-            </View>
-            <View style={styles.modalButtonContainer}>
-              <Pressable onPress={toggleModal}>
-                <Text style={styles.modalButton}>HỦY</Text>
-              </Pressable>
-              <Pressable >
-                <Text style={styles.modalButton}>XÁC NHẬN</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      
     </SafeAreaView>
   );
 }
