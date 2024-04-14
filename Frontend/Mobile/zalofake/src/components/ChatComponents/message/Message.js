@@ -37,7 +37,7 @@ const Message = ({ navigation, route }) => {
   const [scrollViewHeight, setScrollViewHeight] = useState(0);
   const [isLoad, setIsLoad] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { renderMessageContent, showToastSuccess, showToastError } = useMessage();
+  const { renderMessageContent, renderMessageContentReply, showToastSuccess, showToastError } = useMessage();
   const [isModalVisible, setModalVisible] = useState(false);
   const [messageSelected, setMessageSelected] = useState("");
   const [isModalFriendVisible, setIsModalFriendVisible] = useState(false);
@@ -46,7 +46,7 @@ const Message = ({ navigation, route }) => {
   const [isLoadChuyenTiep, setIsLoadChuyenTiep] = useState(false)
   const [isLoadThuHoi, setIsLoadThuHoi] = useState(false)
   const [isLoadXoa, setIsLoadXoa] = useState(false)
-
+  const [replyChat, setReplyChat] = useState(null)
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
   };
@@ -99,12 +99,25 @@ const Message = ({ navigation, route }) => {
         for (let index = 0; index < int; index++) {
           const chat = reversedChats[index];
           const getUser = await getUserById(chat.senderId)
-          const chatNew = {
-            chat: chat,
-            sender: getUser.user.profile,
+          if (chat.replyMessageId === null) {
 
+            const chatNew = {
+              chat: chat,
+              sender: getUser.user.profile,
+              nameReply: null
+            }
+            data.push(chatNew);
+          } else {
+            const getUserReply = await getUserById(chat.replyMessageId.senderId)
+            const chatNew = {
+              chat: chat,
+              sender: getUser.user.profile,
+              nameReply: getUserReply.user.profile.name,
+            }
+            data.push(chatNew);
           }
-          data.push(chatNew);
+
+
         }
         setChats(data);
         fetchFriends();
@@ -261,7 +274,7 @@ const Message = ({ navigation, route }) => {
     const thuHoi = async () => {
       try {
         const response = await axiosInstance.post(`/chats/${messageSelected.chat._id}/delete`);
-        console.log(response)
+        // console.log(response)
         if (response.status === 200) {
           fetchChats();
           showToastSuccess("Thu hồi thành công")
@@ -305,12 +318,12 @@ const Message = ({ navigation, route }) => {
     const handleSendMessage = async () => {
       try {
         let isGroup;
-        if(friend.tag==='group'){
-          isGroup=true;
-        }else{
-          isGroup=false;
+        if (friend.tag === 'group') {
+          isGroup = true;
+        } else {
+          isGroup = false;
         }
-        const send = await sendMessage(friend._id, messageSelected.chat.contents[0],isGroup )
+        const send = await sendMessage(friend._id, messageSelected.chat.contents[0], isGroup)
         if (send) {
           showToastSuccess("Chuyển tiếp thành công")
           setIsLoadChuyenTiep(false)
@@ -344,12 +357,15 @@ const Message = ({ navigation, route }) => {
       videoExportPreset: ImagePicker.VideoExportPreset.Passthrough,
       videoMaxDuration: 10
     });
-
     if (!pickerResult.canceled) {
       setIsLoadMess(true)
       let isGroup = false
       if (conver.tag === "group") {
         isGroup = true
+      }
+      let replyId = null;
+      if (replyChat !== null) {
+        replyId = replyChat.chat._id
       }
       for (const asset of pickerResult.assets) {
         if (asset.type === 'image') {
@@ -362,13 +378,15 @@ const Message = ({ navigation, route }) => {
 
           });
           formData.append('isGroup', isGroup);
+          formData.append('replyMessageId', replyId);
           try {
             const response = await sendImage(conver._id, formData)
             if (response.status === 201) {
               setIsLoadMess(false)
               setIsLoad(false)
               fetchChats();
-              scrollToEnd()
+              scrollToEnd();
+              setReplyChat(null);
               console.log("send image success");
             }
             else if (response.status === 500) {
@@ -388,13 +406,15 @@ const Message = ({ navigation, route }) => {
 
           });
           formData.append('isGroup', isGroup);
+          formData.append('replyMessageId', replyId);
           try {
             const response = await sendVideo(conver._id, formData)
             if (response.status === 201) {
               setIsLoadMess(false)
               setIsLoad(false)
               fetchChats();
-              scrollToEnd()
+              scrollToEnd();
+              setReplyChat(null);
               console.log("send video success");
             }
             else if (response.status === 500) {
@@ -428,16 +448,22 @@ const Message = ({ navigation, route }) => {
       if (conver.tag === "group") {
         isGroup = true
       }
+      let replyId = null;
+      if (replyChat !== null) {
+        replyId = replyChat.chat._id
+      }
+
       try {
         const response = await sendMessage(conver._id,
-          { type: 'text', data: textMessage }, isGroup)
+          { type: 'text', data: textMessage }, replyId, isGroup)
         if (response.status === 201) {
           setIsLoadMess(false)
           setIsLoad(false)
           fetchChats()
           scrollToEnd()
           console.log("send text success");
-          setTextMessage(null)
+          setTextMessage(null);
+          setReplyChat(null);
         }
         else if (response.status === 500) {
           showToastError("Gửi tin nhắn thất bại")
@@ -458,6 +484,10 @@ const Message = ({ navigation, route }) => {
     } else {
       return false;
     }
+  };
+  const handleReplyChat = () => {
+    setReplyChat(messageSelected);
+    toggleModal();
   };
 
   return (
@@ -497,12 +527,31 @@ const Message = ({ navigation, route }) => {
                     <Text style={{ paddingHorizontal: 10, fontSize: 12, color: 'gray', fontWeight: '700' }}>
                       {message.sender.name}
                     </Text>
+                    {message.chat.replyMessageId === null ? (<View></View>) :
+                      (<View style={{ backgroundColor: '#f5c4f2', display: 'flex', marginLeft: 10, flexDirection: 'row', justifyContent: 'space-between', borderLeftWidth: 2, borderColor: 'blue' }}>
 
+                        {message.chat.replyMessageId.contents.map((content, i) => (
+                          <View key={i} style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                            {renderMessageContentReply(content)}
+                            <View>
+                              <Text style={{ paddingLeft: 15, fontSize: 13, color: '#000' }}>
+                                {message.nameReply}
+                              </Text>
+                              <Text style={{ paddingLeft: 15, fontSize: 13, color: '#000' }}>
+                                [{content.type}]
+                              </Text>
+                            </View>
+                          </View>
+                        ))}
+
+                      </View>)
+                    }
                     {message.chat.contents.map((content, i) => (
                       <Pressable key={i}
                         onPress={() => handlePressIn(message)}>
                         <View>
                           {renderMessageContent(content)}
+                          {/* {console.log(content)} */}
                           <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTime(message.timestamp)}</Text></View>
                         </View>
                       </Pressable>
@@ -515,6 +564,26 @@ const Message = ({ navigation, route }) => {
           </View>
         </ScrollView>
       </View >
+      <View>
+        {replyChat === null ?
+          (<Text></Text>) :
+          (
+            <View style={{ backgroundColor: '#f5c4f2', marginLeft: 50, marginTop: 10 }}>
+              <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text style={{ paddingLeft: 15, fontSize: 13, color: '#000' }}>
+                  Trả lời: <Text style={{ paddingLeft: 15, fontSize: 12, color: 'gray' }}>{replyChat.sender.name} </Text>
+                </Text>
+                <Pressable onPress={() => { setReplyChat(null) }} style={{ marginRight: 20 }}><Text>Hủy</Text></Pressable>
+              </View>
+              <View
+              >{replyChat.chat.contents.map((content, i) => (
+                <View key={i} >
+                  {renderMessageContentReply(content)}
+                </View>
+              ))}</View>
+            </View>
+          )}
+      </View>
       <View
         style={{
           flexDirection: "row",
@@ -638,8 +707,17 @@ const Message = ({ navigation, route }) => {
                 />
                 <Text style={styles.modalButton}>Chọn nhiều</Text>
               </Pressable>
-
+              <Pressable style={styles.pressCol} onPress={handleReplyChat}>
+                <FontAwesome5
+                  name="reply"
+                  size={20}
+                  color="black"
+                  style={{ margin: 'auto' }}
+                />
+                <Text style={styles.modalButton}>Trả lời</Text>
+              </Pressable>
             </View>
+
             <View style={styles.modalButtonContainer}>
               <Pressable onPress={toggleModal}>
                 <Text style={styles.modalButton}>HỦY</Text>
