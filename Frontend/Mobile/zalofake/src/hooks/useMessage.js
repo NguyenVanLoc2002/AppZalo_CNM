@@ -4,7 +4,7 @@ import { Video } from 'expo-av';
 import Toast from "react-native-toast-message";
 
 const useMessage = () => {
-
+  
   const showToastSuccess = (notice) => {
     Toast.show({
       text1: notice,
@@ -59,7 +59,7 @@ const useMessage = () => {
 
   return {
     renderMessageContent,
-    showToastError, showToastSuccess,
+    showToastError, showToastSuccess
   };
 };
 
