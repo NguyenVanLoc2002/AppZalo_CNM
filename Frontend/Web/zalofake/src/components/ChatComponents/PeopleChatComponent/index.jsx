@@ -237,6 +237,11 @@ function PeopleChatComponent({
     fileInput.click();
   };
 
+  const handleSelectFileClick = () => {
+    const fileInput = document.getElementById("filePDF");
+    fileInput.click();
+  };
+
   const handleUpload = async (event) => {
     const files = event.target.files;
     console.log("Upload File: ", files);
@@ -1119,7 +1124,8 @@ function PeopleChatComponent({
               >
                 <IoImageOutline size={20} />
               </button>
-              <button className="hover:bg-gray-300 p-2 rounded">
+              <button className="hover:bg-gray-300 p-2 rounded"
+               onClick={handleSelectFileClick}>
                 <IoIosLink size={20} />
               </button>
               <button className="hover:bg-gray-300 p-2 rounded flex">
@@ -1264,6 +1270,15 @@ function PeopleChatComponent({
             <input
               type="file"
               id="fileInput"
+              accept="image/*, video/*"
+              multiple
+              style={{ display: "none" }}
+              onChange={handleUpload}
+            />
+            <input
+              type="file"
+              id="filePDF"
+              accept="application/pdf"
               multiple
               style={{ display: "none" }}
               onChange={handleUpload}
