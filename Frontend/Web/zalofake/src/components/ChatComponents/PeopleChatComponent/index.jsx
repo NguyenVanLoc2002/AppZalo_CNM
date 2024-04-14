@@ -56,9 +56,7 @@ function PeopleChatComponent({
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState("");
 
-  console.log("authUser: ", authUser);
-  console.log("userChat: ", userChat);
-  console.log("message Group: ", messages);
+  console.log("con: ", conversation);
   useEffect(() => {
     if (userChat) {
       if (userChat.admin?._id === authUser._id) {
@@ -147,6 +145,7 @@ function PeopleChatComponent({
       if (!data || data.trim === "") return;
       let messageType;
       console.log("Upload File in send: ", data);
+      
 
       if (receiverId) {
         if (data.type === "text") {
@@ -185,9 +184,11 @@ function PeopleChatComponent({
     }
   };
 
+  console.log("userChat.tag: " ,userChat?.tag );
+
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
-      if (userChat.tag === "friend") {
+      if (userChat.tag === "friend" || !userChat.tag) {
         if (messageReplyId) {
           sendMessage(
             { type: "text", data: content },
@@ -521,13 +522,22 @@ function PeopleChatComponent({
                         }
                         onContextMenu={(e) => handleContextMenu(e, message._id)}
                       >
-                        {authUser._id !== message.senderId && (
-                          <div className="chat-image avatar">
-                            <div className="ml-2 w-10 rounded-full">
-                              <img alt="avatar" src={userChat.avatar} />
-                            </div>
-                          </div>
-                        )}
+                        {conversation.participants.map((user, index) => {
+                          if (user._id === message.senderId) {
+                            return (
+                              <div key={index} className="chat-image avatar">
+                                <div className="ml-2 w-10 rounded-full">
+                                  <img
+                                    alt="avatar"
+                                    src={
+                                      user.profile.avatar?.url || "/zalo.svg"
+                                    }
+                                  />
+                                </div>
+                              </div>
+                            );
+                          }
+                        })}
 
                         <div
                           className={`flex flex-col chat-bubble ${
@@ -716,7 +726,7 @@ function PeopleChatComponent({
 
                         {contextMenuStates[message._id] && (
                           <div
-                            className="flex flex-col z-10 fixed top-1/2 transform -translate-x-40 -translate-y-30 w-52  bg-white rounded-2xl shadow shadow-gray-300 "
+                            className="flex flex-col z-10 fixed top-1/2 transform -translate-x-40 -translate-y-40 w-52  bg-white rounded-2xl shadow shadow-gray-300 "
                             style={{
                               top: contextMenuPosition.y,
                               left: contextMenuPosition.x,
@@ -805,16 +815,33 @@ function PeopleChatComponent({
                         }
                         onContextMenu={(e) => handleContextMenu(e, message._id)}
                       >
-                        {authUser._id !== message.senderId && (
-                          <div className="chat-image avatar">
-                            <div className="ml-2 w-10 rounded-full">
-                              <img alt="avatar" src={userChat.avatar} />
-                            </div>
-                          </div>
-                        )}
+                        {conversation.participants.map((user, index) => {
+                          console.log("user: ", user);
+                          if (user._id === message.senderId) {
+                            return (
+                              <>
+                              <div key={index} className="flex chat-header">
+                                  <p className="text-base font-semibold">{user.profile.name}</p>
+                                </div>
+                              <div key={index} className="chat-image avatar">
+                                
+                                <div className="ml-2 w-10 rounded-full">
+                                  <img
+                                    alt="avatar"
+                                    src={
+                                      user.profile.avatar?.url || "/zalo.svg"
+                                    }
+                                  />
+                                </div>
+                                
+                              </div>
+                              </>
+                            );
+                          }
+                        })}
 
                         <div
-                          className={`flex flex-col chat-bubble${
+                          className={`flex flex-col chat-bubble ${
                             authUser._id === message.senderId
                               ? "bg-[#e5efff]"
                               : "bg-white"
@@ -1001,7 +1028,7 @@ function PeopleChatComponent({
 
                         {contextMenuStates[message._id] && (
                           <div
-                            className="flex flex-col z-10 fixed top-1/2 transform -translate-x-40 -translate-y-30 w-52  bg-white rounded-2xl shadow shadow-gray-300 "
+                            className="flex flex-col z-10 fixed top-1/2 transform -translate-x-40 -translate-y-40 w-52  bg-white rounded-2xl shadow shadow-gray-300 "
                             style={{
                               top: contextMenuPosition.y,
                               left: contextMenuPosition.x,
@@ -1039,7 +1066,7 @@ function PeopleChatComponent({
                                 {language === "vi" ? "Chuyển tiếp" : "Forward"}
                               </p>
                             </div>
-                            {message.senderId !== userChat.id && (
+                            {message.senderId === authUser._id && (
                               <div
                                 className="flex p-2 text-red-400 items-center rounded-xl border-b border-gray-100 hover:bg-gray-100"
                                 onClick={() => deleteChat(message._id)}
@@ -1124,8 +1151,10 @@ function PeopleChatComponent({
               >
                 <IoImageOutline size={20} />
               </button>
-              <button className="hover:bg-gray-300 p-2 rounded"
-               onClick={handleSelectFileClick}>
+              <button
+                className="hover:bg-gray-300 p-2 rounded"
+                onClick={handleSelectFileClick}
+              >
                 <IoIosLink size={20} />
               </button>
               <button className="hover:bg-gray-300 p-2 rounded flex">
