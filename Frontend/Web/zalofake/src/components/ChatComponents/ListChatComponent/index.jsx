@@ -30,7 +30,7 @@ function ListChatComponent({
   const { groups, getGroups } = useGroup();
   const { authUser } = useAuthContext();
   const { socket } = useSocketContext();
-  const { getConversationByID, getConversationByParticipants } =
+  const { getConversationByID, getConversationByParticipants, conversation } =
     useConversation();
 
   useEffect(() => {
@@ -74,37 +74,29 @@ function ListChatComponent({
 
     listChat.push(...listGroup);
     setListChatCurrent(listChat);
+
     if (socket) {
       socket.on("new_message", ({ message }) => {
-        getConversationByID(message.conversationId).then((conversation) => {
-          const friend = conversation.participants.find(
-            (participant) => participant.phone !== authUser.phone
-          );
-          const newChat = {
-            id: friend?._id,
-            conversationId: conversation._id,
-            name: friend?.profile.name,
-            avatar: friend?.profile.avatar?.url || "/zalo.svg",
-            background: friend?.profile.background?.url || "/zalo.svg",
-            unread: message.receiver === authUser.phone ? true : false,
-            lastMessage: message.retrunMessage,
-            tag: conversation.tag,
-          };
-
+        console.log("new_message", message);
+        if (
+          listChatCurrent.some(
+            (chat) => chat.conversationId === message.conversationId
+          )
+        ) {
           setListChatCurrent((prev) => {
             const newList = [...prev];
-            const index = newList.findIndex((chat) => chat.id === newChat.id);
-            if (index !== -1) {
-              newList.splice(index, 1);
-            }
-            newList.unshift(newChat);
+            const index = newList.findIndex(
+              (chat) => chat.conversationId === message.conversationId
+            );
+            newList[index].lastMessage = message;
             return newList;
           });
-        });
+        } else {
+          getConversationByID(message.conversationId);
+        }
       });
 
       socket.on("add-to-group", ({ data }) => {
-        console.log("add-to-group", data);
         const group = data.group;
 
         if (data?.addMembers?.includes(authUser._id)) {
@@ -132,7 +124,6 @@ function ListChatComponent({
             newList.splice(index, 1);
           }
           newList.unshift(newGroup);
-          console.log("newList", newList);
           return newList;
         });
       });
@@ -191,7 +182,35 @@ function ListChatComponent({
         socket.off("delete-group");
       }
     };
-  }, [conversations, socket, groups]);
+  }, [conversations, groups]);
+
+  useEffect(() => {
+    if (conversation) {
+      const friend = conversation.participants.find(
+        (participant) => participant._id !== authUser._id
+      );
+      console.log("conversation", conversation);
+
+      setListChatCurrent((prev) => {
+        const newList = [...prev];
+        const newChat = {
+          id: friend._id,
+          conversationId: conversation._id,
+          name: friend.profile.name,
+          avatar: friend.profile.avatar.url,
+          background: friend.profile.background.url,
+          lastMessage: conversation.lastMessage,
+          tag: conversation.tag,
+        };
+        const index = newList.findIndex((chat) => chat.id === newChat.id);
+        if (index !== -1) {
+          newList.splice(index, 1);
+        }
+        newList.unshift(newChat);
+        return newList;
+      });
+    }
+  }, [conversation]);
 
   const changeTab = (tab) => {
     setActiveTab(tab);

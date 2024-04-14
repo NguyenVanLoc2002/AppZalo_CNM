@@ -39,6 +39,7 @@ function PeopleChatComponent({
   const [content, setContent] = useState("");
   const [isSidebarVisible, setSidebarVisible] = useState(false);
   const [messages, setMessages] = useState([]);
+  const [listMembers, setListMembers] = useState([]);
   const [loadingMedia, setLoadingMedia] = useState(false);
   const scrollRef = useRef(null);
   const { socket } = useSocketContext();
@@ -56,7 +57,7 @@ function PeopleChatComponent({
   const [name, setName] = useState("");
 
   useEffect(() => {
-    if (!userChat) {
+    if (!userChat || userChat?.tag !== "group") {
       setSidebarVisible(false);
     }
     if (userChat) {
@@ -75,6 +76,8 @@ function PeopleChatComponent({
 
     if (socket) {
       socket.on("new_message", ({ message }) => {
+        console.log("new_message", message);
+
         if (message.retrunMessage?.senderId !== userChat?.id) {
           return;
         }
@@ -83,8 +86,19 @@ function PeopleChatComponent({
           message?.retrunMessage,
         ]);
       });
-      socket.on("delete_message", ({ chatId }) => {
-        getConversationByID(userChat.conversationId);
+      socket.on("delete_message", ({ chatId, isDeleted }) => {
+        if (isDeleted) {
+          console.log("delete_conversation");
+          setMessages([]);
+        } else {
+          console.log("delete_message");
+          try {
+            getConversationByID(userChat.conversationId);
+          } catch (error) {
+            console.error(error);
+            setMessages([]);
+          }
+        }
       });
 
       socket.on("add-to-group", ({ data }) => {
@@ -94,7 +108,6 @@ function PeopleChatComponent({
       });
 
       socket.on("remove-from-group", ({ group }) => {
-        console.log(group);
         if (group.removeMember?.includes(authUser._id)) {
           if (authUser._id === group.createBy) {
             toast.error(
@@ -104,8 +117,10 @@ function PeopleChatComponent({
             );
           }
         } else {
-          conversation?.participants?.filter((p) => {
-            group.removeMember?.includes(p._id);
+          group?.removeMembers?.forEach((member) => {
+            setListMembers((prevMembers) =>
+              prevMembers.filter((m) => m._id !== member)
+            );
           });
         }
       });
@@ -113,13 +128,16 @@ function PeopleChatComponent({
       return () => {
         socket.off("new_message");
         socket.off("delete_message");
+        socket.off("add-to-group");
+        socket.off("remove-from-group");
       };
     }
-  }, [userChat, socket]);
+  }, [userChat]);
 
   useEffect(() => {
     if (conversation) {
       setMessages(conversation.messages);
+      setListMembers(conversation.participants);
     }
   }, [conversation]);
 
@@ -267,11 +285,6 @@ function PeopleChatComponent({
             ? "Bạn không được phép xóa tin nhắn này"
             : "You are not authorized to delete this message"
         );
-      } else if (
-        error.response.status === 404 &&
-        error.config.url.includes("conversations/get/messages")
-      ) {
-        setMessages([]);
       }
 
       throw error;
@@ -1364,7 +1377,7 @@ function PeopleChatComponent({
                 </div>
               ) : (
                 <div className="flex flex-col h-[90%] w-full mt-5 mx-2 overflow-scroll">
-                  {conversation?.participants?.map((member, index) => (
+                  {listMembers?.map((member, index) => (
                     <div
                       key={index}
                       className="flex items-center justify-between w-full p-3 hover:bg-gray-200"

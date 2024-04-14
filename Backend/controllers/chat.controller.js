@@ -275,6 +275,7 @@ function extractPublicId(url) {
 
 exports.deleteChat = async (req, res) => {
   const chatId = req.params.chatId;
+  let isDeleted = false;
 
   try {
     const chat = await Chat.findById(chatId);
@@ -310,8 +311,8 @@ exports.deleteChat = async (req, res) => {
         conversation.messages = conversation.messages.filter(
           (message) => message.toString() !== chatId
         );
-        console.log(conversation.messages.length);
-        console.log(conversation.tag);
+        // console.log(conversation.messages.length);
+        // console.log(conversation.tag);
 
         if (
           conversation.messages.length === 0 &&
@@ -320,16 +321,27 @@ exports.deleteChat = async (req, res) => {
           await conversation.deleteOne({
             participants: { $all: [chat.senderId, chat.receiverId] },
           });
-        } else await conversation.save();
+          console.log("Delete conversation");
+          const receiverSocketId = await getReciverSocketId(chat.receiverId);
+          if (receiverSocketId) {
+            io.to(receiverSocketId.socket_id).emit("delete_message", {
+              chatId,
+              isDeleted: true,
+            });
+          }
+        } else {
+          await conversation.save();
+          const receiverSocketId = await getReciverSocketId(chat.receiverId);
+          if (receiverSocketId) {
+            io.to(receiverSocketId.socket_id).emit("delete_message", {
+              chatId,
+              isDeleted,
+            });
+          }
+        }
       });
     }
 
-    const receiverSocketId = await getReciverSocketId(chat.receiverId);
-    if (receiverSocketId) {
-      io.to(receiverSocketId.socket_id).emit("delete_message", {
-        chatId,
-      });
-    }
     await Chat.findByIdAndDelete(chatId);
     res.status(200).json({ message: "Success deleted" });
   } catch (error) {

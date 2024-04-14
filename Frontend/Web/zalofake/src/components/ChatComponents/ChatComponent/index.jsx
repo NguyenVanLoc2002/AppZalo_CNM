@@ -412,6 +412,7 @@ function ChatComponents({ language }) {
                   setIsShowModal("");
                   setShowAllNewFriends(false);
                   setMembers([]);
+                  setAddMembersToGroup(null);
                 }}
                 className="absolute flex justify-center items-center top-2 right-2 cursor-pointer border rounded-full p-2 hover:bg-gray-200 w-10 h-10 "
               >
@@ -566,6 +567,7 @@ function ChatComponents({ language }) {
                     setIsShowModal("");
                     setShowAllNewFriends(false);
                     setMembers([]);
+                    setAddMembersToGroup(null);
                   }}
                 >
                   <p className="text-lg font-semibold">

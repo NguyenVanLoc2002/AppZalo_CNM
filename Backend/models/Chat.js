@@ -42,7 +42,7 @@ chatSchema.post("save", async function (chat, next) {
     if (!chat.isGroup) {
       const conversation = await Conversation.findOne({
         participants: { $all: [chat.senderId, chat.receiverId] },
-        tag : 'friend'
+        tag: "friend",
       });
 
       if (!conversation) {
@@ -61,9 +61,9 @@ chatSchema.post("save", async function (chat, next) {
     } else {
       const group = await Group.findOne({ _id: chat.receiverId });
 
-      const groupConversation = await Conversation.findOne({
-        _id: group.conversationId,
-      });
+      const groupConversation = await Conversation.findById(
+        group.conversationId
+      );
       if (groupConversation) {
         groupConversation.messages.push(chat._id);
         groupConversation.lastMessage = chat._id;
