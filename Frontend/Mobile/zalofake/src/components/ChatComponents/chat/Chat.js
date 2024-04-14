@@ -7,7 +7,7 @@ import {
   TextInput,
   Pressable,
   Modal,
-  SafeAreaView,ActivityIndicator
+  SafeAreaView, ActivityIndicator
 } from "react-native";
 import ChatItem from "./ChatItem";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -20,6 +20,8 @@ import { useSocketContext } from "../../../contexts/SocketContext";
 import useConversation from "../../../hooks/useConversation";
 import useGroup from "../../../hooks/useGroup";
 import useMessage from '../../../hooks/useMessage'
+import useCreateGroup from "../../../hooks/useCreateGroup";
+
 function Chat({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
   const { conversations, getConversations } = useConversation();
@@ -34,6 +36,7 @@ function Chat({ navigation }) {
   const [isLoadXoa, setIsLoadXoa] = useState(false)
   const [itemCurrent, setItemCurrent] = useState()
   const { showToastSuccess, showToastError } = useMessage();
+  const { getUserById } = useCreateGroup()
 
   const toggleModal = () => {
     setModalVisibleXoa(!isModalVisibleXoa);
@@ -102,7 +105,7 @@ function Chat({ navigation }) {
 
       return {
         id: friend?._id,
-        conversationId: conversation.id,
+        conversation: conversation,
         name: friend?.profile.name,
         avatar: friend?.profile.avatar?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
         background: friend?.profile.background?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
@@ -118,7 +121,7 @@ function Chat({ navigation }) {
     const listGroup = groups.map((group) => {
       return {
         id: group._id,
-        conversationId: group.conversation._id,
+        conversation: group.conversation,
         name: group.groupName,
         avatar: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
         background: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
@@ -132,7 +135,7 @@ function Chat({ navigation }) {
   };
 
   useEffect(() => {
-   
+
     fetchDataChat();
   }, [conversations, groups]);
 
@@ -146,10 +149,11 @@ function Chat({ navigation }) {
 
       const conver = listChat[index];
       if (conver.lastMessage !== undefined && conver.lastMessage !== null) {
-        if (conver.id === conver.lastMessage.senderId) {
-          dataChat = conver.name;
+        const getUser = await getUserById(conver?.lastMessage?.senderId)
+        if (authUser.profile.name === getUser.user.profile.name) {
+          dataChat = "Bạn"
         } else {
-          dataChat = 'Bạn'
+          dataChat = getUser.user.profile.name
         }
         if (conver.lastMessage.contents[0].type === "text") {
           dataChat = dataChat + ': ' + conver.lastMessage.contents[0].data;
@@ -211,10 +215,10 @@ function Chat({ navigation }) {
     setIsLoadXoa(true)
     const deleteChat = async () => {
       try {
-        const response = await axiosInstance.post(`/conversations/deleted/${itemCurrent.conver.conversationId}`);
+        const response = await axiosInstance.post(`/conversations/deleted/${itemCurrent.conver.conversation._id}`);
         console.log(response)
         if (response.status === 200) {
-          removeItemById(conversations, itemCurrent.conver.conversationId);
+          removeItemById(conversations, itemCurrent.conver.conversation._id);
           fetchDataChat();
           showToastSuccess("Xóa thành công")
           toggleModal()
@@ -449,7 +453,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: 'center',
     marginTop: 20,
-   
+
   },
   headerIcon: {
     padding: 10,
@@ -484,7 +488,7 @@ const styles = StyleSheet.create({
     width: 300,
     padding: 20,
     borderRadius: 10,
-    display:'flex',
+    display: 'flex',
     flexDirection: "column",
   },
   modalHeaderText: {
@@ -508,7 +512,7 @@ const styles = StyleSheet.create({
   pressCol: {
     justifyContent: 'center',
     alignItems: 'center',
-    flexDirection:'row'
+    flexDirection: 'row'
   },
 });
 

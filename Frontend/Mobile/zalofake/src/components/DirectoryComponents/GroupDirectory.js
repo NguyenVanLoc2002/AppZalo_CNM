@@ -15,6 +15,7 @@ import axiosInstance from "../../api/axiosInstance";
 import moment from 'moment-timezone';
 import Toast from "react-native-toast-message";
 import useCreateGroup from "../../hooks/useCreateGroup";
+import { useAuthContext } from "../../contexts/AuthContext";
 
 const GroupDirectory = ({ navigation }) => {
   const [listFriends, setListFriends] = useState([])
@@ -28,33 +29,45 @@ const GroupDirectory = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [isHidden, setIsHidden] = useState(false)
   const [groupAll, setGroupAll] = useState([])
-  const { getAllGroup, getConversationById, getConversations, createGroup } = useCreateGroup()
+  const { getAllGroup, getConversationById, createGroup, getUserById } = useCreateGroup()
+  const { authUser } = useAuthContext();
 
   const fetchGroup = async () => {
     try {
       const allGr = await getAllGroup();
-      if (allGr) {
-        const group = []
-        let dem = 0
-        for (const gr of allGr) {
-          dem++;
-          const conversation = await getConversations(gr.conversation._id)
-          const newGroup = {
-            _id: gr._id,
-            groupName: gr.groupName,
-            avatar: gr.avatar?.url,
-            createAt: handleGetTime(gr.createAt),
-            createBy: gr.createBy,
-            conversation: gr.conversation,
-            lastMessage: conversation.lastMessage,
-            userSendLast: conversation.userSend,
-            sendTime: handleGetTime(conversation.sendTime)
-          }
-          group.push(newGroup)
+      let dem = 0
+      let sender
+      const newGroup = await Promise.all(allGr.map(async (group) => {
+        dem++;
+        let lastMessage;
+        if (group?.lastMessage?.contents[0].type === 'text') {
+          lastMessage = group?.lastMessage?.contents[0].data
+        } else if (data?.lastMessage?.contents[0].type === 'image') {
+          lastMessage = " [Hình ảnh]"
+        } else {
+          lastMessage = " [Video]"
         }
-        setGroupAll(group)
-        setLengthGroup(dem)
-      }
+        const getUser = await getUserById(group?.lastMessage?.senderId)
+        if (authUser.profile.name === getUser.user.profile.name) {
+          sender = "Bạn"
+        } else {
+          sender = getUser.user.profile.name
+        }
+
+        return {
+          id: group._id,
+          name: group.groupName,
+          avatar: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+          conversation: group.conversation,
+          createBy: group.createBy,
+          lastMessage: lastMessage,
+          sender: sender,
+          timeSend: handleGetTime(group?.lastMessage.timestamp)
+        }
+      }))
+      groupAll.push(...newGroup)
+      setLengthGroup(dem)
+      setGroupAll(groupAll)
     } catch (error) {
       console.log("FetchGroupError: ", error);
     }
@@ -208,15 +221,24 @@ const GroupDirectory = ({ navigation }) => {
         idUser.push(id.id)
       }
       try {
-        const response = await createGroup(nameGroup,idUser)
-        if(response){
+        const response = await createGroup(nameGroup, idUser)
+        if (response) {
           setIsLoading(false)
           setNameGroup(null)
           setTextSearch(null)
           setModalCreateGr(false)
           fetchGroup()
-          navigation.navigate("MessageGroup", { conver: response.conversation , group: response})
-        } 
+          const conversation = {
+            _id: response.conversation
+          }
+          const group = {
+            id: response._id,
+            name: response.groupName,
+            avatar : response.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+            conversation : conversation
+          }
+          navigation.navigate("Message", { conver: group })
+        }
       } catch (error) {
         console.log("CreateGroupError:", error);
         setIsLoading(false)
@@ -252,22 +274,18 @@ const GroupDirectory = ({ navigation }) => {
             </Pressable>
           </View>
           {groupAll?.map((group, index) => (
-            <Pressable key={index} style={styles.groupItem} onPress={() => navigation.navigate("MessageGroup", { conver: group.conversation , group: group})}>
+            <Pressable key={index} style={styles.groupItem} onPress={() => navigation.navigate("Message", { conver: group })}>
               <Image
                 style={styles.avatar}
-                source={{ uri: group.avatar ? group.avatar : "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}
+                source={{ uri: group.avatar }}
               />
               <View style={styles.groupTextContainer}>
-                <Text style={styles.groupTitle}>{group.groupName}</Text>
+                <Text style={styles.groupTitle}>{group.name}</Text>
                 <Text style={styles.groupDescription}>
-                  {group.userSendLast ? `${group.userSendLast}: ${group.lastMessage}` : "Chưa có tin nhắn"}
+                  {group.sender ? `${group.sender}: ${group.lastMessage}` : "Chưa có tin nhắn nào"}
                 </Text>
               </View>
-              {group?.sendTime ? (
-                <Text style={styles.timeText}>{group.createAt}</Text>
-              ) : (
-                <Text style={styles.timeText}>{group.sendTime}</Text>
-              )}
+              <Text style={styles.timeText}>{group.timeSend === 0 ? "vừa xong" : `${group.timeSend} `}</Text>
             </Pressable>
           ))}
         </View>
