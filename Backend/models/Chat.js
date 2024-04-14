@@ -39,7 +39,6 @@ const chatSchema = new mongoose.Schema({
 
 chatSchema.post("save", async function (chat, next) {
   try {
-    console.log("conversation not found: ", chat);
     if (!chat.isGroup) {
       const conversation = await Conversation.findOne({
         participants: { $all: [chat.senderId, chat.receiverId] },
@@ -52,9 +51,9 @@ chatSchema.post("save", async function (chat, next) {
           messages: [chat._id],
           lastMessage: chat._id,
         });
+
         await newConversation.save();
       } else {
-        // console.log("conversation: ", conversation);
         conversation.messages.push(chat._id);
         conversation.lastMessage = chat._id;
         await conversation.save();

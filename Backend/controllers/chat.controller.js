@@ -7,7 +7,6 @@ const { io, getReciverSocketId } = require("../socket/socket.io.js");
 
 //Gửi tin nhắn mới cho một người dùng cụ thể.
 exports.sendMessage = async (req, resp) => {
-  console.log("req.files: ", req.files);
   try {
     const senderId = req.user.user_id; // Lấy userId của người gửi từ thông tin đăng nhập (đã được đặt trong middleware auth)
     const receiverId = req.params.userId;
@@ -15,8 +14,6 @@ exports.sendMessage = async (req, resp) => {
     //Còn là chat single thì không cần truyền chỉ cần truyền data nha FE
     const isGroup = req.body.isGroup || false;
     const replyMessageId = req.body.replyMessageId || null;
-    console.log("isGroup: ", isGroup);
-    console.log("replyMessageId: ", replyMessageId);
 
     let contents = [];
     // Kiểm tra xem req.body có tồn tại không và có chứa nội dung không
@@ -55,36 +52,37 @@ exports.sendMessage = async (req, resp) => {
       replyMessageId,
     });
     await message.save();
+    const retrunMessage = await Chat.findById(message._id).populate({
+      path: "replyMessageId",
+      model: "chats",
+    });
+    const conversation = await Conversation.findOne({
+      participants: { $all: [senderId, receiverId] },
+      tag: isGroup ? "group" : "friend",
+    });
 
-    //Gọi socket và xử lý
-    try {
-      if (isGroup) {
-        const groupMembers = await User.find({ _id: { $in: receiverId } });
-        for (const member of groupMembers) {
-          const receiverSocketId = await getReciverSocketId(member._id);
-          if (receiverSocketId) {
-            io.to(receiverSocketId.socket_id).emit("new_message", { message });
-          }
-        }
-      } else {
-        const receiverSocketId = await getReciverSocketId(receiverId);
+    if (isGroup) {
+      const groupMembers = await User.find({ _id: { $in: receiverId } });
+      for (const member of groupMembers) {
+        const receiverSocketId = await getReciverSocketId(member._id);
         if (receiverSocketId) {
           io.to(receiverSocketId.socket_id).emit("new_message", {
-            message,
+            message: { retrunMessage, conversationId: conversation._id },
           });
         }
       }
-    } catch (error) {
-      console.error("Error sending message:", error);
+    } else {
+      const receiverSocketId = await getReciverSocketId(receiverId);
+      if (receiverSocketId) {
+        io.to(receiverSocketId.socket_id).emit("new_message", {
+          message: { retrunMessage, conversationId: conversation._id },
+        });
+      }
     }
-
-    const conversation = await Conversation.findOne({
-      participants: { $all: [senderId, receiverId] },
-    });
     resp.status(201).json({
       message: "Message sent successfully",
       data: {
-        message,
+        message: retrunMessage,
         conversationId: conversation._id,
       },
     });
@@ -304,18 +302,26 @@ exports.deleteChat = async (req, res) => {
       })
     );
 
-    const conversation = await Conversation.findOne({
+    const conversations = await Conversation.find({
       participants: { $all: [chat.senderId, chat.receiverId] },
     });
-    if (conversation) {
-      conversation.messages = conversation.messages.filter(
-        (message) => message.toString() !== chatId
-      );
-      if (conversation.messages.length === 0 && conversation.tag !== "group") {
-        await conversation.deleteOne({
-          participants: { $all: [chat.senderId, chat.receiverId] },
-        });
-      } else await conversation.save();
+    if (conversations.length > 0) {
+      conversations.forEach(async (conversation) => {
+        conversation.messages = conversation.messages.filter(
+          (message) => message.toString() !== chatId
+        );
+        console.log(conversation.messages.length);
+        console.log(conversation.tag);
+
+        if (
+          conversation.messages.length === 0 &&
+          conversation.tag !== "group"
+        ) {
+          await conversation.deleteOne({
+            participants: { $all: [chat.senderId, chat.receiverId] },
+          });
+        } else await conversation.save();
+      });
     }
 
     const receiverSocketId = await getReciverSocketId(chat.receiverId);

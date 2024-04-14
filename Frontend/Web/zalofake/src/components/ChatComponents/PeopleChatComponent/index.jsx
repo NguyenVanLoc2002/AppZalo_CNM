@@ -1,92 +1,71 @@
 import { useEffect, useRef, useState } from "react";
-import { AiFillLike, AiOutlineUsergroupAdd } from "react-icons/ai";
-import { BiLockOpen, BiScreenshot, BiSmile } from "react-icons/bi";
+import { AiFillLike } from "react-icons/ai";
+import { BiScreenshot, BiSmile } from "react-icons/bi";
 import { BsLayoutSidebarReverse, BsThreeDots, BsTrash3 } from "react-icons/bs";
-import { CiCircleQuestion } from "react-icons/ci";
-import {
-  FaAddressCard,
-  FaCaretDown,
-  FaRegEyeSlash,
-  FaUserFriends,
-  FaVideo,
-} from "react-icons/fa";
+import { FaAddressCard, FaCaretDown } from "react-icons/fa";
 import { FiCheckSquare } from "react-icons/fi";
 import { IoIosLink, IoMdShareAlt } from "react-icons/io";
+import { GrUserAdmin } from "react-icons/gr";
 import {
   IoImageOutline,
   IoTrashOutline,
-  IoWarningOutline,
+  IoPersonRemoveOutline,
+  IoPersonAddOutline,
 } from "react-icons/io5";
 import { LuPencilLine, LuSticker } from "react-icons/lu";
-import { MdFormatColorText, MdPhone } from "react-icons/md";
-import {
-  PiAlarmThin,
-  PiBellRingingThin,
-  PiMagnifyingGlass,
-  PiTagSimpleLight,
-} from "react-icons/pi";
-import {
-  RiAlarmLine,
-  RiBatteryChargeLine,
-  RiDoubleQuotesR,
-} from "react-icons/ri";
+import { MdFormatColorText, MdOutlineCancel } from "react-icons/md";
+import { PiTagSimpleLight } from "react-icons/pi";
+import { RiBatteryChargeLine, RiDoubleQuotesR } from "react-icons/ri";
 import { TfiAlarmClock } from "react-icons/tfi";
 import { FaArrowRotateLeft } from "react-icons/fa6";
-import { TiPinOutline } from "react-icons/ti";
+import { CiCircleCheck } from "react-icons/ci";
 import axiosInstance from "../../../api/axiosInstance";
-import { format, previousMonday } from "date-fns";
+import { format } from "date-fns";
 import { useSocketContext } from "../../../contexts/SocketContext";
 import EmojiPicker from "emoji-picker-react";
-import useConversation from "../../../hooks/useConversation";
 import { Document, Page } from "react-pdf";
+import { useAuthContext } from "../../../contexts/AuthContext";
+import useConversation from "../../../hooks/useConversation";
+import useGroup from "../../../hooks/useGroup";
+import toast from "react-hot-toast";
 
-function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
+function PeopleChatComponent({
+  language,
+  userChat,
+  showModal,
+  shareMessage,
+  addMembersToGroup,
+}) {
   const [content, setContent] = useState("");
   const [isSidebarVisible, setSidebarVisible] = useState(false);
   const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [loadingMedia, setLoadingMedia] = useState(false);
   const scrollRef = useRef(null);
   const { socket } = useSocketContext();
+  const { authUser } = useAuthContext();
+  const { getConversationByID, conversation } = useConversation();
+  const { updateGroup, addMember, removeMember, deleteGroup, loading } =
+    useGroup();
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [isAddingMessages, setIsAddingMessages] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
-  const { getConversations } = useConversation();
   const [contentReply, setContentReply] = useState("");
   const [messageReplyId, setMessageReplyId] = useState("");
+  const [truncatedContent, setTruncatedContent] = useState("");
+  const [isGroupAdmin, setIsGroupAdmin] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [name, setName] = useState("");
+
   useEffect(() => {
-    const fetchMessageHistory = async (converId) => {
-      if (!converId) {
-        setMessages([]);
-        return;
-      }
-
-      setLoading(true);
-      try {
-        const response = await axiosInstance.get(
-          `conversations/get/messages/${converId}`
-        );
-
-        if (response.statusText === "OK") {
-          setMessages(response.data);
-        } else {
-          throw new Error(response.data || "Failed to fetch message history");
-        }
-      } catch (error) {
-        console.error(error);
-        if (error.response.status === 404) {
-          console.log("Không tìm thấy tin nhắn 1");
-          setMessages([]);
-        }
-        setLoading(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (userChat) {
+      if (userChat.admin?._id === authUser._id) {
+        setIsGroupAdmin(true);
+      } else {
+        setIsGroupAdmin(false);
+      }
+      setName(userChat?.name);
       if (userChat.conversationId) {
-        fetchMessageHistory(userChat.conversationId);
+        getConversationByID(userChat.conversationId);
       } else {
         setMessages([]);
       }
@@ -94,15 +73,45 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
 
     if (socket) {
       socket.on("new_message", ({ message }) => {
-        getConversations();
-        if (message.senderId !== userChat?.id) {
+        if (message.retrunMessage?.senderId !== userChat?.id) {
           return;
         }
-        setMessages((prevMessages) => [...prevMessages, message]);
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          message?.retrunMessage,
+        ]);
       });
       socket.on("delete_message", ({ chatId }) => {
-        fetchMessageHistory(userChat.conversationId);
+        getConversationByID(userChat.conversationId);
       });
+
+      socket.on("add-to-group", ({ group }) => {
+        if (group._id === userChat.id) {
+          getConversationByID(userChat.conversationId);
+        }
+      });
+
+      socket.on("remove-from-group", ({ group }) => {
+        if (group.removeMember?.includes(authUser._id)) {
+          if (authUser._id === group.createBy) {
+            toast.error(
+              language === "vi"
+                ? `Bạn đã rời khỏi nhóm ${group.name}`
+                : `You have left the group ${group.name}`
+            );
+          } 
+        }
+
+        setListChatCurrent((prev) => {
+          const newList = [...prev];
+          const index = newList.findIndex((chat) => chat.id === group._id);
+          if (index !== -1) {
+            newList.splice(index, 1);
+          }
+          return newList;
+        });
+      });
+
       return () => {
         socket.off("new_message");
         socket.off("delete_message");
@@ -110,6 +119,11 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
     }
   }, [userChat, socket]);
 
+  useEffect(() => {
+    if (conversation) {
+      setMessages(conversation.messages);
+    }
+  }, [conversation]);
 
   const scrollToBottom = () => {
     if (scrollRef.current) {
@@ -189,17 +203,6 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
     setSidebarVisible(!isSidebarVisible);
   };
 
-  //Giới hạn 3 ảnh trong 1 phần chat-bubble
-  const calcImageSizeInChatBubble = (contents, maxImagePerRow) => {
-    const imagesCount = contents.filter(
-      (content) => content.type === "image"
-    ).length;
-    const imagesPerRow = Math.min(imagesCount, maxImagePerRow);
-    const imageWidth = `calc(100%/${imagesPerRow})`;
-    const imageHeight = "auto";
-    return { imageWidth, imageHeight };
-  };
-
   const handleSelectImageClick = () => {
     const fileInput = document.getElementById("fileInput");
     fileInput.click();
@@ -207,8 +210,6 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
 
   const handleUpload = async (event) => {
     const files = event.target.files;
-    console.log("file1: ", files);
-    // Xử lý tệp ảnh và video ở đây
     try {
       await sendMessage(files, userChat?.id);
     } catch (error) {
@@ -272,7 +273,6 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
         error.response.status === 404 &&
         error.config.url.includes("conversations/get/messages")
       ) {
-        console.log("Không tìm thấy tin nhắn 2");
         setMessages([]);
       }
 
@@ -282,14 +282,10 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
 
   // Hàm xử lý chức năng xóa chỉ phía tôi
   const handleDeleteOnlyMySide = async (chatId) => {
-    console.log("chatId: ", chatId);
-    console.log("dang delete");
     try {
-      console.log(userChat?.conversationId);
-      const response = await axiosInstance.post(
+      await axiosInstance.post(
         `conversations/deleteOnMySelf/${userChat?.conversationId}/${chatId}`
       );
-      console.log("Xoa chi phia toi", response);
       const updatedMessages = messages.filter(
         (message) => message._id !== chatId
       );
@@ -303,14 +299,6 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
     setShowPicker((prevState) => !prevState);
   };
 
-  const onEmojiClick = (e, emojiObject) => {
-    console.log("emojiObject.emoji: ", emojiObject.emoji); // Log emojiObject để kiểm tra
-    setContent((prevInput) => prevInput + emojiObject.emoji);
-    setShowPicker(false);
-  };
-
-  const [truncatedContent, setTruncatedContent] = useState("");
-
   useEffect(() => {
     if (contentReply.data && contentReply.data.length > 40) {
       setTruncatedContent(contentReply.data.substring(0, 40) + "...");
@@ -318,6 +306,87 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
       setTruncatedContent(contentReply.data);
     }
   }, [contentReply]);
+
+  const updateGroupInfo = async () => {
+    if (name.trim() === "") {
+      setName(userChat?.name);
+      setIsEditing(false);
+      return;
+    }
+    try {
+      const response = await updateGroup(userChat.id, { name });
+      if (response) {
+        setIsEditing(false);
+        toast.success(
+          language === "vi"
+            ? "Cập nhật thông tin nhóm thành công"
+            : "Update group info successfully"
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        language === "vi"
+          ? "Cập nhật thông tin nhóm thất bại"
+          : "Update group info failed"
+      );
+    }
+  };
+
+  const handleRemoveMember = async (memberId) => {
+    try {
+      const response = await removeMember(userChat.id, { members: [memberId] });
+      if (response) {
+        getConversationByID(userChat.conversationId);
+        toast.success(
+          language === "vi"
+            ? "Xóa thành viên khỏi nhóm thành công"
+            : "Remove member from group successfully"
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      if (error.response.data.error === "Group must have at least 2 members") {
+        toast.error(
+          language === "vi"
+            ? "Nhóm phải có ít nhất 2 thành viên"
+            : "Group must have at least 2 members"
+        );
+      } else {
+        toast.error(
+          language === "vi"
+            ? "Xóa thành viên khỏi nhóm thất bại"
+            : "Remove member from group failed"
+        );
+      }
+    }
+  };
+
+  const handleAddMember = async () => {
+    addMembersToGroup(userChat.id);
+    showModal("addGroup");
+    getConversationByID(userChat.conversationId);
+  };
+
+  const handleDeleteGroup = async () => {
+    try {
+      const response = await deleteGroup(userChat.id);
+      if (response) {
+        toast.success(
+          language === "vi"
+            ? "Xóa nhóm thành công"
+            : "Delete group successfully"
+        );
+        userChat = null;
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        language === "vi" ? "Xóa nhóm thất bại" : "Delete group failed"
+      );
+    }
+  };
+
   return (
     <>
       {userChat && (
@@ -339,27 +408,19 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                 <PiTagSimpleLight size={18} className="hover:fill-blue-700" />
               </button>
             </div>
-            <div className="flex items-center mr-3">
-              <button className="hover:bg-gray-300 p-2 rounded">
-                <PiMagnifyingGlass size={18} />
-              </button>
-              <button className="hover:bg-gray-300 p-2 rounded">
-                <MdPhone size={20} />
-              </button>
-              <button className="hover:bg-gray-300 p-2 rounded">
-                <FaVideo size={18} />
-              </button>
-              <button
-                className="hover:bg-gray-300 p-2 rounded"
-                onClick={toggleSidebar}
-              >
-                <BsLayoutSidebarReverse size={18} />
-              </button>
-            </div>
+            {userChat?.tag === "group" && (
+              <div className="flex items-center mr-3">
+                <button
+                  className="hover:bg-gray-300 p-2 rounded"
+                  onClick={toggleSidebar}
+                >
+                  <BsLayoutSidebarReverse size={22} />
+                </button>
+              </div>
+            )}
           </div>
 
-          {/*Content Chat */}
-          {messages.length === 0 ? (
+          {messages?.length === 0 ? (
             <div
               className={`flex flex-col justify-center items-center bg-slate-50 overflow-y-auto ${
                 contentReply ? "h-[58vh]" : "h-[74vh]"
@@ -399,11 +460,9 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                 contentReply ? "h-[58vh]" : "h-[74vh]"
               }`}
               ref={scrollRef}
-              // onScroll={handleScroll}
             >
-              {messages.map((message, index) => {
+              {messages?.map((message, index) => {
                 if (message.senderId !== userChat.id) {
-                  // Lấy những tin nhắn có status là 0 hoặc 2
                   if (message.status === 0 || message.status === 2) {
                     return (
                       <div
@@ -433,7 +492,7 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                           {message.replyMessageId && (
                             <div className="h-16 m-2 rounded-lg bg-sky-200 p-2 text-black">
                               <div className="flex flex-col border-l-2 border-sky-500">
-                                {message.replyMessageId.contents[0].type ===
+                                {message.replyMessageId?.contents[0].type ===
                                 "text" ? (
                                   <div>
                                     <p className="ml-2 text-base font-semibold">
@@ -624,8 +683,6 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                               onClick={() => {
                                 setContentReply(message.contents[0]);
                                 setMessageReplyId(message._id);
-                                console.log("messageReplyId: ", messageReplyId);
-                                console.log("message: ", message);
                               }}
                             >
                               <RiDoubleQuotesR
@@ -647,11 +704,7 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                                 size={14}
                                 color="black"
                               />
-                              {/* <RiDoubleQuotesR
-                                className="mr-3"
-                                size={14}
-                                color="black"
-                              /> */}
+
                               <p>
                                 {language === "vi" ? "Chuyển tiếp" : "Forward"}
                               </p>
@@ -675,7 +728,6 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                             <div
                               className="flex p-2 text-red-400 items-center rounded-xl border-b border-gray-100 hover:bg-gray-100"
                               onClick={() => {
-                                console.log("message: ", message);
                                 handleDeleteOnlyMySide(message._id);
                               }}
                             >
@@ -696,7 +748,6 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                     );
                   }
                 } else {
-                  // Lấy những tin nhắn có status là 0 hoặc 1
                   if (message.status === 0 || message.status === 1) {
                     return (
                       <div
@@ -917,7 +968,6 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                               onClick={() => {
                                 setContentReply(message.contents[0]);
                                 setMessageReplyId(message._id);
-                                console.log("message: ", message);
                               }}
                             >
                               <RiDoubleQuotesR
@@ -1016,7 +1066,6 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
                   className="-translate-y-60"
                   style={{ width: "100%" }}
                   onEmojiClick={(e) => {
-                    console.log("e.emoji: ", e.emoji);
                     setContent((prevInput) => prevInput + e.emoji);
                     setShowPicker(false);
                   }}
@@ -1225,164 +1274,174 @@ function PeopleChatComponent({ language, userChat, showModal, shareMessage }) {
       )}
 
       {isSidebarVisible && (
-        <div className="fixed top-0 right-0 h-screen bg-gray w-4/12 z-10 bg-gray-300 border-l  drop-shadow-2xl">
-          <div className="h-[70px] bg-white flex justify-center items-center border-b">
-            <p className="flex text-lg font-medium">Thông tin hội thoại</p>
+        <div className="fixed top-0 right-0 h-screen bg-gray w-4/12 bg-gray-300 border-l drop-shadow-2xl">
+          <div className="rounded-t-xl h-[6%] bg-primary flex justify-center items-center border-b">
+            <p className="flex text-lg font-medium text-white">
+              {language === "vi" ? "Thông tin" : "Information"}
+            </p>
             <button
-              className="flex top-0 right-2 fixed text-lg font-medium"
+              className="flex top-1 right-2 fixed border boder-red-500 rounded-full bg-red-500 text-white hover:bg-red-600 hover:text-white w-7 h-7"
               onClick={toggleSidebar}
             >
-              x
+              <p className="text-center w-full h-full">x</p>
             </button>
           </div>
-          <div className="h-[calc(100%-70px)] items-center  overflow-y-auto">
-            <div className="h-[200px] bg-white items-center flex-col">
-              <div className="flex justify-center pt-2">
-                <img src="zalo.svg" alt="avatar" />
-              </div>
-              <div className="flex justify-center pt-2">
-                <p className="text-lg font-semibold">{userChat?.name}</p>
-                <div className="flex items-center ml-2 rounded-full bg-gray-200 p-1 hover:bg-gray-400">
-                  <button>
-                    <LuPencilLine size={20} />
-                  </button>
-                </div>
-              </div>
-              <div className="flex justify-around pt-2">
-                <div className="flex flex-col items-center">
-                  <button className="flex items-center  rounded-full bg-gray-200 p-1 hover:bg-gray-400">
-                    <PiBellRingingThin size={22} />
-                  </button>
-                  <p className="flex text-center">
-                    Tắt thông <br /> báo
-                  </p>
-                </div>
-                <div className="flex flex-col items-center ">
-                  <button className="flex items-center rounded-full bg-gray-200 p-1 hover:bg-gray-400">
-                    <TiPinOutline size={22} />
-                  </button>
-                  <p className="flex text-center">
-                    Ghim hội <br />
-                    thoại{" "}
-                  </p>
-                </div>
-                <div className="flex flex-col items-center">
-                  <button className="flex items-center  rounded-full bg-gray-200 p-1 hover:bg-gray-400">
-                    <AiOutlineUsergroupAdd size={22} />
-                  </button>
-                  <p className="flex text-center ">
-                    Tạo nhóm <br />
-                    trò truyện
-                  </p>
-                </div>
-              </div>
+          <div className="h-[20%] bg-white items-center flex-col">
+            <div className="flex justify-center pt-2">
+              <img
+                src={userChat?.avatar}
+                alt="avatar"
+                className="w-20 h-20 object-cover rounded-full border-2 border-gray-200"
+              />
             </div>
-
-            <div className=" flex flex-col justify-around mt-2  bg-white">
-              <button className="flex items-center p-2 hover:bg-gray-200">
-                <RiAlarmLine size={25} />
-                <p className="ml-2">Danh sách nhắc hẹn</p>
-              </button>
-
-              <button className="flex items-center  p-2 hover:bg-gray-200">
-                <FaUserFriends size={25} stroke="blue" />
-                <p className="ml-2">Nhóm chung</p>
-              </button>
+            <div className="relative flex justify-center items-center pt-2">
+              <input
+                className={`text-lg font-semibold text-center focus:outline-none rounded-xl w-full mx-2 ${
+                  !isEditing ? "" : "border focus:border-success p-1"
+                }`}
+                value={name}
+                readOnly={!isEditing}
+                onChange={(e) => setName(e.target.value)}
+              />
+              {isGroupAdmin && (
+                <div className="absolute -top-1 right-4 rounded-full flex items-center ml-2">
+                  {isEditing ? (
+                    <div className="flex">
+                      <button onClick={updateGroupInfo}>
+                        <CiCircleCheck
+                          size={25}
+                          color="green"
+                          className="mx-1"
+                        />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsEditing(false);
+                          setName(userChat?.name);
+                        }}
+                      >
+                        <MdOutlineCancel
+                          size={25}
+                          color="red"
+                          className="ml-2"
+                        />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setIsEditing(!isEditing);
+                      }}
+                    >
+                      <LuPencilLine size={22} color="green" />
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
-            <div className=" flex flex-col mt-2 p-2 bg-white">
-              <button className="flex items-center justify-between p-2">
-                <p className="font-medium text-lg ">Ảnh/Video</p>
-                <FaCaretDown size={20} />
-              </button>
-              <div>
-                <p className="text-center font-normal text-gray-400">
-                  Chưa có ảnh và video được chia sẻ
+            <div className="flex justify-center items-center h-[20%] w-full border-warning border rounded-full mt-5 mx-2">
+              <p>{language === "vi" ? "Quản Trị Viên :" : "Admin :"}</p>
+              <p className="ml-2 font-semibold">
+                {userChat?.admin?.profile?.name}
+              </p>
+            </div>
+          </div>
+
+          {userChat?.tag === "group" && (
+            <div className="h-[55%] bg-white items-center flex-col mt-[1px]">
+              <div className="h-[5%] flex justify-center relative pt-2">
+                <p className="text-lg font-semibold">
+                  {language === "vi" ? "Danh sách thành viên" : "Member list"}
                 </p>
+                <button
+                  className="absolute top-3 right-5"
+                  onClick={handleAddMember}
+                >
+                  <IoPersonAddOutline size={20} color="green" />
+                </button>
               </div>
-            </div>
-            <div className=" flex flex-col mt-2 p-2 bg-white">
-              <button className="flex items-center justify-between p-2">
-                <p className="font-medium text-lg ">File</p>
-                <FaCaretDown size={20} />
-              </button>
-              <div>
-                <p className="text-center font-normal text-gray-400">
-                  Chưa có file được chia sẻ
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-col mt-2 p-2 bg-white">
-              <button className="flex items-center justify-between p-2">
-                <p className="font-medium text-lg ">Link</p>
-                <FaCaretDown size={20} />
-              </button>
-              <div>
-                <p className="text-center font-normal text-gray-400">
-                  Chưa có link được chia sẻ
-                </p>
-              </div>
-            </div>
-            <div className=" flex flex-col mt-2 bg-white">
-              <button className="flex items-center justify-between mt-2 p-2 ml-2">
-                <p className="font-medium text-lg ">Thiết lập bảo mật</p>
-                <FaCaretDown size={20} />
-              </button>
-              <div className="flex flex-col">
-                <div className="flex items-center pt-2 pb-2 hover:bg-gray-200">
-                  <button className="ml-4">
-                    <BiLockOpen size={25} stroke="blue" />
-                  </button>
-                  <button className="flex flex-col ml-2">
-                    <p className="flex items-center">
-                      Mã hóa đầu cuối{" "}
-                      <CiCircleQuestion size={20} className="ml-2" />
-                    </p>
-                    <p className="font-normal text-sm text-gray-400">
-                      Chưa nâng cấp
-                    </p>
-                  </button>
+              {loading ? (
+                <div className="flex justify-center items-center h-[90%] w-full">
+                  <span className="loading loading-spinner loading-lg"></span>
                 </div>
-                <div className="flex items-center pt-2 pb-2 hover:bg-gray-200">
-                  <button className="ml-4">
-                    <PiAlarmThin size={25} stroke="blue" />
+              ) : (
+                <div className="flex flex-col h-[90%] w-full mt-5 mx-2 overflow-scroll">
+                  {conversation?.participants?.map((member, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between w-full p-3 hover:bg-gray-200"
+                    >
+                      <div className="flex items-center">
+                        <img
+                          src={member.profile?.avatar?.url}
+                          alt="avatar"
+                          className="w-10 h-10 object-cover rounded-full border"
+                        />
+                        <p className="ml-2">{member.profile?.name}</p>
+                      </div>
+                      {isGroupAdmin && (
+                        <div className="flex items-center">
+                          <button
+                            onClick={() => {
+                              handleRemoveMember(member._id);
+                            }}
+                          >
+                            {loading ? (
+                              <span className="loading loading-spinner loading-sm"></span>
+                            ) : (
+                              <IoPersonRemoveOutline size={20} color="red" />
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className=" flex flex-col bg-white h-[20%] mt-[1px]">
+            <div className="h-[20%] flex justify-center pt-2">
+              <p className="text-lg font-semibold">
+                {language === "vi" ? "Thiết lập nhóm" : "Group setting"}
+              </p>
+            </div>
+            <div className="flex flex-col">
+              {isGroupAdmin && (
+                <div className="flex items-center justify-between pt-4 pb-4 hover:bg-gray-200">
+                  <button className="ml-5">
+                    <GrUserAdmin size={20} color="gray" />
                   </button>
 
-                  <button className="flex flex-col ml-2 ">
-                    <p className="flex items-center">
-                      Tin nhắn tự động xóa{" "}
-                      <CiCircleQuestion size={20} className="ml-2" />
-                    </p>
-                    <p className="font-normal text-sm text-gray-400">
-                      Không bao giờ
-                    </p>
+                  <button className="flex items-center mr-auto ml-2 text-gray-600">
+                    <p>{language === "vi" ? "Quản trị viên" : "Admin"}</p>
                   </button>
                 </div>
-                <div className="flex items-center justify-between pt-4 pb-4 hover:bg-gray-200">
-                  <button className="ml-4">
-                    <FaRegEyeSlash size={25} stroke="blue" />
-                  </button>
+              )}
 
-                  <button className="flex items-center mr-auto ml-2 ">
-                    <p>Ẩn trò chuyện</p>
+              <div className="flex items-center justify-between pt-4 pb-4 hover:bg-gray-200">
+                {isGroupAdmin ? (
+                  <button className="flex" onClick={handleDeleteGroup}>
+                    <div className="ml-4">
+                      <IoTrashOutline size={20} stroke="red" />
+                    </div>
+                    <div className="flex items-center mr-auto ml-2 text-red-600">
+                      <p>
+                        {language === "vi" ? "Giải tán nhóm" : "Dissolve group"}
+                      </p>
+                    </div>
                   </button>
-                  <input type="checkbox" className="toggle" />
-                </div>
-                <div className="flex items-center justify-between pt-4 pb-4 hover:bg-gray-200">
-                  <button className="ml-4">
-                    <IoWarningOutline size={25} />
+                ) : (
+                  <button className="flex">
+                    <div className="ml-4">
+                      <IoTrashOutline size={20} stroke="red" />
+                    </div>
+                    <div className="flex items-center mr-auto ml-2 text-red-600">
+                      <p>{language === "vi" ? "Rời nhóm" : "Leave group"}</p>
+                    </div>
                   </button>
-                  <button className="flex items-center mr-auto ml-2 ">
-                    <p>Báo xấu</p>
-                  </button>
-                </div>
-                <div className="flex items-center justify-between pt-4 pb-4 hover:bg-gray-200">
-                  <button className="ml-4">
-                    <IoTrashOutline size={25} stroke="red" />
-                  </button>
-                  <button className="flex items-center mr-auto ml-2 text-red-600">
-                    <p>Xóa lịch sử trò chuyện</p>
-                  </button>
-                </div>
+                )}
               </div>
             </div>
           </div>
