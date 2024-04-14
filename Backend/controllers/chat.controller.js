@@ -6,27 +6,20 @@ const Group = require("../models/Group.js");
 const User = require("../models/User.js");
 const { io, getReciverSocketId } = require("../socket/socket.io.js");
 
-//Gửi tin nhắn mới cho một người dùng cụ thể.
 exports.sendMessage = async (req, resp) => {
   try {
-    const senderId = req.user.user_id; // Lấy userId của người gửi từ thông tin đăng nhập (đã được đặt trong middleware auth)
+    const senderId = req.user.user_id;
     const receiverId = req.params.userId;
-    // Thêm biến này từ FE khi chọn conversation để trò chuyện nếu là Group thì truyền đi isGroup là true
-    //Còn là chat single thì không cần truyền chỉ cần truyền data nha FE
     const isGroup = req.body.isGroup || false;
     const replyMessageId = req.body.replyMessageId || null;
 
     let contents = [];
-    // Kiểm tra xem req.body có tồn tại không và có chứa nội dung không
     if (Object.keys(req.body).length) {
-      // Nếu có nội dung, thêm vào mảng contents
       contents.push({
         type: req.body.data.type,
         data: req.body.data.data,
       });
     }
-
-    //Upload media to Cloudinary if any
     if (req.files) {
       for (const file of req.files) {
         contents.push({
@@ -43,8 +36,6 @@ exports.sendMessage = async (req, resp) => {
     if (!contents || !contents.length) {
       throw new Error("Contents are empty or contain no fields");
     }
-
-    // Tạo và lưu tin nhắn mới vào cơ sở dữ liệu
     const message = new Chat({
       senderId,
       receiverId,
@@ -60,7 +51,6 @@ exports.sendMessage = async (req, resp) => {
 
     const group = await Group.findOne({ _id: receiverId });
 
-
     let conversation;
     if (group) {
       conversation = await Conversation.findOne({
@@ -74,7 +64,6 @@ exports.sendMessage = async (req, resp) => {
       });
     }
 
-   
     if (isGroup) {
       const groupMembers = await User.find({ _id: { $in: receiverId } });
       for (const member of groupMembers) {
@@ -326,8 +315,6 @@ exports.deleteChat = async (req, res) => {
         conversation.messages = conversation.messages.filter(
           (message) => message.toString() !== chatId
         );
-        // console.log(conversation.messages.length);
-        // console.log(conversation.tag);
 
         if (
           conversation.messages.length === 0 &&
@@ -336,7 +323,6 @@ exports.deleteChat = async (req, res) => {
           await conversation.deleteOne({
             participants: { $all: [chat.senderId, chat.receiverId] },
           });
-          console.log("Delete conversation");
           const receiverSocketId = await getReciverSocketId(chat.receiverId);
           if (receiverSocketId) {
             io.to(receiverSocketId.socket_id).emit("delete_message", {
@@ -345,6 +331,8 @@ exports.deleteChat = async (req, res) => {
             });
           }
         } else {
+          conversation.lastMessage =
+            conversation.messages[conversation.messages.length - 1];
           await conversation.save();
           const receiverSocketId = await getReciverSocketId(chat.receiverId);
           if (receiverSocketId) {
