@@ -56,6 +56,8 @@ function PeopleChatComponent({
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState("");
 
+  console.log("userChat: ", userChat);
+  console.log("message Group: ", messages);
   useEffect(() => {
     if (userChat) {
       if (userChat.admin?._id === authUser._id) {
@@ -99,7 +101,7 @@ function PeopleChatComponent({
                 ? `Bạn đã rời khỏi nhóm ${group.name}`
                 : `You have left the group ${group.name}`
             );
-          } 
+          }
         }
 
         setListChatCurrent((prev) => {
@@ -137,7 +139,7 @@ function PeopleChatComponent({
     }
   }, [messages, isAddingMessages]);
 
-  const sendMessage = async (data, receiverId, replyMessageId) => {
+  const sendMessage = async (data, receiverId, replyMessageId, isGroup) => {
     setLoadingMedia(true);
     try {
       if (!data || data.trim === "") return;
@@ -156,7 +158,7 @@ function PeopleChatComponent({
 
         const response = await axiosInstance.post(
           `chats/${receiverId}/${messageType}`,
-          { data: data, replyMessageId },
+          { data: data, replyMessageId, isGroup },
           {
             headers: {
               "Content-Type": "multipart/form-data",
@@ -182,14 +184,28 @@ function PeopleChatComponent({
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
-      if (messageReplyId) {
-        sendMessage(
-          { type: "text", data: content },
-          userChat?.id,
-          messageReplyId
-        );
-      } else {
-        sendMessage({ type: "text", data: content }, userChat?.id, null);
+      if (userChat.tag === "friend") {
+        if (messageReplyId) {
+          sendMessage(
+            { type: "text", data: content },
+            userChat?.id,
+            messageReplyId,
+            false
+          );
+        } else {
+          sendMessage({ type: "text", data: content }, userChat?.id, null,false);
+        }
+      }else{
+        if (messageReplyId) {
+          sendMessage(
+            { type: "text", data: content },
+            userChat?.id,
+            messageReplyId,
+            true
+          );
+        } else {
+          sendMessage({ type: "text", data: content }, userChat?.id, null,true);
+        }
       }
     }
   };
