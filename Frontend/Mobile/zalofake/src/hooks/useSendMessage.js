@@ -2,13 +2,10 @@ import axiosInstance from "../api/axiosInstance";
 
 const useSendMessage = () => {
 
-    const sendImage = async (user, message, isGroup) => {
+    const sendImage = async (user, message) => {
         try {
             const response = await axiosInstance.post(`/chats/${user}/sendImages`,
-                {
-                     message,
-                    isGroup: isGroup
-                },
+                message,
                 {
                     headers: {
                         "Content-Type": "multipart/form-data",
@@ -40,14 +37,11 @@ const useSendMessage = () => {
 
 
 
-    const sendVideo = async (user, message, isGroup) => {
-      
+    const sendVideo = async (user, message) => {
+
         try {
             const response = await axiosInstance.post(`/chats/${user}/sendVideo`,
-                {
-                    message,
-                    isGroup: isGroup
-                },
+                message,
                 {
                     headers: {
                         "Content-Type": "multipart/form-data",

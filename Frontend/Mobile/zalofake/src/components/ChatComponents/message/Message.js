@@ -22,7 +22,7 @@ import { useSocketContext } from "../../../contexts/SocketContext"
 
 const Message = ({ navigation, route }) => {
   const { conver } = route.params;
-  // const {user} = conver.user;
+  // console.log("conver:", JSON.stringify(conver));
   //nhi  
   const [textMessage, setTextMessage] = useState(null)
   const [isColorSend, setIsColorSend] = useState(false)
@@ -67,7 +67,7 @@ const Message = ({ navigation, route }) => {
       } else {
         const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversation._id}`);
         const reversedChats = response.data; //.reverse();
-        console.log(reversedChats)
+        // console.log(reversedChats)
         setChats(reversedChats);
         fetchFriends();
         // const lastElement = reversedChats[0]
@@ -310,7 +310,10 @@ const Message = ({ navigation, route }) => {
     console.log(pickerResult.assets[0])
     if (!pickerResult.canceled) {
       setIsLoadMess(true)
-
+      let isGroup = false
+      if(conver.tag === "group"){
+        isGroup = true
+      } 
       for (const asset of pickerResult.assets) {
         if (asset.type === 'image') {
           const formData = new FormData();
@@ -319,13 +322,13 @@ const Message = ({ navigation, route }) => {
             uri: asset.uri,
             name: fileName,
             type: 'image/jpeg',
+
           });
+          formData.append('isGroup', isGroup);
           try {
-            let isGroup = false
-            if(conver.tag === "group"){
-              isGroup = true
-            } 
-            const response = await sendImage(conver.id, formData, isGroup)
+            console.log("formData",formData);
+        
+            const response = await sendImage(conver._id, formData)
             if (response.status === 201) {
               setIsLoadMess(false)
               setIsLoad(false)
@@ -347,13 +350,11 @@ const Message = ({ navigation, route }) => {
             uri: asset.uri,
             name: fileName,
             type: 'video/mp4',
+
           });
+          formData.append('isGroup', isGroup);
           try {
-            let isGroup = false
-            if(conver.tag === "group"){
-              isGroup = true
-            } 
-            const response = await sendVideo(conver.id, formData, isGroup)
+            const response = await sendVideo(conver._id, formData)
             if (response.status === 201) {
               setIsLoadMess(false)
               setIsLoad(false)
@@ -395,7 +396,7 @@ const Message = ({ navigation, route }) => {
       } 
       try {
         console.log("isGroup:", isGroup);
-        const response = await sendMessage(conver.id,
+        const response = await sendMessage(conver._id,
           { type: 'text', data: textMessage }, isGroup)
         if (response.status === 201) {
           setIsLoadMess(false)

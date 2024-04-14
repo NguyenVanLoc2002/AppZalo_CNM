@@ -42,7 +42,7 @@ const GroupDirectory = ({ navigation }) => {
         let lastMessage;
         if (group?.lastMessage?.contents[0].type === 'text') {
           lastMessage = group?.lastMessage?.contents[0].data
-        } else if (data?.lastMessage?.contents[0].type === 'image') {
+        } else if (group?.lastMessage?.contents[0].type === 'image') {
           lastMessage = " [Hình ảnh]"
         } else {
           lastMessage = " [Video]"
@@ -55,7 +55,7 @@ const GroupDirectory = ({ navigation }) => {
         }
 
         return {
-          id: group._id,
+          _id: group._id,
           name: group.groupName,
           avatar: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
           conversation: group.conversation,
@@ -100,7 +100,7 @@ const GroupDirectory = ({ navigation }) => {
         const newRadioButtons = [];
         for (const friend of response.data.friends) {
           const item = {
-            id: friend.userId,
+            _id: friend.userId,
             name: friend.profile.name,
             avatar: friend?.profile?.avatar?.url
           }
@@ -143,7 +143,7 @@ const GroupDirectory = ({ navigation }) => {
         const newRadioButtons = [];
         for (const friend of filteredFriends) {
           const item = {
-            id: friend.userId,
+            _id: friend.userId,
             name: friend.profile.name,
             avatar: friend?.profile?.avatar?.url
           }
@@ -158,7 +158,7 @@ const GroupDirectory = ({ navigation }) => {
 
   const handleFriendSelection = (item) => {
     if (selectedFriends.includes(item)) {
-      setSelectedFriends(prevState => prevState.filter(friend => friend.id !== item.id));
+      setSelectedFriends(prevState => prevState.filter(friend => friend._id !== item._id));
     } else {
       setSelectedFriends(prevState => [...prevState, item]);
     }
@@ -168,7 +168,7 @@ const GroupDirectory = ({ navigation }) => {
     return selectedFriends.includes(friend);
   };
   const handleDeleteFriendSelected = (item) => {
-    setSelectedFriends(selectedFriends.filter(friend => friend.id !== item.id));
+    setSelectedFriends(selectedFriends.filter(friend => friend._id !== item._id));
   }
   useEffect(() => {
     if (selectedFriends.length === 0) {
@@ -218,7 +218,7 @@ const GroupDirectory = ({ navigation }) => {
     else {
       let idUser = [];
       for (const id of selectedFriends) {
-        idUser.push(id.id)
+        idUser.push(id._id)
       }
       if (idUser.length < 2) {
         showToast("Group phải từ 2 người trở lên","error")
