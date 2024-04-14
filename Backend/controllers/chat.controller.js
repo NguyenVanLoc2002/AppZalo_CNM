@@ -12,9 +12,10 @@ exports.sendMessage = async (req, resp) => {
     const receiverId = req.params.userId;
     const isGroup = req.body.isGroup || false;
     const replyMessageId = req.body.replyMessageId || null;
-
     let contents = [];
-    if (Object.keys(req.body).length) {
+    // Kiểm tra xem req.body có tồn tại không và có chứa nội dung không
+    if (req.body.data) {
+      // Nếu có nội dung, thêm vào mảng contents
       contents.push({
         type: req.body.data.type,
         data: req.body.data.data,
