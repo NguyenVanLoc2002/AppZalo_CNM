@@ -62,8 +62,10 @@ chatSchema.post("save", async function (chat, next) {
       const group = await Group.findOne({ _id: chat.receiverId });
 
       const groupConversation = await Conversation.findOne({
-        _id: group.conversationId,
+        _id: group.conversation,
+        tag : 'group'
       });
+
       if (groupConversation) {
         groupConversation.messages.push(chat._id);
         groupConversation.lastMessage = chat._id;
