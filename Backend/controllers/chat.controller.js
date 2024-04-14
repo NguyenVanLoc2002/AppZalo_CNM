@@ -2,6 +2,7 @@ const cloudinary = require("../configs/Cloudinary.config.js");
 const Chats = require("../models/Chat.js");
 const Chat = require("../models/Chat.js");
 const Conversation = require("../models/Conversation.js");
+const Group = require("../models/Group.js");
 const User = require("../models/User.js");
 const { io, getReciverSocketId } = require("../socket/socket.io.js");
 
@@ -56,23 +57,27 @@ exports.sendMessage = async (req, resp) => {
       path: "replyMessageId",
       model: "chats",
     });
+
+    const group = await Group.findOne({ _id: receiverId });
+
     const conversation = await Conversation.findOne({
       participants: { $all: [senderId, receiverId] },
-      tag: isGroup ? "group" : "friend",
+      tag: "friend",
     });
-
+    // console.log("conversationId: ", group.conversation);
     if (isGroup) {
       const groupMembers = await User.find({ _id: { $in: receiverId } });
       for (const member of groupMembers) {
         const receiverSocketId = await getReciverSocketId(member._id);
         if (receiverSocketId) {
           io.to(receiverSocketId.socket_id).emit("new_message", {
-            message: { retrunMessage, conversationId: conversation._id },
+            message: { retrunMessage, conversationId: group.conversation },
           });
         }
       }
     } else {
       const receiverSocketId = await getReciverSocketId(receiverId);
+
       if (receiverSocketId) {
         io.to(receiverSocketId.socket_id).emit("new_message", {
           message: { retrunMessage, conversationId: conversation._id },
@@ -83,7 +88,7 @@ exports.sendMessage = async (req, resp) => {
       message: "Message sent successfully",
       data: {
         message: retrunMessage,
-        conversationId: conversation._id,
+        conversationId: isGroup ? group.conversation : conversation._id,
       },
     });
   } catch (error) {
