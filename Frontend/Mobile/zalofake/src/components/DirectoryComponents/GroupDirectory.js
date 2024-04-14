@@ -215,7 +215,7 @@ const GroupDirectory = ({ navigation }) => {
           setTextSearch(null)
           setModalCreateGr(false)
           fetchGroup()
-          navigation.navigate("Message", { conver: response.conversation , user: response})
+          navigation.navigate("MessageGroup", { conver: response.conversation , group: response})
         } 
       } catch (error) {
         console.log("CreateGroupError:", error);
@@ -252,7 +252,7 @@ const GroupDirectory = ({ navigation }) => {
             </Pressable>
           </View>
           {groupAll?.map((group, index) => (
-            <Pressable key={index} style={styles.groupItem} onPress={() => navigation.navigate("Message", { conver: group.conversation , user: group})}>
+            <Pressable key={index} style={styles.groupItem} onPress={() => navigation.navigate("MessageGroup", { conver: group.conversation , group: group})}>
               <Image
                 style={styles.avatar}
                 source={{ uri: group.avatar ? group.avatar : "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}

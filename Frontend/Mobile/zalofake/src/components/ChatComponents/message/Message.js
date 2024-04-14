@@ -19,14 +19,16 @@ import * as ImagePicker from "expo-image-picker";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useSocketContext } from "../../../contexts/SocketContext"
 
+
 const Message = ({ navigation, route }) => {
-  const { conver, user } = route.params;
+  const { conver} = route.params;
+  // const {user} = conver.user;
   //nhi  
   const [textMessage, setTextMessage] = useState(null)
   const [isColorSend, setIsColorSend] = useState(false)
   const { sendMessage, sendImage, sendVideo } = useSendMessage();
   const { socket } = useSocketContext()
-
+  
   //truc
   const [chats, setChats] = useState([]);
   const scrollViewRef = useRef();
@@ -44,7 +46,7 @@ const Message = ({ navigation, route }) => {
   const [isLoadChuyenTiep, setIsLoadChuyenTiep] = useState(false)
   const [isLoadThuHoi, setIsLoadThuHoi] = useState(false)
   const [isLoadXoa, setIsLoadXoa] = useState(false)
-
+  
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
   };
@@ -60,14 +62,19 @@ const Message = ({ navigation, route }) => {
     }
   };
   const fetchChats = async () => {
-    console.log("conver:", conver);
     try {
-      const response = await axiosInstance.get(`/conversations/get/messages/${conver._id}`);
-      const reversedChats = response.data; //.reverse();
-      setChats(reversedChats);
-      fetchFriends();
-      const lastElement = reversedChats[0]
-      setLastTimestamp(lastElement.timestamp)
+      if(conver.conversationId === null){
+        showToastSuccess('Chưa có tin nhắn')
+      }else{
+        const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversationId}`);
+        const reversedChats = response.data; //.reverse();
+        console.log(reversedChats)
+        setChats(reversedChats);
+        fetchFriends();
+        const lastElement = reversedChats[0]
+        setLastTimestamp(lastElement.timestamp)
+      }
+      
     } catch (error) {
       console.log(error);
       return false;
@@ -101,7 +108,7 @@ const Message = ({ navigation, route }) => {
 
 
   const handleCheckIsSend = (message) => {
-    if (message.senderId === user._id) {
+    if (message.senderId === conver.id) {
       return false;
     } else {
       return true;
@@ -132,7 +139,7 @@ const Message = ({ navigation, route }) => {
             style={{ padding: 5, marginRight: 10 }}
           />
           <Pressable
-            onPress={() => navigation.navigate("MessageSettings", { user })}
+            onPress={() => navigation.navigate("MessageSettings", { conver })}
           >
             <Ionicons
               name="list-outline"
@@ -144,8 +151,8 @@ const Message = ({ navigation, route }) => {
         </View>
       ),
       headerTitle: () => (
-        <View style={{ flexDirection: "row", alignItems: "center", width: '55%', marginRight: 120 }}>
-          <Text style={{ fontSize: 20, color: "white", fontWeight: 'bold' }}>{user?.profile?.name ? user.profile.name : user.groupName}</Text>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text style={{ fontSize: 20, color: "white", fontWeight: 'bold' }}>{conver.name}</Text>
         </View>
       ),
       headerStyle: {
@@ -182,7 +189,8 @@ const Message = ({ navigation, route }) => {
     setIsLoading(true)
     const fetchChats = async () => {
       try {
-        const response = await axiosInstance.get(`/conversations/get/messages/${conver._id}`);
+        // const response = await axiosInstance.get(`/chats/getHistoryMessage/${user._id}?lastTimestamp=${lastTimestamp}`);
+        const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversationId}`);
         const reversedChats = response.data;//.reverse();
         // if (reversedChats && reversedChats.length > 0) {
         //   setChats(prevChats => [...reversedChats, ...prevChats]);
@@ -219,7 +227,7 @@ const Message = ({ navigation, route }) => {
   const handleDeleteMess = () => {
     setIsLoadThuHoi(true)
     const thuHoi = async () => {
-      console.log('id' + messageSelected._id)
+      console.log('id'+messageSelected._id)
       try {
         const response = await axiosInstance.post(`chats/${messageSelected._id}/delete`);
         console.log(response)
@@ -306,20 +314,21 @@ const Message = ({ navigation, route }) => {
       videoExportPreset: ImagePicker.VideoExportPreset.Passthrough,
       videoMaxDuration: 10
     });
+    console.log(pickerResult.assets[0])
     if (!pickerResult.canceled) {
       setIsLoadMess(true)
-
+     
       for (const asset of pickerResult.assets) {
         if (asset.type === 'image') {
           const formData = new FormData();
-          const fileName = asset.uri.split('/').pop();
-          formData.append('data[]', {
-            uri: asset.uri,
-            name: fileName,
-            type: 'image/jpeg',
-          });
+            const fileName = asset.uri.split('/').pop();
+            formData.append('data[]', {
+              uri: asset.uri,
+              name: fileName,
+              type: 'image/jpeg',
+            });
           try {
-            const response = await sendImage(user, formData)
+            const response = await sendImage(conver.id, formData)
             if (response.status === 201) {
               setIsLoadMess(false)
               setIsLoad(false)
@@ -337,14 +346,14 @@ const Message = ({ navigation, route }) => {
           }
         } else if (asset.type === 'video') {
           const formData = new FormData();
-          const fileName = asset.uri.split('/').pop();
-          formData.append('data[]', {
-            uri: asset.uri,
-            name: fileName,
-            type: 'video/mp4',
-          });
+            const fileName = asset.uri.split('/').pop();
+            formData.append('data[]', {
+              uri: asset.uri,
+              name: fileName,
+              type: 'video/mp4',
+            });
           try {
-            const response = await sendVideo(user, formData)
+            const response = await sendVideo(conver.id, formData)
             if (response.status === 201) {
               setIsLoadMess(false)
               setIsLoad(false)
@@ -381,15 +390,16 @@ const Message = ({ navigation, route }) => {
     else {
       setIsLoadMess(true)
       try {
-        const response = await sendMessage(user,
+        const response = await sendMessage(conver.id,
           { type: 'text', data: textMessage })
         if (response.status === 201) {
           setIsLoadMess(false)
           setIsLoad(false)
-          setChats(
-            chats.concat(response.data.data))
+          // setChats( 
+          //   chats.concat(response.data.data))
+          fetchChats()
           scrollToEnd()
-          console.log("send text success");
+          console.log("success");
           setTextMessage(null)
         }
         else if (response.status === 500) {
@@ -535,23 +545,23 @@ const Message = ({ navigation, route }) => {
                 )}
                 <Text style={styles.modalButton} >Xóa</Text>
               </Pressable>
-              {messageSelected.senderId === user._id ? (
-                <Text></Text>
-              ) : (
-                <Pressable style={styles.pressCol} onPress={handleDeleteMess}>
-                  {isLoadThuHoi ? (
-                    <ActivityIndicator color="black" size="large" />
-                  ) : (
-                    <FontAwesome5
-                      name="comment-slash"
-                      size={20}
-                      color="black"
-                      style={{ marginRight: 8 }}
-                    />
-                  )}
-                  <Text style={styles.modalButton}>Thu hồi</Text>
-                </Pressable>
-              )}
+              {messageSelected.senderId===conver.id ? (
+                  <Text></Text>
+                ) : (
+                  <Pressable style={styles.pressCol} onPress={handleDeleteMess}>
+                {isLoadThuHoi ? (
+                  <ActivityIndicator color="black" size="large" />
+                ) : (
+                  <FontAwesome5
+                    name="comment-slash"
+                    size={20}
+                    color="black"
+                    style={{ marginRight: 8 }}
+                  />
+                )}
+                <Text style={styles.modalButton}>Thu hồi</Text>
+              </Pressable>
+                )} 
             </View>
             <View style={styles.modalButtonContainer1}>
               <Pressable style={styles.pressCol} >
