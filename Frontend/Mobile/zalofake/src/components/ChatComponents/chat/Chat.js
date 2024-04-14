@@ -135,7 +135,6 @@ function Chat({ navigation }) {
   };
 
   useEffect(() => {
-
     fetchDataChat();
   }, [conversations, groups]);
 

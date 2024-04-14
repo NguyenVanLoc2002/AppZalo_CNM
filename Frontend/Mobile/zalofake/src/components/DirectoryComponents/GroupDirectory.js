@@ -62,7 +62,8 @@ const GroupDirectory = ({ navigation }) => {
           createBy: group.createBy,
           lastMessage: lastMessage,
           sender: sender,
-          timeSend: handleGetTime(group?.lastMessage.timestamp)
+          timeSend: handleGetTime(group?.lastMessage.timestamp),
+          tag : group.conversation.tag
         }
       }))
       setGroupAll(newGroup)

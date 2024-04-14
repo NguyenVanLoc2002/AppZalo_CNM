@@ -321,16 +321,20 @@ const Message = ({ navigation, route }) => {
             type: 'image/jpeg',
           });
           try {
-            const response = await sendImage(conver.id, formData)
+            let isGroup = false
+            if(conver.tag === "group"){
+              isGroup = true
+            } 
+            const response = await sendImage(conver.id, formData, isGroup)
             if (response.status === 201) {
               setIsLoadMess(false)
               setIsLoad(false)
               fetchChats();
               scrollToEnd()
-              console.log("success");
+              console.log("send image success");
             }
             else if (response.status === 500) {
-              console.log("fail");
+              console.log("send image fail");
             }
           } catch (error) {
             console.log(error);
@@ -345,16 +349,20 @@ const Message = ({ navigation, route }) => {
             type: 'video/mp4',
           });
           try {
-            const response = await sendVideo(conver.id, formData)
+            let isGroup = false
+            if(conver.tag === "group"){
+              isGroup = true
+            } 
+            const response = await sendVideo(conver.id, formData, isGroup)
             if (response.status === 201) {
               setIsLoadMess(false)
               setIsLoad(false)
               fetchChats();
               scrollToEnd()
-              console.log("success");
+              console.log("send video success");
             }
             else if (response.status === 500) {
-              console.log("fail");
+              console.log("send video fail");
             }
           } catch (error) {
             console.log(error);
@@ -380,22 +388,26 @@ const Message = ({ navigation, route }) => {
     }
     else {
       setIsLoadMess(true)
+      let isGroup = false
+      if(conver.tag === "group"){
+        isGroup = true
+        console.log("tag", conver.tag);
+      } 
       try {
+        console.log("isGroup:", isGroup);
         const response = await sendMessage(conver.id,
-          { type: 'text', data: textMessage })
+          { type: 'text', data: textMessage }, isGroup)
         if (response.status === 201) {
           setIsLoadMess(false)
           setIsLoad(false)
-          // setChats( 
-          //   chats.concat(response.data.data))
           fetchChats()
           scrollToEnd()
-          console.log("success");
+          console.log("send text success");
           setTextMessage(null)
         }
         else if (response.status === 500) {
           showToastError("Gửi tin nhắn thất bại")
-          console.log("fail");
+          console.log("send text fail");
         }
 
       } catch (error) {
