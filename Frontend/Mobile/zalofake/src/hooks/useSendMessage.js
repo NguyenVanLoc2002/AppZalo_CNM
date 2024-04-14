@@ -24,7 +24,7 @@ const useSendMessage = () => {
             const response = await axiosInstance.post(`/chats/${user._id}/sendText`,
                 {
                     data: message,
-                    isGroup: true
+                    isGroup : true
                 }
             )
             return response;

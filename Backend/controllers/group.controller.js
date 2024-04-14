@@ -292,3 +292,73 @@ exports.removeMember = async (req, res) => {
     return res.status(500).json({ error: "Something went wrong" });
   }
 };
+exports.getAllGroup = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    let groups = await Group.find({ createdBy: user.user_id }).populate([
+      { path: "conversation" },
+      { path: "createBy", select: "profile.name" },
+    ]);
+
+    if (groups.length > 0) {
+      console.log("groups", groups);
+      return res.status(200).json(groups);
+    } else {
+      groups = await Group.aggregate([
+        {
+          $lookup: {
+            from: "conversations",
+            localField: "conversation",
+            foreignField: "_id",
+            as: "conversation",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "createBy",
+            foreignField: "_id",
+            as: "createBy",
+          },
+        },
+        {
+          $unwind: "$conversation",
+        },
+        {
+          $lookup: {
+            from: "chats",
+            localField: "conversation.lastMessage",
+            foreignField: "_id",
+            as: "lastMessage",
+          },
+        },
+        {
+          $unwind: "$lastMessage",
+        },
+        {
+          $match: {
+            "conversation.participants": {
+              $in: [new mongoose.Types.ObjectId(user.user_id)],
+            },
+          },
+        },
+
+        {
+          $project: {
+            groupName: 1,
+            avatar: 1,
+            createBy: { $arrayElemAt: ["$createBy.profile.name", 0] },
+            conversation: 1,
+            lastMessage: 1,
+          },
+        },
+      ]);
+
+      return res.status(200).json(groups);
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+};

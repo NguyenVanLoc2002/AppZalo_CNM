@@ -15,15 +15,22 @@ import axiosInstance from "../../../api/axiosInstance";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import moment from 'moment-timezone';
 import { useAuthContext } from "../../../contexts/AuthContext";
-import { useSocketContext } from "../../../contexts/SocketContext"
-
+import { useSocketContext } from "../../../contexts/SocketContext";
+import useConversation from "../../../hooks/useConversation";
+import useGroup from "../../../hooks/useGroup";
 function Chat({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
-  const [conversations, setConversations] = useState([]);
+  const { conversations, getConversations } = useConversation();
+  const {  groups, getGroups } = useGroup();
+  // const [conversations, setConversations] = useState([]);
   const [listFriends, setListFriends] = useState([]);
+  const [chats, setChats] = useState([]);
   const [isLoad, SetIsLoad] = useState(false);
   const { authUser } = useAuthContext();
-  const { socket } = useSocketContext()
+  const { socket } = useSocketContext();
+
+
+
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -79,313 +86,256 @@ function Chat({ navigation }) {
     });
   }, [navigation]);
 
-  const fetchDataConver = async () => {
-    try {
-      const AsyncStorageValue = await AsyncStorage.getAllKeys();
-      // console.log("AsyncStorageValue: ", AsyncStorageValue);
-      const response = await axiosInstance.get("/conversations/getConversations");
-      if (response.status === 200) {
-        // console.log(response.data)
-        let data = [];
-        let name;
-        let image;
-        let dataChat;
-        let user;
-        for (let index = 0; index < response.data.length; index++) {
-          const conver = response.data[index];
-          // console.log(authUser.phone)
-          if (conver.lastMessage !== undefined) {
-            if(conver.participants.length!=2){
-              for(let index = 0; index < conver.participants.length; index++){
-                const part = conver.participants[index];
-                name = name + part.profile?.name;
-                user = conver;
-              };
-              image = "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png"
-            }else{
-              if(conver.participants[0].phone===authUser.phone){
-                image = conver.participants[1].profile?.avatar?.url;
-                name = conver.participants[1].profile?.name;
-                user = conver.participants[1];
-                if (conver.participants[1]._id === conver.lastMessage.senderId) {
-                  dataChat = conver.participants[1].profile?.name;
-                } else {
-                  dataChat = 'Bạn'
-                }
-                if (conver.lastMessage.contents[0].type === "text") {
-                  dataChat = dataChat + ': ' + conver.lastMessage.contents[0].data;
-                } else if (conver.lastMessage.contents[0].type === "image") {
-                  dataChat = dataChat + ': [Hình ảnh]';
-                } else {
-                  dataChat = dataChat + ': [Video]';
-                }
-              }else{
-                image = conver.participants[0].profile?.avatar?.url;
-                name = conver.participants[0].profile?.name;
-                user = conver.participants[0];
-                if (conver.participants[0]._id === conver.lastMessage.senderId) {
-                  dataChat = conver.participants[0].profile?.name;
-                } else {
-                  dataChat = 'Bạn'
-                }
-                if (conver.lastMessage.contents[0].type === "text") {
-                  dataChat = dataChat + ': ' + conver.lastMessage.contents[0].data;
-                } else if (conver.lastMessage.contents[0].type === "image") {
-                  dataChat = dataChat + ': [Hình ảnh]';
-                } else {
-                  dataChat = dataChat + ': [Video]';
-                }
-              }
-            }
-            
-            const conversationNew = {
-              conver:conver,
-              name: name,
-              image:image,
-              dataChat:dataChat,
-              time: handleGetTime(conver.lastMessage.timestamp),
-              user:user
-            };
-            data.push(conversationNew);
-          }
+
+
+  useEffect(() => {
+    const listChat = conversations.map((conversation) => {
+      const friend = conversation.participants.find(
+        (participant) => participant.phone !== authUser.phone
+      );
+
+      return {
+        id: friend?._id,
+        conversationId: conversation.id,
+        name: friend?.profile.name,
+        avatar: friend?.profile.avatar?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+        background: friend?.profile.background?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+        unread: conversation.messages.some(
+          (message) => message.receiver === authUser.phone && !message.isRead
+        ),
+        lastMessage: conversation.lastMessage,
+        tag: conversation.tag,
+      };
+    });
+
+
+    const listGroup = groups.map((group) => {
+      return {
+        id: group._id,
+        conversationId: group.conversation._id,
+        name: group.groupName,
+        avatar: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+        background: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+        lastMessage: group.lastMessage,
+        tag: group.conversation.tag,
+      };
+    });
+    listChat.push(...listGroup);
+    // console.log(listChat);
+    fetchDataConver(listChat)
+  }, [conversations, groups]);
+
+  const fetchDataConver = async (listChat) => {
+
+    let data = [];
+    let dataChat;
+    let int = listChat.length;
+    // console.log(listChat)
+    for (let index = 0; index < int; index++) {
+
+      const conver = listChat[index];
+      if (conver.lastMessage !== undefined && conver.lastMessage !== null) {
+        if (conver.id === conver.lastMessage.senderId) {
+          dataChat = conver.name;
+        } else{
+          dataChat = 'Bạn'
+        }
+        if (conver.lastMessage.contents[0].type === "text") {
+          dataChat = dataChat + ': ' + conver.lastMessage.contents[0].data;
+        } else if (conver.lastMessage.contents[0].type === "image") {
+          dataChat = dataChat + ': [Hình ảnh]';
+        } else {
+          dataChat = dataChat + ': [Video]';
+        }
+        const conversationNew = {
+          conver:conver,
+          dataChat:dataChat,
+          time: handleGetTime(conver.lastMessage.timestamp)
         };
-        data.sort((a, b) => b.conver.lastMessage.timestamp - a.conver.lastMessage.timestamp);
-        setConversations(data)
-        console.log(data)
+        data.push(conversationNew);
+   
       }
-      else if (response.status === 404) {
-        console.log("getFriendError:", error);
-      }
+      
+    };
+    data.sort((a, b) => {
+      const timeA = a.conver.lastMessage.timestamp || "";
+      const timeB = b.conver.lastMessage.timestamp || "";
+      return timeB.localeCompare(timeA);
+    });
+    setListFriends(data);
+   
+  };
+
+useEffect(() => {
+  const fetchDataListFriend = async () => {
+    try {
+
+      getConversations();
+       getGroups();
+
     } catch (error) {
       console.log("getFriendError:", error);
     }
   };
-  
+  if (!isLoad) {
+    fetchDataListFriend();
+    SetIsLoad(true);
+  }
+}, []);
+const handleChatItemPress = (item) => {
+  // fetchDataConver();
+  navigation.navigate("Message", { conver: item.conver});
+};
+const handleGetTime = (time) => {
+  const currentTime = moment().tz('Asia/Ho_Chi_Minh'); // Lấy thời gian hiện tại ở múi giờ Việt Nam
+  const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh'); // Chuyển đổi thời gian đã cho sang múi giờ Việt Nam
+  const timeDifference = moment.duration(currentTime.diff(vietnamDatetime)); // Tính khoảng cách thời gian
 
-  // const fetchData = async () => {
-  //   try {
-  //     const AsyncStorageValue = await AsyncStorage.getAllKeys();
-  //     console.log("AsyncStorageValue: ", AsyncStorageValue);
-  //     const response = await axiosInstance.get("/users/get/friends");
-  //     if (response.status === 200) {
-  //       // setFriends(response.data.friends);
-  //       fetchDataFriend(response.data.friends)
-  //       // console.log(response.data.friends)
-  //     }
-  //     else if (response.status === 404) {
-  //       console.log("getFriendError:", error);
-  //     }
-  //   } catch (error) {
-  //     console.log("getFriendError:", error);
-  //   }
-  // };
-  // const fetchDataFriend = async (fr) => {
-  //   const idSet = new Set();
-  //   for (let index = 0; index < fr.length; index++) {
-  //     const friend = fr[index];
-  //     try {
-  //       const getChat = await axiosInstance.get(`/chats/${friend.userId}/getLastMessage`);
-  //       if (getChat.status === 200) {
-  //         let dataChat;
-  //         console.log(friend.userId)
-  //         console.log(getChat.data.data.senderId)
-  //         if (friend.userId === getChat.data.data.senderId) {
-  //           dataChat = friend.profile?.name;
-  //         } else {
-  //           dataChat = 'Bạn'
-  //         }
-  //         if (getChat.data.data.contents[0].type === "text") {
-  //           dataChat = dataChat + ': ' + getChat.data.data.contents[0].data;
-  //         } else if (getChat.data.data.contents[0].type === "image") {
-  //           dataChat = dataChat + ': [Hình ảnh]';
-  //         } else {
-  //           dataChat = dataChat + ': [Video]';
-  //         }
+  const days = Math.floor(timeDifference.asDays()); // Số ngày
+  const hours = Math.abs(timeDifference.hours()); // Số giờ (dương)
+  const minutes = Math.abs(timeDifference.minutes()); // Số phút (dương)
 
-  //         const newFriend = {
-  //           friend: friend,
-  //           chat: dataChat,
-  //           time: handleGetTime(getChat.data.data.timestamp)
-  //         };
-  //         if (!idSet.has(friend.userId)) {
-  //           setListFriends(prevList => [...prevList, newFriend]);
-  //           idSet.add(friend.userId);
-  //         }
-  //       } else {
-  //         console.log("Error get chat");
-  //       }
-  //     } catch (error) {
-  //       console.log("Error:", error);
-  //     }
-  //   }
-  // }
-  useEffect(() => {
-    const fetchDataListFriend = async () => {
-      try {
-        await fetchDataConver();
-      } catch (error) {
-        console.log("getFriendError:", error);
-      }
-    };
-    if (!isLoad) {
-      fetchDataListFriend();
-      SetIsLoad(true);
-    }
-  }, []);
-  const handleChatItemPress = (item) => {
-    // fetchDataConver();
-    navigation.navigate("Message", { conver: item.conver , user: item.user});
-  };
-  const handleGetTime = (time) => {
-    const currentTime = moment().tz('Asia/Ho_Chi_Minh'); // Lấy thời gian hiện tại ở múi giờ Việt Nam
-    const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh'); // Chuyển đổi thời gian đã cho sang múi giờ Việt Nam
-    const timeDifference = moment.duration(currentTime.diff(vietnamDatetime)); // Tính khoảng cách thời gian
+  if (days >= 1) {
+    return `${days} ngày`;
+  }
+  else if (hours >= 1) {
+    return `${hours} giờ`;
+  }
+  else {
+    return `${minutes} phút`;
+  }
+};
 
-    const days = Math.floor(timeDifference.asDays()); // Số ngày
-    const hours = Math.abs(timeDifference.hours()); // Số giờ (dương)
-    const minutes = Math.abs(timeDifference.minutes()); // Số phút (dương)
-
-    if (days >= 1) {
-      return `${days} ngày`;
-    }
-    else if (hours >= 1) {
-      return `${hours} giờ`;
-    }
-    else {
-      return `${minutes} phút`;
-    }
-  };
-
-  return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <FlatList
-        data={conversations}
-        renderItem={({ item }) => (
-          <Pressable onPress={() => handleChatItemPress(item)} >
-            <ChatItem item={item} />
-          </Pressable>
-        )}
-        keyExtractor={(item) => item.conver._id}
-      />
-      <Modal
-        animationType="none"
-        transparent={true}
-        visible={isModalVisible}
-        onRequestClose={() => setModalVisible(!isModalVisible)}
-      >
-        <Pressable
-          style={{
-            flex: 1,
-            justifyContent: "flex-start",
-            alignItems: "flex-end",
-            marginEnd: 10,
-            marginTop: 10,
-          }}
-          onPress={() => setModalVisible(!isModalVisible)}
-        >
-          <View
-            style={{ backgroundColor: "white", padding: 10, borderRadius: 10 }}
-          >
-            <Pressable
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                padding: 10,
-              }}
-              onPress={() => {
-                navigation.navigate("AddFriends");
-
-                setModalVisible(!isModalVisible);
-              }}
-            >
-              <Ionicons
-                name="person-add-outline"
-                size={22}
-                color="grey"
-                style={{ marginRight: 10 }}
-              />
-              <Text>Thêm bạn</Text>
-            </Pressable>
-            <Pressable
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                padding: 10,
-              }}
-            >
-              <Ionicons
-                name="people-outline"
-                size={22}
-                color="grey"
-                style={{ marginRight: 10 }}
-              />
-              <Text>Tạo nhóm</Text>
-            </Pressable>
-            <Pressable
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                padding: 10,
-              }}
-            >
-              <Ionicons
-                name="cloud-outline"
-                size={22}
-                color="grey"
-                style={{ marginRight: 10 }}
-              />
-              <Text>Cloud của tôi</Text>
-            </Pressable>
-            <Pressable
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                padding: 10,
-              }}
-            >
-              <Ionicons
-                name="calendar-outline"
-                size={22}
-                color="grey"
-                style={{ marginRight: 10 }}
-              />
-              <Text>Lịch Zalo</Text>
-            </Pressable>
-            <Pressable
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                padding: 10,
-              }}
-            >
-              <Ionicons
-                name="videocam-outline"
-                size={22}
-                color="grey"
-                style={{ marginRight: 10 }}
-              />
-              <Text>Tạo cuộc gọi nhóm</Text>
-            </Pressable>
-            <Pressable
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                padding: 10,
-              }}
-            >
-              <Ionicons
-                name="desktop-outline"
-                size={22}
-                color="grey"
-                style={{ marginRight: 10 }}
-              />
-              <Text>Thiết bị đăng nhập</Text>
-            </Pressable>
-          </View>
+return (
+  <SafeAreaView style={{ flex: 1 }}>
+    <FlatList
+      data={listFriends}
+      renderItem={({ item }) => (
+        <Pressable onPress={() => handleChatItemPress(item)} >
+          <ChatItem item={item} />
         </Pressable>
-      </Modal>
-    </SafeAreaView>
-  );
+      )}
+      // keyExtractor={(item) => item.conver.conversationId}
+    />
+    <Modal
+      animationType="none"
+      transparent={true}
+      visible={isModalVisible}
+      onRequestClose={() => setModalVisible(!isModalVisible)}
+    >
+      <Pressable
+        style={{
+          flex: 1,
+          justifyContent: "flex-start",
+          alignItems: "flex-end",
+          marginEnd: 10,
+          marginTop: 10,
+        }}
+        onPress={() => setModalVisible(!isModalVisible)}
+      >
+        <View
+          style={{ backgroundColor: "white", padding: 10, borderRadius: 10 }}
+        >
+          <Pressable
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 10,
+            }}
+            onPress={() => {
+              navigation.navigate("AddFriends");
+
+              setModalVisible(!isModalVisible);
+            }}
+          >
+            <Ionicons
+              name="person-add-outline"
+              size={22}
+              color="grey"
+              style={{ marginRight: 10 }}
+            />
+            <Text>Thêm bạn</Text>
+          </Pressable>
+          <Pressable
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 10,
+            }}
+          >
+            <Ionicons
+              name="people-outline"
+              size={22}
+              color="grey"
+              style={{ marginRight: 10 }}
+            />
+            <Text>Tạo nhóm</Text>
+          </Pressable>
+          <Pressable
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 10,
+            }}
+          >
+            <Ionicons
+              name="cloud-outline"
+              size={22}
+              color="grey"
+              style={{ marginRight: 10 }}
+            />
+            <Text>Cloud của tôi</Text>
+          </Pressable>
+          <Pressable
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 10,
+            }}
+          >
+            <Ionicons
+              name="calendar-outline"
+              size={22}
+              color="grey"
+              style={{ marginRight: 10 }}
+            />
+            <Text>Lịch Zalo</Text>
+          </Pressable>
+          <Pressable
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 10,
+            }}
+          >
+            <Ionicons
+              name="videocam-outline"
+              size={22}
+              color="grey"
+              style={{ marginRight: 10 }}
+            />
+            <Text>Tạo cuộc gọi nhóm</Text>
+          </Pressable>
+          <Pressable
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 10,
+            }}
+          >
+            <Ionicons
+              name="desktop-outline"
+              size={22}
+              color="grey"
+              style={{ marginRight: 10 }}
+            />
+            <Text>Thiết bị đăng nhập</Text>
+          </Pressable>
+        </View>
+      </Pressable>
+    </Modal>
+  </SafeAreaView>
+);
 }
 const styles = StyleSheet.create({
   headerRightContainer: {
