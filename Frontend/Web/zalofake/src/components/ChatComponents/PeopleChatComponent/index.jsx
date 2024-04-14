@@ -142,6 +142,7 @@ function PeopleChatComponent({
 
   const sendMessage = async (data, receiverId, replyMessageId, isGroup) => {
     setLoadingMedia(true);
+    console.log("isGroup: ", isGroup);
     try {
       if (!data || data.trim === "") return;
       let messageType;

@@ -60,18 +60,28 @@ exports.sendMessage = async (req, resp) => {
 
     const group = await Group.findOne({ _id: receiverId });
 
-    const conversation = await Conversation.findOne({
-      participants: { $all: [senderId, receiverId] },
-      tag: "friend",
-    });
-    // console.log("conversationId: ", group.conversation);
+
+    let conversation;
+    if (group) {
+      conversation = await Conversation.findOne({
+        _id: group.conversation,
+        tag: "group",
+      });
+    } else {
+      conversation = await Conversation.findOne({
+        participants: { $all: [senderId, receiverId] },
+        tag: "friend",
+      });
+    }
+
+   
     if (isGroup) {
       const groupMembers = await User.find({ _id: { $in: receiverId } });
       for (const member of groupMembers) {
         const receiverSocketId = await getReciverSocketId(member._id);
         if (receiverSocketId) {
           io.to(receiverSocketId.socket_id).emit("new_message", {
-            message: { retrunMessage, conversationId: group.conversation },
+            message: { retrunMessage, conversationId: conversation._id },
           });
         }
       }
@@ -88,7 +98,7 @@ exports.sendMessage = async (req, resp) => {
       message: "Message sent successfully",
       data: {
         message: retrunMessage,
-        conversationId: isGroup ? group.conversation : conversation._id,
+        conversationId: conversation._id,
       },
     });
   } catch (error) {
