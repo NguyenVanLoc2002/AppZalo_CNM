@@ -7,14 +7,13 @@ const { io, getReciverSocketId } = require("../socket/socket.io.js");
 
 //Gửi tin nhắn mới cho một người dùng cụ thể.
 exports.sendMessage = async (req, resp) => {
-  console.log("req.files: ", req.files);
   try {
     const senderId = req.user.user_id; // Lấy userId của người gửi từ thông tin đăng nhập (đã được đặt trong middleware auth)
     const receiverId = req.params.userId;
     // Thêm biến này từ FE khi chọn conversation để trò chuyện nếu là Group thì truyền đi isGroup là true
     //Còn là chat single thì không cần truyền chỉ cần truyền data nha FE
     const isGroup = req.body.isGroup || false;
-    console.log("isGroup: ", isGroup);
+    const replyMessageId = req.body.replyMessageId || null;
 
     let contents = [];
     // Kiểm tra xem req.body có tồn tại không và có chứa nội dung không
@@ -45,35 +44,48 @@ exports.sendMessage = async (req, resp) => {
     }
 
     // Tạo và lưu tin nhắn mới vào cơ sở dữ liệu
-    const message = new Chat({ senderId, receiverId, contents, isGroup });
+    const message = new Chat({
+      senderId,
+      receiverId,
+      contents,
+      isGroup,
+      replyMessageId,
+    });
     await message.save();
+    const retrunMessage = await Chat.findById(message._id).populate({
+      path: "replyMessageId",
+      model: "chats",
+    });
+    const conversation = await Conversation.findOne({
+      participants: { $all: [senderId, receiverId] },
+      tag: isGroup ? "group" : "friend",
+    });
 
-    //Gọi socket và xử lý
-    try {
-      if (isGroup) {
-        const groupMembers = await User.find({ _id: { $in: receiverId } });
-        for (const member of groupMembers) {
-          const receiverSocketId = await getReciverSocketId(member._id);
-          if (receiverSocketId) {
-            io.to(receiverSocketId.socket_id).emit("new_message", { message });
-          }
-        }
-      } else {
-        const receiverSocketId = await getReciverSocketId(receiverId);
+    if (isGroup) {
+      const groupMembers = await User.find({ _id: { $in: receiverId } });
+      for (const member of groupMembers) {
+        const receiverSocketId = await getReciverSocketId(member._id);
         if (receiverSocketId) {
           io.to(receiverSocketId.socket_id).emit("new_message", {
-            message,
+            message: { retrunMessage, conversationId: conversation._id },
           });
         }
       }
-    } catch (error) {
-      console.error("Error sending message:", error);
+    } else {
+      const receiverSocketId = await getReciverSocketId(receiverId);
+      if (receiverSocketId) {
+        io.to(receiverSocketId.socket_id).emit("new_message", {
+          message: { retrunMessage, conversationId: conversation._id },
+        });
+      }
     }
-
-    // Trả về phản hồi thành công
-    resp
-      .status(201)
-      .json({ message: "Message sent successfully", data: message });
+    resp.status(201).json({
+      message: "Message sent successfully",
+      data: {
+        message: retrunMessage,
+        conversationId: conversation._id,
+      },
+    });
   } catch (error) {
     console.log("Error sending message:", error);
     resp
@@ -90,12 +102,10 @@ exports.getHistoryMessageMobile = async (req, resp) => {
     const lastTimestamp = req.query.lastTimestamp; // Lấy tham số lastTimestamp từ query string
     let queryCondition = {
       $or: [
-        { senderId: currentUserId, receiverId: userId},
+        { senderId: currentUserId, receiverId: userId },
         { senderId: userId, receiverId: currentUserId },
       ],
     };
-   
-
 
     const totalMessageHistory = await Chat.countDocuments(queryCondition);
     let messagesHistory;
@@ -122,7 +132,7 @@ exports.getHistoryMessageMobile = async (req, resp) => {
     resp.status(500).json({ success: false, massage: "Internal server error" });
   }
 };
-exports.getHistoryMessage= async (req, resp) => {
+exports.getHistoryMessage = async (req, resp) => {
   try {
     const userId = req.params.userId; //người nhận lấy từ param
     const currentUserId = req.user.user_id; // người dùng hiện đang đăng nhập
@@ -276,7 +286,7 @@ function extractPublicId(url) {
 }
 
 exports.deleteChat = async (req, res) => {
-  const { chatId } = req.params;
+  const chatId = req.params.chatId;
 
   try {
     const chat = await Chat.findById(chatId);
@@ -305,18 +315,26 @@ exports.deleteChat = async (req, res) => {
       })
     );
 
-    const conversation = await Conversation.findOne({
+    const conversations = await Conversation.find({
       participants: { $all: [chat.senderId, chat.receiverId] },
     });
-    if (conversation) {
-      conversation.messages = conversation.messages.filter(
-        (message) => message.toString() !== chatId
-      );
-      if (conversation.messages.length === 0) {
-        await conversation.deleteOne({
-          participants: { $all: [chat.senderId, chat.receiverId] },
-        });
-      } else await conversation.save();
+    if (conversations.length > 0) {
+      conversations.forEach(async (conversation) => {
+        conversation.messages = conversation.messages.filter(
+          (message) => message.toString() !== chatId
+        );
+        console.log(conversation.messages.length);
+        console.log(conversation.tag);
+
+        if (
+          conversation.messages.length === 0 &&
+          conversation.tag !== "group"
+        ) {
+          await conversation.deleteOne({
+            participants: { $all: [chat.senderId, chat.receiverId] },
+          });
+        } else await conversation.save();
+      });
     }
 
     const receiverSocketId = await getReciverSocketId(chat.receiverId);
@@ -334,4 +352,3 @@ exports.deleteChat = async (req, res) => {
       .json({ message: "An error occurred while deleting the message" });
   }
 };
-
