@@ -289,8 +289,10 @@ exports.deleteChat = async (req, res) => {
     );
     await Promise.all(
       mediaFiles.map(async (media) => {
+        console.log("media data: ", media.data);
         const publicId = extractPublicId(media.data);
         try {
+          console.log("publicId: ", publicId);
           await cloudinary.uploader.destroy(publicId);
         } catch (error) {
           console.log("Error deleting media in cloudinary:", error);
