@@ -13,8 +13,9 @@ exports.sendMessage = async (req, resp) => {
     const receiverId = req.params.userId;
     // Thêm biến này từ FE khi chọn conversation để trò chuyện nếu là Group thì truyền đi isGroup là true
     //Còn là chat single thì không cần truyền chỉ cần truyền data nha FE
-    const isGroup = req.body.isGroup || false;
-    const replyMessageId = req.body.replyMessageId || null;
+    const isGroup = req.body.isGroup === 'false' ? false : true;
+
+    const replyMessageId = req.body.replyMessageId === 'null' ?  null :req.body.replyMessageId ;
     let contents = [];
     // Kiểm tra xem req.body có tồn tại không và có chứa nội dung không
     if (req.body.data) {
@@ -24,7 +25,7 @@ exports.sendMessage = async (req, resp) => {
         data: req.body.data.data,
       });
     }
-
+    console.log(req.body)
     //Upload media to Cloudinary if any
     if (req.files) {
       for (const file of req.files) {
