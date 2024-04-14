@@ -9,7 +9,7 @@ export default {
         roboto: ["Roboto"],
       },
       backgroundColor:{
-        primary: "#0184e0",
+        primary: "#008ffb",
         primaryHover: "#0190f3",
       }
       
