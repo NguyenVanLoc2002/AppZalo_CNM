@@ -17,8 +17,6 @@ function ListChatComponent({
   changeUserChat,
   friends,
   conversations,
-  newSocket,
-  socketData,
 }) {
   const [valueSearch, setValueSearch] = useState("");
   const [isHovered, setIsHovered] = useState(false);
@@ -33,23 +31,13 @@ function ListChatComponent({
   const { authUser } = useAuthContext();
   const { getConversationByID, getConversationByParticipants, conversation } =
     useConversation();
-
-  const [isNewSocket, setIsNewSocket] = useState(null);
-  const [newSocketData, setNewSocketData] = useState(null);
-
+  const { isNewSocket, newSocketData } = useSocketContext();
 
   useEffect(() => {
     getGroups();
     setOriginalFriendList(friends);
     setFriendList(friends);
   }, [friends]);
-
-  useEffect(() => {
-    if (socketData) {
-      setIsNewSocket(newSocket);
-      setNewSocketData(socketData);
-    }
-  }, [newSocket, socketData]);
 
   useEffect(() => {
     const listChat = conversations.map((conversation) => {
@@ -96,46 +84,42 @@ function ListChatComponent({
         (chat) => chat.conversationId === message.conversationId
       );
       if (isExist) {
-        console.log("reload list chat");
         setListChatCurrent((prev) => {
           const newList = [...prev];
           const index = newList.findIndex(
             (chat) => chat.conversationId === message.conversationId
           );
           newList[index].lastMessage = message.retrunMessage;
-          console.log("newList", newList);
           return newList;
         });
       } else {
+        console.log("getConversationByID", message);
         getConversationByID(message.conversationId);
       }
     }
 
-    if (isNewSocket === "delete-message") {
+    if (isNewSocket === "delete_message") {
       const { chatRemove, conversationId, isDeleted } = newSocketData;
-      console.log("delete_conversation", conversationId);
-      console.log("isDeleted", isDeleted, typeof isDeleted);
       if (isDeleted) {
-        setListChatCurrent((prev) => {
-          prev?.filter(
-            (conversation) => conversation.conversationId !== conversationId
-          );
-        });
-      } else {
-        console.log("delete_message");
+        console.log("delete_conversation", conversationId);
         setListChatCurrent((prev) => {
           const newList = [...prev];
           const index = newList.findIndex(
             (chat) => chat.conversationId === conversationId
           );
           if (index !== -1) {
-            newList[index].lastMessage.contents[0] = {
-              type: "text",
-              data:
-                language === "vi"
-                  ? "Tin nhắn đã bị xóa"
-                  : "Message has been deleted",
-            };
+            newList.splice(index, 1);
+          }
+          return newList;
+        });
+      } else {
+        setListChatCurrent((prev) => {
+          const newList = [...prev];
+          const index = newList.findIndex(
+            (chat) => chat.conversationId === conversationId
+          );
+          if (index !== -1) {
+            newList[index].lastMessage = chatRemove;
           }
           return newList;
         });
@@ -145,7 +129,6 @@ function ListChatComponent({
     if (isNewSocket === "add-to-group") {
       const data = newSocketData;
       const group = data?.group;
-      console.log("add-to-group", group);
 
       if (data?.addMembers?.includes(authUser._id)) {
         toast.success(
@@ -196,12 +179,13 @@ function ListChatComponent({
 
       setListChatCurrent((prev) => {
         const newList = [...prev];
-        const index = newList.findIndex((chat) => chat.id === group._id);
+        const index = newList.findIndex((chat) => chat.id === group.id);
         if (index !== -1) {
           newList.splice(index, 1);
         }
         return newList;
       });
+      changeUserChat(null);
     }
 
     if (isNewSocket === "delete-group") {
@@ -222,6 +206,20 @@ function ListChatComponent({
 
       changeUserChat(null);
     }
+
+    if (isNewSocket === "leave-group") {
+      const group = newSocketData;
+      setListChatCurrent((prev) => {
+        const newList = [...prev];
+        const index = newList.findIndex((chat) => chat.id === group.id);
+        if (index !== -1) {
+          newList.splice(index, 1);
+        }
+        return newList;
+      });
+
+      changeUserChat(null);
+    }
   }, [isNewSocket, newSocketData]);
 
   useEffect(() => {
@@ -230,7 +228,7 @@ function ListChatComponent({
         (participant) => participant._id !== authUser._id
       );
       setListChatCurrent((prev) => {
-        const newList = [...(prev || [])];
+        const newList = [...prev];
         const newChat = {
           id: friend._id,
           conversationId: conversation._id,
@@ -277,7 +275,7 @@ function ListChatComponent({
     }
   };
 
-  const selectedFriendToChat = (friend) => {
+  const selectedFriendToChat = async (friend) => {
     const conversation = conversations.find((conversation) =>
       conversation.participants.some(
         (participant) => participant._id === friend.id
@@ -286,9 +284,8 @@ function ListChatComponent({
     if (conversation) {
       friend.conversationId = conversation.id;
     } else {
-      getConversationByParticipants([friend.id]).then((conversation) => {
-        friend.conversationId = conversation._id;
-      });
+      const newConversation = await getConversationByParticipants([friend.id]);
+      friend.conversationId = newConversation?._id;
     }
     userChat(friend);
   };
@@ -458,7 +455,7 @@ function ListChatComponent({
                         : ""}
                       {friend?.lastMessage?.contents
                         ? friend.lastMessage.contents[0]?.type === "text"
-                          ? friend?.lastMessage?.contents.length > 15
+                          ? friend?.lastMessage?.contents[0].data.length > 15
                             ? `${friend?.lastMessage?.contents[0].data.slice(
                                 0,
                                 15

@@ -121,7 +121,6 @@ const useGroup = () => {
   };
 
   const removeMember = async (groupId, memberData) => {
-    console.log(memberData);
     setGrLoading(true);
     try {
       const response = await axiosInstance.post(
