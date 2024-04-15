@@ -109,8 +109,8 @@ function JoinedGroupComponent({ language }) {
                       <p className="font-semibold">{group.groupName}</p>
                       <p className="text-sm text-gray-500">
                         {language == "vi"
-                          ? `Quản trị viên: ${group.createBy} - Thành viên: ${group.conversation.participants?.length}`
-                          : `Admin: ${group.createBy} - Members: ${group.conversation.participants?.length}`}
+                          ? `Quản trị viên: ${group.createBy.profile.name} - Thành viên: ${group.conversation.participants?.length}`
+                          : `Admin: ${group.createBy.profile.name} - Members: ${group.conversation.participants?.length}`}
                       </p>
                     </div>
                   </div>
