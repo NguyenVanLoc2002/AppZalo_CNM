@@ -39,13 +39,13 @@ function PeopleChatComponent({
   const [content, setContent] = useState("");
   const [isSidebarVisible, setSidebarVisible] = useState(false);
   const [messages, setMessages] = useState([]);
+  const [listMembers, setListMembers] = useState([]);
   const [loadingMedia, setLoadingMedia] = useState(false);
   const scrollRef = useRef(null);
   const { socket } = useSocketContext();
   const { authUser } = useAuthContext();
   const { getConversationByID, conversation } = useConversation();
-  const { updateGroup, addMember, removeMember, deleteGroup, loading } =
-    useGroup();
+  const { updateGroup, removeMember, deleteGroup, loading } = useGroup();
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [isAddingMessages, setIsAddingMessages] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
@@ -56,8 +56,10 @@ function PeopleChatComponent({
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState("");
 
-  console.log("con: ", conversation);
   useEffect(() => {
+    if (!userChat || userChat?.tag !== "group") {
+      setSidebarVisible(false);
+    }
     if (userChat) {
       if (userChat.admin?._id === authUser._id) {
         setIsGroupAdmin(true);
@@ -71,23 +73,46 @@ function PeopleChatComponent({
         setMessages([]);
       }
     }
-
     if (socket) {
       socket.on("new_message", ({ message }) => {
-        if (message.retrunMessage?.senderId !== userChat?.id) {
-          return;
+        console.log("new_message", message, userChat);
+        console.log("new_message check : ", message.conversationId === userChat.conversationId);
+
+
+        if (message.conversationId === userChat.conversationId) {
+          setMessages((prevMessages) => {
+            const newMessages = [...prevMessages];
+            const index = newMessages.findIndex(
+              (m) => m._id === message.retrunMessage._id
+            );
+            if (index === -1) {
+              newMessages.push(message.retrunMessage);
+            } else {
+              newMessages[index] = message.retrunMessage;
+            }
+            return newMessages;
+          });
         }
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          message?.retrunMessage,
-        ]);
       });
-      socket.on("delete_message", ({ chatId }) => {
-        getConversationByID(userChat.conversationId);
+      socket.on("delete_message", ({ chatId, isDeleted }) => {
+        if (isDeleted) {
+          console.log("delete_conversation");
+          setMessages([]);
+        } else {
+          try {
+            console.log("userChat.conversationId", userChat);
+            if (userChat?.conversationId) {
+              getConversationByID(userChat.conversationId);
+            }
+          } catch (error) {
+            console.error(error);
+            setMessages([]);
+          }
+        }
       });
 
-      socket.on("add-to-group", ({ group }) => {
-        if (group._id === userChat.id) {
+      socket.on("add-to-group", ({ data }) => {
+        if (data?.group._id === userChat.id) {
           getConversationByID(userChat.conversationId);
         }
       });
@@ -101,21 +126,20 @@ function PeopleChatComponent({
                 : `You have left the group ${group.name}`
             );
           }
+        } else {
+          group?.removeMembers?.forEach((member) => {
+            setListMembers((prevMembers) =>
+              prevMembers.filter((m) => m._id !== member)
+            );
+          });
         }
-
-        setListChatCurrent((prev) => {
-          const newList = [...prev];
-          const index = newList.findIndex((chat) => chat.id === group._id);
-          if (index !== -1) {
-            newList.splice(index, 1);
-          }
-          return newList;
-        });
       });
 
       return () => {
-        socket.off("new_message");
-        socket.off("delete_message");
+        // socket.off("new_message");
+        // socket.off("delete_message");
+        socket.off("add-to-group");
+        socket.off("remove-from-group");
       };
     }
   }, [userChat, socket]);
@@ -123,6 +147,7 @@ function PeopleChatComponent({
   useEffect(() => {
     if (conversation) {
       setMessages(conversation.messages);
+      setListMembers(conversation.participants);
     }
   }, [conversation]);
 
@@ -140,12 +165,9 @@ function PeopleChatComponent({
 
   const sendMessage = async (data, receiverId, replyMessageId, isGroup) => {
     setLoadingMedia(true);
-    console.log("isGroup: ", isGroup);
     try {
       if (!data || data.trim === "") return;
       let messageType;
-      console.log("Upload File in send: ", data);
-      
 
       if (receiverId) {
         if (data.type === "text") {
@@ -171,7 +193,6 @@ function PeopleChatComponent({
           ...prevMessages,
           response.data.data.message,
         ]);
-        // userChat.conversationId = response.data.data.conversationId;
         setContent("");
         setContentReply("");
         setMessageReplyId("");
@@ -317,11 +338,6 @@ function PeopleChatComponent({
             ? "Bạn không được phép xóa tin nhắn này"
             : "You are not authorized to delete this message"
         );
-      } else if (
-        error.response.status === 404 &&
-        error.config.url.includes("conversations/get/messages")
-      ) {
-        setMessages([]);
       }
 
       throw error;
@@ -510,7 +526,7 @@ function PeopleChatComponent({
               ref={scrollRef}
             >
               {messages?.map((message, index) => {
-                if (message.senderId === authUser._id) {
+                if (message?.senderId === authUser._id) {
                   if (message.status === 0 || message.status === 2) {
                     return (
                       <div
@@ -646,7 +662,6 @@ function PeopleChatComponent({
                                 key={contentIndex}
                                 className="message-container"
                               >
-                                {/* Render nội dung của message */}
                                 {content.type === "text" ? (
                                   <div className="flex flex-col">
                                     <span className="text-base text-black">
@@ -1451,7 +1466,7 @@ function PeopleChatComponent({
                 </div>
               ) : (
                 <div className="flex flex-col h-[90%] w-full mt-5 mx-2 overflow-scroll">
-                  {conversation?.participants?.map((member, index) => (
+                  {listMembers?.map((member, index) => (
                     <div
                       key={index}
                       className="flex items-center justify-between w-full p-3 hover:bg-gray-200"

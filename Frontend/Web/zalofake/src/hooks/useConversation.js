@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 import axiosInstance from "../api/axiosInstance";
 const useConversation = () => {
   const [conversations, setConversations] = useState([]);
-  const [conversation, setConversation] = useState({});
+  const [conversation, setConversation] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const getConversations = async () => {
@@ -75,8 +75,8 @@ const useConversation = () => {
       }
     } catch (error) {
       console.log(error);
-      toast.error("Failed to get conversation");
       setLoading(false);
+      throw new Error("Failed to get conversation");
     }
   };
 
