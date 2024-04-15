@@ -61,7 +61,10 @@ exports.createGroup = async (req, res) => {
       const memderSocketId = await getReciverSocketId(member);
       if (memderSocketId) {
         io.to(memderSocketId.socket_id).emit("add-to-group", {
-          group: returnGroup,
+          data: {
+            group: returnGroup,
+            addMembers: members,
+          },
         });
       }
     });
@@ -293,8 +296,10 @@ exports.addMember = async (req, res) => {
       const memderSocketId = await getReciverSocketId(member);
       if (memderSocketId) {
         io.to(memderSocketId.socket_id).emit("add-to-group", {
-          group,
-          addMembers: members,
+          data: {
+            group: group,
+            addMembers: newMembers,
+          },
         });
       }
     });
