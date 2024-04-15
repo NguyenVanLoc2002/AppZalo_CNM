@@ -58,11 +58,13 @@ const useMessage = () => {
       return (
 
         <View style={{ paddingLeft: 15, paddingRight: 15 }}>
-          {console.log(content)}
-          <PDFReader
-            // source={{ uri: "file:///C:/Users/tranb/Downloads/TranBaoTruc_20072261_Tuan3.pdf" }}
+          {console.log(content.data)}
+          {/* {content.data!==null?(<PDFReader
           source={{ uri: content.data }}
-           />
+           /> ):(<Text></Text>)
+
+          } */}
+          {/*  */}
         </View>
 
       );
