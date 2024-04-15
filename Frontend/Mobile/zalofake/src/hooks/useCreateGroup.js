@@ -93,7 +93,7 @@ const useCreateGroup = () => {
     try {
       const response = await axiosInstance.post("/groups/create", {
         name: nameGroup,
-        members: idUser,
+        members: idUser,            
       });
       console.log("resp", response);
       if (response.status === 201) {
@@ -102,9 +102,9 @@ const useCreateGroup = () => {
           type: "success",
           text1: "Tạo nhóm thành công!",
           text1Style: { color: "white" }, // Đặt màu chữ trắng cho text1
-          position: "bottom", // Đặt vị trí ở phía dưới
+          position: "bottom", // Đặt vị trí ở phía dưới   
         });
-        return response.data.group._id;
+        return response.data;
       } else if (response.status === 500) {
         console.log("Create group fail");
         return null;

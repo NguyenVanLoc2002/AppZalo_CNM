@@ -6,15 +6,13 @@ import {
   TextInput,
   Pressable,
   StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-  Modal,
-  Image,
+  ScrollView, ActivityIndicator, Modal,
+  Image
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import axiosInstance from "../../../api/axiosInstance";
-import moment from "moment-timezone";
-import useMessage from "../../../hooks/useMessage";
+import moment from 'moment-timezone';
+import useMessage from '../../../hooks/useMessage'
 import Toast from "react-native-toast-message";
 import useSendMessage from "../../../hooks/useSendMessage";
 import * as ImagePicker from "expo-image-picker";
@@ -80,7 +78,7 @@ const Message = ({ navigation, route }) => {
 
           formData.append('isGroup', isGroup);
           formData.append('replyMessageId', replyId);
-          console.log(formData);
+          
           try {
             const response = await sendFiles(conver._id, formData)
             if (response.status === 201) {
@@ -191,12 +189,12 @@ const Message = ({ navigation, route }) => {
     }
   };
   const scrollToEnd = () => {
-    fetchChats();
+    fetchChats()
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollToEnd({ animated: true });
       console.log("scrollToEnd");
     }
-  };
+  }
   useEffect(() => {
     fetchChats();
 
@@ -204,10 +202,10 @@ const Message = ({ navigation, route }) => {
       socket.on("new_message", ({ message }) => {
         setChats((prevMessages) => [message, ...prevMessages]);
         console.log("new_message: ", message);
-        scrollToEnd();
+        scrollToEnd()
       });
       socket.on("delete_message", ({ chatId }) => {
-        scrollToEnd();
+        scrollToEnd()
       });
       return () => {
         socket.off("new_message");
@@ -219,11 +217,9 @@ const Message = ({ navigation, route }) => {
 
 
   const handleGetTime = (time) => {
-    const vietnamDatetime = moment(time)
-      .tz("Asia/Ho_Chi_Minh")
-      .format("YYYY-MM-DD HH:mm:ss");
-    const dateObject = new Date(vietnamDatetime);
-    return `${dateObject.getHours()}:${dateObject.getMinutes()}`;
+    const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss');
+    const dateObject = new Date(vietnamDatetime)
+    return `${dateObject.getHours()}:${dateObject.getMinutes()}`
   };
 
   useEffect(() => {
@@ -276,25 +272,23 @@ const Message = ({ navigation, route }) => {
   useEffect(() => {
     if (scrollViewRef.current && contentHeight > scrollViewHeight && !isLoad) {
       const offset = contentHeight - scrollViewHeight;
-      setIsLoad(true);
+      setIsLoad(true)
       scrollViewRef.current.scrollTo({ x: 0, y: offset, animated: true });
     }
   }, [contentHeight, scrollViewHeight]);
+
 
   // Khôi phục vị trí cuộn của ScrollView
   const restoreScrollPosition = () => {
     if (scrollViewRef.current) {
       scrollViewRef.current.measure((x, y, width, height, pageX, pageY) => {
-        scrollViewRef.current.scrollTo({
-          x: 0,
-          y: height + scrollViewHeight,
-          animated: false,
-        });
+        scrollViewRef.current.scrollTo({ x: 0, y: height + scrollViewHeight, animated: false });
+
       });
     }
   };
   const handleScrollToTop = () => {
-    setIsLoading(true);
+    setIsLoading(true)
     const fetchChats = async () => {
       try {
         // const response = await axiosInstance.get(`/chats/getHistoryMessage/${user._id}?lastTimestamp=${lastTimestamp}`);
@@ -307,12 +301,14 @@ const Message = ({ navigation, route }) => {
         //   const lastElement = reversedChats[0]
         //   setLastTimestamp(lastElement.timestamp)
         // }
-        setIsLoading(false);
+        setIsLoading(false)
+
       } catch (error) {
         console.log(error);
       }
     };
     fetchChats();
+
   };
   const handleScroll = (event) => {
     const { y } = event.nativeEvent.contentOffset;
@@ -321,18 +317,18 @@ const Message = ({ navigation, route }) => {
     }
   };
   const handlePressIn = (message) => {
-    setMessageSelected(message);
-    setModalVisible(true);
+    setMessageSelected(message)
+    setModalVisible(true)
   };
   const removeItemById = (array, idToRemove) => {
-    const indexToRemove = array.findIndex((item) => item._id === idToRemove);
+    const indexToRemove = array.findIndex(item => item._id === idToRemove);
     if (indexToRemove !== -1) {
       array.splice(indexToRemove, 1);
     }
     return array;
   };
   const handleDeleteMess = () => {
-    setIsLoadThuHoi(true);
+    setIsLoadThuHoi(true)
     const thuHoi = async () => {
       try {
         const response = await axiosInstance.post(`/chats/${messageSelected.chat._id}/delete`);
@@ -345,14 +341,14 @@ const Message = ({ navigation, route }) => {
         }
       } catch (error) {
         console.log(error);
-        setIsLoadThuHoi(false);
-        toggleModal();
+        setIsLoadThuHoi(false)
+        toggleModal()
       }
     };
     thuHoi();
   };
   const handleDeleteMessByStatus = () => {
-    setIsLoadXoa(true);
+    setIsLoadXoa(true)
     const deleteChat = async () => {
       try {
         const response = await axiosInstance.post(`conversations/deleteOnMySelf/${conver.conversation._id}/${messageSelected.chat._id}`);
@@ -364,8 +360,8 @@ const Message = ({ navigation, route }) => {
         }
       } catch (error) {
         console.log(error);
-        setIsLoadXoa(false);
-        toggleModal();
+        setIsLoadXoa(false)
+        toggleModal()
       }
     };
     deleteChat();
@@ -376,7 +372,7 @@ const Message = ({ navigation, route }) => {
   };
 
   const chuyenTiepChat = (friend) => {
-    setIsLoadChuyenTiep(true);
+    setIsLoadChuyenTiep(true)
     const handleSendMessage = async () => {
       try {
         let isGroup;
@@ -387,18 +383,18 @@ const Message = ({ navigation, route }) => {
         }
         const send = await sendMessage(friend._id, messageSelected.chat.contents[0], isGroup)
         if (send) {
-          showToastSuccess("Chuyển tiếp thành công");
-          setIsLoadChuyenTiep(false);
+          showToastSuccess("Chuyển tiếp thành công")
+          setIsLoadChuyenTiep(false)
         } else {
-          showToastError("Chuyển tiếp thất bại");
+          showToastError("Chuyển tiếp thất bại")
         }
       } catch (error) {
-        console.log("error1:", error);
-        setIsLoadChuyenTiep(false);
+        console.log("error1:", error)
+        setIsLoadChuyenTiep(false)
         return false;
       }
       toggleModalFriend();
-    };
+    }
     handleSendMessage();
   };
 
@@ -417,7 +413,7 @@ const Message = ({ navigation, route }) => {
       allowsMultipleSelection: true,
       selectionLimit: 20,
       videoExportPreset: ImagePicker.VideoExportPreset.Passthrough,
-      videoMaxDuration: 10,
+      videoMaxDuration: 10
     });
     // console.log(pickerResult.assets[0])
     if (!pickerResult.canceled) {
@@ -431,7 +427,7 @@ const Message = ({ navigation, route }) => {
         replyId = replyChat.chat._id
       }
       for (const asset of pickerResult.assets) {
-        if (asset.type === "image") {
+        if (asset.type === 'image') {
           const formData = new FormData();
           const fileName = asset.uri.split('/').pop();
           formData.append('data[]', {
@@ -458,9 +454,9 @@ const Message = ({ navigation, route }) => {
             }
           } catch (error) {
             console.log(error);
-            setIsLoadMess(false);
+            setIsLoadMess(false)
           }
-        } else if (asset.type === "video") {
+        } else if (asset.type === 'video') {
           const formData = new FormData();
           const fileName = asset.uri.split('/').pop();
           formData.append('data[]', {
@@ -486,12 +482,12 @@ const Message = ({ navigation, route }) => {
             }
           } catch (error) {
             console.log(error);
-            setIsLoadMess(false);
+            setIsLoadMess(false)
           }
         }
       }
     }
-  };
+  }
 
   useEffect(() => {
     // Update send button color based on textMessage
@@ -535,12 +531,13 @@ const Message = ({ navigation, route }) => {
           showToastError("Gửi tin nhắn thất bại")
           console.log("send text fail");
         }
+
       } catch (error) {
         console.log(error);
-        setIsLoadMess(false);
+        setIsLoadMess(false)
       }
     }
-  };
+  }
 
   const handleCheckIsSend = (message) => {
     // const getUser = await getUserById(message.senderId)
@@ -551,7 +548,6 @@ const Message = ({ navigation, route }) => {
     }
   };
   const handleReplyChat = () => {
-    console.log(selectedFile)
     setReplyChat(messageSelected);
     toggleModal();
   };
@@ -566,8 +562,7 @@ const Message = ({ navigation, route }) => {
           <View></View>
         )}
         <Toast />
-        <ScrollView
-          ref={scrollViewRef}
+        <ScrollView ref={scrollViewRef}
           onScroll={handleScroll}
           scrollEventThrottle={16}
           onLayout={(event) => {
@@ -665,7 +660,7 @@ const Message = ({ navigation, route }) => {
           <Ionicons name="happy-outline" size={30} color="black" />
         </Pressable>
 
-        <View style={{ width: "54%" }}>
+        <View style={{ width: '54%' }}>
           <TextInput
             value={textMessage}
             onChangeText={setTextMessage}
@@ -674,7 +669,7 @@ const Message = ({ navigation, route }) => {
               height: 40,
               borderColor: "gray",
               borderRadius: 5,
-              fontSize: 17,
+              fontSize: 17
             }}
             placeholder="Tin nhắn"
           />
@@ -690,7 +685,11 @@ const Message = ({ navigation, route }) => {
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => console.log("Pressed microphone")}>
-            <Ionicons name="mic-outline" size={30} color="black" />
+            <Ionicons
+              name="mic-outline"
+              size={30}
+              color="black"
+            />
           </TouchableOpacity>
 
           <TouchableOpacity onPress={openImagePicker}>
@@ -714,7 +713,9 @@ const Message = ({ navigation, route }) => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalHeaderText}>Choose</Text>
+            <Text style={styles.modalHeaderText}>
+              Choose
+            </Text>
             <View style={styles.modalButtonContainer1}>
               <Pressable style={styles.pressCol} onPress={handleGetModalFriend}>
                 <FontAwesome5
@@ -725,10 +726,7 @@ const Message = ({ navigation, route }) => {
                 />
                 <Text style={styles.modalButton}>Chuyển tiếp</Text>
               </Pressable>
-              <Pressable
-                style={styles.pressCol}
-                onPress={handleDeleteMessByStatus}
-              >
+              <Pressable style={styles.pressCol} onPress={handleDeleteMessByStatus}>
                 {isLoadXoa ? (
                   <ActivityIndicator color="black" size="large" />
                 ) : (
@@ -739,7 +737,7 @@ const Message = ({ navigation, route }) => {
                     style={{ marginRight: 8 }}
                   />
                 )}
-                <Text style={styles.modalButton}>Xóa</Text>
+                <Text style={styles.modalButton} >Xóa</Text>
               </Pressable>
               {
                 messageSelected.sender?.name === authUser.profile.name
@@ -763,12 +761,12 @@ const Message = ({ navigation, route }) => {
                   )}
             </View>
             <View style={styles.modalButtonContainer1}>
-              <Pressable style={styles.pressCol}>
+              <Pressable style={styles.pressCol} >
                 <FontAwesome5
                   name="list"
                   size={20}
                   color="black"
-                  style={{ margin: "auto" }}
+                  style={{ margin: 'auto' }}
                 />
                 <Text style={styles.modalButton}>Chọn nhiều</Text>
               </Pressable>
@@ -787,7 +785,7 @@ const Message = ({ navigation, route }) => {
               <Pressable onPress={toggleModal}>
                 <Text style={styles.modalButton}>HỦY</Text>
               </Pressable>
-              <Pressable>
+              <Pressable >
                 <Text style={styles.modalButton}>XÁC NHẬN</Text>
               </Pressable>
             </View>
@@ -802,7 +800,9 @@ const Message = ({ navigation, route }) => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalHeaderText}>Choose</Text>
+            <Text style={styles.modalHeaderText}>
+              Choose
+            </Text>
             <View style={styles.modalButtonContainer}>
               <ScrollView>
                 <View style={styles.friendList}>
@@ -816,7 +816,7 @@ const Message = ({ navigation, route }) => {
                   </View>
                   {friends.map((friend, index) => (
                     <View key={index} style={styles.friendRow}>
-                      <Pressable style={styles.friendItem}>
+                      <Pressable style={styles.friendItem} >
                         <View style={styles.friendInfo}>
                           <Image
                             source={{
@@ -827,18 +827,12 @@ const Message = ({ navigation, route }) => {
                           <Text style={styles.friendName}>{friend.name}</Text>
                         </View>
                         <View style={styles.friendActions}>
-                          <Pressable
-                            onPress={() => chuyenTiepChat(friend)}
-                            style={styles.pressCol}
-                          >
+                          <Pressable onPress={() => chuyenTiepChat(friend)} style={styles.pressCol}>
                             <FontAwesome5
                               name="arrow-right"
                               size={30}
                               color="black"
-                              style={{
-                                alignContent: "center",
-                                alignItems: "center",
-                              }}
+                              style={{ alignContent: "center", alignItems: "center" }}
                             />
                           </Pressable>
                         </View>
@@ -852,14 +846,14 @@ const Message = ({ navigation, route }) => {
               <Pressable onPress={toggleModalFriend}>
                 <Text style={styles.modalButton}>HỦY</Text>
               </Pressable>
-              <Pressable>
+              <Pressable >
                 <Text style={styles.modalButton}>XÁC NHẬN</Text>
               </Pressable>
             </View>
           </View>
         </View>
       </Modal>
-    </View>
+    </View >
   );
 };
 const styles = StyleSheet.create({
@@ -886,7 +880,7 @@ const styles = StyleSheet.create({
   modalButtonContainer: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginTop: 20,
+    marginTop: 20
   },
   modalButton: {
     fontWeight: "bold",
@@ -930,14 +924,14 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   pressCol: {
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalButtonContainer1: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 20,
+    alignItems: 'center',
+    marginTop: 20
   },
   styleSender: {
     marginTop: 10,
