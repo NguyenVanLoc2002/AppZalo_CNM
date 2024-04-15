@@ -35,6 +35,8 @@ function PeopleChatComponent({
   showModal,
   shareMessage,
   addMembersToGroup,
+  newSocket,
+  socketData,
 }) {
   const [content, setContent] = useState("");
   const [isSidebarVisible, setSidebarVisible] = useState(false);
@@ -42,10 +44,10 @@ function PeopleChatComponent({
   const [listMembers, setListMembers] = useState([]);
   const [loadingMedia, setLoadingMedia] = useState(false);
   const scrollRef = useRef(null);
-  const { socket } = useSocketContext();
   const { authUser } = useAuthContext();
   const { getConversationByID, conversation } = useConversation();
-  const { updateGroup, removeMember, deleteGroup, loading } = useGroup();
+  const { updateGroup, removeMember, deleteGroup, loading, leaveGroup } =
+    useGroup();
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [isAddingMessages, setIsAddingMessages] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
@@ -55,8 +57,16 @@ function PeopleChatComponent({
   const [isGroupAdmin, setIsGroupAdmin] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState("");
+  const [thisUser, setThisUser] = useState(null);
+
+  const [isNewSocket, setIsNewSocket] = useState(null);
+  const [newSocketData, setNewSocketData] = useState(null);
 
   useEffect(() => {
+    if (userChat) {
+      setThisUser(userChat);
+    }
+
     if (!userChat || userChat?.tag !== "group") {
       setSidebarVisible(false);
     }
@@ -73,13 +83,25 @@ function PeopleChatComponent({
         setMessages([]);
       }
     }
-    if (socket) {
-      socket.on("new_message", ({ message }) => {
-        console.log("new_message", message, userChat);
-        console.log("new_message check : ", message.conversationId === userChat.conversationId);
+  }, [userChat]);
 
+  useEffect(() => {
+    if (socketData) {
+      setIsNewSocket(newSocket);
+      setNewSocketData(socketData);
+    }
+  }, [newSocket, socketData]);
 
-        if (message.conversationId === userChat.conversationId) {
+  useEffect(() => {
+    if (thisUser) {
+      if (isNewSocket === "new_message") {
+        const message = newSocketData;
+        console.log("new message on chat : ", message);
+
+        if (
+          message.conversationId === thisUser.conversationId ||
+          message.retrunMessage.receiverId === authUser._id
+        ) {
           setMessages((prevMessages) => {
             const newMessages = [...prevMessages];
             const index = newMessages.findIndex(
@@ -93,31 +115,33 @@ function PeopleChatComponent({
             return newMessages;
           });
         }
-      });
-      socket.on("delete_message", ({ chatId, isDeleted }) => {
+      }
+      if (isNewSocket === "delete_message") {
+        console.log("delete message on chat : ", newSocketData);
+        const { chatRemove, conversationId, isDeleted } = newSocketData;
         if (isDeleted) {
-          console.log("delete_conversation");
-          setMessages([]);
+          setThisUser(null);
         } else {
           try {
-            console.log("userChat.conversationId", userChat);
-            if (userChat?.conversationId) {
-              getConversationByID(userChat.conversationId);
+            if (thisUser && thisUser.conversationId === conversationId) {
+              getConversationByID(conversationId);
             }
           } catch (error) {
             console.error(error);
             setMessages([]);
           }
         }
-      });
+      }
 
-      socket.on("add-to-group", ({ data }) => {
-        if (data?.group._id === userChat.id) {
-          getConversationByID(userChat.conversationId);
+      if (isNewSocket === "add-to-group") {
+        const data = newSocketData;
+        if (data?.group._id === thisUser.id) {
+          getConversationByID(thisUser.conversationId);
         }
-      });
+      }
 
-      socket.on("remove-from-group", ({ group }) => {
+      if (isNewSocket === "remove-from-group") {
+        const group = newSocketData;
         if (group.removeMember?.includes(authUser._id)) {
           if (authUser._id === group.createBy) {
             toast.error(
@@ -133,16 +157,37 @@ function PeopleChatComponent({
             );
           });
         }
-      });
+      }
 
-      return () => {
-        // socket.off("new_message");
-        // socket.off("delete_message");
-        socket.off("add-to-group");
-        socket.off("remove-from-group");
-      };
+      if (isNewSocket === "leave-group") {
+        const group = newSocketData;
+        console.log("group : ", group);
+        if (group.removeMember?.includes(authUser._id)) {
+          toast.error(
+            language === "vi"
+              ? `Bạn đã rời khỏi nhóm ${group.name}`
+              : `You have left the group ${group.name}`
+          );
+        } else {
+          const leaveMember = listMembers?.find(
+            (member) => member._id === group.leaveMember
+          );
+
+          console.log("listMember : ", listMembers);
+          console.log("leaveMember : ", leaveMember);
+
+          setListMembers((prevMembers) =>
+            prevMembers.filter((m) => m._id !== group.leaveMember)
+          );
+          toast.error(
+            language === "vi"
+              ? `${leaveMember?.profile.name} đã rời khỏi nhóm ${group.name}`
+              : `${leaveMember?.profile.name} has left the group ${group.name}`
+          );
+        }
+      }
     }
-  }, [userChat, socket]);
+  }, [newSocket, socketData, isNewSocket, newSocketData]);
 
   useEffect(() => {
     if (conversation) {
@@ -162,6 +207,14 @@ function PeopleChatComponent({
       scrollToBottom();
     }
   }, [messages, isAddingMessages]);
+
+  useEffect(() => {
+    if (contentReply.data && contentReply.data.length > 40) {
+      setTruncatedContent(contentReply.data.substring(0, 40) + "...");
+    } else {
+      setTruncatedContent(contentReply.data);
+    }
+  }, [contentReply]);
 
   const sendMessage = async (data, receiverId, replyMessageId, isGroup) => {
     setLoadingMedia(true);
@@ -204,21 +257,20 @@ function PeopleChatComponent({
       setLoadingMedia(false);
     }
   };
-
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
-      if (userChat.tag === "friend") {
+      if (thisUser.tag === "friend") {
         if (messageReplyId) {
           sendMessage(
             { type: "text", data: content },
-            userChat?.id,
+            thisUser?.id,
             messageReplyId,
             false
           );
         } else {
           sendMessage(
             { type: "text", data: content },
-            userChat?.id,
+            thisUser?.id,
             null,
             false
           );
@@ -227,20 +279,78 @@ function PeopleChatComponent({
         if (messageReplyId) {
           sendMessage(
             { type: "text", data: content },
-            userChat?.id,
+            thisUser?.id,
             messageReplyId,
             true
           );
         } else {
           sendMessage(
             { type: "text", data: content },
-            userChat?.id,
+            thisUser?.id,
             null,
             true
           );
         }
       }
     }
+  };
+
+  const deleteChat = async (chatId) => {
+    try {
+      const converId = thisUser?.conversationId;
+      const response = await axiosInstance.post(`/chats/${chatId}/delete`);
+      if (response.status === 200) {
+        if (messages.length === 1) {
+          setMessages([]);
+          setThisUser(null);
+        } else {
+          const updatedMessagesResponse = await axiosInstance.get(
+            `conversations/get/messages/${converId}`
+          );
+          if (updatedMessagesResponse.status === 200) {
+            const dataUpdate = updatedMessagesResponse.data;
+            setMessages(dataUpdate);
+          }
+          setContextMenuStates({});
+        }
+      }
+    } catch (error) {
+      console.error("Lỗi khi xóa tin nhắn:", error);
+      if (error.status === 403) {
+        toast.error(
+          language === "vi"
+            ? "Bạn không được phép xóa tin nhắn này"
+            : "You are not authorized to delete this message"
+        );
+      } else {
+        toast.error(
+          language === "vi"
+            ? "Lỗi khi xóa tin nhắn, vui lòng thử lại"
+            : "Error deleting message, please try again"
+        );
+      }
+
+      throw error;
+    }
+  };
+
+  // Hàm xử lý chức năng xóa chỉ phía tôi
+  const handleDeleteOnlyMySide = async (chatId) => {
+    try {
+      await axiosInstance.post(
+        `conversations/deleteOnMySelf/${thisUser?.conversationId}/${chatId}`
+      );
+      const updatedMessages = messages.filter(
+        (message) => message._id !== chatId
+      );
+      setMessages(updatedMessages);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const togglePicker = () => {
+    setShowPicker((prevState) => !prevState);
   };
 
   const isoStringToTime = (isoString) => {
@@ -261,17 +371,17 @@ function PeopleChatComponent({
     const files = event.target.files;
     console.log("Upload File: ", files);
     try {
-      if (userChat.tag === "friend") {
+      if (thisUser.tag === "friend") {
         if (messageReplyId) {
-          await sendMessage(files, userChat?.id, messageReplyId, false);
+          await sendMessage(files, thisUser?.id, messageReplyId, false);
         } else {
-          await sendMessage(files, userChat?.id, null, false);
+          await sendMessage(files, thisUser?.id, null, false);
         }
       } else {
         if (messageReplyId) {
-          await sendMessage(files, userChat?.id, messageReplyId, true);
+          await sendMessage(files, thisUser?.id, messageReplyId, true);
         } else {
-          await sendMessage(files, userChat?.id, null, true);
+          await sendMessage(files, thisUser?.id, null, true);
         }
       }
     } catch (error) {
@@ -279,7 +389,6 @@ function PeopleChatComponent({
     }
   };
 
-  // Thêm state để lưu vị trí của context menu
   const [contextMenuPosition, setContextMenuPosition] = useState({
     x: 0,
     y: 0,
@@ -287,91 +396,29 @@ function PeopleChatComponent({
   const [contextMenuStates, setContextMenuStates] = useState({});
 
   const handleContextMenu = (e, chatId) => {
-    e.preventDefault(); // Ngăn chặn hiển thị context menu mặc định của trình duyệt
+    e.preventDefault();
     const newPosition = { x: e.pageX, y: e.pageY };
 
-    // Cập nhật state để hiển thị context menu cho tin nhắn được click chuột phải
     setContextMenuStates((prevState) => ({
       ...prevState,
-      [chatId]: true, // chatId là khóa của tin nhắn trong state contextMenuStates
+      [chatId]: true,
     }));
 
-    // Cập nhật vị trí của context menu
     setContextMenuPosition(newPosition);
   };
 
-  // Hàm xử lý ẩn context menu khi click bất kỳ đâu ngoài context menu
   const handleHideContextMenu = () => {
-    setContextMenuStates({}); // Ẩn context menu cho tất cả các tin nhắn
+    setContextMenuStates({});
   };
-
-  const deleteChat = async (chatId) => {
-    try {
-      const converId = userChat?.conversationId;
-      const response = await axiosInstance.post(`/chats/${chatId}/delete`);
-      if (response.status === 200) {
-        if (messages.length === 1) {
-          setMessages([]);
-        } else {
-          const updatedMessagesResponse = await axiosInstance.get(
-            `conversations/get/messages/${converId}`
-          );
-          if (updatedMessagesResponse.status === 200) {
-            const dataUpdate = updatedMessagesResponse.data;
-            setMessages(dataUpdate);
-          }
-          setContextMenuStates({});
-        }
-      }
-    } catch (error) {
-      console.error("Lỗi khi xóa tin nhắn:", error);
-      if (error.status === 403) {
-        toast.error(
-          language === "vi"
-            ? "Bạn không được phép xóa tin nhắn này"
-            : "You are not authorized to delete this message"
-        );
-      }
-
-      throw error;
-    }
-  };
-
-  // Hàm xử lý chức năng xóa chỉ phía tôi
-  const handleDeleteOnlyMySide = async (chatId) => {
-    try {
-      await axiosInstance.post(
-        `conversations/deleteOnMySelf/${userChat?.conversationId}/${chatId}`
-      );
-      const updatedMessages = messages.filter(
-        (message) => message._id !== chatId
-      );
-      setMessages(updatedMessages);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const togglePicker = () => {
-    setShowPicker((prevState) => !prevState);
-  };
-
-  useEffect(() => {
-    if (contentReply.data && contentReply.data.length > 40) {
-      setTruncatedContent(contentReply.data.substring(0, 40) + "...");
-    } else {
-      setTruncatedContent(contentReply.data);
-    }
-  }, [contentReply]);
 
   const updateGroupInfo = async () => {
     if (name.trim() === "") {
-      setName(userChat?.name);
+      setName(thisUser?.name);
       setIsEditing(false);
       return;
     }
     try {
-      const response = await updateGroup(userChat.id, { name });
+      const response = await updateGroup(thisUser.id, { name });
       if (response) {
         setIsEditing(false);
         toast.success(
@@ -392,9 +439,9 @@ function PeopleChatComponent({
 
   const handleRemoveMember = async (memberId) => {
     try {
-      const response = await removeMember(userChat.id, { members: [memberId] });
+      const response = await removeMember(thisUser.id, { members: [memberId] });
       if (response) {
-        getConversationByID(userChat.conversationId);
+        getConversationByID(thisUser.conversationId);
         toast.success(
           language === "vi"
             ? "Xóa thành viên khỏi nhóm thành công"
@@ -420,21 +467,21 @@ function PeopleChatComponent({
   };
 
   const handleAddMember = async () => {
-    addMembersToGroup(userChat.id);
+    addMembersToGroup(thisUser.id);
     showModal("addGroup");
-    getConversationByID(userChat.conversationId);
+    getConversationByID(thisUser.conversationId);
   };
 
   const handleDeleteGroup = async () => {
     try {
-      const response = await deleteGroup(userChat.id);
+      const response = await deleteGroup(thisUser.id);
       if (response) {
         toast.success(
           language === "vi"
             ? "Xóa nhóm thành công"
             : "Delete group successfully"
         );
-        userChat = null;
+        setThisUser(null);
       }
     } catch (error) {
       console.error(error);
@@ -444,9 +491,29 @@ function PeopleChatComponent({
     }
   };
 
+  const handleLeaveGroup = async () => {
+    try {
+      const response = await leaveGroup(thisUser.id);
+      if (response) {
+        toast.success(
+          language === "vi"
+            ? "Rời khỏi nhóm thành công"
+            : "Leave group successfully"
+        );
+        setThisUser(null);
+        setSidebarVisible(false);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        language === "vi" ? "Rời khỏi nhóm thất bại" : "Leave group failed"
+      );
+    }
+  };
+
   return (
     <>
-      {userChat && (
+      {thisUser && (
         <div
           className=" bg-white h-screen sm:w-[calc(100%-24rem)] w-0 border-r overflow-auto"
           onClick={handleHideContextMenu}
@@ -454,18 +521,18 @@ function PeopleChatComponent({
           <div className="h-[10vh] bg-white flex justify-between items-center border-b">
             <div className="flex items-center w-14 h-14 mr-3 pl-2">
               <img
-                src={userChat?.avatar}
+                src={thisUser?.avatar}
                 alt="avatar"
                 className="w-12 h-12 object-cover rounded-full border "
               />
             </div>
             <div className="flex-col items-center mr-auto ml-2">
-              <p className="text-lg font-semibold">{userChat?.name}</p>
+              <p className="text-lg font-semibold">{thisUser?.name}</p>
               <button className="">
                 <PiTagSimpleLight size={18} className="hover:fill-blue-700" />
               </button>
             </div>
-            {userChat?.tag === "group" && (
+            {thisUser?.tag === "group" && (
               <div className="flex items-center mr-3">
                 <button
                   className="hover:bg-gray-300 p-2 rounded"
@@ -486,7 +553,7 @@ function PeopleChatComponent({
               <p className="text-lg text-center">
                 {language === "vi" ? (
                   <span>
-                    Chưa có tin nhắn nào với <strong>{userChat?.name}</strong>
+                    Chưa có tin nhắn nào với <strong>{thisUser?.name}</strong>
                   </span>
                 ) : (
                   <soan>No message yet</soan>
@@ -495,18 +562,18 @@ function PeopleChatComponent({
 
               <div className="flex flex-col items-center w-96 h-[45%] mt-5 p-1">
                 <img
-                  src={userChat?.background}
+                  src={thisUser?.background}
                   alt="background's friend"
                   className="object-cover w-full h-2/3 rounded-lg mt-1 shadow-lg"
                 />
                 <div className="flex p-3 -mt-3 rounded-lg border shadow-lg w-full h-full bg-gray-100">
                   <img
-                    src={userChat?.avatar}
+                    src={thisUser?.avatar}
                     alt="avatar"
                     className="w-16 h-16 object-cover rounded-full border mr-3"
                   />
                   <h2 className="text-2xl font-semibold text-primary mt-3 mr-5">
-                    {userChat?.name}
+                    {thisUser?.name}
                   </h2>
                 </div>
               </div>
@@ -534,7 +601,7 @@ function PeopleChatComponent({
                         {authUser._id !== message.senderId && (
                           <div className="chat-image avatar">
                             <div className="ml-2 w-10 rounded-full">
-                              <img alt="avatar" src={userChat.avatar} />
+                              <img alt="avatar" src={thisUser.avatar} />
                             </div>
                           </div>
                         )}
@@ -553,7 +620,7 @@ function PeopleChatComponent({
                                 "text" ? (
                                   <div>
                                     <p className="ml-2 text-base font-semibold">
-                                      {userChat.name}
+                                      {thisUser.name}
                                     </p>
                                     <p className="ml-2 text-sm">
                                       {message.replyMessageId.contents[0].data}
@@ -571,7 +638,7 @@ function PeopleChatComponent({
                                     />
                                     <div className="flex flex-col">
                                       <p className="ml-2 text-base font-semibold">
-                                        {userChat.name}
+                                        {thisUser.name}
                                       </p>
 
                                       <p className="ml-2 text-sm">[Hình ảnh]</p>
@@ -593,7 +660,7 @@ function PeopleChatComponent({
                                     </video>
                                     <div className="flex flex-col">
                                       <p className="ml-2 text-base font-semibold">
-                                        {userChat.name}
+                                        {thisUser.name}
                                       </p>
 
                                       <p className="ml-2 text-sm">[Hình ảnh]</p>
@@ -817,7 +884,7 @@ function PeopleChatComponent({
                         {authUser._id !== message.senderId && (
                           <div className="chat-image avatar">
                             <div className="ml-2 w-10 rounded-full">
-                              <img alt="avatar" src={userChat.avatar} />
+                              <img alt="avatar" src={thisUser.avatar} />
                             </div>
                           </div>
                         )}
@@ -836,7 +903,7 @@ function PeopleChatComponent({
                                 "text" ? (
                                   <div>
                                     <p className="ml-2 text-base font-semibold">
-                                      {userChat.name}
+                                      {thisUser.name}
                                     </p>
                                     <p className="ml-2 text-sm">
                                       {message.replyMessageId.contents[0].data}
@@ -854,7 +921,7 @@ function PeopleChatComponent({
                                     />
                                     <div className="flex flex-col">
                                       <p className="ml-2 text-base font-semibold">
-                                        {userChat.name}
+                                        {thisUser.name}
                                       </p>
 
                                       <p className="ml-2 text-sm">[Hình ảnh]</p>
@@ -876,7 +943,7 @@ function PeopleChatComponent({
                                     </video>
                                     <div className="flex flex-col">
                                       <p className="ml-2 text-base font-semibold">
-                                        {userChat.name}
+                                        {thisUser.name}
                                       </p>
 
                                       <p className="ml-2 text-sm">[Hình ảnh]</p>
@@ -1048,7 +1115,7 @@ function PeopleChatComponent({
                                 {language === "vi" ? "Chuyển tiếp" : "Forward"}
                               </p>
                             </div>
-                            {message.senderId !== userChat.id && (
+                            {message.senderId !== thisUser.id && (
                               <div
                                 className="flex p-2 text-red-400 items-center rounded-xl border-b border-gray-100 hover:bg-gray-100"
                                 onClick={() => deleteChat(message._id)}
@@ -1286,7 +1353,7 @@ function PeopleChatComponent({
         </div>
       )}
 
-      {!userChat && (
+      {!thisUser && (
         <div className=" bg-white h-screen sm:w-[calc(100%-24rem)] w-0 border-r relative z-0 flex flex-col justify-center items-center">
           <div className="text-lg text-center">
             {language === "vi" ? (
@@ -1329,7 +1396,7 @@ function PeopleChatComponent({
       )}
 
       {isSidebarVisible && (
-        <div className="fixed top-0 right-0 h-screen bg-gray w-4/12 bg-gray-300 border-l drop-shadow-2xl">
+        <div className="fixed top-0 right-0 z-50 h-screen bg-gray w-4/12 bg-gray-300 border-l drop-shadow-2xl">
           <div className="rounded-t-xl h-[6%] bg-primary flex justify-center items-center border-b">
             <p className="flex text-lg font-medium text-white">
               {language === "vi" ? "Thông tin" : "Information"}
@@ -1344,7 +1411,7 @@ function PeopleChatComponent({
           <div className="h-[20%] bg-white items-center flex-col">
             <div className="flex justify-center pt-2">
               <img
-                src={userChat?.avatar}
+                src={thisUser?.avatar}
                 alt="avatar"
                 className="w-20 h-20 object-cover rounded-full border-2 border-gray-200"
               />
@@ -1372,7 +1439,7 @@ function PeopleChatComponent({
                       <button
                         onClick={() => {
                           setIsEditing(false);
-                          setName(userChat?.name);
+                          setName(thisUser?.name);
                         }}
                       >
                         <MdOutlineCancel
@@ -1397,12 +1464,12 @@ function PeopleChatComponent({
             <div className="flex justify-center items-center h-[20%] w-full border-warning border rounded-full mt-5 mx-2">
               <p>{language === "vi" ? "Quản Trị Viên :" : "Admin :"}</p>
               <p className="ml-2 font-semibold">
-                {userChat?.admin?.profile?.name}
+                {thisUser?.admin?.profile?.name}
               </p>
             </div>
           </div>
 
-          {userChat?.tag === "group" && (
+          {thisUser?.tag === "group" && (
             <div className="h-[55%] bg-white items-center flex-col mt-[1px]">
               <div className="h-[5%] flex justify-center relative pt-2">
                 <p className="text-lg font-semibold">
@@ -1488,7 +1555,7 @@ function PeopleChatComponent({
                     </div>
                   </button>
                 ) : (
-                  <button className="flex">
+                  <button className="flex" onClick={handleLeaveGroup}>
                     <div className="ml-4">
                       <IoTrashOutline size={20} stroke="red" />
                     </div>

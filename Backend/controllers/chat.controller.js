@@ -322,7 +322,6 @@ exports.deleteChat = async (req, res) => {
         (message) => message.toString() !== chatId
       );
       const remove = await Chat.findByIdAndDelete(chatId);
-    console.log("remove", remove);
 
 
       if (conversation.messages.length === 0 && conversation.tag !== "group") {
