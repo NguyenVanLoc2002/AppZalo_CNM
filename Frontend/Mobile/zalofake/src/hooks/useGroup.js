@@ -121,8 +121,6 @@ const useGroup = () => {
   };
 
   const removeMember = async (groupId, memberData) => {
-    console.log(memberData);
-    console.log(groupId);
     setGrLoading(true);
     try {
       const response = await axiosInstance.post(
@@ -130,7 +128,6 @@ const useGroup = () => {
         memberData
       );
       const { data, status } = response;
-
       if (status === 200) {
         setGroup(data.group);
         return true;

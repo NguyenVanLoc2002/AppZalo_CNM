@@ -16,8 +16,13 @@ import moment from "moment-timezone";
 import Toast from "react-native-toast-message";
 import useCreateGroup from "../../hooks/useCreateGroup";
 
-const GroupDirectory = ({ navigation }) => {
-  const [listConversations, setListConversation] = useState([]);
+const GroupDirectory = ({ navigation, route }) => {
+  const type = route?.params?.typeModal;
+  const groupId = route?.params?.groupId;
+
+  const [typeModal, setTypeModal] = useState("");
+  const [groupAdd, setGroupAdd] = useState(null);
+  // const [listConversations, setListConversation] = useState([]);
   const [listFriends, setListFriends] = useState([]);
   const [lengthGroup, setLengthGroup] = useState(0);
   const [group, setGroup] = useState();
@@ -56,7 +61,6 @@ const GroupDirectory = ({ navigation }) => {
           group.push(newGroup);
         }
         setGroupAll(group);
-        console.log("groupAll", allGr);
         setLengthGroup(dem);
       }
     } catch (error) {
@@ -65,7 +69,6 @@ const GroupDirectory = ({ navigation }) => {
   };
 
   const handleGetTime = (time) => {
-    console.log(time);
     const currentTime = moment().tz("Asia/Ho_Chi_Minh"); // Lấy thời gian hiện tại ở múi giờ Việt Nam
     const vietnamDatetime = moment(time).tz("Asia/Ho_Chi_Minh"); // Chuyển đổi thời gian đã cho sang múi giờ Việt Nam
     const timeDifference = moment.duration(currentTime.diff(vietnamDatetime)); // Tính khoảng cách thời gian
@@ -109,6 +112,13 @@ const GroupDirectory = ({ navigation }) => {
     fetchFriend();
     fetchGroup();
   }, []);
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      fetchGroup();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   const showToastError = (notice) => {
     Toast.show({
@@ -119,7 +129,6 @@ const GroupDirectory = ({ navigation }) => {
     });
   };
   const handleSearch = () => {
-    console.log("press");
     if (!textSearch) {
       showToastError("Bạn chưa nhập");
     } else {
@@ -243,15 +252,16 @@ const GroupDirectory = ({ navigation }) => {
       for (const id of selectedFriends) {
         idUser.push(id.id);
       }
+      console.log("iduser", idUser);
       try {
         const response = await createGroup(nameGroup, idUser);
         if (response) {
+          await fetchGroup();
           setIsLoading(false);
           setNameGroup(null);
           setTextSearch(null);
           setModalCreateGr(false);
-          fetchGroup();
-          // navigation.navigate("Message", response)
+          setSelectedRadioButtons([]);
         }
       } catch (error) {
         console.log("CreateGroupError:", error);
@@ -329,28 +339,34 @@ const GroupDirectory = ({ navigation }) => {
                 style={styles.pressClose}
                 onPress={() => {
                   setModalCreateGr(false);
+                  setTypeModal("");
+                  setGroupAdd(null);
                 }}
               >
                 <Ionicons name="close" size={30} color="black" />
               </Pressable>
             </View>
             <View style={styles.viewClose}>
-              <Text style={{ fontWeight: "600", fontSize: 20 }}>Nhóm mới</Text>
+              <Text style={{ fontWeight: "600", fontSize: 20 }}>
+                {typeModal ? "Thêm thành viên" : "Nhóm mới"}
+              </Text>
               <Text style={{ color: "#979797", fontWeight: "600" }}>
                 Đã chọn: 0
               </Text>
             </View>
-            <View
-              style={{ height: "7%", width: "80%", justifyContent: "center" }}
-            >
-              <TextInput
-                value={nameGroup}
-                onChangeText={setNameGroup}
-                placeholder="Đặt tên nhóm"
-                placeholderTextColor="gray"
-                style={{ fontSize: 18, height: "80%", width: "100%" }}
-              ></TextInput>
-            </View>
+            {!typeModal && (
+              <View
+                style={{ height: "7%", width: "80%", justifyContent: "center" }}
+              >
+                <TextInput
+                  value={nameGroup}
+                  onChangeText={setNameGroup}
+                  placeholder="Đặt tên nhóm"
+                  placeholderTextColor="gray"
+                  style={{ fontSize: 18, height: "80%", width: "100%" }}
+                ></TextInput>
+              </View>
+            )}
             <View style={styles.viewSearch}>
               <Pressable onPress={handleSearch}>
                 <Ionicons name="search-outline" size={30} color="black" />

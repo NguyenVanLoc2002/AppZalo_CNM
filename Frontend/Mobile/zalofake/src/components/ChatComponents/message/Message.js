@@ -23,7 +23,6 @@ import { useSocketContext } from "../../../contexts/SocketContext";
 
 const Message = ({ navigation, route }) => {
   const { group, user } = route.params;
-  // const {user} = group.user;
   //nhi
   const [textMessage, setTextMessage] = useState(null);
   const [isColorSend, setIsColorSend] = useState(false);
