@@ -29,7 +29,7 @@ const GroupDirectory = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [isHidden, setIsHidden] = useState(false)
   const [groupAll, setGroupAll] = useState([])
-  const { getAllGroup, getConversationById, createGroup, getUserById} = useCreateGroup()
+  const { getAllGroup, getConversationById, createGroup, getUserById } = useCreateGroup()
   const { authUser } = useAuthContext();
 
   const fetchGroup = async () => {
@@ -63,7 +63,7 @@ const GroupDirectory = ({ navigation }) => {
           lastMessage: lastMessage,
           sender: sender,
           timeSend: handleGetTime(group?.lastMessage.timestamp),
-          tag : group.conversation.tag
+          tag: group.conversation.tag
         }
       }))
       setGroupAll(newGroup)
@@ -132,7 +132,7 @@ const GroupDirectory = ({ navigation }) => {
   const handleSearch = () => {
     console.log("press");
     if (!textSearch) {
-      showToast("Bạn chưa nhập","error")
+      showToast("Bạn chưa nhập", "error")
     }
     else {
       const filteredFriends = listFriends.filter((friend) => {
@@ -151,7 +151,7 @@ const GroupDirectory = ({ navigation }) => {
         }
         setListSearch(newRadioButtons);
       } else {
-        showToast("Không tìm thấy","error")
+        showToast("Không tìm thấy", "error")
       }
     }
   }
@@ -211,7 +211,7 @@ const GroupDirectory = ({ navigation }) => {
   const handleCreate = async () => {
     setIsLoading(true)
     if (!nameGroup) {
-      showToast("Vui lòng đặt tên nhóm","error")
+      showToast("Vui lòng đặt tên nhóm", "error")
       setIsLoading(false)
       return;
     }
@@ -221,7 +221,7 @@ const GroupDirectory = ({ navigation }) => {
         idUser.push(id._id)
       }
       if (idUser.length < 2) {
-        showToast("Group phải từ 2 người trở lên","error")
+        showToast("Group phải từ 2 người trở lên", "error")
         setIsLoading(false)
       } else {
         try {
@@ -234,17 +234,19 @@ const GroupDirectory = ({ navigation }) => {
             setSelectedFriends([])
             setModalCreateGr(false)
             fetchGroup()
-            // const conversation = {
-            //   _id: response.conversation
-            // }
-            // const group = {
-            //   id: response._id,
-            //   name: response.groupName,
-            //   avatar: response.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
-            //   conversation: conversation
-            // }
-            // navigation.navigate("Message", { conver: group })
-            // showToast("Tạo group thành công","success")
+        
+            const group = {
+              _id: response.group._id,
+              name: response.group.groupName,
+              createAt: handleGetTime(response.group.createAt),
+              createBy: response.group.createBy,
+              avatar: response.group?.avatar?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+              conversation: response.group.conversation,
+              tag: response.group.conversation.tag
+            }
+            console.log("group", JSON.stringify(response.group));
+            navigation.navigate("Message", { conver: group })
+
           }
         } catch (error) {
           console.log("CreateGroupError:", error);
