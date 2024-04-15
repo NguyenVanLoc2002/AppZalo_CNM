@@ -35,8 +35,8 @@ function PeopleChatComponent({
   showModal,
   shareMessage,
   addMembersToGroup,
-  newSocket,
-  socketData,
+  // newSocket,
+  // socketData,
 }) {
   const [content, setContent] = useState("");
   const [isSidebarVisible, setSidebarVisible] = useState(false);
@@ -59,8 +59,10 @@ function PeopleChatComponent({
   const [name, setName] = useState("");
   const [thisUser, setThisUser] = useState(null);
 
-  const [isNewSocket, setIsNewSocket] = useState(null);
-  const [newSocketData, setNewSocketData] = useState(null);
+  const { isNewSocket, newSocketData } = useSocketContext();
+
+  // const [isNewSocket, setIsNewSocket] = useState(null);
+  // const [newSocketData, setNewSocketData] = useState(null);
 
   useEffect(() => {
     if (userChat) {
@@ -78,6 +80,7 @@ function PeopleChatComponent({
       }
       setName(userChat?.name);
       if (userChat.conversationId) {
+        console.log("getConversationByID : ", userChat.conversationId);
         getConversationByID(userChat.conversationId);
       } else {
         setMessages([]);
@@ -86,17 +89,17 @@ function PeopleChatComponent({
   }, [userChat]);
 
   useEffect(() => {
-    if (socketData) {
-      setIsNewSocket(newSocket);
-      setNewSocketData(socketData);
+    if (conversation) {
+      setMessages(conversation.messages);
+      setListMembers(conversation.participants);
     }
-  }, [newSocket, socketData]);
+  }, [conversation, userChat]);
 
+  // socket event
   useEffect(() => {
     if (thisUser) {
       if (isNewSocket === "new_message") {
         const message = newSocketData;
-        console.log("new message on chat : ", message);
 
         if (
           message.conversationId === thisUser.conversationId ||
@@ -117,7 +120,6 @@ function PeopleChatComponent({
         }
       }
       if (isNewSocket === "delete_message") {
-        console.log("delete message on chat : ", newSocketData);
         const { chatRemove, conversationId, isDeleted } = newSocketData;
         if (isDeleted) {
           setThisUser(null);
@@ -161,7 +163,6 @@ function PeopleChatComponent({
 
       if (isNewSocket === "leave-group") {
         const group = newSocketData;
-        console.log("group : ", group);
         if (group.removeMember?.includes(authUser._id)) {
           toast.error(
             language === "vi"
@@ -172,9 +173,6 @@ function PeopleChatComponent({
           const leaveMember = listMembers?.find(
             (member) => member._id === group.leaveMember
           );
-
-          console.log("listMember : ", listMembers);
-          console.log("leaveMember : ", leaveMember);
 
           setListMembers((prevMembers) =>
             prevMembers.filter((m) => m._id !== group.leaveMember)
@@ -187,14 +185,7 @@ function PeopleChatComponent({
         }
       }
     }
-  }, [newSocket, socketData, isNewSocket, newSocketData]);
-
-  useEffect(() => {
-    if (conversation) {
-      setMessages(conversation.messages);
-      setListMembers(conversation.participants);
-    }
-  }, [conversation]);
+  }, [isNewSocket, newSocketData]);
 
   const scrollToBottom = () => {
     if (scrollRef.current) {
@@ -250,6 +241,18 @@ function PeopleChatComponent({
         setContentReply("");
         setMessageReplyId("");
         setIsAddingMessages(false);
+        scrollToBottom();
+        setShowPicker(false);
+        setLoadingMedia(false);
+        if (response.status === 201) {
+          if (
+            !thisUser.conversationId ||
+            thisUser.conversationId !== response.data.data.conversationId
+          ) {
+            thisUser.conversationId = response.data.data.conversationId;
+            await getConversationByID(response.data.data.conversationId);
+          }
+        }
       }
     } catch (error) {
       console.error("Error sending message:", error);
@@ -296,6 +299,7 @@ function PeopleChatComponent({
   };
 
   const deleteChat = async (chatId) => {
+    setLoadingMedia(true);
     try {
       const converId = thisUser?.conversationId;
       const response = await axiosInstance.post(`/chats/${chatId}/delete`);
@@ -309,11 +313,12 @@ function PeopleChatComponent({
           );
           if (updatedMessagesResponse.status === 200) {
             const dataUpdate = updatedMessagesResponse.data;
-            setMessages(dataUpdate);
+            setMessages([...dataUpdate]);
           }
           setContextMenuStates({});
         }
       }
+      setLoadingMedia(false);
     } catch (error) {
       console.error("Lỗi khi xóa tin nhắn:", error);
       if (error.status === 403) {
@@ -329,7 +334,7 @@ function PeopleChatComponent({
             : "Error deleting message, please try again"
         );
       }
-
+      setLoadingMedia(false);
       throw error;
     }
   };
@@ -343,7 +348,7 @@ function PeopleChatComponent({
       const updatedMessages = messages.filter(
         (message) => message._id !== chatId
       );
-      setMessages(updatedMessages);
+      setMessages([...updatedMessages]);
     } catch (error) {
       console.error(error);
     }
@@ -374,7 +379,6 @@ function PeopleChatComponent({
 
   const handleUpload = async (event) => {
     const files = event.target.files;
-    console.log("Upload File: ", files);
     try {
       if (userChat.tag === "friend") {
         if (messageReplyId) {
@@ -505,8 +509,8 @@ function PeopleChatComponent({
             ? "Rời khỏi nhóm thành công"
             : "Leave group successfully"
         );
-        setThisUser(null);
         setSidebarVisible(false);
+        setThisUser(null);
       }
     } catch (error) {
       console.error(error);
@@ -585,8 +589,8 @@ function PeopleChatComponent({
             </div>
           ) : (
             <div
-              className={`flex flex-col bg-slate-50 overflow-y-auto  ${
-                contentReply ? "h-[58vh]" : "h-[74vh]"
+              className={`flex flex-col bg-slate-50 overflow-y-auto mb-2 ${
+                contentReply ? "h-[61vh]" : "h-[77vh]"
               }`}
               ref={scrollRef}
             >
@@ -595,7 +599,7 @@ function PeopleChatComponent({
                   if (message.status === 0 || message.status === 2) {
                     return (
                       <div
-                        key={index}
+                        key={index++}
                         className={
                           authUser._id === message.senderId
                             ? "chat chat-end"
@@ -603,10 +607,10 @@ function PeopleChatComponent({
                         }
                         onContextMenu={(e) => handleContextMenu(e, message._id)}
                       >
-                        {conversation.participants.map((user, index) => {
+                        {conversation?.participants.map((user, index) => {
                           if (user._id === message.senderId) {
                             return (
-                              <div key={index} className="chat-image avatar">
+                              <div key={index++} className="chat-image avatar">
                                 <div className="ml-2 w-10 rounded-full">
                                   <img
                                     alt="avatar"
@@ -621,7 +625,7 @@ function PeopleChatComponent({
                         })}
 
                         <div
-                          className={`flex flex-col chat-bubble ${
+                          className={`flex flex-col chat-bubble md:max-w-[70%] max-w-[50%] ${
                             authUser._id === message.senderId
                               ? "bg-[#e5efff]"
                               : "bg-white"
@@ -629,7 +633,7 @@ function PeopleChatComponent({
                         >
                           {message.replyMessageId && (
                             <div className="h-16 m-2 rounded-lg bg-sky-200 p-2 text-black">
-                              <div className="flex flex-col border-l-2 border-sky-500">
+                              <div className="flex flex-col border-l-2 border-sky-300">
                                 {message.replyMessageId?.contents[0].type ===
                                 "text" ? (
                                   <div>
@@ -724,12 +728,12 @@ function PeopleChatComponent({
                             const imageHeight = "auto";
                             return (
                               <div
-                                key={contentIndex}
-                                className="message-container"
+                                key={contentIndex++}
+                                className="message-container break-all"
                               >
                                 {content.type === "text" ? (
-                                  <div className="flex flex-col">
-                                    <span className="text-base text-black">
+                                  <div className="flex flex-col break-all ">
+                                    <span className="text-base text-black break-all ">
                                       {content.data}
                                     </span>
                                     <time className="text-xs opacity-50 text-stone-500">
@@ -793,7 +797,7 @@ function PeopleChatComponent({
                                 ) : (
                                   <div>
                                     <DocViewer
-                                      documents={[{ uri: content.data }]}
+                                      documents={{ uri: content.data }}
                                       pluginRenderers={DocViewerRenderers}
                                       style={{ height: "400px" }}
                                     />
@@ -895,15 +899,12 @@ function PeopleChatComponent({
                         }
                         onContextMenu={(e) => handleContextMenu(e, message._id)}
                       >
-                        {conversation.participants.map((user, index) => {
-                          console.log("user: ", user);
+                        {conversation?.participants.map((user, index) => {
                           if (user._id === message.senderId) {
                             return (
                               <>
-                                <div key={index} className="flex chat-header">
-                                  <p className="text-base font-semibold">
-                                    {user.profile.name}
-                                  </p>
+                                <div key={index++} className="flex chat-header">
+                                  <p className="text-sm">{user.profile.name}</p>
                                 </div>
                                 <div key={index} className="chat-image avatar">
                                   <div className="ml-2 w-10 rounded-full">
@@ -921,7 +922,7 @@ function PeopleChatComponent({
                         })}
 
                         <div
-                          className={`flex flex-col chat-bubble ${
+                          className={`flex flex-col chat-bubble border  ${
                             authUser._id === message.senderId
                               ? "bg-[#e5efff]"
                               : "bg-white"
@@ -1025,13 +1026,13 @@ function PeopleChatComponent({
 
                             return (
                               <div
-                                key={contentIndex}
-                                className="message-container"
+                                key={contentIndex++}
+                                className="message-container break-all"
                               >
                                 {/* Render nội dung của message */}
                                 {content.type === "text" ? (
-                                  <div className="flex flex-col">
-                                    <span className="text-base text-black">
+                                  <div className="flex flex-col break-all">
+                                    <span className="text-base text-black break-all">
                                       {content.data}
                                     </span>
                                     <time className="text-xs opacity-50 text-stone-500">
@@ -1187,31 +1188,33 @@ function PeopleChatComponent({
                 }
               })}
               {isFetchingMore && (
-                <span className="loading loading-spinner loading-lg"></span>
+                <div className="flex justify-center items-center h-16">
+                  <span className="loading loading-bars loading-lg bg-cyan-500"></span>
+                </div>
               )}
               {loadingMedia && (
-                <p className="flex flex-col justify-end mr-2 mb-2">
-                  Loading....
-                </p>
+                <div className="flex justify-center items-center h-16">
+                  <span className="loading loading-bars loading-lg bg-cyan-500"></span>
+                </div>
               )}
             </div>
           )}
 
           <div
             className={`${
-              contentReply ? "h-[31vh]" : "h-[15vh]"
+              contentReply ? "h-[28vh]" : "h-[12vh]"
             } bg-white flex-col border-t`}
           >
             <div
               className={`${
                 contentReply ? "h-[20%]" : "h-[40%]"
-              } bg-white flex justify-between items-center border-b p-1`}
+              } bg-white flex justify-start items-center border-b p-1`}
             >
               <button
-                className="hover:bg-gray-300 p-2 rounded"
+                className="hover:bg-gray-300 p-2 rounded mx-8"
                 onClick={togglePicker}
               >
-                <LuSticker size={20} />
+                <LuSticker size={22} />
               </button>
 
               {showPicker && (
@@ -1226,38 +1229,16 @@ function PeopleChatComponent({
               )}
 
               <button
-                className="hover:bg-gray-300 p-2 rounded"
+                className="hover:bg-gray-300 p-2 rounded mx-8"
                 onClick={handleSelectImageClick}
               >
-                <IoImageOutline size={20} />
+                <IoImageOutline size={22} />
               </button>
               <button
-                className="hover:bg-gray-300 p-2 rounded"
+                className="hover:bg-gray-300 p-2 rounded mx-8"
                 onClick={handleSelectFileClick}
               >
-                <IoIosLink size={20} />
-              </button>
-              <button className="hover:bg-gray-300 p-2 rounded flex">
-                <BiScreenshot size={20} />
-                <FaCaretDown size={18} />
-              </button>
-              <button className="hover:bg-gray-300 p-2 rounded flex">
-                <FaAddressCard size={20} />
-              </button>
-              <button className="hover:bg-gray-300 p-2 rounded flex">
-                <TfiAlarmClock size={20} />
-              </button>
-              <button className="hover:bg-gray-300 p-2 rounded flex">
-                <FiCheckSquare size={20} />
-              </button>
-              <button className="hover:bg-gray-300 p-2 rounded flex">
-                <MdFormatColorText size={20} />
-              </button>
-              <button className="hover:bg-gray-300 pr-2 pl-2 rounded flex text-2xl">
-                !
-              </button>
-              <button className="hover:bg-gray-300 p-2 rounded flex text-2xl">
-                <BsThreeDots size={20} />
+                <IoIosLink size={22} />
               </button>
             </div>
             <div className={`${contentReply ? "h-[80%]" : "h-[60%]"} flex `}>
@@ -1350,29 +1331,20 @@ function PeopleChatComponent({
                     </button>
                   </div>
                 )}
-                <div className="flex items-center mb-2">
-                  <input
+                <div className="flex justify-center items-center py-1 h-full">
+                  <textarea
                     type="text"
-                    placeholder="Nhập @, tin nhắn tới"
-                    className="w-full outline-none p-2 "
+                    autoFocus="true"
+                    placeholder={
+                      language === "vi"
+                        ? "Nhập tin nhắn..."
+                        : "Type a message..."
+                    }
+                    className={`w-full break-all outline-none px-5 py-2 ${contentReply ? "h-[50%] max-h-fit" : "h-full"} border rounded-full focus:border-blue-200 focus:shadow-md`}
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     onKeyPress={handleKeyPress}
                   />
-                  <div className="flex items-center mr-2">
-                    <button className="hover:bg-gray-300 p-2 rounded">
-                      <RiBatteryChargeLine size={20} />
-                    </button>
-                    <button className="hover:bg-gray-300 p-2 rounded">
-                      <BiSmile size={20} />
-                    </button>
-                    <button className="hover:bg-gray-300 p-2 rounded text-2xl mb-1">
-                      @
-                    </button>
-                    <button className="hover:bg-gray-300 p-2 rounded">
-                      <AiFillLike size={20} color="rgb(252 186 3)" />
-                    </button>
-                  </div>
                 </div>
               </div>
             </div>
@@ -1533,7 +1505,7 @@ function PeopleChatComponent({
                 <div className="flex flex-col h-[90%] w-full mt-5 mx-2 overflow-scroll">
                   {listMembers?.map((member, index) => (
                     <div
-                      key={index}
+                      key={index++}
                       className="flex items-center justify-between w-full p-3 hover:bg-gray-200"
                     >
                       <div className="flex items-center">

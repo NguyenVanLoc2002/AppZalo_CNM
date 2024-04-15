@@ -378,12 +378,13 @@ exports.leaveGroup = async (req, res) => {
     if (!group) {
       return res.status(404).json({ error: "Group not found" });
     }
+    const members = group.conversation.participants;
 
     group.conversation.participants = group.conversation.participants.filter(
       (p) => p.toString() !== uid.user_id
     );
 
-    group.conversation.participants.forEach(async (member) => {
+    members.forEach(async (member) => {
       const memderSocketId = await getReciverSocketId(member);
       if (memderSocketId) {
         io.to(memderSocketId.socket_id).emit("leave-group", {

@@ -139,7 +139,7 @@ exports.getHistoryMessageMobile = async (req, resp) => {
     const userId = req.params.userId; //người nhận lấy từ param
     const currentUserId = req.user.user_id; // người dùng hiện đang đăng nhập
 
-    const lastTimestamp = req.query.lastTimestamp; // Lấy tham số lastTimestamp từ query string
+    const lastTimestamp = req.query.lastTimestamp;
     // let queryCondition = {
     //   $or: [
     //     { senderId: currentUserId, receiverId: userId , status: { $in: [0, 2] }},
@@ -325,17 +325,22 @@ exports.deleteChat = async (req, res) => {
       );
       const remove = await Chat.findByIdAndDelete(chatId);
 
-
       if (conversation.messages.length === 0 && conversation.tag !== "group") {
-        await Conversation.findByIdAndDelete(conversation._id);
-        const receiverSocketId = await getReciverSocketId(chat.receiverId);
-        if (receiverSocketId) {
-          io.to(receiverSocketId.socket_id).emit("delete_message", {
-            chatRemove: remove,
-            conversationId: conversation._id,
-            isDeleted: true,
-          });
-        }
+        const removeConversation = await Conversation.findByIdAndDelete(
+          conversation._id
+        );
+        removeConversation.participants?.forEach(async (member) => {
+          if (member.toString()) {
+            const receiverSocketId = await getReciverSocketId(member);
+            if (receiverSocketId) {
+              io.to(receiverSocketId.socket_id).emit("delete_message", {
+                chatRemove: remove,
+                conversationId: conversation._id,
+                isDeleted: true,
+              });
+            }
+          }
+        });
       } else {
         conversation.lastMessage =
           conversation.messages[conversation.messages.length - 1];
