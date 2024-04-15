@@ -10,12 +10,10 @@ exports.sendMessage = async (req, resp) => {
   try {
     const senderId = req.user.user_id;
     const receiverId = req.params.userId;
-    const isGroup = req.body.isGroup || false;
+    const isGroup = JSON.parse(req.body.isGroup) || false;
     const replyMessageId = req.body.replyMessageId || null;
     let contents = [];
-    // Kiểm tra xem req.body có tồn tại không và có chứa nội dung không
     if (req.body.data) {
-      // Nếu có nội dung, thêm vào mảng contents
       contents.push({
         type: req.body.data.type,
         data: req.body.data.data,
@@ -44,40 +42,38 @@ exports.sendMessage = async (req, resp) => {
       isGroup,
       replyMessageId,
     });
+
     await message.save();
     const retrunMessage = await Chat.findById(message._id).populate({
       path: "replyMessageId",
       model: "chats",
     });
 
-    const group = await Group.findOne({ _id: receiverId });
+    const group = await Group.findById(receiverId).populate("conversation");
 
     let conversation;
-    if (group) {
-      conversation = await Conversation.findOne({
-        _id: group.conversation,
-        tag: "group",
-      });
-    } else {
+    if (!group) {
       conversation = await Conversation.findOne({
         participants: { $all: [senderId, receiverId] },
         tag: "friend",
       });
+    } else {
+      conversation = group.conversation;
     }
 
     if (isGroup) {
-      const groupMembers = await User.find({ _id: { $in: receiverId } });
-      for (const member of groupMembers) {
-        const receiverSocketId = await getReciverSocketId(member._id);
-        if (receiverSocketId) {
-          io.to(receiverSocketId.socket_id).emit("new_message", {
-            message: { retrunMessage, conversationId: conversation._id },
-          });
+      for (const member of group.conversation.participants) {
+        if (member.toString() !== senderId) {
+          const receiverSocketId = await getReciverSocketId(member._id);
+          if (receiverSocketId) {
+            io.to(receiverSocketId.socket_id).emit("new_message", {
+              message: { retrunMessage, conversationId: conversation._id },
+            });
+          }
         }
       }
     } else {
       const receiverSocketId = await getReciverSocketId(receiverId);
-
       if (receiverSocketId) {
         io.to(receiverSocketId.socket_id).emit("new_message", {
           message: { retrunMessage, conversationId: conversation._id },
@@ -308,45 +304,56 @@ exports.deleteChat = async (req, res) => {
       })
     );
 
-    const conversations = await Conversation.find({
-      participants: { $all: [chat.senderId, chat.receiverId] },
-    });
-    if (conversations.length > 0) {
-      conversations.forEach(async (conversation) => {
-        conversation.messages = conversation.messages.filter(
-          (message) => message.toString() !== chatId
-        );
-
-        if (
-          conversation.messages.length === 0 &&
-          conversation.tag !== "group"
-        ) {
-          await conversation.deleteOne({
-            participants: { $all: [chat.senderId, chat.receiverId] },
-          });
-          const receiverSocketId = await getReciverSocketId(chat.receiverId);
-          if (receiverSocketId) {
-            io.to(receiverSocketId.socket_id).emit("delete_message", {
-              chatId,
-              isDeleted: true,
-            });
-          }
-        } else {
-          conversation.lastMessage =
-            conversation.messages[conversation.messages.length - 1];
-          await conversation.save();
-          const receiverSocketId = await getReciverSocketId(chat.receiverId);
-          if (receiverSocketId) {
-            io.to(receiverSocketId.socket_id).emit("delete_message", {
-              chatId,
-              isDeleted,
-            });
-          }
-        }
+    const group = await Group.findById(chat.receiverId).populate(
+      "conversation"
+    );
+    let conversation;
+    if (group) {
+      conversation = group.conversation;
+    } else {
+      conversation = await Conversation.findOne({
+        participants: { $all: [chat.senderId, chat.receiverId] },
+        tag: "friend",
       });
     }
 
-    await Chat.findByIdAndDelete(chatId);
+    if (conversation) {
+      conversation.messages = conversation.messages.filter(
+        (message) => message.toString() !== chatId
+      );
+      const remove = await Chat.findByIdAndDelete(chatId);
+    console.log("remove", remove);
+
+
+      if (conversation.messages.length === 0 && conversation.tag !== "group") {
+        await Conversation.findByIdAndDelete(conversation._id);
+        const receiverSocketId = await getReciverSocketId(chat.receiverId);
+        if (receiverSocketId) {
+          io.to(receiverSocketId.socket_id).emit("delete_message", {
+            chatRemove: remove,
+            conversationId: conversation._id,
+            isDeleted: true,
+          });
+        }
+      } else {
+        conversation.lastMessage =
+          conversation.messages[conversation.messages.length - 1];
+        await conversation.save();
+        conversation.participants?.forEach(async (member) => {
+          if (member.toString() !== chat.senderId) {
+            const receiverSocketId = await getReciverSocketId(member);
+            if (receiverSocketId) {
+              io.to(receiverSocketId.socket_id).emit("delete_message", {
+                chatRemove: remove,
+                conversationId: conversation._id,
+                isDeleted,
+              });
+            }
+          }
+        });
+      }
+    }
+
     res.status(200).json({ message: "Success deleted" });
   } catch (error) {
     console.error("Error deleting message:", error);

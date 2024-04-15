@@ -69,7 +69,6 @@ chatSchema.post("save", async function (chat, next) {
         await groupConversation.save();
         await group.save();
       }
-      
     }
     next();
   } catch (error) {
