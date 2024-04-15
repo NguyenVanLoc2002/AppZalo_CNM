@@ -142,6 +142,23 @@ const useGroup = () => {
     }
   };
 
+  const leaveGroup = async (groupId) => {
+    setGrLoading(true);
+    try {
+      const response = await axiosInstance.post(`/groups/leave/${groupId}`);
+      const { status } = response;
+
+      if (status === 200) {
+        return true;
+      }
+    } catch (error) {
+      console.error(error);
+      throw error;
+    } finally {
+      setGrLoading(false);
+    }
+  };
+
   return {
     group,
     groups,
@@ -153,6 +170,7 @@ const useGroup = () => {
     updateGroup,
     addMember,
     removeMember,
+    leaveGroup,
   };
 };
 

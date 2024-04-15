@@ -12,6 +12,7 @@ import { useAuthContext } from "../../../contexts/AuthContext";
 import useGroup from "../../../hooks/useGroup";
 import axiosInstance from "../../../api/axiosInstance";
 import useConversation from "../../../hooks/useConversation";
+import { useSocketContext } from "../../../contexts/SocketContext";
 
 function ChatComponents({ language }) {
   const [userChat, setUserChat] = useState(null);
@@ -45,6 +46,49 @@ function ChatComponents({ language }) {
   const [listChatCurrent, setListChatCurrent] = useState([]);
 
   const [members, setMembers] = useState([]);
+
+  // state for socket
+  const { socket } = useSocketContext();
+  const [isNewSocket, setIsNewSocket] = useState(null);
+  const [newSocketData, setNewSocketData] = useState(null);
+
+  // Socket io
+
+  useEffect(() => {
+    if (socket) {
+      // socket for private chat
+      socket.on("new_message", ({ message }) => {
+        console.log("new_message", message);
+        setIsNewSocket("new_message");
+        setNewSocketData(message);
+      });
+      socket.on(
+        "delete_message",
+        ({ chatRemove, conversationId, isDeleted }) => {
+          console.log("delete_conver ?: ", isDeleted);
+          setIsNewSocket("delete_message");
+          setNewSocketData({ chatRemove, conversationId, isDeleted });
+        }
+      );
+
+      // socket for group
+
+      socket.on("add-to-group", ({ data }) => {
+        setIsNewSocket("add-to-group");
+        setNewSocketData(data);
+      });
+
+      socket.on("remove-from-group", ({ group }) => {
+        setIsNewSocket("remove-from-group");
+        setNewSocketData(group);
+      });
+
+      socket.on("leave-group", ({ group }) => {
+        setIsNewSocket("leave-group");
+        setNewSocketData(group);
+      });
+    }
+  }, [socket]);
 
   const sendMessage = async (data, receiverId) => {
     try {
@@ -239,6 +283,8 @@ function ChatComponents({ language }) {
             showModal={changeShowModal}
             friends={friendList}
             conversations={listChatCurrent}
+            newSocket={isNewSocket}
+            socketData={newSocketData}
           />
         </div>
         <PeopleChatComponent
@@ -247,9 +293,11 @@ function ChatComponents({ language }) {
           showModal={changeShowModal}
           shareMessage={setShareMessage}
           addMembersToGroup={setAddMembersToGroup}
+          newSocket={isNewSocket}
+          socketData={newSocketData}
         />
         {isShowModal === "addFriend" && (
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/5 h-[90%] bg-white rounded-lg shadow-lg ">
+          <div className="z-50 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/5 h-[90%] bg-white rounded-lg shadow-lg ">
             <div className="relative flex items-center justify-between p-4 border-b text-lg font-semibold h-[10%]">
               <p>{language == "vi" ? "Thêm Bạn" : "Add Friend"}</p>
               <button
@@ -396,7 +444,7 @@ function ChatComponents({ language }) {
           </div>
         )}
         {isShowModal === "addGroup" && (
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/5 h-[90%] bg-white rounded-lg shadow-lg ">
+          <div className="z-50 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/5 h-[90%] bg-white rounded-lg shadow-lg ">
             <div className="relative flex items-center justify-between p-4 border-b text-lg font-semibold h-[10%]">
               <p>
                 {addMembersToGroup
