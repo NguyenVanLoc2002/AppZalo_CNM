@@ -35,7 +35,6 @@ router.post(
 router.post(
   "/:userId/sendText",
   multerUploadImage.array("data"),
-  formatBodyData,
   sendMessage
 );
 
