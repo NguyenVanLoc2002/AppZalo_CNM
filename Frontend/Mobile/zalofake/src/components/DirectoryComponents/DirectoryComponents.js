@@ -64,9 +64,9 @@ const DirectoryComponents = ({ navigation }) => {
   }, [navigation]);
 
   return (
-    <Tab.Navigator initialRouteName="Bạn bè" tabBarPosition="top">
-      <Tab.Screen name="Bạn bè" component={FriendDirectory} />
-      <Tab.Screen name="Nhóm" component={GroupDirectory} />
+    <Tab.Navigator initialRouteName="FriendDirectory" tabBarPosition="top">
+      <Tab.Screen name="FriendDirectory" component={FriendDirectory} />
+      <Tab.Screen name="GroupDirectory" component={GroupDirectory} />
     </Tab.Navigator>
   );
 };

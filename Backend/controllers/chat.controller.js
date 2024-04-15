@@ -10,8 +10,11 @@ exports.sendMessage = async (req, resp) => {
   try {
     const senderId = req.user.user_id;
     const receiverId = req.params.userId;
-    const isGroup = JSON.parse(req.body.isGroup) || false;
-    const replyMessageId = req.body.replyMessageId || null;
+    // Thêm biến này từ FE khi chọn conversation để trò chuyện nếu là Group thì truyền đi isGroup là true
+    //Còn là chat single thì không cần truyền chỉ cần truyền data nha FE
+    const isGroup = req.body.isGroup === 'false' ? false : true;
+
+    const replyMessageId = req.body.replyMessageId === 'null' ?  null :req.body.replyMessageId ;
     let contents = [];
     if (req.body.data) {
       contents.push({
@@ -103,12 +106,10 @@ exports.getHistoryMessageMobile = async (req, resp) => {
     const lastTimestamp = req.query.lastTimestamp; // Lấy tham số lastTimestamp từ query string
     let queryCondition = {
       $or: [
-        { senderId: currentUserId, receiverId: userId},
+        { senderId: currentUserId, receiverId: userId },
         { senderId: userId, receiverId: currentUserId },
       ],
     };
-   
-
 
     const totalMessageHistory = await Chat.countDocuments(queryCondition);
     let messagesHistory;
@@ -135,7 +136,7 @@ exports.getHistoryMessageMobile = async (req, resp) => {
     resp.status(500).json({ success: false, massage: "Internal server error" });
   }
 };
-exports.getHistoryMessage= async (req, resp) => {
+exports.getHistoryMessage = async (req, resp) => {
   try {
     const userId = req.params.userId; //người nhận lấy từ param
     const currentUserId = req.user.user_id; // người dùng hiện đang đăng nhập
@@ -348,5 +349,4 @@ exports.deleteChat = async (req, res) => {
       .json({ message: "An error occurred while deleting the message" });
   }
 };
-
 
