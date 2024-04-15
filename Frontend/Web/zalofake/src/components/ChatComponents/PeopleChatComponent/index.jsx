@@ -56,9 +56,6 @@ function PeopleChatComponent({
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState("");
 
-  console.log("authUser: ", authUser);
-  console.log("userChat: ", userChat);
-  console.log("message Group: ", messages);
   useEffect(() => {
     if (!userChat || userChat?.tag !== "group") {
       setSidebarVisible(false);
@@ -76,27 +73,37 @@ function PeopleChatComponent({
         setMessages([]);
       }
     }
-
     if (socket) {
       socket.on("new_message", ({ message }) => {
-        console.log("new_message", message);
+        console.log("new_message", message, userChat);
+        console.log("new_message check : ", message.conversationId === userChat.conversationId);
 
-        if (message.retrunMessage?.senderId !== userChat?.id) {
-          return;
+
+        if (message.conversationId === userChat.conversationId) {
+          setMessages((prevMessages) => {
+            const newMessages = [...prevMessages];
+            const index = newMessages.findIndex(
+              (m) => m._id === message.retrunMessage._id
+            );
+            if (index === -1) {
+              newMessages.push(message.retrunMessage);
+            } else {
+              newMessages[index] = message.retrunMessage;
+            }
+            return newMessages;
+          });
         }
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          message?.retrunMessage,
-        ]);
       });
       socket.on("delete_message", ({ chatId, isDeleted }) => {
         if (isDeleted) {
           console.log("delete_conversation");
           setMessages([]);
         } else {
-          console.log("delete_message");
           try {
-            getConversationByID(userChat.conversationId);
+            console.log("userChat.conversationId", userChat);
+            if (userChat?.conversationId) {
+              getConversationByID(userChat.conversationId);
+            }
           } catch (error) {
             console.error(error);
             setMessages([]);
@@ -129,13 +136,13 @@ function PeopleChatComponent({
       });
 
       return () => {
-        socket.off("new_message");
-        socket.off("delete_message");
+        // socket.off("new_message");
+        // socket.off("delete_message");
         socket.off("add-to-group");
         socket.off("remove-from-group");
       };
     }
-  }, [userChat]);
+  }, [userChat, socket]);
 
   useEffect(() => {
     if (conversation) {
@@ -158,11 +165,9 @@ function PeopleChatComponent({
 
   const sendMessage = async (data, receiverId, replyMessageId, isGroup) => {
     setLoadingMedia(true);
-    console.log("isGroup: ", isGroup);
     try {
       if (!data || data.trim === "") return;
       let messageType;
-      console.log("Upload File in send: ", data);
 
       if (receiverId) {
         if (data.type === "text") {
@@ -188,7 +193,6 @@ function PeopleChatComponent({
           ...prevMessages,
           response.data.data.message,
         ]);
-        // userChat.conversationId = response.data.data.conversationId;
         setContent("");
         setContentReply("");
         setMessageReplyId("");
@@ -515,7 +519,7 @@ function PeopleChatComponent({
               ref={scrollRef}
             >
               {messages?.map((message, index) => {
-                if (message.senderId === authUser._id) {
+                if (message?.senderId === authUser._id) {
                   if (message.status === 0 || message.status === 2) {
                     return (
                       <div
@@ -642,7 +646,6 @@ function PeopleChatComponent({
                                 key={contentIndex}
                                 className="message-container"
                               >
-                                {/* Render nội dung của message */}
                                 {content.type === "text" ? (
                                   <div className="flex flex-col">
                                     <span className="text-base text-black">

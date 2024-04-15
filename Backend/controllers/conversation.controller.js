@@ -73,6 +73,7 @@ exports.getConversation = async (req, res) => {
   }
 };
 
+
 exports.getConversations = async (req, res) => {
   try {
     const userId = req.user.user_id;
@@ -86,7 +87,7 @@ exports.getConversations = async (req, res) => {
       },
       {
         path: "lastMessage",
-        select: "senderId receiverId contents timestamp read",
+        select: "senderId receiverId contents",
       },
     ]);
     if (!conversations) {

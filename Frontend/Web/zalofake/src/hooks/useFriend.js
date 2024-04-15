@@ -20,6 +20,7 @@ const useFriend = () => {
           name: friend.profile.name,
           avatar: friend.profile.avatar.url ?? "/zalo.svg",
           background: friend.profile.background.url ?? "/zalo.svg",
+          tag: "friend",
         }));
         setFriends(newFriendList);
       }
