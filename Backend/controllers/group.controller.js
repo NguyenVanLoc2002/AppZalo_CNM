@@ -80,7 +80,12 @@ exports.getGroup = async (req, res) => {
   try {
     const { groupId } = req.params;
     const group = await Group.findById(groupId).populate([
-      { path: "conversation" },
+      {
+        path: "conversation",
+        populate: {
+          path: "participants",
+        },
+      },
       { path: "createBy", select: "profile.name" },
     ]);
     if (!group) {

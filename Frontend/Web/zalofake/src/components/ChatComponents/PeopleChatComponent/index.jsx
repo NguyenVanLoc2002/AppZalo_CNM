@@ -259,7 +259,7 @@ function PeopleChatComponent({
   };
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
-      if (thisUser.tag === "friend") {
+      if (userChat.tag === "friend" || !userChat.tag) {
         if (messageReplyId) {
           sendMessage(
             { type: "text", data: content },
@@ -367,21 +367,26 @@ function PeopleChatComponent({
     fileInput.click();
   };
 
+  const handleSelectFileClick = () => {
+    const fileInput = document.getElementById("filePDF");
+    fileInput.click();
+  };
+
   const handleUpload = async (event) => {
     const files = event.target.files;
     console.log("Upload File: ", files);
     try {
-      if (thisUser.tag === "friend") {
+      if (userChat.tag === "friend") {
         if (messageReplyId) {
-          await sendMessage(files, thisUser?.id, messageReplyId, false);
+          await sendMessage(files, userChat?.id, messageReplyId, false);
         } else {
-          await sendMessage(files, thisUser?.id, null, false);
+          await sendMessage(files, userChat?.id, null, false);
         }
       } else {
         if (messageReplyId) {
-          await sendMessage(files, thisUser?.id, messageReplyId, true);
+          await sendMessage(files, userChat?.id, messageReplyId, true);
         } else {
-          await sendMessage(files, thisUser?.id, null, true);
+          await sendMessage(files, userChat?.id, null, true);
         }
       }
     } catch (error) {
@@ -598,13 +603,22 @@ function PeopleChatComponent({
                         }
                         onContextMenu={(e) => handleContextMenu(e, message._id)}
                       >
-                        {authUser._id !== message.senderId && (
-                          <div className="chat-image avatar">
-                            <div className="ml-2 w-10 rounded-full">
-                              <img alt="avatar" src={thisUser.avatar} />
-                            </div>
-                          </div>
-                        )}
+                        {conversation.participants.map((user, index) => {
+                          if (user._id === message.senderId) {
+                            return (
+                              <div key={index} className="chat-image avatar">
+                                <div className="ml-2 w-10 rounded-full">
+                                  <img
+                                    alt="avatar"
+                                    src={
+                                      user.profile.avatar?.url || "/zalo.svg"
+                                    }
+                                  />
+                                </div>
+                              </div>
+                            );
+                          }
+                        })}
 
                         <div
                           className={`flex flex-col chat-bubble ${
@@ -792,7 +806,7 @@ function PeopleChatComponent({
 
                         {contextMenuStates[message._id] && (
                           <div
-                            className="flex flex-col z-10 fixed top-1/2 transform -translate-x-40 -translate-y-30 w-52  bg-white rounded-2xl shadow shadow-gray-300 "
+                            className="flex flex-col z-10 fixed top-1/2 transform -translate-x-40 -translate-y-40 w-52  bg-white rounded-2xl shadow shadow-gray-300 "
                             style={{
                               top: contextMenuPosition.y,
                               left: contextMenuPosition.x,
@@ -881,16 +895,33 @@ function PeopleChatComponent({
                         }
                         onContextMenu={(e) => handleContextMenu(e, message._id)}
                       >
-                        {authUser._id !== message.senderId && (
-                          <div className="chat-image avatar">
-                            <div className="ml-2 w-10 rounded-full">
-                              <img alt="avatar" src={thisUser.avatar} />
-                            </div>
-                          </div>
-                        )}
+                        {conversation.participants.map((user, index) => {
+                          console.log("user: ", user);
+                          if (user._id === message.senderId) {
+                            return (
+                              <>
+                                <div key={index} className="flex chat-header">
+                                  <p className="text-base font-semibold">
+                                    {user.profile.name}
+                                  </p>
+                                </div>
+                                <div key={index} className="chat-image avatar">
+                                  <div className="ml-2 w-10 rounded-full">
+                                    <img
+                                      alt="avatar"
+                                      src={
+                                        user.profile.avatar?.url || "/zalo.svg"
+                                      }
+                                    />
+                                  </div>
+                                </div>
+                              </>
+                            );
+                          }
+                        })}
 
                         <div
-                          className={`flex flex-col chat-bubble${
+                          className={`flex flex-col chat-bubble ${
                             authUser._id === message.senderId
                               ? "bg-[#e5efff]"
                               : "bg-white"
@@ -1077,7 +1108,7 @@ function PeopleChatComponent({
 
                         {contextMenuStates[message._id] && (
                           <div
-                            className="flex flex-col z-10 fixed top-1/2 transform -translate-x-40 -translate-y-30 w-52  bg-white rounded-2xl shadow shadow-gray-300 "
+                            className="flex flex-col z-10 fixed top-1/2 transform -translate-x-40 -translate-y-40 w-52  bg-white rounded-2xl shadow shadow-gray-300 "
                             style={{
                               top: contextMenuPosition.y,
                               left: contextMenuPosition.x,
@@ -1200,7 +1231,10 @@ function PeopleChatComponent({
               >
                 <IoImageOutline size={20} />
               </button>
-              <button className="hover:bg-gray-300 p-2 rounded">
+              <button
+                className="hover:bg-gray-300 p-2 rounded"
+                onClick={handleSelectFileClick}
+              >
                 <IoIosLink size={20} />
               </button>
               <button className="hover:bg-gray-300 p-2 rounded flex">
@@ -1345,6 +1379,15 @@ function PeopleChatComponent({
             <input
               type="file"
               id="fileInput"
+              accept="image/*, video/*"
+              multiple
+              style={{ display: "none" }}
+              onChange={handleUpload}
+            />
+            <input
+              type="file"
+              id="filePDF"
+              accept="application/pdf"
               multiple
               style={{ display: "none" }}
               onChange={handleUpload}
