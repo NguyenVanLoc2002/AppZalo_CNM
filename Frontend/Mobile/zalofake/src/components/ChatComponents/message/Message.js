@@ -92,7 +92,6 @@ const Message = ({ navigation, route }) => {
       } else {
         const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversation._id}`);
         const reversedChats = response.data;
-        // console.log(reversedChats)
 
         let data = [];
         let int = reversedChats.length;
@@ -100,7 +99,6 @@ const Message = ({ navigation, route }) => {
           const chat = reversedChats[index];
           const getUser = await getUserById(chat.senderId)
           if (chat.replyMessageId === null) {
-
             const chatNew = {
               chat: chat,
               sender: getUser.user.profile,
@@ -141,20 +139,26 @@ const Message = ({ navigation, route }) => {
     fetchChats();
 
     if (socket) {
-      socket.on("new_message", ({ message }) => {
-        setChats((prevMessages) => [message, ...prevMessages]);
-        console.log("new_message: ", message);
-        scrollToEnd()
+      socket.on("new_message", async ({ message }) => {
+        if (message.conversationId === conver.conversation._id) {
+          setChats(prevChats => [
+            ...prevChats,
+            {
+              chat: message.retrunMessage,
+              sender: getUser.user.profile,
+              nameReply: null
+            }
+          ]);
+          scrollToEnd()
+        }
       });
-      socket.on("delete_message", ({ chatId }) => {
-        scrollToEnd()
-      });
-      return () => {
-        socket.off("new_message");
-        socket.off("delete_message");
-      };
     }
-  }, [socket]);
+    return () => {
+      if (socket) {
+        socket.off("new_message");
+      }
+    };
+  }, [socket, chats]);
 
 
 
@@ -540,7 +544,7 @@ const Message = ({ navigation, route }) => {
                                 {renderMessageContentReply(content)}
                               </View>
                             ) : (
-                              <View style={{display: 'flex', paddingVertical: 5, alignItems: 'center', paddingRight: 5, flexDirection: 'row'}}>
+                              <View style={{ display: 'flex', paddingVertical: 5, alignItems: 'center', paddingRight: 5, flexDirection: 'row' }}>
                                 {renderMessageContentReply(content)}
                                 <View>
                                   <Text style={{ paddingLeft: 10, fontSize: 13, fontWeight: 'bold' }}>
