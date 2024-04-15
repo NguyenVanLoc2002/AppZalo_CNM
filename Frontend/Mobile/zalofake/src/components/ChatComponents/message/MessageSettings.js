@@ -18,7 +18,8 @@ import useGroup from "../../../hooks/useGroup";
 import useConversation from "../../../hooks/useConversation";
 
 const MessageSettings = ({ navigation, route }) => {
-  const { group } = route.params;
+  const { conver } = route.params;
+
 
   const [isMarkAsCloseFriend, setMarkAsCloseFriend] = useState(false);
   const [isPinChat, setPinChat] = useState(false);
@@ -59,18 +60,18 @@ const MessageSettings = ({ navigation, route }) => {
         fontSize: 20,
       },
     });
-    setName(group?.nameGroup);
-    getConversationByID(group.conversation._id);
-    if (group?.createBy?._id === authUser._id) {
+    setName(conver.name);
+    getConversationByID(conver.conversation._id);
+    if (conver?.createBy?._id === authUser._id) {
       setIsGroupAdmin(true);
     }
   }, [navigation]);
 
   const handleRemoveMember = async (memberId) => {
     try {
-      const response = await removeMember(group.idGroup, memberId);
+      const response = await removeMember(conver._id, memberId);
       if (response) {
-        getConversationByID(group.conversationId);
+        getConversationByID(conver.conversation._id);
         Toast.show(
           language === "vi"
             ? "Xóa thành viên khỏi nhóm thành công"
@@ -95,7 +96,7 @@ const MessageSettings = ({ navigation, route }) => {
     }
   };
   const handleAddMember = async () => {
-    getConversationByID(group.conversationId);
+    getConversationByID(conver.conversation._id);
   };
 
   const handleSearch = () => {
@@ -135,7 +136,7 @@ const MessageSettings = ({ navigation, route }) => {
 
   const handleDeleteGroup = async () => {
     try {
-      const response = await deleteGroup(group.idGroup);
+      const response = await deleteGroup(conver._id);
       if (response) {
         Toast.show(
           language === "vi"
@@ -180,6 +181,7 @@ const MessageSettings = ({ navigation, route }) => {
   }, [selectedFriends]);
 
   const renderListItem = (item, index) => (
+
     <Pressable
       key={index}
       style={{ width: "100%", flexDirection: "row", alignItems: "center" }}
@@ -200,7 +202,7 @@ const MessageSettings = ({ navigation, route }) => {
         </View>
         <Text style={{ fontWeight: "500", marginLeft: 0 }}>{item.name}</Text>
       </View>
-      <Pressable
+      {/* <Pressable
         style={{
           height: 150,
           backgroundColor: "purple",
@@ -209,14 +211,14 @@ const MessageSettings = ({ navigation, route }) => {
           paddingTop: 10,
           backgroundColor: "white",
         }}
-        onPress={() => navigation.navigate("FriendProfile", { user })}
+        // onPress={() => navigation.navigate("FriendProfile", { user })}
       >
         <Image
           source={{ uri: user?.profile?.avatar?.url }}
           style={{ width: 100, height: 100, borderRadius: 50 }}
         />
         <Text style={{ fontSize: 20, fontWeight: "bold" }}>{user.profile.name}</Text>
-      </Pressable>
+      </Pressable> */}
     </Pressable>
   );
 
@@ -255,7 +257,7 @@ const MessageSettings = ({ navigation, route }) => {
         >
           <View style={{ justifyContent: "center" }}>
             <Image
-              source={{ uri: group?.avatar }}
+              source={{ uri: conver?.avatar }}
               style={{
                 width: 100,
                 height: 100,
@@ -304,7 +306,7 @@ const MessageSettings = ({ navigation, route }) => {
                     <Pressable
                       onPress={() => {
                         setIsEditing(false);
-                        setName(group?.nameGroup);
+                        setName(conver?.name);
                       }}
                     >
                       <MdOutlineCancel
@@ -342,7 +344,7 @@ const MessageSettings = ({ navigation, route }) => {
           >
             <Text>{language === "vi" ? "Quản Trị Viên :" : "Admin :"}</Text>
             <Text style={{ marginLeft: 10, fontWeight: "bold" }}>
-              {group?.createBy?.profile?.name}
+              {conver?.createBy?.profile?.name}
             </Text>
           </View>
         </View>
@@ -379,9 +381,75 @@ const MessageSettings = ({ navigation, route }) => {
               />
             </Pressable>
           </View>
-          <Text style={{ textAlign: "center", color: "black" }}>
-            Tắt{"\n"}thông báo
-          </Text>
+          {loading ? (
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+                width: "100%",
+              }}
+            >
+              <ActivityIndicator size="large" color="blue" />
+            </View>
+          ) : (
+            <ScrollView
+              style={{
+                flex: 1,
+                marginTop: 5,
+                marginHorizontal: 10,
+                width: "100%",
+                paddingHorizontal: 10,
+              }}
+            >
+              {conversation?.participants?.map((member, index) => (
+                
+                <Pressable
+                  key={index}
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: 10,
+                    backgroundColor: "#eee",
+                    borderRadius: 10,
+                    marginBottom: 5,
+                  }}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Image
+                      source={{ uri: member.profile?.avatar?.url }}
+                      style={{
+                        width: 50,
+                        height: 50,
+                        borderRadius: 25,
+                        borderWidth: 1,
+                        borderColor: "black",
+                      }}
+                    />
+                    <Text style={{ marginLeft: 10 }}>
+                      {member.profile?.name}
+                    </Text>
+                  </View>
+                  {isGroupAdmin && (
+                    <Pressable>
+                      {loading ? (
+                        <ActivityIndicator size="small" color="blue" />
+                      ) : (
+                        <MaterialCommunityIcons
+                          name="minus"
+                          size={24}
+                          color="black"
+                          onPress={() => handleRemoveMember(member._id)}
+                        />
+                        // <Text>haha</Text>
+                      )}
+                    </Pressable>
+                  )}
+                </Pressable>
+              ))}
+            </ScrollView>
+          )}
         </View>
       </View>
       <View
@@ -499,9 +567,9 @@ const MessageSettings = ({ navigation, route }) => {
           color="black"
           style={{ marginHorizontal: 15 }}
         />
-        <Text style={{ textAlign: "center", color: "black" }}>
+        {/* <Text style={{ textAlign: "center", color: "black" }}>
           {`Tạo nhóm với ${user.ten}`}
-        </Text>
+        </Text> */}
       </Pressable>
       <View
         style={{
@@ -517,9 +585,9 @@ const MessageSettings = ({ navigation, route }) => {
           color="black"
           style={{ marginHorizontal: 15 }}
         />
-        <Text style={{ textAlign: "center", color: "black" }}>
+        {/* <Text style={{ textAlign: "center", color: "black" }}>
           {`Thêm ${user.ten} vào nhóm`}
-        </Text>
+        </Text> */}
       </View>
       <Modal animationType="slide" transparent={true} visible={modalAddMember}>
         <View
@@ -638,7 +706,7 @@ const MessageSettings = ({ navigation, route }) => {
                 onPress={() => {
                   if (selectedFriends.length > 0) {
                     addMember(
-                      group.id,
+                      conver._id,
                       selectedFriends.map((f) => f.id)
                     );
                     setModalAddMember(false);
