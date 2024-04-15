@@ -193,6 +193,7 @@ function PeopleChatComponent({
           ...prevMessages,
           response.data.data.message,
         ]);
+        userChat.conversationId = response.data.data.conversationId;
         setContent("");
         setContentReply("");
         setMessageReplyId("");
@@ -526,7 +527,7 @@ function PeopleChatComponent({
               ref={scrollRef}
             >
               {messages?.map((message, index) => {
-                if (message?.senderId === authUser._id) {
+                if (message.senderId === authUser._id) {
                   if (message.status === 0 || message.status === 2) {
                     return (
                       <div

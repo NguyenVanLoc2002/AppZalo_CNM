@@ -123,10 +123,10 @@ function Chat({ navigation }) {
         background: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
         lastMessage: group.lastMessage,
         tag: group.conversation.tag,
+        createBy: group.createBy,
       };
     });
     listChat.push(...listGroup);
-    // console.log(listChat);
     fetchDataConver(listChat)
   };
 

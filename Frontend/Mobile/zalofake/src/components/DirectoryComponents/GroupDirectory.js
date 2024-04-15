@@ -244,9 +244,7 @@ const GroupDirectory = ({ navigation }) => {
               conversation: response.group.conversation,
               tag: response.group.conversation.tag
             }
-            console.log("group", JSON.stringify(response.group));
             navigation.navigate("Message", { conver: group })
-
           }
         } catch (error) {
           console.log("CreateGroupError:", error);
