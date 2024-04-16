@@ -132,7 +132,7 @@ function Chat({ navigation }) {
 
   useEffect(() => {
     fetchDataChat();
-    console.log("listFriend:", JSON.stringify(listFriends));
+   
   }, [conversations, groups]);
 
   const fetchDataConver = async (listChat) => {
@@ -140,7 +140,7 @@ function Chat({ navigation }) {
     let data = [];
     let dataChat;
     let int = listChat.length;
-    // console.log(listChat)
+   
     for (let index = 0; index < int; index++) {
 
       const conver = listChat[index];
