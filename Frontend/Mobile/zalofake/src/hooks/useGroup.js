@@ -81,17 +81,22 @@ const useGroup = () => {
     try {
       const response = await axiosInstance.put(
         `/groups/update/${groupId}`,
-        groupData
+        groupData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data', // Header cần thiết khi gửi dữ liệu dưới dạng multipart/form-data
+          },
+        }
       );
-      const { data, status } = response;
-
-      if (status === 200) {
-        setGroup(data.group);
+      if (response.status === 200) {
         return true;
       }
     } catch (error) {
+
+      console.log('1')
       console.error(error);
-      throw error;
+      return false;
+      // throw error;
     } finally {
       setGrLoading(false);
     }
