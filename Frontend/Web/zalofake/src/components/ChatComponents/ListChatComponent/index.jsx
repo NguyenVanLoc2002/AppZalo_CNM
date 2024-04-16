@@ -29,9 +29,9 @@ function ListChatComponent({
   const [isChatSelected, setIsChatSelected] = useState("");
   const { groups, getGroups } = useGroup();
   const { authUser } = useAuthContext();
-  const { socket } = useSocketContext();
   const { getConversationByID, getConversationByParticipants, conversation } =
     useConversation();
+  const { isNewSocket, newSocketData } = useSocketContext();
 
   
 
@@ -75,152 +75,153 @@ function ListChatComponent({
 
     listChat.push(...listGroup);
     setListChatCurrent(listChat);
-    console.log("listChatCurrent", listChatCurrent);
+  }, [conversations, groups]);
 
-    if (socket) {
-      socket.on("new_message", ({ message }) => {
-        console.log(
-          "new_message on list chat",
-          message,
-          "listChatCurrent",
-          listChatCurrent
-        );
+  useEffect(() => {
+    if (isNewSocket === "new_message") {
+      const message = newSocketData;
 
-        const isExist = listChatCurrent.some(
-          (chat) => chat.conversationId === message.conversationId
-        );
-        if (
-          isExist
-        ) {
-          console.log("reload list chat");
-          setListChatCurrent((prev) => {
-            const newList = [...prev];
-            const index = newList.findIndex(
-              (chat) => chat.conversationId === message.conversationId
-            );
-            newList[index].lastMessage = message.retrunMessage;
-            console.log("newList", newList);
-            return newList;
-          });
-        } else {
-          getConversationByID(message.conversationId);
-        }
-      });
-
-      socket.on(
-        "delete_message",
-        ({ chatRemove, conversationId, isDeleted }) => {
-          if (isDeleted === true) {
-            console.log("delete_conversation");
-            setListChatCurrent((prev) => {
-              const newList = [...prev];
-              const index = newList.findIndex(
-                (conversation) => conversation._id === conversationId
-              );
-              if (index !== -1) {
-                newList.splice(index, 1);
-              }
-              return newList;
-            });
-          } else {
-            setListChatCurrent((prev) => {
-              const newList = [...prev];
-              const index = newList.findIndex(
-                (conversation) => conversation._id === conversationId
-              );
-              if (index !== -1) {
-                newList[index].lastMessage = chatRemove;
-              }
-              return newList;
-            });
-          }
-        }
+      const isExist = listChatCurrent.some(
+        (chat) => chat.conversationId === message.conversationId
       );
-
-      socket.on("add-to-group", ({ data }) => {
-        const group = data.group;
-
-        if (data?.addMembers?.includes(authUser._id)) {
-          toast.success(
-            language === "vi"
-              ? `Bạn đã tham gia nhóm ${group.name}`
-              : `You have joined the group ${group.name}`
+      if (isExist) {
+        setListChatCurrent((prev) => {
+          const newList = [...prev];
+          const index = newList.findIndex(
+            (chat) => chat.conversationId === message.conversationId
           );
-        }
-
-        setListChatCurrent((prev) => {
-          const newList = [...prev];
-          const newGroup = {
-            id: group._id,
-            conversationId: group.conversation._id,
-            name: group.groupName,
-            avatar: group.avatar.url,
-            background: group.avatar.url,
-            lastMessage: group.lastMessage,
-            tag: group.conversation.tag,
-            admin: group.createBy,
-          };
-          const index = newList.findIndex((chat) => chat.id === newGroup.id);
-          if (index !== -1) {
-            newList.splice(index, 1);
-          }
-          newList.unshift(newGroup);
+          newList[index].lastMessage = message.retrunMessage;
           return newList;
         });
-      });
+      } else {
+        console.log("getConversationByID", message);
+        getConversationByID(message.conversationId);
+      }
+    }
 
-      socket.on("remove-from-group", ({ group }) => {
-        if (group.removeMember?.includes(authUser._id)) {
-          if (authUser._id === group.createBy) {
-            toast.error(
-              language === "vi"
-                ? `Bạn đã rời khỏi nhóm ${group.name}`
-                : `You have left the group ${group.name}`
-            );
-          } else {
-            toast.error(
-              language === "vi"
-                ? `Bạn đã bị loại khỏi nhóm ${group.name}`
-                : `You have been removed from the group ${group.name}`
-            );
-          }
-        }
-
+    if (isNewSocket === "delete_message") {
+      const { chatRemove, conversationId, isDeleted } = newSocketData;
+      if (isDeleted) {
+        console.log("delete_conversation", conversationId);
         setListChatCurrent((prev) => {
           const newList = [...prev];
-          const index = newList.findIndex((chat) => chat.id === group._id);
+          const index = newList.findIndex(
+            (chat) => chat.conversationId === conversationId
+          );
           if (index !== -1) {
             newList.splice(index, 1);
           }
           return newList;
         });
-      });
+      } else {
+        setListChatCurrent((prev) => {
+          const newList = [...prev];
+          const index = newList.findIndex(
+            (chat) => chat.conversationId === conversationId
+          );
+          if (index !== -1) {
+            newList[index].lastMessage = chatRemove;
+          }
+          return newList;
+        });
+      }
+    }
 
-      socket.on("delete-group", ({ group }) => {
+    if (isNewSocket === "add-to-group") {
+      const data = newSocketData;
+      const group = data?.group;
+
+      if (data?.addMembers?.includes(authUser._id)) {
         toast.success(
           language === "vi"
-            ? `Nhóm ${group.name} đã bị xóa`
-            : `Group ${group.name} has been deleted`
+            ? `Bạn đã tham gia nhóm ${group.groupName}`
+            : `You have joined the group ${group.groupName}`
         );
-        setListChatCurrent((prev) => {
-          const newList = [...prev];
-          const index = newList.findIndex((chat) => chat.id === group.id);
-          if (index !== -1) {
-            newList.splice(index, 1);
-          }
-          return newList;
-        });
+      }
 
-        changeUserChat(null);
+      setListChatCurrent((prev) => {
+        const newList = [...prev];
+        const newGroup = {
+          id: group._id,
+          conversationId: group.conversation._id,
+          name: group.groupName,
+          avatar: group.avatar.url,
+          background: group.avatar.url,
+          lastMessage: group.lastMessage,
+          tag: group.conversation.tag,
+          admin: group.createBy,
+        };
+        const index = newList.findIndex((chat) => chat.id === newGroup.id);
+        if (index !== -1) {
+          newList.splice(index, 1);
+        }
+        newList.unshift(newGroup);
+        return newList;
       });
-      return () => {
-        socket.off("new_message");
-        socket.off("add-to-group");
-        socket.off("remove-from-group");
-        socket.off("delete-group");
-      };
     }
-  }, [conversations, groups, socket]);
+
+    if (isNewSocket === "remove-from-group") {
+      const group = newSocketData;
+      if (group.removeMember?.includes(authUser._id)) {
+        if (authUser._id === group.createBy) {
+          toast.error(
+            language === "vi"
+              ? `Bạn đã rời khỏi nhóm ${group.name}`
+              : `You have left the group ${group.name}`
+          );
+        } else {
+          toast.error(
+            language === "vi"
+              ? `Bạn đã bị loại khỏi nhóm ${group.name}`
+              : `You have been removed from the group ${group.name}`
+          );
+        }
+      }
+
+      setListChatCurrent((prev) => {
+        const newList = [...prev];
+        const index = newList.findIndex((chat) => chat.id === group.id);
+        if (index !== -1) {
+          newList.splice(index, 1);
+        }
+        return newList;
+      });
+      changeUserChat(null);
+    }
+
+    if (isNewSocket === "delete-group") {
+      const group = newSocketData;
+      toast.success(
+        language === "vi"
+          ? `Nhóm ${group.name} đã bị xóa`
+          : `Group ${group.name} has been deleted`
+      );
+      setListChatCurrent((prev) => {
+        const newList = [...prev];
+        const index = newList.findIndex((chat) => chat.id === group.id);
+        if (index !== -1) {
+          newList.splice(index, 1);
+        }
+        return newList;
+      });
+
+      changeUserChat(null);
+    }
+
+    if (isNewSocket === "leave-group") {
+      const group = newSocketData;
+      setListChatCurrent((prev) => {
+        const newList = [...prev];
+        const index = newList.findIndex((chat) => chat.id === group.id);
+        if (index !== -1) {
+          newList.splice(index, 1);
+        }
+        return newList;
+      });
+
+      changeUserChat(null);
+    }
+  }, [isNewSocket, newSocketData]);
 
   useEffect(() => {
     if (conversation) {
@@ -276,7 +277,7 @@ function ListChatComponent({
     }
   };
 
-  const selectedFriendToChat = (friend) => {
+  const selectedFriendToChat = async (friend) => {
     const conversation = conversations.find((conversation) =>
       conversation.participants.some(
         (participant) => participant._id === friend.id
@@ -285,9 +286,8 @@ function ListChatComponent({
     if (conversation) {
       friend.conversationId = conversation.id;
     } else {
-      getConversationByParticipants([friend.id]).then((conversation) => {
-        friend.conversationId = conversation._id;
-      });
+      const newConversation = await getConversationByParticipants([friend.id]);
+      friend.conversationId = newConversation?._id;
     }
     userChat(friend);
   };
@@ -422,50 +422,7 @@ function ListChatComponent({
         ) : (
           <>
             <div className="h-full w-full max-h-full">
-              {activeTab === "all" ? (
-                <>
-                  <div
-                    className="flex justify-between p-2 hover:bg-gray-200 transition-colors duration-300 ease-in-out"
-                    onMouseEnter={() => setIsHovered(true)}
-                    onMouseLeave={() => setIsHovered(false)}
-                  >
-                    <div className="bg-blue w-14 ">
-                      <img
-                        className="rounded-full"
-                        src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Circle-icons-cloud.svg/768px-Circle-icons-cloud.svg.png"
-                        alt="cloud"
-                      />
-                    </div>
-                    <div className="flex-col mr-auto ml-2 p-1">
-                      <p className="font-semibold">Cloud của tôi</p>
-                      <p
-                        className="text-gray-600 mt-auto"
-                        style={{ fontSize: 14 }}
-                      >
-                        Bạn: Giáo trình
-                      </p>
-                    </div>
-                    <div>
-                      <p
-                        className="text-sm hover:text-gray-600"
-                        style={{ fontSize: 12 }}
-                      >
-                        {isHovered ? (
-                          <button>
-                            <IoIosMore size={20} opacity={1.8} />
-                          </button>
-                        ) : (
-                          "Hôm qua"
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <></>
-              )}
-
-              {listChatCurrent.map((friend) => (
+              {listChatCurrent?.map((friend) => (
                 <div
                   key={friend.id}
                   className={`flex justify-between hover:bg-gray-200 transition-colors duration-300 ease-in-out p-2 ${
@@ -500,7 +457,7 @@ function ListChatComponent({
                         : ""}
                       {friend?.lastMessage?.contents
                         ? friend.lastMessage.contents[0]?.type === "text"
-                          ? friend?.lastMessage?.contents.length > 15
+                          ? friend?.lastMessage?.contents[0].data.length > 15
                             ? `${friend?.lastMessage?.contents[0].data.slice(
                                 0,
                                 15

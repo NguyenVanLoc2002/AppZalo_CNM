@@ -73,7 +73,6 @@ exports.getConversation = async (req, res) => {
   }
 };
 
-
 exports.getConversations = async (req, res) => {
   try {
     const userId = req.user.user_id;
@@ -194,10 +193,11 @@ exports.deleteOnMySelf = async (req, res) => {
           } else {
             return res.status(200).json({ message: "Delete mess success" });
           }
-
-          res.status(200).json({ message: "Update status success" });
         } catch (error) {
           console.log("Error delete: ", error);
+          res.status(500).json({
+            error: "An error occurred while processing the request: ",
+          });
         }
       }
     } else {
@@ -219,9 +219,11 @@ exports.deleteOnMySelf = async (req, res) => {
           } else {
             return res.status(200).json({ message: "Delete mess success" });
           }
-          res.status(200).json({ message: "Update status success" });
         } catch (error) {
           console.log("Error delete: ", error);
+          res.status(500).json({
+            error: "An error occurred while processing the request: ",
+          });
         }
       }
     }

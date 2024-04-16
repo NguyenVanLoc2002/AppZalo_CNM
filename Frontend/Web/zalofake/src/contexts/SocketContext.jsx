@@ -14,6 +14,9 @@ export const SocketContextProvider = ({ children }) => {
   const { refreshToken, authUser, setAuthUser, reloadAuthUser } =
     useAuthContext();
 
+  const [isNewSocket, setIsNewSocket] = useState(null);
+  const [newSocketData, setNewSocketData] = useState(null);
+
   const connectSocket = (token) => {
     const newSocket = io("http://localhost:3000", {
       query: {
@@ -55,17 +58,33 @@ export const SocketContextProvider = ({ children }) => {
       socket.on("reject-request-add-friend", handleFriendRejectAction);
       socket.on("cancel-request-add-friend", handleFriendAction);
       socket.on("unfriend", handleFriendAction);
-
+      // socket for chat
+      socket.on("new_message", handleNewMessage);
+      socket.on("delete_message", handleDeleteMessage);
+      // socket for group
+      socket.on("add-to-group", handleAddToGroup);
+      socket.on("remove-from-group", handleRemoveFromGroup);
+      socket.on("leave-group", handleLeaveGroup);
 
       return () => {
         socket.off("force_logout");
+        // socket for friend
         socket.off("receive-request-add-friend", handleReceiveFriendRequest);
         socket.off("accept-request-add-friend", handleFriendAcceptAction);
         socket.off("reject-request-add-friend", handleFriendRejectAction);
         socket.off("cancel-request-add-friend", handleFriendAction);
+        socket.off("unfriend", handleFriendAction);
+        // socket for chat
+        socket.off("new_message", handleNewMessage);
+        socket.off("delete_message", handleDeleteMessage);
+        // socket for group
+        socket.off("add-to-group", handleAddToGroup);
+        socket.off("remove-from-group", handleRemoveFromGroup);
+        socket.off("leave-group", handleLeaveGroup);
+
       };
     }
-  }, [socket]);
+  }, [socket, authUser]);
 
   const handleReceiveFriendRequest = async (sender) => {
     toast.success(`${sender.sender.name} has sent you a friend request`);
@@ -86,8 +105,37 @@ export const SocketContextProvider = ({ children }) => {
     await reloadAuthUser();
   };
 
+  // handle for chat
+  const handleNewMessage = ({message}) => {
+    setIsNewSocket("new_message");
+    setNewSocketData(message);
+  };
+
+  const handleDeleteMessage = ({ chatRemove, conversationId, isDeleted }) => {
+    setIsNewSocket("delete_message");
+    setNewSocketData({ chatRemove, conversationId, isDeleted });
+  };
+
+  // handle for group
+  const handleAddToGroup = ({ data }) => {
+    setIsNewSocket("add-to-group");
+    setNewSocketData(data);
+  };
+
+  const handleRemoveFromGroup = ({ group }) => {
+    setIsNewSocket("remove-from-group");
+    setNewSocketData(group);
+  };
+
+  const handleLeaveGroup = ({ group }) => {
+    setIsNewSocket("leave-group");
+    setNewSocketData(group);
+  };
+
   return (
-    <SocketContext.Provider value={{ socket, onlineFriends }}>
+    <SocketContext.Provider
+      value={{ socket, onlineFriends, isNewSocket, newSocketData }}
+    >
       {children}
     </SocketContext.Provider>
   );

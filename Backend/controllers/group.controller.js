@@ -366,3 +366,47 @@ exports.removeMember = async (req, res) => {
     return res.status(500).json({ error: "Something went wrong" });
   }
 };
+
+exports.leaveGroup = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const token = req.headers.authorization.split(" ")[1];
+    const uid = jwt.verify(token, process.env.JWT_SECRET);
+
+    const group =
+      (await Group.findById(groupId).populate("conversation")) || {};
+    if (!group) {
+      return res.status(404).json({ error: "Group not found" });
+    }
+    const members = group.conversation.participants;
+
+    group.conversation.participants = group.conversation.participants.filter(
+      (p) => p.toString() !== uid.user_id
+    );
+
+    members.forEach(async (member) => {
+      const memderSocketId = await getReciverSocketId(member);
+      if (memderSocketId) {
+        io.to(memderSocketId.socket_id).emit("leave-group", {
+          group: {
+            id: group._id,
+            name: group.groupName,
+            leaveMember: uid.user_id,
+          },
+        });
+      }
+    });
+
+    if (group.conversation.participants.length <= 2) {
+      return res.status(400).json({
+        error: "Group must have at least 2 members",
+      });
+    }
+
+    await group.conversation.save();
+    return res.status(200).json(group);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+};
