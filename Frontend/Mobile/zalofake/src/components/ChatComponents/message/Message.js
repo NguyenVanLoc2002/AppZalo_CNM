@@ -198,7 +198,7 @@ const Message = ({ navigation, route }) => {
         const message = newSocketData;
         if (message) {
           reloadAuthUser()
-          console.log("messagae", JSON.stringify(message));
+          console.log("socket new messagae");
           if (
             message.conversationId === conver.conversation._id ||
             message.retrunMessage.receiverId === authUser._id
@@ -224,7 +224,7 @@ const Message = ({ navigation, route }) => {
           try {
             if(conver && conver.conversation._id === conversationId){
               getConversationByID(conversationId)
-              console.log("socket delete");
+              console.log("socket delete messagae");
             }
           } catch (error) {
             console.error(error);
