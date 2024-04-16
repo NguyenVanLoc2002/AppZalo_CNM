@@ -1,9 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AiFillLike } from "react-icons/ai";
-import { BiScreenshot, BiSmile } from "react-icons/bi";
-import { BsLayoutSidebarReverse, BsThreeDots, BsTrash3 } from "react-icons/bs";
-import { FaAddressCard, FaCaretDown } from "react-icons/fa";
-import { FiCheckSquare } from "react-icons/fi";
+import { BsLayoutSidebarReverse, BsTrash3 } from "react-icons/bs";
 import { IoIosLink, IoMdShareAlt } from "react-icons/io";
 import { GrUserAdmin } from "react-icons/gr";
 import {
@@ -11,16 +7,17 @@ import {
   IoTrashOutline,
   IoPersonRemoveOutline,
   IoPersonAddOutline,
+  IoKeyOutline,
 } from "react-icons/io5";
+import { HiMagnifyingGlass } from "react-icons/hi2";
 import { LuPencilLine, LuSticker } from "react-icons/lu";
-import { MdFormatColorText, MdOutlineCancel } from "react-icons/md";
+import { MdOutlineCancel } from "react-icons/md";
 import { PiTagSimpleLight } from "react-icons/pi";
-import { RiBatteryChargeLine, RiDoubleQuotesR } from "react-icons/ri";
-import { TfiAlarmClock } from "react-icons/tfi";
+import { RiDoubleQuotesR } from "react-icons/ri";
 import { FaArrowRotateLeft } from "react-icons/fa6";
 import { CiCircleCheck } from "react-icons/ci";
 import axiosInstance from "../../../api/axiosInstance";
-import { format } from "date-fns";
+import { format, set } from "date-fns";
 import { useSocketContext } from "../../../contexts/SocketContext";
 import EmojiPicker from "emoji-picker-react";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
@@ -34,64 +31,87 @@ function PeopleChatComponent({
   userChat,
   showModal,
   shareMessage,
-  addMembersToGroup,
-  // newSocket,
-  // socketData,
+  groupToChange,
 }) {
+  // State for current user
+  const [thisUser, setThisUser] = useState(null);
+
+  // State for chat content
   const [content, setContent] = useState("");
-  const [isSidebarVisible, setSidebarVisible] = useState(false);
   const [messages, setMessages] = useState([]);
-  const [listMembers, setListMembers] = useState([]);
   const [loadingMedia, setLoadingMedia] = useState(false);
   const scrollRef = useRef(null);
-  const { authUser } = useAuthContext();
-  const { getConversationByID, conversation } = useConversation();
-  const { updateGroup, removeMember, deleteGroup, loading, leaveGroup } =
-    useGroup();
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [isAddingMessages, setIsAddingMessages] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const [contentReply, setContentReply] = useState("");
   const [messageReplyId, setMessageReplyId] = useState("");
   const [truncatedContent, setTruncatedContent] = useState("");
+
+  // Context
+  const { authUser } = useAuthContext();
+  const { isNewSocket, newSocketData } = useSocketContext();
+  // Custom hook
+  const { getConversationByID, conversation } = useConversation();
+  const {
+    grLoading,
+    group,
+    updateGroup,
+    removeMember,
+    deleteGroup,
+    leaveGroup,
+    changeAdmins,
+  } = useGroup();
+
+  // State for sidebar and group info
+  const [isSidebarVisible, setSidebarVisible] = useState(false);
+  const [listMembers, setListMembers] = useState([]);
   const [isGroupAdmin, setIsGroupAdmin] = useState(false);
+  const [isCreator, setIsCreator] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState("");
-  const [thisUser, setThisUser] = useState(null);
 
-  const { isNewSocket, newSocketData } = useSocketContext();
-
-  // const [isNewSocket, setIsNewSocket] = useState(null);
-  // const [newSocketData, setNewSocketData] = useState(null);
+  //state for admin change modal
+  const [isShowAdminChange, setIsShowAdminChange] = useState(false);
+  const [typeModal, setTypeModal] = useState("removeAdmin");
+  const [isInputFocusGroup, setIsInputFocusGroup] = useState(false);
+  const [valueSearch, setValueSearch] = useState("");
+  const [originalListMember, setOriginalListMember] = useState([]);
 
   useEffect(() => {
     if (userChat) {
       setThisUser(userChat);
+      console.log("thisUser", thisUser);
     }
 
     if (!userChat || userChat?.tag !== "group") {
       setSidebarVisible(false);
     }
     if (userChat) {
-      if (userChat.admin?._id === authUser._id) {
+      if (userChat.admins?.includes(authUser._id)) {
+        if (userChat.creator?._id === authUser._id) {
+          setIsCreator(true);
+        }
         setIsGroupAdmin(true);
       } else {
         setIsGroupAdmin(false);
       }
       setName(userChat?.name);
+
       if (userChat.conversationId) {
-        console.log("getConversationByID : ", userChat.conversationId);
         getConversationByID(userChat.conversationId);
       } else {
         setMessages([]);
       }
     }
   }, [userChat]);
+  console.log("userChat", userChat);
 
   useEffect(() => {
     if (conversation) {
       setMessages(conversation.messages);
       setListMembers(conversation.participants);
+      setOriginalListMember(conversation.participants);
     }
   }, [conversation, userChat]);
 
@@ -120,7 +140,7 @@ function PeopleChatComponent({
         }
       }
       if (isNewSocket === "delete_message") {
-        const { chatRemove, conversationId, isDeleted } = newSocketData;
+        const { conversationId, isDeleted } = newSocketData;
         if (isDeleted) {
           setThisUser(null);
         } else {
@@ -182,6 +202,40 @@ function PeopleChatComponent({
               ? `${leaveMember?.profile.name} đã rời khỏi nhóm ${group.name}`
               : `${leaveMember?.profile.name} has left the group ${group.name}`
           );
+        }
+      }
+
+      if (isNewSocket === "change-admins") {
+        const { group, members, typeChange } = newSocketData;
+        if (group?.id === thisUser.id) {
+          setThisUser({
+            ...thisUser,
+            admins: group?.admins,
+          });
+          if (typeChange === "remove") {
+            members.forEach((member) => {
+              if (member === authUser._id) {
+                setIsGroupAdmin(false);
+                toast.error(
+                  language === "vi"
+                    ? "Bạn đã bị hủy quyền quản trị viên"
+                    : "You have been removed as an admin"
+                );
+              }
+            });
+          }
+          if (typeChange === "add") {
+            members.forEach((member) => {
+              if (member === authUser._id) {
+                setIsGroupAdmin(true);
+                toast.success(
+                  language === "vi"
+                    ? "Bạn đã được thêm làm quản trị viên"
+                    : "You have been added as an admin"
+                );
+              }
+            });
+          }
         }
       }
     }
@@ -477,7 +531,7 @@ function PeopleChatComponent({
   };
 
   const handleAddMember = async () => {
-    addMembersToGroup(thisUser.id);
+    groupToChange(thisUser.id);
     showModal("addGroup");
     getConversationByID(thisUser.conversationId);
   };
@@ -517,6 +571,45 @@ function PeopleChatComponent({
       console.error(error);
       toast.error(
         language === "vi" ? "Rời khỏi nhóm thất bại" : "Leave group failed"
+      );
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const searchTerm = e.target.value;
+    setValueSearch(searchTerm);
+    if (searchTerm.trim() === "") {
+      setListMembers(originalListMember);
+    } else {
+      const filteredFriends = originalListMember.filter((member) =>
+        member?.profile?.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setListMembers(filteredFriends);
+    }
+  };
+
+  const handleChangeAdmin = async (memberId, typeChange) => {
+    try {
+      const response = await changeAdmins(thisUser.id, [memberId], typeChange);
+      if (response) {
+        setThisUser({
+          ...thisUser,
+          admins: response.group?.admins,
+          creator: response.group?.createBy,
+        });
+        setListMembers(response.group?.conversation?.participants);
+        toast.success(
+          language === "vi"
+            ? "Thay đổi quyền quản trị viên thành công"
+            : "Change admin successfully"
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        language === "vi"
+          ? "Thay đổi quyền quản trị viên thất bại"
+          : "Change admin failed"
       );
     }
   };
@@ -892,7 +985,7 @@ function PeopleChatComponent({
                   if (message.status === 0 || message.status === 1) {
                     return (
                       <div
-                        key={index}
+                        key={message._id}
                         className={
                           authUser._id === message.senderId
                             ? "chat chat-end"
@@ -1341,7 +1434,9 @@ function PeopleChatComponent({
                         ? "Nhập tin nhắn..."
                         : "Type a message..."
                     }
-                    className={`w-full break-all outline-none px-5 py-2 ${contentReply ? "h-[50%] max-h-fit" : "h-full"} border rounded-full focus:border-blue-200 focus:shadow-md`}
+                    className={`w-full break-all outline-none px-5 py-2 ${
+                      contentReply ? "h-[50%] max-h-fit" : "h-full"
+                    } border rounded-full focus:border-blue-200 focus:shadow-md`}
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     onKeyPress={handleKeyPress}
@@ -1480,7 +1575,7 @@ function PeopleChatComponent({
             <div className="flex justify-center items-center h-[20%] w-full border-warning border rounded-full mt-5 mx-2">
               <p>{language === "vi" ? "Quản Trị Viên :" : "Admin :"}</p>
               <p className="ml-2 font-semibold">
-                {thisUser?.admin?.profile?.name}
+                {thisUser?.creator?.profile?.name}
               </p>
             </div>
           </div>
@@ -1498,42 +1593,66 @@ function PeopleChatComponent({
                   <IoPersonAddOutline size={20} color="green" />
                 </button>
               </div>
-              {loading ? (
+              {grLoading ? (
                 <div className="flex justify-center items-center h-[90%] w-full">
                   <span className="loading loading-spinner loading-lg"></span>
                 </div>
               ) : (
                 <div className="flex flex-col h-[90%] w-full mt-5 mx-2 overflow-scroll">
-                  {listMembers?.map((member, index) => (
-                    <div
-                      key={index++}
-                      className="flex items-center justify-between w-full p-3 hover:bg-gray-200"
-                    >
-                      <div className="flex items-center">
-                        <img
-                          src={member.profile?.avatar?.url}
-                          alt="avatar"
-                          className="w-10 h-10 object-cover rounded-full border"
-                        />
-                        <p className="ml-2">{member.profile?.name}</p>
-                      </div>
-                      {isGroupAdmin && (
-                        <div className="flex items-center">
-                          <button
-                            onClick={() => {
-                              handleRemoveMember(member._id);
-                            }}
-                          >
-                            {loading ? (
-                              <span className="loading loading-spinner loading-sm"></span>
-                            ) : (
-                              <IoPersonRemoveOutline size={20} color="red" />
-                            )}
-                          </button>
+                  {listMembers?.map((member, index) => {
+                    const memberIsCreator =
+                      thisUser?.creator?._id === member._id;
+                    const memberIsAdmin = thisUser?.admins?.includes(
+                      member._id
+                    );
+                    const isMe = member._id === authUser._id;
+
+                    return (
+                      <div
+                        key={index++}
+                        className="flex items-center justify-between w-full p-3 hover:bg-gray-200"
+                      >
+                        <div className="flex items-center w-[70%]">
+                          <img
+                            src={member.profile?.avatar?.url}
+                            alt="avatar"
+                            className="w-10 h-10 object-cover rounded-full border"
+                          />
+                          <p className="ml-2">{member.profile?.name}</p>
                         </div>
-                      )}
-                    </div>
-                  ))}
+                        <div className="flex items-center justify-end w-[30%]">
+                          {memberIsCreator ? (
+                            <IoKeyOutline size={23} color="orange" />
+                          ) : (
+                            <>
+                              {memberIsAdmin && (
+                                <IoKeyOutline size={23} color="gray" />
+                              )}
+                            </>
+                          )}
+
+                          {isGroupAdmin && !memberIsCreator && !isMe && (
+                            <div className="flex items-center ml-5">
+                              <button
+                                onClick={() => {
+                                  handleRemoveMember(member._id);
+                                }}
+                              >
+                                {grLoading ? (
+                                  <span className="loading loading-spinner loading-sm"></span>
+                                ) : (
+                                  <IoPersonRemoveOutline
+                                    size={20}
+                                    color="red"
+                                  />
+                                )}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -1546,20 +1665,23 @@ function PeopleChatComponent({
               </p>
             </div>
             <div className="flex flex-col">
-              {isGroupAdmin && (
+              {isCreator && (
                 <div className="flex items-center justify-between pt-4 pb-4 hover:bg-gray-200">
                   <button className="ml-5">
                     <GrUserAdmin size={20} color="gray" />
                   </button>
 
-                  <button className="flex items-center mr-auto ml-2 text-gray-600">
+                  <button
+                    className="flex items-center mr-auto ml-2 text-gray-600"
+                    onClick={() => setIsShowAdminChange(true)}
+                  >
                     <p>{language === "vi" ? "Quản trị viên" : "Admin"}</p>
                   </button>
                 </div>
               )}
 
               <div className="flex items-center justify-between pt-4 pb-4 hover:bg-gray-200">
-                {isGroupAdmin ? (
+                {isCreator ? (
                   <button className="flex" onClick={handleDeleteGroup}>
                     <div className="ml-4">
                       <IoTrashOutline size={20} stroke="red" />
@@ -1582,6 +1704,176 @@ function PeopleChatComponent({
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {isShowAdminChange && (
+        <div className="z-50 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/5 h-[90%] bg-white rounded-lg shadow-lg ">
+          <div className="relative flex items-center justify-between p-4 border-b text-lg font-semibold h-[10%]">
+            <p>
+              {language == "vi"
+                ? "Thiết lập quản trị viên"
+                : "Set up administrators"}
+            </p>
+            <button
+              onClick={() => {
+                setIsShowAdminChange(false);
+                setIsInputFocusGroup(false);
+                setValueSearch("");
+                setListMembers(originalListMember);
+              }}
+              className="absolute flex justify-center items-center top-2 right-2 cursor-pointer border rounded-full p-2 hover:bg-gray-200 w-10 h-10 "
+            >
+              x
+            </button>
+          </div>
+
+          <div
+            className={` h-[6%] flex items-center rounded-full border  m-4 mt-2 mb-2 ${
+              isInputFocusGroup === true ? " border-blue-500 " : ""
+            } `}
+          >
+            <HiMagnifyingGlass size={18} className="ml-2" />
+            <input
+              type="text"
+              className="w-[89%] outline-none ml-2 "
+              placeholder={language == "vi" ? "Tìm kiếm " : "Search"}
+              value={valueSearch}
+              onChange={handleInputChange}
+              onFocus={() => setIsInputFocusGroup(true)}
+              onBlur={() => setIsInputFocusGroup(false)}
+            />
+          </div>
+
+          {/* tab change type modal */}
+          <div className="flex justify-center items-center mx-5 my-3 h-[4%]">
+            <button
+              className={`mx-5 w-[50%] h-full ${
+                typeModal === "removeAdmin" ? "border-b-blue-400 border-b " : ""
+              }`}
+              onClick={() => setTypeModal("removeAdmin")}
+            >
+              <p
+                className={`text-md ${
+                  typeModal === "removeAdmin" ? "font-semibold" : ""
+                }`}
+              >
+                {language == "vi" ? "Xóa quản trị viên" : "Remove admin"}
+              </p>
+            </button>
+            <button
+              className={`mx-5 w-[50%] h-full ${
+                typeModal === "addAdmin" ? "border-b-blue-400 border-b " : ""
+              }`}
+              onClick={() => setTypeModal("addAdmin")}
+            >
+              <p
+                className={`text-md ${
+                  typeModal === "addAdmin" ? "font-semibold" : ""
+                }`}
+              >
+                {language == "vi" ? "Thêm quản trị viên" : "Add admin"}
+              </p>
+            </button>
+          </div>
+
+          <div className=" h-[66%] flex-col pt-2 p-4 items-center overflow-y-auto">
+            <p className="font-semibold">
+              {typeModal === "removeAdmin"
+                ? language == "vi"
+                  ? "Danh sách quản trị viên"
+                  : "List of administrators"
+                : language == "vi"
+                ? "Danh sách thành viên"
+                : "List of members"}
+            </p>
+            <div className="flex-col max-h-44 mt-2">
+              {listMembers.map((member, index) => {
+                const isMe = member._id === authUser._id;
+                const isAdmin = thisUser?.admins?.includes(member._id);
+                if (typeModal === "removeAdmin") {
+                  return (
+                    isAdmin &&
+                    !isMe && (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between w-full p-3 hover:bg-gray-200"
+                      >
+                        <div className="flex items-center">
+                          <img
+                            src={member.profile?.avatar?.url}
+                            alt="avatar"
+                            className="w-10 h-10 object-cover rounded-full border"
+                          />
+                          <p className="ml-2">{member.profile?.name}</p>
+                        </div>
+                        <div className="flex items-center">
+                          <button
+                            onClick={() => {
+                              handleChangeAdmin(member._id, "remove");
+                            }}
+                          >
+                            {grLoading ? (
+                              <span className="loading loading-spinner loading-sm"></span>
+                            ) : (
+                              <IoPersonRemoveOutline size={20} color="red" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  );
+                } else {
+                  return (
+                    !isAdmin && (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between w-full p-3 hover:bg-gray-200"
+                      >
+                        <div className="flex items-center">
+                          <img
+                            src={member.profile?.avatar?.url}
+                            alt="avatar"
+                            className="w-10 h-10 object-cover rounded-full border"
+                          />
+                          <p className="ml-2">{member.profile?.name}</p>
+                        </div>
+                        <div className="flex items-center">
+                          <button
+                            onClick={() => {
+                              handleChangeAdmin(member._id, "add");
+                            }}
+                          >
+                            {grLoading ? (
+                              <span className="loading loading-spinner loading-sm"></span>
+                            ) : (
+                              <IoPersonAddOutline size={20} color="green" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  );
+                }
+              })}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end border-t h-[10%]">
+            <button
+              className="rounded-lg bg-gray-200 p-3 pl-6 pr-6 mr-3 hover:bg-gray-300"
+              onClick={() => {
+                setIsShowAdminChange(false);
+                setIsInputFocusGroup(false);
+                setValueSearch("");
+                setListMembers(originalListMember);
+              }}
+            >
+              <p className="text-lg font-semibold">
+                {language == "vi" ? "Đóng" : "Close"}
+              </p>
+            </button>
           </div>
         </div>
       )}

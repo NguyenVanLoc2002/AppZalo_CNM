@@ -114,6 +114,7 @@ exports.getConversationByParticipants = async (req, res) => {
 
     const conversation = await Conversation.findOne({
       participants: { $all: participants },
+      tag: { $ne: "group" },
     }).populate([
       {
         path: "participants",
