@@ -6,8 +6,9 @@ import {
   Pressable,
   ScrollView,
   TextInput,
-  Modal,
+  Modal, ActivityIndicator
 } from "react-native";
+import { FontAwesome5 } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Switch } from "react-native";
@@ -18,6 +19,8 @@ import useGroup from "../../../hooks/useGroup";
 import useConversation from "../../../hooks/useConversation";
 import useMessage from "../../../hooks/useMessage";
 import useSendMessage from "../../../hooks/useSendMessage";
+import * as ImagePicker from "expo-image-picker";
+
 const MessageSettings = ({ navigation, route }) => {
   const { conver } = route.params;
   const { sendMessage } = useSendMessage();
@@ -38,12 +41,17 @@ const MessageSettings = ({ navigation, route }) => {
   const [isHidden, setIsHidden] = useState(false);
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [listSearch, setListSearch] = useState([]);
-  // const [friends, setFriends] = useState([]);
+  const [isLoadingUpdateName, setIsLoadingUpdateName] = useState(false);
+  const [isLoadingUpdataAvatar, setIsLoadingUpdataAvatar] = useState(false);
+  const [isLoadingAddMem, setIsLoadingAddMem] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
   const [listFriendCanSearch, setListFriendCanSearch] = useState([]);
+  
   const { updateGroup, addMember, removeMember, deleteGroup, loading } =
     useGroup();
   const { getConversationByID, conversation } = useConversation();
-
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedAvatar, setSelectedAvatar] = useState(null);
   useEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
@@ -71,14 +79,42 @@ const MessageSettings = ({ navigation, route }) => {
     if (conver?.createBy?._id === authUser._id) {
       setIsGroupAdmin(true);
     }
-    // console.log(conversation)
     fetchFriends();
-    // getConversationByID(conver.conversation._id);
+  };
+  // cập nhật tên nhóm
+  const updateGroupInfo = async () => {
+    setIsLoadingUpdateName(true);
+    if (name.trim() === "") {
+      setName(conver.name);
+      setIsEditing(false);
+      showToastError('Tên không được rỗng')
+      return;
+    }
+    try {
+      const response = await updateGroup(conver._id, { name });
+      if (response) {
+        let textMessage = authUser?.profile?.name + ' đã cập nhật tên nhóm thành ' + name;
+        await sendMessage(conver._id,
+          { type: 'text', data: textMessage }, null, true)
+        setIsEditing(false);
+        setIsLoadingUpdateName(false);
+        showToastSuccess(
+          "Cập nhật thông tin nhóm thành công"
+        );
+      }
+      setIsLoadingUpdateName(false);
+    } catch (error) {
+      setIsLoadingUpdateName(false);
+      console.error(error);
+      showToastError(
+        "Cập nhật thông tin nhóm thất bại"
+      );
+    }
   };
 
-
+  // Thêm thành viên
   const addMemberToGroup = async () => {
-
+    setIsLoadingAddMem(true);
     if (selectedFriends.length > 0) {
       let selectedFr = []
       let selectedFrName = "";
@@ -98,7 +134,8 @@ const MessageSettings = ({ navigation, route }) => {
       if (rs) {
         let textMessage = authUser?.profile?.name + ' đã thêm ' + selectedFrName + ' vào nhóm!!!';
         await sendMessage(conver._id,
-          { type: 'text', data: textMessage }, null, true)
+          { type: 'text', data: textMessage }, null, true);
+
         getConversationByID(conver.conversation._id);
         setModalAddMember(false);
         setSelectedFriends([]);
@@ -106,31 +143,32 @@ const MessageSettings = ({ navigation, route }) => {
       } else {
         showToastError("Thêm thành viên vào nhóm thất bại");
       }
+      setIsLoadingAddMem(false);
       setModalAddMember(false);
     } else {
+      setIsLoadingAddMem(false);
       showToastError("Bạn chưa chọn thành viên");
     }
 
   };
-
-
+  // xóa thành viên
   const removeMemberInGroup = async (member) => {
     try {
       let selectedFrName = member.profile?.name;
       let selectedFr = [member._id]
-    
-        const groupData = {
-          groupId: conver._id,
-          members: selectedFr
-        };
-        const response = await removeMember(conver._id, groupData);
-        if (response) {
-          getConversationByID(conver.conversation._id);
-          let textMessage = authUser?.profile?.name + ' đã xóa ' + selectedFrName + ' khỏi nhóm!!!';
-          await sendMessage(conver._id,
-            { type: 'text', data: textMessage }, null, true)
-          showToastSuccess('Xóa thành viên khỏi nhóm thành công')
-        }
+
+      const groupData = {
+        groupId: conver._id,
+        members: selectedFr
+      };
+      const response = await removeMember(conver._id, groupData);
+      if (response) {
+        getConversationByID(conver.conversation._id);
+        let textMessage = authUser?.profile?.name + ' đã xóa ' + selectedFrName + ' khỏi nhóm!!!';
+        await sendMessage(conver._id,
+          { type: 'text', data: textMessage }, null, true)
+        showToastSuccess('Xóa thành viên khỏi nhóm thành công')
+      }
     } catch (error) {
       console.error(error);
       if (error.response.data.error === "Group must have at least 2 members") {
@@ -140,22 +178,17 @@ const MessageSettings = ({ navigation, route }) => {
       }
     }
   };
-
-
+  // load danh sách bạn, set danh sách bạn có thể add vào group
   const fetchFriends = async () => {
     try {
       const response = await axiosInstance.get("/users/get/friends");
-     
       const newRadioButtons = [];
       let i = true;
       for (const friend of response.data.friends) {
         for (const friend1 of conver?.conversation?.participants) {
-          // console.log(friend);
-          // console.log(friend1)
           if (friend.userId === friend1) {
             i = false;
           }
-
         }
         if (i === true) {
           const item = {
@@ -166,10 +199,10 @@ const MessageSettings = ({ navigation, route }) => {
           };
           newRadioButtons.push(item);
         } else {
-          i = false;
+          i = true;
         }
       }
-  
+      console.log('radio', newRadioButtons)
       setListSearch(newRadioButtons);
       setListFriendCanSearch(newRadioButtons)
     } catch (error) {
@@ -177,7 +210,7 @@ const MessageSettings = ({ navigation, route }) => {
     }
   };
 
-
+  // Search bạn để add vào group
   const handleSearch = () => {
     console.log("Giá trị của radioButton:", radioButton);
 
@@ -216,26 +249,24 @@ const MessageSettings = ({ navigation, route }) => {
       }
     }
   };
-
+  //giải tán nhóm
   const handleDeleteGroup = async () => {
     try {
       const response = await deleteGroup(conver._id);
       if (response) {
-        Toast.show(
-          language === "vi"
-            ? "Xóa nhóm thành công"
-            : "Delete group successfully"
+        showToastSuccess(
+          "Xóa nhóm thành công"
         );
-        navigation.navigate("GroupDirectory");
+        navigation.navigate("ChatComponent");
       }
     } catch (error) {
       console.error(error);
-      Toast.show(
-        language === "vi" ? "Xóa nhóm thất bại" : "Delete group failed"
+      showToastError(
+        "Xóa nhóm thất bại"
       );
     }
   };
-
+  // chọn bạn để add group
   const handleFriendSelection = (item) => {
     if (selectedFriends.includes(item)) {
       setSelectedFriends((prevState) =>
@@ -318,9 +349,76 @@ const MessageSettings = ({ navigation, route }) => {
     setModalAddMember(false);
   };
 
+  // Cập nhật avatar
+  const openImagePicker = async () => {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      console.log("Permission to access camera roll is required!");
+      return;
+    }
+    const pickerResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!pickerResult.canceled) {
+      setSelectedImage(pickerResult.assets[0].uri);
+    } else {
+      console.log("No image selected");
+    }
+  };
+
+  const handleUpdateAvatar = async () => {
+    try {
+      setIsLoadingUpdataAvatar(true);
+      const formData = new FormData();
+      formData.append("avatar", {
+        uri: selectedImage,
+        type: "image/jpeg",
+        name: "avatar.jpg",
+      });   
+      const response = await updateGroup(conver._id,  formData );
+      if (response) {
+        let textMessage = authUser?.profile?.name + ' đã cập nhật avatar mới';
+        await sendMessage(conver._id,
+          { type: 'text', data: textMessage }, null, true)
+        setIsLoadingUpdataAvatar(false);
+        setSelectedAvatar(selectedImage);
+        showToastSuccess(
+          "Cập nhật avtar nhóm thành công"
+        );
+      }
+      setIsLoadingUpdataAvatar(false);
+
+    } catch (error) {
+      setIsLoadingUpdataAvatar(false);
+      console.error(error);
+      console.log("Error", error.message || "Failed to update avatar");
+    } finally {
+      setIsLoadingUpdataAvatar(false);
+      closeModal();
+    }
+  };
+  const openModal = () => {
+    if (conver?.createBy?._id === authUser._id) {
+      setSelectedImage(
+        conver.avatar
+      );
+      setModalVisible(true);
+    }
+
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+  };
+
   return (
     <ScrollView style={{ flex: 1, backgroundColor: "white" }}>
-      <Toast />
+
       <View
         style={{
           position: "fixed",
@@ -337,6 +435,7 @@ const MessageSettings = ({ navigation, route }) => {
           shadowRadius: 2,
         }}
       >
+        <Toast />
         <View
           style={{
             backgroundColor: "white",
@@ -345,20 +444,23 @@ const MessageSettings = ({ navigation, route }) => {
           }}
         >
           <View style={{ justifyContent: "center" }}>
-            <Image
-              source={{ uri: conver?.avatar }}
-              style={{
-                width: 100,
-                height: 100,
-                borderRadius: 50,
-                borderWidth: 2,
-                borderColor: "#ccc",
-              }}
-            />
+            <Pressable onPress={openModal}>
+              <Image
+                source={{ uri: selectedAvatar || conver?.avatar }}
+                style={{
+                  width: 100,
+                  height: 100,
+                  borderRadius: 50,
+                  borderWidth: 2,
+                  borderColor: "#ccc",
+                }}
+              />
+            </Pressable>
           </View>
           <View
             style={{
-              position: "relative",
+              // position: "relative",
+              display: 'flex',
               justifyContent: "center",
               alignItems: "center",
               paddingTop: 10,
@@ -369,6 +471,8 @@ const MessageSettings = ({ navigation, route }) => {
                 fontSize: 18,
                 fontWeight: "bold",
                 color: "black",
+                borderBottomWidth: isEditing ? 1 : 0, borderColor: 'black',
+                marginBottom: 5
               }}
               value={name}
               editable={isEditing}
@@ -377,43 +481,57 @@ const MessageSettings = ({ navigation, route }) => {
             {isGroupAdmin && (
               <View
                 style={{
-                  position: "absolute",
-                  top: -1,
-                  right: 40,
+                  display: 'flex',
                   flexDirection: "row",
+                  justifyContent: 'flex-end',
+                  alignItems: 'flex-end',
+                  alignSelf: 'flex-end'
                 }}
               >
+                <Pressable style={{ width: 50, height: 35, borderWidth: 1, borderColor: 'blue', justifyContent: 'center', alignItems: 'center', marginRight: 10, backgroundColor: '#9cf5ff', borderRadius: 10 }}
+                  onPress={() => {
+                    setIsEditing(true);
+                  }}>
+                  <FontAwesome5
+                    name="pen"
+                    size={20}
+                    color="black"
+                    style={{ marginRight: 8 }} />
+                </Pressable>
+
                 {isEditing ? (
-                  <View style={{ flexDirection: "row" }}>
-                    <Pressable>
-                      <CiCircleCheck
-                        size={25}
-                        color="green"
-                        style={{ marginHorizontal: 5 }}
-                      />
-                    </Pressable>
-                    <Pressable
+                  <View>
+                    <Pressable style={{ width: 50, height: 35, borderWidth: 1, borderColor: 'blue', justifyContent: 'center', alignItems: 'center', marginRight: 10, backgroundColor: '#9cf5ff', borderRadius: 10 }}
                       onPress={() => {
                         setIsEditing(false);
                         setName(conver?.name);
-                      }}
-                    >
-                      <MdOutlineCancel
-                        size={25}
-                        color="red"
-                        style={{ marginLeft: 10 }}
+                      }}>
+                      <FontAwesome5
+                        name="times"
+                        size={20}
+                        color="black"
+                        style={{ marginRight: 8 }}
                       />
+                    </Pressable>
+                    <Pressable style={{ width: 50, height: 35, borderWidth: 1, borderColor: 'blue', justifyContent: 'center', alignItems: 'center', marginRight: 10, backgroundColor: '#9cf5ff', borderRadius: 10 }}
+                      onPress={updateGroupInfo}>
+                      {isLoadingUpdateName ? (
+                        <ActivityIndicator color="blue" size="large" />
+                      ) : (
+                        <FontAwesome5
+                          name="check"
+                          size={20}
+                          color="black"
+                          style={{ marginRight: 8 }}
+                        />
+                      )}
+
                     </Pressable>
                   </View>
                 ) : (
-                  <Pressable
-                    onPress={() => {
-                      setIsEditing(!isEditing);
-                    }}
-                  >
-                    {/* <LuPencilLine size={22} color="green" /> */}
-                  </Pressable>
+                  <View></View>
                 )}
+
               </View>
             )}
           </View>
@@ -542,6 +660,60 @@ const MessageSettings = ({ navigation, route }) => {
             </ScrollView>
           )}
         </View>
+
+        <View style={{ backgroundColor: "white", marginTop: 1 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "center",
+              alignItems: "center",
+              paddingTop: 10,
+            }}
+          >
+            <Text style={{ fontSize: 18, fontWeight: "bold" }}>
+              {language === "vi" ? "Thiết lập nhóm" : "Group setting"}
+            </Text>
+          </View>
+          <View>
+            {isGroupAdmin && (
+              <Pressable
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  paddingVertical: 10,
+                  paddingHorizontal: 20,
+                }}
+                onPress={handleDeleteGroup}
+              >
+                {/* <GrUserAdmin size={20} color="gray" /> */}
+                <Text style={{ color: "gray", marginLeft: 10 }}>
+                  {language === "vi" ? "Quản trị viên" : "Admin"}
+                </Text>
+              </Pressable>
+            )}
+
+            <Pressable
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                paddingVertical: 10,
+                paddingHorizontal: 20,
+              }}
+              onPress={isGroupAdmin ? handleDeleteGroup : null}
+            >
+              {/* <IoTrashOutline size={20} color="red" /> */}
+              <Text style={{ color: "red", marginLeft: 10 }}>
+                {isGroupAdmin
+                  ? language === "vi"
+                    ? "Giải tán nhóm"
+                    : "Dissolve group"
+                  : language === "vi"
+                    ? "Rời nhóm"
+                    : "Leave group"}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
       </View>
 
       <Modal animationType="slide" transparent={true} visible={modalAddMember}>
@@ -593,7 +765,7 @@ const MessageSettings = ({ navigation, route }) => {
                 Đã chọn: {selectedFriends.length}
               </Text>
             </View>
-           
+
             <View
               style={{
                 flexDirection: "row",
@@ -651,7 +823,12 @@ const MessageSettings = ({ navigation, route }) => {
                 }}
                 onPress={addMemberToGroup}
               >
-                <Text style={{ color: "white", fontSize: 18 }}>Thêm</Text>
+                {isLoadingAddMem ? (
+                  <ActivityIndicator color="blue" size="large" />
+                ) : (
+                  <Text style={{ color: "white", fontSize: 18 }}>Thêm</Text>
+                )}
+
               </Pressable>
               <Pressable
                 style={{
@@ -667,6 +844,69 @@ const MessageSettings = ({ navigation, route }) => {
                 <Text style={{ color: "white", fontSize: 18 }}>Huỷ</Text>
               </Pressable>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal cập nhật avatar group */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={closeModal}
+      >
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "rgba(0,0,0,0.5)",
+          }}
+        >
+          <View
+            style={{ backgroundColor: "white", padding: 20, borderRadius: 10 }}
+          >
+            <Image
+              source={{
+                uri:
+                  selectedImage ||
+                  conver.avatar
+              }}
+              style={{ width: 200, height: 200, borderRadius: 100 }}
+            />
+            <Pressable onPress={openImagePicker}>
+              <Text
+                style={{
+                  color: "#0091FF",
+                  textAlign: "center",
+                  paddingVertical: 20,
+                }}
+              >
+                Chọn ảnh
+              </Text>
+            </Pressable>
+            <Pressable onPress={handleUpdateAvatar}>
+              {isLoadingUpdataAvatar ? (
+                <ActivityIndicator color="blue" size="large" />
+              ) : (
+                <Text
+                  style={{
+                    color: "#0091FF",
+                    textAlign: "center",
+                    paddingVertical: 20,
+                  }}
+                >
+                  cập nhật
+                </Text>
+              )}
+
+            </Pressable>
+
+            <Pressable onPress={closeModal}>
+              <Text style={{ color: "#0091FF", textAlign: "center" }}>
+                Đóng
+              </Text>
+            </Pressable>
           </View>
         </View>
       </Modal>
