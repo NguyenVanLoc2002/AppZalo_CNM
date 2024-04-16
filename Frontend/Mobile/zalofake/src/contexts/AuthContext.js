@@ -44,7 +44,7 @@ export const AuthContextProvider = ({ children }) => {
           await AsyncStorage.setItem("authUser", JSON.stringify(authUser));
         }
         if (accessToken) {
-          console.log("save accessToken", accessToken);
+          // console.log("save accessToken", accessToken);
           await AsyncStorage.setItem(
             "accessToken",
             JSON.stringify(accessToken)

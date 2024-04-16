@@ -19,8 +19,6 @@ import useConversation from "../../../hooks/useConversation";
 
 const MessageSettings = ({ navigation, route }) => {
   const { conver } = route.params;
-
-
   const [isMarkAsCloseFriend, setMarkAsCloseFriend] = useState(false);
   const [isPinChat, setPinChat] = useState(false);
   const [isHideChat, setHideChat] = useState(false);
@@ -30,7 +28,6 @@ const MessageSettings = ({ navigation, route }) => {
   const [name, setName] = useState("");
   const [isGroupAdmin, setIsGroupAdmin] = useState(false);
   const { authUser } = useAuthContext();
-  const language = "vi";
   const [nameGroup, setNameGroup] = useState(null);
   const [textSearch, setTextSearch] = useState(null);
   const [radioButton, setRadioButton] = useState([]);
@@ -72,26 +69,14 @@ const MessageSettings = ({ navigation, route }) => {
       const response = await removeMember(conver._id, memberId);
       if (response) {
         getConversationByID(conver.conversation._id);
-        Toast.show(
-          language === "vi"
-            ? "Xóa thành viên khỏi nhóm thành công"
-            : "Remove member from group successfully"
-        );
+        Toast.show("Xóa thành viên khỏi nhóm thành công");
       }
     } catch (error) {
       console.error(error);
       if (error.response.data.error === "Group must have at least 2 members") {
-        Toast.show(
-          language === "vi"
-            ? "Nhóm phải có ít nhất 2 thành viên"
-            : "Group must have at least 2 members"
-        );
+        Toast.show("Nhóm phải có ít nhất 2 thành viên");
       } else {
-        Toast.show(
-          language === "vi"
-            ? "Xóa thành viên khỏi nhóm thất bại"
-            : "Remove member from group failed"
-        );
+        Toast.show("Xóa thành viên khỏi nhóm thất bại");
       }
     }
   };
@@ -138,18 +123,12 @@ const MessageSettings = ({ navigation, route }) => {
     try {
       const response = await deleteGroup(conver._id);
       if (response) {
-        Toast.show(
-          language === "vi"
-            ? "Xóa nhóm thành công"
-            : "Delete group successfully"
-        );
+        Toast.show("Xóa nhóm thành công");
         navigation.navigate("GroupDirectory");
       }
     } catch (error) {
       console.error(error);
-      Toast.show(
-        language === "vi" ? "Xóa nhóm thất bại" : "Delete group failed"
-      );
+      Toast.show("Xóa nhóm thất bại");
     }
   };
 
@@ -342,7 +321,7 @@ const MessageSettings = ({ navigation, route }) => {
               justifyContent: "center",
             }}
           >
-            <Text>{language === "vi" ? "Quản Trị Viên :" : "Admin :"}</Text>
+            <Text>{"Quản Trị Viên :"}</Text>
             <Text style={{ marginLeft: 10, fontWeight: "bold" }}>
               {conver?.createBy?.profile?.name}
             </Text>
@@ -367,7 +346,7 @@ const MessageSettings = ({ navigation, route }) => {
             }}
           >
             <Text style={{ fontSize: 18, fontWeight: "bold" }}>
-              {language === "vi" ? "Danh sách thành viên" : "Member list"}
+              {"Danh sách thành viên"}
             </Text>
             <Pressable
               style={{ position: "absolute", top: 10, right: 20 }}
