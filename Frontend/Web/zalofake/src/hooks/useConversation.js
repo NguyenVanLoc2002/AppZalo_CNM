@@ -47,6 +47,7 @@ const useConversation = () => {
   };
 
   const getConversationByParticipants = async (participants) => {
+    setLoading(true);
     try {
       const response = await axiosInstance.post(
         "conversations/getByParticipants",
@@ -57,9 +58,13 @@ const useConversation = () => {
       if (response.status === 200) {
         return response.data;
       }
+      setLoading(false);
     } catch (error) {
       console.log(error);
-      toast.error("Failed to get conversation");
+      setLoading(false);
+      return null;
+    } finally {
+      setLoading(false);
     }
   };
 

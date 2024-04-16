@@ -61,7 +61,7 @@ chatSchema.post("save", async function (chat, next) {
     } else {
       const group = await Group.findById(chat.receiverId);
 
-      const groupConversation = await Conversation.findById(group.conversation);
+      const groupConversation = await Conversation.findById(group?.conversation);
       if (groupConversation) {
         groupConversation.messages.push(chat._id);
         groupConversation.lastMessage = chat._id;
