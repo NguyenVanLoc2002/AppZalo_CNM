@@ -63,8 +63,7 @@ const useMessage = () => {
           source={{ uri: content.data }}
            /> ):(<Text></Text>)
 
-          } */}
-          {/*  */}
+          }  */}
         </View>
 
       );

@@ -39,6 +39,7 @@ const chatSchema = new mongoose.Schema({
 
 chatSchema.post("save", async function (chat, next) {
   try {
+    
     if (!chat.isGroup) {
       const conversation = await Conversation.findOne({
         participants: { $all: [chat.senderId, chat.receiverId] },

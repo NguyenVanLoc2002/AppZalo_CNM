@@ -12,8 +12,8 @@ exports.sendMessage = async (req, resp) => {
     const receiverId = req.params.userId;
     // Thêm biến này từ FE khi chọn conversation để trò chuyện nếu là Group thì truyền đi isGroup là true
     //Còn là chat single thì không cần truyền chỉ cần truyền data nha FE
-    const isGroup = req.body.isGroup === 'false' ? false : true;
-
+    // const isGroup = req.body.isGroup === 'false' ? false : true;
+    const isGroup = JSON.parse(req.body.isGroup) || false;
     const replyMessageId = req.body.replyMessageId === 'null' ?  null :req.body.replyMessageId ;
     let contents = [];
     if (req.body.data) {
@@ -53,13 +53,14 @@ exports.sendMessage = async (req, resp) => {
     });
 
     const group = await Group.findById(receiverId).populate("conversation");
-
+  
     let conversation;
     if (!group) {
       conversation = await Conversation.findOne({
         participants: { $all: [senderId, receiverId] },
         tag: "friend",
       });
+    
     } else {
       conversation = group.conversation;
     }
