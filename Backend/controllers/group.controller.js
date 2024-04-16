@@ -161,8 +161,14 @@ exports.getAllGroup = async (req, res) => {
               0,
             ],
           },
-          conversation: 1,
+          conversation: {
+            _id: 1,
+            participants: 1,
+            lastMessage: 1,
+            tag: 1,
+          },
           lastMessage: 1,
+          admins: 1,
         },
       },
     ]);
@@ -241,7 +247,7 @@ exports.addMember = async (req, res) => {
     const { groupId } = req.params;
     const { members } = req.body;
     const group = await Group.findById(groupId).populate([
-      { path: "conversation" },
+      { path: "conversation", populate: { path: "lastMessage" } },
       { path: "createBy", select: "profile _id" },
     ]);
     if (!group) {
@@ -324,7 +330,10 @@ exports.removeMember = async (req, res) => {
     if (!group) {
       return res.status(404).json({ error: "Group not found" });
     }
-    if (group.createBy.toString() !== uid.user_id) {
+    if (
+      group.createBy.toString() !== uid.user_id &&
+      !group.admins.includes(uid.user_id)
+    ) {
       return res.status(403).json({ error: "You are not authorized" });
     }
     if (!members || members.length < 1) {
@@ -332,7 +341,17 @@ exports.removeMember = async (req, res) => {
     }
 
     members.map(async (member) => {
+      if (group.createBy.toString() === member) {
+        return res.status(403).json({
+          error: "You can't remove creator from group",
+        });
+      }
       if (group.conversation.participants.includes(member)) {
+        if (group.admins.includes(member)) {
+          console.log("remove admin", member);
+          console.log("group.admins", group.admins);
+          group.admins = group.admins.filter((a) => a.toString() !== member);
+        }
         return (group.conversation.participants =
           group.conversation.participants.filter(
             (p) => p.toString() !== member
@@ -342,7 +361,7 @@ exports.removeMember = async (req, res) => {
 
     group.conversation.participants.forEach(async (member) => {
       const memderSocketId = await getReciverSocketId(member);
-      if (memderSocketId) {
+      if (memderSocketId && members !== uid.user_id) {
         io.to(memderSocketId.socket_id).emit("remove-from-group", {
           group: {
             id: group._id,
@@ -360,6 +379,7 @@ exports.removeMember = async (req, res) => {
     }
 
     await group.conversation.save();
+    await group.save();
     return res.status(200).json(group);
   } catch (error) {
     console.error(error);
@@ -383,6 +403,14 @@ exports.leaveGroup = async (req, res) => {
     group.conversation.participants = group.conversation.participants.filter(
       (p) => p.toString() !== uid.user_id
     );
+    if (group.createBy.toString() === uid.user_id) {
+      return res.status(403).json({
+        error: "Creator can't leave group",
+      });
+    }
+    if (group.admins.includes(uid.user_id)) {
+      group.admins = group.admins.filter((a) => a.toString() !== uid.user_id);
+    }
 
     members.forEach(async (member) => {
       const memderSocketId = await getReciverSocketId(member);
@@ -405,6 +433,125 @@ exports.leaveGroup = async (req, res) => {
 
     await group.conversation.save();
     return res.status(200).json(group);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+};
+
+exports.changeAdmins = async (req, res) => {
+  try {
+    const { members, typeChange, groupId } = req.body;
+    const token = req.headers.authorization.split(" ")[1];
+    const uid = jwt.verify(token, process.env.JWT_SECRET);
+    const group = await Group.findById(groupId).populate([
+      {
+        path: "conversation",
+        select: "-messages -createdAt -__v",
+        populate: {
+          path: "participants",
+          select: "profile _id",
+        },
+      },
+      {
+        path: "createBy",
+        select: "profile _id",
+      },
+    ]);
+
+    if (!group) {
+      return res.status(404).json({ error: "Group not found" });
+    }
+    if (group.createBy._id.toString() !== uid.user_id) {
+      return res.status(403).json({ error: "You are not authorized" });
+    }
+    if (!members || members.length === 0) {
+      return res.status(400).json({ error: "Members is required" });
+    }
+    const result = [];
+    if (typeChange === "add") {
+      members.forEach(async (member) => {
+        const memberExist = group.conversation.participants.some(
+          (p) => p._id.toString() === member
+        );
+        if (!memberExist) {
+          result.push({
+            type: "error",
+            message: "Member not in group",
+            member,
+          });
+          return;
+        }
+        if (
+          group.admins.includes(member) ||
+          group.createBy.toString() === member
+        ) {
+          result.push({
+            type: "error",
+            message: "Member is admin",
+            member,
+          });
+          return;
+        }
+        group.admins.push(member);
+        result.push({
+          type: "success",
+          message: "Member added to admin",
+          member,
+        });
+      });
+    } else if (typeChange === "remove") {
+      members.forEach(async (member) => {
+        const memberExist = group.conversation.participants.some(
+          (p) => p._id.toString() === member
+        );
+        if (!memberExist) {
+          result.push({
+            type: "error",
+            message: "Member not in group",
+            member,
+          });
+          return;
+        }
+        if (!group.admins.includes(member)) {
+          result.push({
+            type: "error",
+            message: "Member is not admin",
+            member,
+          });
+          return;
+        }
+        group.admins = group.admins.filter((a) => a.toString() !== member);
+        result.push({
+          type: "success",
+          message: "Member removed from admin",
+          member,
+        });
+      });
+    } else {
+      return res.status(400).json({
+        error: "Invalid typeChange",
+      });
+    }
+    await group.save();
+    group.conversation.participants.forEach(async (member) => {
+      if (member.toString() !== uid.user_id) {
+        const memderSocketId = await getReciverSocketId(member);
+        if (memderSocketId) {
+          io.to(memderSocketId.socket_id).emit("change-admins", {
+            group: {
+              id: group._id,
+              name: group.groupName,
+              admins: group.admins,
+            },
+            members,
+            typeChange,
+          });
+        }
+      }
+    });
+
+    return res.status(200).json({ group, result });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Something went wrong" });
