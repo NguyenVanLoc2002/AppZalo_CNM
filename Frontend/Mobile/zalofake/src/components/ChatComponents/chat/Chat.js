@@ -26,17 +26,15 @@ function Chat({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
   const { conversations, getConversations } = useConversation();
   const { groups, getGroups } = useGroup();
-  // const [conversations, setConversations] = useState([]);
   const [listFriends, setListFriends] = useState([]);
   const [chats, setChats] = useState([]);
   const [isLoad, SetIsLoad] = useState(false);
   const { authUser } = useAuthContext();
-  const { socket } = useSocketContext();
   const [isModalVisibleXoa, setModalVisibleXoa] = useState(false);
   const [isLoadXoa, setIsLoadXoa] = useState(false)
-
   const { showToastSuccess, showToastError } = useMessage();
   const { getUserById } = useCreateGroup()
+  const { isNewSocket, newSocketData } = useSocketContext();
 
 
   useEffect(() => {
@@ -99,7 +97,6 @@ function Chat({ navigation }) {
       const friend = conversation.participants.find(
         (participant) => participant.phone !== authUser.phone
       );
-
       return {
         _id: friend?._id,
         conversation: conversation,
@@ -132,32 +129,19 @@ function Chat({ navigation }) {
 
   useEffect(() => {
     fetchDataChat();
-   
+
   }, [conversations, groups]);
 
   const fetchDataConver = async (listChat) => {
-
     let data = [];
-    let dataChat;
     let int = listChat.length;
-   
+
     for (let index = 0; index < int; index++) {
 
       const conver = listChat[index];
+
       if (conver.lastMessage !== undefined && conver.lastMessage !== null) {
-        const getUser = await getUserById(conver?.lastMessage?.senderId)
-        if (authUser.profile.name === getUser.user.profile.name) {
-          dataChat = "Bạn"
-        } else {
-          dataChat = getUser.user.profile.name
-        }
-        if (conver.lastMessage.contents[0].type === "text") {
-          dataChat = dataChat + ': ' + conver.lastMessage.contents[0].data;
-        } else if (conver.lastMessage.contents[0].type === "image") {
-          dataChat = dataChat + ': [Hình ảnh]';
-        } else {
-          dataChat = dataChat + ': [Video]';
-        }
+        const dataChat = await setDataChat(conver.lastMessage);
         const conversationNew = {
           conver: conver,
           dataChat: dataChat,
@@ -176,14 +160,29 @@ function Chat({ navigation }) {
     setListFriends(data);
 
   };
-
+  const setDataChat = async (conver) => {
+    let dataChat = '';
+    const getUser = await getUserById(conver.senderId)
+    if (authUser.profile.name === getUser.user.profile.name) {
+      dataChat = "Bạn"
+    } else {
+      dataChat = getUser.user.profile.name
+    }
+    if (conver.contents[0].type === "text") {
+      dataChat = dataChat + ': ' + conver.contents[0].data;
+    } else if (conver.contents[0].type === "image") {
+      dataChat = dataChat + ': [Hình ảnh]';
+    } else {
+      dataChat = dataChat + ': [Video]';
+    }
+    return dataChat;
+  }
+ 
   useEffect(() => {
     const fetchDataListFriend = async () => {
       try {
-
         getConversations();
         getGroups();
-
       } catch (error) {
         console.log("getFriendError:", error);
       }
@@ -192,9 +191,31 @@ function Chat({ navigation }) {
       fetchDataListFriend();
       SetIsLoad(true);
     }
-  }, []);
+
+    const fetchSocket = async () => {
+      if (isNewSocket === "new_message") {
+        const message = newSocketData;
+        if (message) {
+          const updatedListFriends = await Promise.all(listFriends.map(async (item) => {
+            if (item.conver.conversation._id === message.conversationId) {
+              const dataChat = await setDataChat(message.retrunMessage);
+              return {
+                ...item,
+                dataChat: dataChat,
+                time: handleGetTime(message.retrunMessage.timestamp)
+              };
+            }
+            return item;
+          }));
+          setListFriends(updatedListFriends)
+        }
+      }
+    }
+    fetchSocket()
+  }, [isNewSocket, newSocketData]);
+
   const handleChatItemPress = (item) => {
-    navigation.navigate("Message", { conver: item.conver});
+    navigation.navigate("Message", { conver: item.conver });
   };
 
 
@@ -227,7 +248,7 @@ function Chat({ navigation }) {
             <ChatItem item={item} />
           </Pressable>
         )}
-      keyExtractor={(item) => item.conver.conversation._id}
+        keyExtractor={(item) => item.conver.conversation._id}
       />
       <Modal
         animationType="none"
@@ -346,7 +367,7 @@ function Chat({ navigation }) {
           </View>
         </Pressable>
       </Modal>
-      
+
     </SafeAreaView>
   );
 }

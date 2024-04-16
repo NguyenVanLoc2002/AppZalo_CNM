@@ -58,7 +58,7 @@ exports.getConversation = async (req, res) => {
       },
       {
         path: "lastMessage",
-        select: "contents senderId",
+        select: "contents senderId ",
       },
     ]);
     if (!conversation) {
@@ -86,7 +86,7 @@ exports.getConversations = async (req, res) => {
       },
       {
         path: "lastMessage",
-        select: "senderId receiverId contents",
+        select: "senderId receiverId contents timestamp",
       },
     ]);
     if (!conversations) {
