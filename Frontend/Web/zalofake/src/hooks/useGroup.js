@@ -158,6 +158,27 @@ const useGroup = () => {
     }
   };
 
+  const changeAdmins = async (groupId, memberData, typeChange) => {
+    setGrLoading(true);
+    try {
+      const response = await axiosInstance.post("/groups/changeAdmins", {
+        members: [...memberData],
+        typeChange,
+        groupId,
+      });
+      const { data, status } = response;
+
+      if (status === 200) {
+        return data;
+      }
+    } catch (error) {
+      console.error(error);
+      throw error;
+    } finally {
+      setGrLoading(false);
+    }
+  };
+
   return {
     group,
     groups,
@@ -170,6 +191,7 @@ const useGroup = () => {
     addMember,
     removeMember,
     leaveGroup,
+    changeAdmins,
   };
 };
 

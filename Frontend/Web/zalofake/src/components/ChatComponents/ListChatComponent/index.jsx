@@ -68,7 +68,8 @@ function ListChatComponent({
         background: group.avatar.url,
         lastMessage: group.lastMessage,
         tag: group.conversation.tag,
-        admin: group.createBy,
+        creator: group.createBy,
+        admins: group.admins,
       };
     });
 
@@ -127,6 +128,8 @@ function ListChatComponent({
     }
 
     if (isNewSocket === "add-to-group") {
+      console.log("newSocketData", newSocketData.group);
+      console.log("LastMessage", newSocketData.group.conversation.lastMessage);
       const data = newSocketData;
       const group = data?.group;
 
@@ -146,9 +149,10 @@ function ListChatComponent({
           name: group.groupName,
           avatar: group.avatar.url,
           background: group.avatar.url,
-          lastMessage: group.lastMessage,
+          lastMessage: group.conversation.lastMessage,
           tag: group.conversation.tag,
-          admin: group.createBy,
+          creator: group.createBy,
+          admins: group.admins,
         };
         const index = newList.findIndex((chat) => chat.id === newGroup.id);
         if (index !== -1) {
@@ -209,14 +213,21 @@ function ListChatComponent({
 
     if (isNewSocket === "leave-group") {
       const group = newSocketData;
-      setListChatCurrent((prev) => {
-        const newList = [...prev];
-        const index = newList.findIndex((chat) => chat.id === group.id);
-        if (index !== -1) {
-          newList.splice(index, 1);
-        }
-        return newList;
-      });
+      if (group.leaveMember === authUser._id) {
+        toast.error(
+          language === "vi"
+            ? `Bạn đã rời khỏi nhóm ${group.name}`
+            : `You have left the group ${group.name}`
+        );
+        setListChatCurrent((prev) => {
+          const newList = [...prev];
+          const index = newList.findIndex((chat) => chat.id === group.id);
+          if (index !== -1) {
+            newList.splice(index, 1);
+          }
+          return newList;
+        });
+      }
 
       changeUserChat(null);
     }
@@ -287,6 +298,8 @@ function ListChatComponent({
       const newConversation = await getConversationByParticipants([friend.id]);
       friend.conversationId = newConversation?._id;
     }
+    console.log("friend", friend, "conversation", conversation);
+
     userChat(friend);
   };
 

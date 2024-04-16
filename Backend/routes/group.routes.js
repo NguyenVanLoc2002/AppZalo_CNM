@@ -10,6 +10,7 @@ const {
   removeMember,
   deleteGroup,
   leaveGroup,
+  changeAdmins,
 } = require("../controllers/group.controller");
 const { multerUploadImage } = require("../middlewares/multerMiddleware");
 const { protect } = require("../middlewares/authMiddleware");
@@ -26,6 +27,7 @@ router.post(
 router.post("/addMembers/:groupId", protect, addMember);
 router.post("/removeMembers/:groupId", protect, removeMember);
 router.post("/leave/:groupId", protect, leaveGroup);
+router.post("/changeAdmins", protect, changeAdmins);
 
 router.put(
   "/update/:groupId",
