@@ -146,11 +146,9 @@ const Message = ({ navigation, route }) => {
   const fetchChats = async () => {
     try {
       if (conver.conversation._id === null || conver.conversation._id === undefined) {
-        // showToastSuccess('Chưa có tin nhắn')
       } else {
         const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversation._id}`);
-        const reversedChats = response.data; //.reverse();
-        // console.log(reversedChats)
+        const reversedChats = response.data;
 
         let data = [];
         let int = reversedChats.length;
@@ -158,7 +156,6 @@ const Message = ({ navigation, route }) => {
           const chat = reversedChats[index];
           const getUser = await getUserById(chat.senderId)
           if (chat.replyMessageId === null) {
-
             const chatNew = {
               chat: chat,
               sender: getUser.user.profile,
@@ -199,20 +196,27 @@ const Message = ({ navigation, route }) => {
     fetchChats();
 
     if (socket) {
-      socket.on("new_message", ({ message }) => {
-        setChats((prevMessages) => [message, ...prevMessages]);
-        console.log("new_message: ", message);
-        scrollToEnd()
+      socket.on("new_message", async ({ message }) => {
+        if (message.conversationId === conver.conversation._id) {
+          const getUser = await getUserById(message.retrunMessage.senderId)
+          setChats(prevChats => [
+            ...prevChats,
+            {
+              chat: message.retrunMessage,
+              sender: getUser.user.profile,
+              nameReply: null
+            }
+          ]);
+          scrollToEnd()
+        }
       });
-      socket.on("delete_message", ({ chatId }) => {
-        scrollToEnd()
-      });
-      return () => {
-        socket.off("new_message");
-        socket.off("delete_message");
-      };
     }
-  }, [socket]);
+    return () => {
+      if (socket) {
+        socket.off("new_message");
+      }
+    };
+  }, [socket, chats]);
 
 
 
@@ -415,7 +419,6 @@ const Message = ({ navigation, route }) => {
       videoExportPreset: ImagePicker.VideoExportPreset.Passthrough,
       videoMaxDuration: 10
     });
-    // console.log(pickerResult.assets[0])
     if (!pickerResult.canceled) {
       setIsLoadMess(true)
       let isGroup = false
@@ -434,12 +437,11 @@ const Message = ({ navigation, route }) => {
             uri: asset.uri,
             name: fileName,
             type: 'image/jpeg',
+
           });
           formData.append('isGroup', isGroup);
           formData.append('replyMessageId', replyId);
           try {
-
-
             const response = await sendImage(conver._id, formData)
             if (response.status === 201) {
               setIsLoadMess(false)
@@ -463,11 +465,11 @@ const Message = ({ navigation, route }) => {
             uri: asset.uri,
             name: fileName,
             type: 'video/mp4',
+
           });
           formData.append('isGroup', isGroup);
           formData.append('replyMessageId', replyId);
           try {
-
             const response = await sendVideo(conver._id, formData)
             if (response.status === 201) {
               setIsLoadMess(false)
@@ -507,7 +509,6 @@ const Message = ({ navigation, route }) => {
       let isGroup = false
       if (conver.tag === "group") {
         isGroup = true
-        console.log("tag", conver.tag);
       }
       let replyId = null;
       if (replyChat !== null) {
@@ -515,7 +516,6 @@ const Message = ({ navigation, route }) => {
       }
 
       try {
-        console.log("isGroup:", isGroup);
         const response = await sendMessage(conver._id,
           { type: 'text', data: textMessage }, replyId, isGroup)
         if (response.status === 201) {
@@ -552,7 +552,6 @@ const Message = ({ navigation, route }) => {
     toggleModal();
   };
 
-
   return (
     <View style={{ flex: 1, backgroundColor: "#E5E9EB" }}>
       <View style={{ flex: 1, justifyContent: "center" }}>
@@ -587,23 +586,34 @@ const Message = ({ navigation, route }) => {
                   <View style={[
                     handleCheckIsSend(message) ? styles.styleSender : styles.styleRecive
                   ]}>
-                    <Text style={{ paddingLeft: 15, fontSize: 12, color: 'gray' }}>
+                    <Text style={{ paddingHorizontal: 10, fontSize: 12, color: 'gray', fontWeight: '700' }}>
                       {message.sender.name}
                     </Text>
                     {message.chat.replyMessageId === null ? (<View></View>) :
-                      (<View style={{ backgroundColor: '#f5c4f2', display: 'flex', marginLeft: 10, flexDirection: 'row', justifyContent: 'space-between', borderLeftWidth: 2, borderColor: 'blue' }}>
+                      (<View style={{ backgroundColor: '#89D5FB', display: 'flex', marginLeft: 10, borderLeftWidth: 2, borderColor: '#0072AB' }}>
 
                         {message.chat.replyMessageId.contents.map((content, i) => (
-                          <View key={i} style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                            {renderMessageContentReply(content)}
-                            <View>
-                              <Text style={{ paddingLeft: 15, fontSize: 13, color: '#000' }}>
-                                {message.nameReply}
-                              </Text>
-                              <Text style={{ paddingLeft: 15, fontSize: 13, color: '#000' }}>
-                                [{content.type}]
-                              </Text>
-                            </View>
+                          <View key={i} style={{ display: 'flex', paddingVertical: 10, alignItems: 'center', paddingRight: 5 }}>
+                            {content.type === 'text' ? (
+                              <View>
+                                <Text style={{ fontSize: 13, fontWeight: 'bold', paddingLeft: 15 }}>
+                                  {message.nameReply}
+                                </Text>
+                                {renderMessageContentReply(content)}
+                              </View>
+                            ) : (
+                              <View style={{ display: 'flex', paddingVertical: 5, alignItems: 'center', paddingRight: 5, flexDirection: 'row' }}>
+                                {renderMessageContentReply(content)}
+                                <View>
+                                  <Text style={{ paddingLeft: 10, fontSize: 13, fontWeight: 'bold' }}>
+                                    {message.nameReply}
+                                  </Text>
+                                  <Text style={{ paddingLeft: 10, fontSize: 13, color: '#000' }}>
+                                    [{content.type}]
+                                  </Text>
+                                </View>
+                              </View>
+                            )}
                           </View>
                         ))}
 
@@ -861,7 +871,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "#e2e8f1",
   },
   modalContent: {
     backgroundColor: "#fff",
@@ -937,17 +947,19 @@ const styles = StyleSheet.create({
     marginTop: 10,
     justifyContent: 'space-around',
     borderRadius: 10,
-    backgroundColor: "#7debf5",
+    backgroundColor: "#cff0fe",
     alignItems: "flex-end",
     alignSelf: "flex-end",
+    paddingTop: 5,
   },
   styleRecive: {
     marginTop: 10,
-    backgroundColor: "#d9d9d9",
+    backgroundColor: "white",
     alignItems: "flex-start",
     alignSelf: "flex-start",
     justifyContent: 'space-around',
     borderRadius: 10,
+    paddingTop: 5
   },
 
 });
