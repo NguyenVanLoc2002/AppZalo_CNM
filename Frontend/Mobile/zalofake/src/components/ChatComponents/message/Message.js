@@ -219,7 +219,7 @@ const Message = ({ navigation, route }) => {
       if(isNewSocket === "delete_message"){
         const { conversationId, isDeleted } = newSocketData;
         if(isDeleted){
-          
+          setChats([])
         } else {
           try {
             if(conver && conver.conversation._id === conversationId){

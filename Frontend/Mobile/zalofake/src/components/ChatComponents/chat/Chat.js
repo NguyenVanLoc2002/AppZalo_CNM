@@ -141,43 +141,72 @@ function Chat({ navigation }) {
       const conver = listChat[index];
 
       if (conver.lastMessage !== undefined && conver.lastMessage !== null) {
-        const dataChat = await setDataChat(conver.lastMessage);
+        const dataChat = await setDataChat(conver.lastMessage, false);
         const conversationNew = {
           conver: conver,
           dataChat: dataChat,
-          time: handleGetTime(conver.lastMessage.timestamp)
+          time: handleGetTime(conver?.lastMessage?.timestamp)
         };
         data.push(conversationNew);
 
       }
 
     };
-    data.sort((a, b) => {
-      const timeA = a.conver.lastMessage.timestamp || "";
-      const timeB = b.conver.lastMessage.timestamp || "";
-      return timeB.localeCompare(timeA);
-    });
+    sortTime(data)
     setListFriends(data);
 
   };
-  const setDataChat = async (conver) => {
+  const sortTime = (data) => {
+    data.sort((a, b) => {
+      const timeA = a?.conver?.lastMessage?.timestamp || "";
+      const timeB = b?.conver?.lastMessage?.timestamp || "";
+      return timeB.localeCompare(timeA);
+    });
+    return data;
+  }
+  const setDataChat = async (conver, isDelete) => {
     let dataChat = '';
-    const getUser = await getUserById(conver.senderId)
-    if (authUser.profile.name === getUser.user.profile.name) {
-      dataChat = "Bạn"
-    } else {
-      dataChat = getUser.user.profile.name
-    }
-    if (conver.contents[0].type === "text") {
-      dataChat = dataChat + ': ' + conver.contents[0].data;
-    } else if (conver.contents[0].type === "image") {
-      dataChat = dataChat + ': [Hình ảnh]';
-    } else {
-      dataChat = dataChat + ': [Video]';
+    if (conver) {
+      const getUser = await getUserById(conver.senderId)
+      if (authUser.profile.name === getUser.user.profile.name) {
+        dataChat = "Bạn"
+      } else {
+        dataChat = getUser.user.profile.name
+      }
+      if (isDelete) {
+        dataChat = dataChat + ": đã thu hồi tin nhắn";
+      }
+      else {
+        if (conver.contents[0].type === "text") {
+          dataChat = dataChat + ': ' + conver.contents[0].data;
+        } else if (conver.contents[0].type === "image") {
+          dataChat = dataChat + ': [Hình ảnh]';
+        } else {
+          dataChat = dataChat + ': [Video]';
+        }
+      }
     }
     return dataChat;
   }
- 
+  const updatedListFriends = async (conversationId, message, isDelete) => {
+    const updatedListFriends = await Promise.all(listFriends.map(async (item) => {
+      if (item.conver.conversation._id === conversationId) {
+        const dataChat = await setDataChat(message, isDelete);
+        return {
+          ...item,
+          conver: {
+            ...item?.conver,
+            lastMessage: message
+          },
+          dataChat: dataChat,
+          time: handleGetTime(message?.timestamp)
+        };
+      }
+      return item;
+    }));
+    return updatedListFriends;
+  }
+
   useEffect(() => {
     const fetchDataListFriend = async () => {
       try {
@@ -196,18 +225,27 @@ function Chat({ navigation }) {
       if (isNewSocket === "new_message") {
         const message = newSocketData;
         if (message) {
-          const updatedListFriends = await Promise.all(listFriends.map(async (item) => {
-            if (item.conver.conversation._id === message.conversationId) {
-              const dataChat = await setDataChat(message.retrunMessage);
-              return {
-                ...item,
-                dataChat: dataChat,
-                time: handleGetTime(message.retrunMessage.timestamp)
-              };
-            }
-            return item;
-          }));
-          setListFriends(updatedListFriends)
+          console.log("socket new message");
+          const update = await updatedListFriends(message.conversationId, message.retrunMessage, false)
+          const sortUpdate = sortTime(update);
+          setListFriends(sortUpdate)
+        }
+      }
+      if (isNewSocket === "delete_message") {
+        const { chatRemove, conversationId, isDeleted } = newSocketData;
+        if (chatRemove) {
+          if (isDeleted) {
+            console.log("delete_conversation", conversationId);
+            const updatedListFriends = listFriends.map((item) => {
+              if (item.conver.conversation._id === conversationId) {
+                console.log("hihi");
+              }
+            })
+          } else {
+            const update = await updatedListFriends(conversationId, chatRemove, true)
+            const sortUpdate = sortTime(update);
+            setListFriends(sortUpdate)
+          }
         }
       }
     }
