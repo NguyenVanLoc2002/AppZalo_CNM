@@ -12,7 +12,6 @@ import { useAuthContext } from "../../../contexts/AuthContext";
 import useGroup from "../../../hooks/useGroup";
 import axiosInstance from "../../../api/axiosInstance";
 import useConversation from "../../../hooks/useConversation";
-import { useSocketContext } from "../../../contexts/SocketContext";
 
 function ChatComponents({ language }) {
   const [userChat, setUserChat] = useState(null);
@@ -26,6 +25,7 @@ function ChatComponents({ language }) {
     addFriend,
   } = useFriend();
   const { authUser, reloadAuthUser } = useAuthContext();
+  const { conversations, getConversations } = useConversation();
   const { createGroup, addMember, grLoading } = useGroup();
 
   const [phone, setPhone] = useState("");
@@ -38,11 +38,10 @@ function ChatComponents({ language }) {
   const [friendToAdd, setFriendToAdd] = useState("");
   const [isShowModal, setIsShowModal] = useState("");
   const [shareMessage, setShareMessage] = useState();
-  const [addMembersToGroup, setAddMembersToGroup] = useState(null);
+  const [groupToChange, setGroupToChange] = useState(null);
   const [valueSearch, setValueSearch] = useState("");
   const [originalFriendList, setOriginalFriendList] = useState([]);
   const [selectedFriends, setSelectedFriends] = useState([]);
-  const { conversations, getConversations } = useConversation();
   const [listChatCurrent, setListChatCurrent] = useState([]);
 
   const [members, setMembers] = useState([]);
@@ -211,10 +210,10 @@ function ChatComponents({ language }) {
       return;
     }
     const groupData = {
-      groupId: addMembersToGroup,
+      groupId: groupToChange,
       members: members.map((member) => member.id),
     };
-    const rs = await addMember(addMembersToGroup, groupData);
+    const rs = await addMember(groupToChange, groupData);
     if (rs) {
       setIsShowModal("");
       setMembers([]);
@@ -240,8 +239,6 @@ function ChatComponents({ language }) {
             showModal={changeShowModal}
             friends={friendList}
             conversations={listChatCurrent}
-            // newSocket={isNewSocket}
-            // socketData={newSocketData}
           />
         </div>
         <PeopleChatComponent
@@ -249,9 +246,7 @@ function ChatComponents({ language }) {
           userChat={userChat}
           showModal={changeShowModal}
           shareMessage={setShareMessage}
-          addMembersToGroup={setAddMembersToGroup}
-          // newSocket={isNewSocket}
-          // socketData={newSocketData}
+          groupToChange={setGroupToChange}
         />
         {isShowModal === "addFriend" && (
           <div className="z-50 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/5 h-[90%] bg-white rounded-lg shadow-lg ">
@@ -404,7 +399,7 @@ function ChatComponents({ language }) {
           <div className="z-50 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/5 h-[90%] bg-white rounded-lg shadow-lg ">
             <div className="relative flex items-center justify-between p-4 border-b text-lg font-semibold h-[10%]">
               <p>
-                {addMembersToGroup
+                {groupToChange
                   ? language == "vi"
                     ? "Thêm thành viên"
                     : "Add members"
@@ -417,14 +412,14 @@ function ChatComponents({ language }) {
                   setIsShowModal("");
                   setShowAllNewFriends(false);
                   setMembers([]);
-                  setAddMembersToGroup(null);
+                  setGroupToChange(null);
                 }}
                 className="absolute flex justify-center items-center top-2 right-2 cursor-pointer border rounded-full p-2 hover:bg-gray-200 w-10 h-10 "
               >
                 x
               </button>
             </div>
-            {!addMembersToGroup && (
+            {!groupToChange && (
               <div className=" flex items-center justify-between pl-4 pr-4 pt-2 h-[10%]">
                 <button className="flex rounded-full border p-3">
                   <MdCameraAlt size={25} fill="gray" />
@@ -572,14 +567,14 @@ function ChatComponents({ language }) {
                     setIsShowModal("");
                     setShowAllNewFriends(false);
                     setMembers([]);
-                    setAddMembersToGroup(null);
+                    setGroupToChange(null);
                   }}
                 >
                   <p className="text-lg font-semibold">
                     {language == "vi" ? "Hủy" : "Cancel"}
                   </p>
                 </button>
-                {addMembersToGroup ? (
+                {groupToChange ? (
                   <button
                     className="rounded-lg bg-primaryHover p-3 pl-6 pr-6 mr-3 hover:bg-primary"
                     onClick={handleAddMemberToGroup}
