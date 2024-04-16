@@ -36,6 +36,7 @@ export const AuthContextProvider = ({ children }) => {
     };
 
     loadData();
+    reloadAuthUser();
   }, []);
   useEffect(() => {
     const saveData = async () => {
