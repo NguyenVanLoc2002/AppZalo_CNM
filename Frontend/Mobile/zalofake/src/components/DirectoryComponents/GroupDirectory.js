@@ -234,8 +234,7 @@ const GroupDirectory = ({ navigation }) => {
             setSelectedFriends([])
             setModalCreateGr(false)
             fetchGroup()
-            console.log("response:", JSON.stringify(response));
-            console.log( response.group);
+        
             const group = {
               _id: response.group._id,
               name: response.group.groupName,
@@ -245,9 +244,7 @@ const GroupDirectory = ({ navigation }) => {
               conversation: response.group.conversation,
               tag: response.group.conversation.tag
             }
-            console.log("group", group);
             navigation.navigate("Message", { conver: group })
-
           }
         } catch (error) {
           console.log("CreateGroupError:", error);

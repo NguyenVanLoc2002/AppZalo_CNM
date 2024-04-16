@@ -132,6 +132,7 @@ function Chat({ navigation }) {
 
   useEffect(() => {
     fetchDataChat();
+    console.log("listFriend:", JSON.stringify(listFriends));
   }, [conversations, groups]);
 
   const fetchDataConver = async (listChat) => {
@@ -216,7 +217,6 @@ function Chat({ navigation }) {
       return `${minutes} phút`;
     }
   };
-
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <Toast />

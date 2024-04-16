@@ -75,13 +75,13 @@ const useMessage = () => {
   const renderMessageContentReply = (content) => {
     if (content.type === 'text') {
       return (
-        <View style={{ paddingLeft: 25, paddingRight: 15, paddingTop: 5 }}>
+        <View style={{ paddingHorizontal: 15}}>
           <Text style={{ fontSize: 14 }}>{content.data}</Text>
         </View>
       );
     } else if (content.type === 'image') {
       return (
-        <View style={{ paddingLeft: 30, paddingTop: 5 }}>
+        <View style={{ paddingLeft: 10}}>
           <Image
             source={{ uri: content.data }}
             style={{ width: 100, height: 100, borderRadius: 10 }}
@@ -90,7 +90,7 @@ const useMessage = () => {
       );
     } else if (content.type === 'video') {
       return (
-        <View style={{ paddingLeft: 30, marginBottom: -15, marginTop: -10 }}>
+        <View style={{ paddingLeft: 10 }}>
           <Video
             source={{ uri: content.data }}
 

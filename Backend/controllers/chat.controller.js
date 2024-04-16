@@ -141,7 +141,14 @@ exports.getHistoryMessage = async (req, resp) => {
   try {
     const userId = req.params.userId; //người nhận lấy từ param
     const currentUserId = req.user.user_id; // người dùng hiện đang đăng nhập
-    const lastTimestamp = req.query.lastTimestamp; // Lấy tham số lastTimestamp từ query string
+
+    const lastTimestamp = req.query.lastTimestamp;
+    // let queryCondition = {
+    //   $or: [
+    //     { senderId: currentUserId, receiverId: userId , status: { $in: [0, 2] }},
+    //     { senderId: userId, receiverId: currentUserId , status: { $in: [0, 1] }},
+    //   ],
+    // };
     let queryCondition = {
       $or: [
         { senderId: currentUserId, receiverId: userId },
@@ -281,8 +288,10 @@ exports.deleteChat = async (req, res) => {
     );
     await Promise.all(
       mediaFiles.map(async (media) => {
+        console.log("media data: ", media.data);
         const publicId = extractPublicId(media.data);
         try {
+          console.log("publicId: ", publicId);
           await cloudinary.uploader.destroy(publicId);
         } catch (error) {
           console.log("Error deleting media in cloudinary:", error);
@@ -308,19 +317,23 @@ exports.deleteChat = async (req, res) => {
         (message) => message.toString() !== chatId
       );
       const remove = await Chat.findByIdAndDelete(chatId);
-    console.log("remove", remove);
-
 
       if (conversation.messages.length === 0 && conversation.tag !== "group") {
-        await Conversation.findByIdAndDelete(conversation._id);
-        const receiverSocketId = await getReciverSocketId(chat.receiverId);
-        if (receiverSocketId) {
-          io.to(receiverSocketId.socket_id).emit("delete_message", {
-            chatRemove: remove,
-            conversationId: conversation._id,
-            isDeleted: true,
-          });
-        }
+        const removeConversation = await Conversation.findByIdAndDelete(
+          conversation._id
+        );
+        removeConversation.participants?.forEach(async (member) => {
+          if (member.toString()) {
+            const receiverSocketId = await getReciverSocketId(member);
+            if (receiverSocketId) {
+              io.to(receiverSocketId.socket_id).emit("delete_message", {
+                chatRemove: remove,
+                conversationId: conversation._id,
+                isDeleted: true,
+              });
+            }
+          }
+        });
       } else {
         conversation.lastMessage =
           conversation.messages[conversation.messages.length - 1];
