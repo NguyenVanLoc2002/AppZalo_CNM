@@ -198,6 +198,7 @@ const Message = ({ navigation, route }) => {
     if (socket) {
       socket.on("new_message", async ({ message }) => {
         if (message.conversationId === conver.conversation._id) {
+          const getUser = await getUserById(message.retrunMessage.senderId)
           setChats(prevChats => [
             ...prevChats,
             {
