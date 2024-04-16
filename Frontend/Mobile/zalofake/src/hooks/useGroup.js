@@ -97,12 +97,14 @@ const useGroup = () => {
     }
   };
 
-  const addMember = async (groupId, memberData) => {
+  const addMember = async (groupId, members) => {
     setGrLoading(true);
+    console.log(groupId);
+    console.log(members)
     try {
       const response = await axiosInstance.post(
         `/groups/addMembers/${groupId}`,
-        memberData
+        members
       );
       const { data, status } = response;
 

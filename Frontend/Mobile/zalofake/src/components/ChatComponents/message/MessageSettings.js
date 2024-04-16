@@ -12,15 +12,16 @@ import { useNavigation } from "@react-navigation/native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Switch } from "react-native";
 import Toast from "react-native-toast-message";
-
+import axiosInstance from "../../../api/axiosInstance";
 import { useAuthContext } from "../../../contexts/AuthContext";
 import useGroup from "../../../hooks/useGroup";
 import useConversation from "../../../hooks/useConversation";
-
+import useMessage from "../../../hooks/useMessage";
+import useSendMessage from "../../../hooks/useSendMessage";
 const MessageSettings = ({ navigation, route }) => {
   const { conver } = route.params;
-
-
+  const { sendMessage } = useSendMessage();
+  const { showToastError, showToastSuccess } = useMessage();
   const [isMarkAsCloseFriend, setMarkAsCloseFriend] = useState(false);
   const [isPinChat, setPinChat] = useState(false);
   const [isHideChat, setHideChat] = useState(false);
@@ -37,6 +38,8 @@ const MessageSettings = ({ navigation, route }) => {
   const [isHidden, setIsHidden] = useState(false);
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [listSearch, setListSearch] = useState([]);
+  // const [friends, setFriends] = useState([]);
+  const [listFriendCanSearch, setListFriendCanSearch] = useState([]);
   const { updateGroup, addMember, removeMember, deleteGroup, loading } =
     useGroup();
   const { getConversationByID, conversation } = useConversation();
@@ -60,44 +63,120 @@ const MessageSettings = ({ navigation, route }) => {
         fontSize: 20,
       },
     });
+    fetchData();
+  }, [navigation]);
+  const fetchData = async () => {
     setName(conver.name);
-    getConversationByID(conver.conversation._id);
+    await getConversationByID(conver.conversation._id);
     if (conver?.createBy?._id === authUser._id) {
       setIsGroupAdmin(true);
     }
-  }, [navigation]);
+    // console.log(conversation)
+    fetchFriends();
+    // getConversationByID(conver.conversation._id);
+  };
 
-  const handleRemoveMember = async (memberId) => {
-    try {
-      const response = await removeMember(conver._id, memberId);
-      if (response) {
-        getConversationByID(conver.conversation._id);
-        Toast.show(
-          language === "vi"
-            ? "Xóa thành viên khỏi nhóm thành công"
-            : "Remove member from group successfully"
-        );
+
+  const addMemberToGroup = async () => {
+
+    if (selectedFriends.length > 0) {
+      let selectedFr = []
+      let selectedFrName = "";
+      selectedFriends.map((f) => {
+        selectedFr.push(f.id);
+        selectedFrName = selectedFrName + f.name + ' - ';
       }
+      )
+      const groupData = {
+        groupId: conver._id,
+        members: selectedFr
+      };
+      const rs = await addMember(
+        conver._id,
+        groupData
+      );
+      if (rs) {
+        let textMessage = authUser?.profile?.name + ' đã thêm ' + selectedFrName + ' vào nhóm!!!';
+        await sendMessage(conver._id,
+          { type: 'text', data: textMessage }, null, true)
+        getConversationByID(conver.conversation._id);
+        setModalAddMember(false);
+        setSelectedFriends([]);
+        showToastSuccess("Thêm thành viên vào nhóm thành công");
+      } else {
+        showToastError("Thêm thành viên vào nhóm thất bại");
+      }
+      setModalAddMember(false);
+    } else {
+      showToastError("Bạn chưa chọn thành viên");
+    }
+
+  };
+
+
+  const removeMemberInGroup = async (member) => {
+    try {
+      let selectedFrName = member.profile?.name;
+      let selectedFr = [member._id]
+    
+        const groupData = {
+          groupId: conver._id,
+          members: selectedFr
+        };
+        const response = await removeMember(conver._id, groupData);
+        if (response) {
+          getConversationByID(conver.conversation._id);
+          let textMessage = authUser?.profile?.name + ' đã xóa ' + selectedFrName + ' khỏi nhóm!!!';
+          await sendMessage(conver._id,
+            { type: 'text', data: textMessage }, null, true)
+          showToastSuccess('Xóa thành viên khỏi nhóm thành công')
+        }
     } catch (error) {
       console.error(error);
       if (error.response.data.error === "Group must have at least 2 members") {
-        Toast.show(
-          language === "vi"
-            ? "Nhóm phải có ít nhất 2 thành viên"
-            : "Group must have at least 2 members"
-        );
+        showToastError('Nhóm phải có ít nhất 2 thành viên')
       } else {
-        Toast.show(
-          language === "vi"
-            ? "Xóa thành viên khỏi nhóm thất bại"
-            : "Remove member from group failed"
-        );
+        showToastError('Xóa thành viên khỏi nhóm thất bại')
       }
     }
   };
-  const handleAddMember = async () => {
-    getConversationByID(conver.conversation._id);
+
+
+  const fetchFriends = async () => {
+    try {
+      const response = await axiosInstance.get("/users/get/friends");
+     
+      const newRadioButtons = [];
+      let i = true;
+      for (const friend of response.data.friends) {
+        for (const friend1 of conver?.conversation?.participants) {
+          // console.log(friend);
+          // console.log(friend1)
+          if (friend.userId === friend1) {
+            i = false;
+          }
+
+        }
+        if (i === true) {
+          const item = {
+            id: friend.userId,
+            name: friend?.profile?.name,
+            avatar: friend?.profile?.avatar?.url,
+            phone: friend.phone
+          };
+          newRadioButtons.push(item);
+        } else {
+          i = false;
+        }
+      }
+  
+      setListSearch(newRadioButtons);
+      setListFriendCanSearch(newRadioButtons)
+    } catch (error) {
+      console.log(error);
+    }
   };
+
 
   const handleSearch = () => {
     console.log("Giá trị của radioButton:", radioButton);
@@ -105,21 +184,27 @@ const MessageSettings = ({ navigation, route }) => {
     if (!textSearch) {
       showToastError("Bạn chưa nhập");
     } else {
-      const filteredFriends = listFriends.filter((friend) => {
+      const filteredFriends = listFriendCanSearch.filter((friend) => {
+        // console.log(textSearch)
+        // console.log(friend)
         return (
-          friend.profile.name
+          friend.name
             .toLowerCase()
             .includes(textSearch.toLowerCase()) || friend.phone === textSearch
         );
       });
+      // console.log(filteredFriends)
+      if (filteredFriends.length === 0) {
+        showToastError("Không tìm thấy");
 
-      if (filteredFriends.length > 0) {
+      } else {
         const newRadioButtons = [];
         for (const friend of filteredFriends) {
           const item = {
             id: friend.userId,
-            name: friend.profile.name,
-            avatar: friend?.profile?.avatar?.url,
+            name: friend.name,
+            avatar: friend.avatar,
+            phone: friend.phone
           };
           newRadioButtons.push(item);
         }
@@ -128,8 +213,6 @@ const MessageSettings = ({ navigation, route }) => {
           "Giá trị của radioButton sau khi tìm kiếm:",
           newRadioButtons
         );
-      } else {
-        showToastError("Không tìm thấy");
       }
     }
   };
@@ -167,6 +250,10 @@ const MessageSettings = ({ navigation, route }) => {
   const isFriendSelected = (friend) => {
     return selectedFriends.includes(friend);
   };
+  const handleRemoveSearch = () => {
+    setTextSearch(null);
+    setListSearch(listFriendCanSearch);
+  };
 
   const handleDeleteFriendSelected = (item) => {
     setSelectedFriends(
@@ -202,23 +289,24 @@ const MessageSettings = ({ navigation, route }) => {
         </View>
         <Text style={{ fontWeight: "500", marginLeft: 0 }}>{item.name}</Text>
       </View>
-      {/* <Pressable
-        style={{
-          height: 150,
-          backgroundColor: "purple",
-          justifyContent: "center",
-          alignItems: "center",
-          paddingTop: 10,
-          backgroundColor: "white",
+      <Pressable
+        onPress={() => {
+          handleFriendSelection(item)
         }}
-        // onPress={() => navigation.navigate("FriendProfile", { user })}
       >
-        <Image
-          source={{ uri: user?.profile?.avatar?.url }}
-          style={{ width: 100, height: 100, borderRadius: 50 }}
-        />
-        <Text style={{ fontSize: 20, fontWeight: "bold" }}>{user.profile.name}</Text>
-      </Pressable> */}
+        <View style={{ padding: 13, width: 24, height: 24, backgroundColor: '#F3F5F6', borderRadius: 50, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#37333A' }}>
+          {isFriendSelected(item) ? (
+            <Pressable style={{ width: 25, height: 25, backgroundColor: '#0091FF', borderRadius: 50, alignItems: 'center', justifyContent: 'center' }} onPress={
+              () => handleDeleteFriendSelected(item)
+            }>
+              <Ionicons color='white' size={27} name="checkmark-circle" />
+            </Pressable>
+          ) : (
+            <View></View>
+          )}
+        </View>
+      </Pressable>
+
     </Pressable>
   );
 
@@ -232,6 +320,7 @@ const MessageSettings = ({ navigation, route }) => {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: "white" }}>
+      <Toast />
       <View
         style={{
           position: "fixed",
@@ -296,7 +385,7 @@ const MessageSettings = ({ navigation, route }) => {
               >
                 {isEditing ? (
                   <View style={{ flexDirection: "row" }}>
-                    <Pressable onPress={updateGroupInfo}>
+                    <Pressable>
                       <CiCircleCheck
                         size={25}
                         color="green"
@@ -348,7 +437,6 @@ const MessageSettings = ({ navigation, route }) => {
             </Text>
           </View>
         </View>
-
         <View
           style={{
             backgroundColor: "white",
@@ -402,193 +490,60 @@ const MessageSettings = ({ navigation, route }) => {
                 paddingHorizontal: 10,
               }}
             >
-              {conversation?.participants?.map((member, index) => (
-                
-                <Pressable
-                  key={index}
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: 10,
-                    backgroundColor: "#eee",
-                    borderRadius: 10,
-                    marginBottom: 5,
-                  }}
-                >
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <Image
-                      source={{ uri: member.profile?.avatar?.url }}
-                      style={{
-                        width: 50,
-                        height: 50,
-                        borderRadius: 25,
-                        borderWidth: 1,
-                        borderColor: "black",
-                      }}
-                    />
-                    <Text style={{ marginLeft: 10 }}>
-                      {member.profile?.name}
-                    </Text>
-                  </View>
-                  {isGroupAdmin && (
-                    <Pressable>
-                      {loading ? (
-                        <ActivityIndicator size="small" color="blue" />
-                      ) : (
-                        <MaterialCommunityIcons
-                          name="minus"
-                          size={24}
-                          color="black"
-                          onPress={() => handleRemoveMember(member._id)}
-                        />
-                        // <Text>haha</Text>
-                      )}
-                    </Pressable>
-                  )}
-                </Pressable>
+              {conversation?.participants?.map((member, index) =>
+              (<View key={index}>
+                {member._id !== authUser._id && (
+                  <Pressable
+
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: 10,
+                      backgroundColor: "#eee",
+                      borderRadius: 10,
+                      marginBottom: 5,
+                    }}
+                  >
+
+                    <View style={{ flexDirection: "row", alignItems: "center" }}>
+                      <Image
+                        source={{ uri: member.profile?.avatar?.url }}
+                        style={{
+                          width: 50,
+                          height: 50,
+                          borderRadius: 25,
+                          borderWidth: 1,
+                          borderColor: "black",
+                        }}
+                      />
+                      <Text style={{ marginLeft: 10 }}>
+                        {member.profile?.name}
+                      </Text>
+                    </View>
+                    {isGroupAdmin && (
+                      <Pressable onPress={() => { removeMemberInGroup(member) }}>
+                        {loading ? (
+                          <ActivityIndicator size="small" color="blue" />
+                        ) : (
+                          <MaterialCommunityIcons
+                            name="minus"
+                            size={24}
+                            color="black"
+                          />
+                        )}
+                      </Pressable>
+                    )}
+                  </Pressable>
+                )
+                }
+              </View>
               ))}
             </ScrollView>
           )}
         </View>
       </View>
-      <View
-        style={{
-          height: 50,
-          alignItems: "center",
-          backgroundColor: "white",
-          flexDirection: "row",
-          marginVertical: 10,
-        }}
-      >
-        <Ionicons
-          name="notifications-outline"
-          size={24}
-          color="black"
-          style={{ marginHorizontal: 15 }}
-        />
-        <Text style={{ textAlign: "center", color: "black" }}>
-          Mã hóa đầu cuối
-        </Text>
-      </View>
-      <View
-        style={{
-          height: 50,
-          alignItems: "center",
-          backgroundColor: "white",
-          flexDirection: "row",
-        }}
-      >
-        <Ionicons
-          name="pencil"
-          size={24}
-          color="black"
-          style={{ marginHorizontal: 15 }}
-        />
-        <Text style={{ textAlign: "center", color: "black" }}>
-          Đổi tên gợi nhớ
-        </Text>
-      </View>
-      <View
-        style={{
-          height: 50,
-          alignItems: "center",
-          backgroundColor: "white",
-          flexDirection: "row",
-        }}
-      >
-        <Ionicons
-          name="star-outline"
-          size={24}
-          color="black"
-          style={{ marginHorizontal: 15 }}
-        />
-        <Text style={{ textAlign: "center", color: "black" }}>
-          Đánh dấu bạn thân
-        </Text>
-      </View>
-      <View
-        style={{
-          height: 50,
-          alignItems: "center",
-          backgroundColor: "white",
-          flexDirection: "row",
-        }}
-      >
-        <Ionicons
-          name="time-outline"
-          size={24}
-          color="black"
-          style={{ marginHorizontal: 15 }}
-        />
-        <Text style={{ textAlign: "center", color: "black" }}>
-          Nhật ký chung
-        </Text>
-        <View style={{ flex: 1 }} />
-        <Switch
-          trackColor={{ false: "#767577", true: "#0091FF" }}
-          thumbColor={isMarkAsCloseFriend ? "#0091FF" : "#f4f3f4"}
-          onValueChange={() => setMarkAsCloseFriend(!isMarkAsCloseFriend)}
-          value={isMarkAsCloseFriend}
-          style={{ marginEnd: 15 }}
-        />
-      </View>
-      <View
-        style={{
-          height: 50,
-          alignItems: "center",
-          backgroundColor: "white",
-          flexDirection: "row",
-          marginVertical: 10,
-        }}
-      >
-        <Ionicons
-          name="images-outline"
-          size={24}
-          color="black"
-          style={{ marginHorizontal: 15 }}
-        />
-        <Text style={{ textAlign: "center", color: "black" }}>
-          Ảnh, file, link đã gửi
-        </Text>
-      </View>
-      <Pressable
-        style={{
-          height: 50,
-          alignItems: "center",
-          backgroundColor: "white",
-          flexDirection: "row",
-        }}
-        onPress={() => navigation.navigate("CreateGroup")}
-      >
-        <Ionicons
-          name="add-circle-outline"
-          size={24}
-          color="black"
-          style={{ marginHorizontal: 15 }}
-        />
-        {/* <Text style={{ textAlign: "center", color: "black" }}>
-          {`Tạo nhóm với ${user.ten}`}
-        </Text> */}
-      </Pressable>
-      <View
-        style={{
-          height: 50,
-          alignItems: "center",
-          backgroundColor: "white",
-          flexDirection: "row",
-        }}
-      >
-        <Ionicons
-          name="person-add-outline"
-          size={24}
-          color="black"
-          style={{ marginHorizontal: 15 }}
-        />
-        {/* <Text style={{ textAlign: "center", color: "black" }}>
-          {`Thêm ${user.ten} vào nhóm`}
-        </Text> */}
-      </View>
+
       <Modal animationType="slide" transparent={true} visible={modalAddMember}>
         <View
           style={{
@@ -635,20 +590,10 @@ const MessageSettings = ({ navigation, route }) => {
                 Thêm thành viên
               </Text>
               <Text style={{ color: "#979797", fontWeight: "600" }}>
-                Đã chọn: 0
+                Đã chọn: {selectedFriends.length}
               </Text>
             </View>
-            {/* <View
-              style={{ height: "7%", width: "80%", justifyContent: "center" }}
-            >
-              <TextInput
-                value={nameGroup}
-                onChangeText={setNameGroup}
-                placeholder="Đặt tên nhóm"
-                placeholderTextColor="gray"
-                style={{ fontSize: 18, height: "80%", width: "100%" }}
-              ></TextInput>
-            </View> */}
+           
             <View
               style={{
                 flexDirection: "row",
@@ -676,7 +621,8 @@ const MessageSettings = ({ navigation, route }) => {
               ></TextInput>
               <Pressable
                 onPress={() => {
-                  setTextSearch(null);
+                  handleRemoveSearch();
+
                 }}
               >
                 <Ionicons name="close" size={30} color="black" />
@@ -703,17 +649,7 @@ const MessageSettings = ({ navigation, route }) => {
                   backgroundColor: "#2196F3",
                   borderRadius: 10,
                 }}
-                onPress={() => {
-                  if (selectedFriends.length > 0) {
-                    addMember(
-                      conver._id,
-                      selectedFriends.map((f) => f.id)
-                    );
-                    setModalAddMember(false);
-                  } else {
-                    showToastError("Bạn chưa chọn thành viên");
-                  }
-                }}
+                onPress={addMemberToGroup}
               >
                 <Text style={{ color: "white", fontSize: 18 }}>Thêm</Text>
               </Pressable>
