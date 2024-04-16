@@ -316,7 +316,7 @@ const GroupDirectory = ({ navigation }) => {
             </View>
             <View style={styles.viewClose}>
               <Text style={{ fontWeight: '600', fontSize: 20 }}>Nhóm mới</Text>
-              {/* <Text style={{ color: '#979797', fontWeight: '600' }}>Đã chọn: 0</Text> */}
+              <Text style={{ color: '#979797', fontWeight: '600' }}>Đã chọn: {selectedFriends.length}</Text>
             </View>
             <View style={{ height: '7%', width: '80%', justifyContent: 'center' }}>
               <TextInput
