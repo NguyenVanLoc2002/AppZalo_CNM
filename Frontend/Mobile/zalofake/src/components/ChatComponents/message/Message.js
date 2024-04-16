@@ -176,9 +176,7 @@ const Message = ({ navigation, route }) => {
         }
         setChats(data);
         fetchFriends();
-        // const lastElement = reversedChats[0]
-        // setLastTimestamp(lastElement.timestamp)
-      }
+           }
 
     } catch (error) {
       console.log(error);

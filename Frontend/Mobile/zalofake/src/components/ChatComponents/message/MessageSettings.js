@@ -25,10 +25,10 @@ const MessageSettings = ({ navigation, route }) => {
   const { conver } = route.params;
   const { sendMessage } = useSendMessage();
   const { showToastError, showToastSuccess } = useMessage();
-  const [isMarkAsCloseFriend, setMarkAsCloseFriend] = useState(false);
-  const [isPinChat, setPinChat] = useState(false);
-  const [isHideChat, setHideChat] = useState(false);
-  const [isNotifyIncomingCalls, setNotifyIncomingCalls] = useState(false);
+  // const [isMarkAsCloseFriend, setMarkAsCloseFriend] = useState(false);
+  // const [isPinChat, setPinChat] = useState(false);
+  // const [isHideChat, setHideChat] = useState(false);
+  // const [isNotifyIncomingCalls, setNotifyIncomingCalls] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [modalAddMember, setModalAddMember] = useState(false);
   const [name, setName] = useState("");
@@ -71,7 +71,7 @@ const MessageSettings = ({ navigation, route }) => {
         fontSize: 20,
       },
     });
-    fetchData();
+   fetchData();
   }, [navigation]);
   const fetchData = async () => {
     setName(conver.name);
@@ -385,7 +385,7 @@ const MessageSettings = ({ navigation, route }) => {
         let textMessage = authUser?.profile?.name + ' đã cập nhật avatar mới';
         await sendMessage(conver._id,
           { type: 'text', data: textMessage }, null, true)
-        setIsLoadingUpdataAvatar(false);
+        setIsLoadingUpdataAvatar(false);   
         setSelectedAvatar(selectedImage);
         showToastSuccess(
           "Cập nhật avtar nhóm thành công"
