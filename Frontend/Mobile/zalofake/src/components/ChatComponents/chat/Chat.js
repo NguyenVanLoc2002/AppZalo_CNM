@@ -32,10 +32,7 @@ function Chat({ navigation }) {
   const [isLoad, SetIsLoad] = useState(false);
   const { authUser } = useAuthContext();
   const { socket } = useSocketContext();
-  const [isModalVisibleXoa, setModalVisibleXoa] = useState(false);
-  const [isLoadXoa, setIsLoadXoa] = useState(false)
 
-  const { showToastSuccess, showToastError } = useMessage();
   const { getUserById } = useCreateGroup()
 
 
@@ -132,7 +129,6 @@ function Chat({ navigation }) {
 
   useEffect(() => {
     fetchDataChat();
-    console.log("listFriend:", JSON.stringify(listFriends));
   }, [conversations, groups]);
 
   const fetchDataConver = async (listChat) => {
