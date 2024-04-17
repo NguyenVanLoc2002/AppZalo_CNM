@@ -13,7 +13,6 @@ import { useSocketContext } from "../../../contexts/SocketContext";
 function ListChatComponent({
   language,
   showModal,
-  userChat,
   changeUserChat,
   friends,
   conversations,
@@ -24,22 +23,17 @@ function ListChatComponent({
   const [activeTab, setActiveTab] = useState("all");
   const [showUnread, setShowUnread] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false);
-  const [originalFriendList, setOriginalFriendList] = useState([]);
   const [listChatCurrent, setListChatCurrent] = useState([]);
   const [isChatSelected, setIsChatSelected] = useState("");
-  const { groups, getGroups } = useGroup();
   const { authUser } = useAuthContext();
   const { getConversationByID, getConversationByParticipants, conversation } =
     useConversation();
   const { isNewSocket, newSocketData } = useSocketContext();
+  const [searchResult, setSearchResult] = useState([]);
 
   useEffect(() => {
-    getGroups();
-    setOriginalFriendList(friends);
     setFriendList(friends);
-  }, [friends]);
 
-  useEffect(() => {
     const listChat = conversations.map((conversation) => {
       const friend = conversation.participants.find(
         (participant) => participant.phone !== authUser.phone
@@ -59,23 +53,15 @@ function ListChatComponent({
       };
     });
 
-    const listGroup = groups.map((group) => {
-      return {
-        id: group._id,
-        conversationId: group.conversation._id,
-        name: group.groupName,
-        avatar: group.avatar.url,
-        background: group.avatar.url,
-        lastMessage: group.lastMessage,
-        tag: group.conversation.tag,
-        creator: group.createBy,
-        admins: group.admins,
-      };
+    friendList.forEach((friend) => {
+      if (friend.tag === "group") {
+        listChat.push(friend);
+      }
     });
 
-    listChat.push(...listGroup);
     setListChatCurrent(listChat);
-  }, [conversations, groups]);
+    setSearchResult(friends);
+  }, [conversations, friends]);
 
   useEffect(() => {
     if (isNewSocket === "new_message") {
@@ -94,7 +80,6 @@ function ListChatComponent({
           return newList;
         });
       } else {
-        console.log("getConversationByID", message);
         getConversationByID(message.conversationId);
       }
     }
@@ -102,7 +87,6 @@ function ListChatComponent({
     if (isNewSocket === "delete_message") {
       const { chatRemove, conversationId, isDeleted } = newSocketData;
       if (isDeleted) {
-        console.log("delete_conversation", conversationId);
         setListChatCurrent((prev) => {
           const newList = [...prev];
           const index = newList.findIndex(
@@ -128,8 +112,6 @@ function ListChatComponent({
     }
 
     if (isNewSocket === "add-to-group") {
-      console.log("newSocketData", newSocketData.group);
-      console.log("LastMessage", newSocketData.group.conversation.lastMessage);
       const data = newSocketData;
       const group = data?.group;
 
@@ -165,7 +147,8 @@ function ListChatComponent({
 
     if (isNewSocket === "remove-from-group") {
       const group = newSocketData;
-      if (group.removeMember?.includes(authUser._id)) {
+      console.log("remove-from-group", group);
+      if (group.removeMembers?.includes(authUser._id)) {
         if (authUser._id === group.createBy) {
           toast.error(
             language === "vi"
@@ -179,17 +162,16 @@ function ListChatComponent({
               : `You have been removed from the group ${group.name}`
           );
         }
+        setListChatCurrent((prev) => {
+          const newList = [...prev];
+          const index = newList.findIndex((chat) => chat.id === group.id);
+          if (index !== -1) {
+            newList.splice(index, 1);
+          }
+          return newList;
+        });
+        changeUserChat(null);
       }
-
-      setListChatCurrent((prev) => {
-        const newList = [...prev];
-        const index = newList.findIndex((chat) => chat.id === group.id);
-        if (index !== -1) {
-          newList.splice(index, 1);
-        }
-        return newList;
-      });
-      changeUserChat(null);
     }
 
     if (isNewSocket === "delete-group") {
@@ -230,6 +212,20 @@ function ListChatComponent({
       }
 
       changeUserChat(null);
+    }
+    if (isNewSocket === "change-admins") {
+      const { group, members, typeChange } = newSocketData;
+      const isChange = listChatCurrent.findIndex(
+        (chat) => chat.id === group.id
+      );
+
+      if (isChange != -1) {
+        setListChatCurrent((prev) => {
+          const newList = [...prev];
+          newList[isChange].admins = group.admins;
+          return newList;
+        });
+      }
     }
   }, [isNewSocket, newSocketData]);
 
@@ -277,12 +273,13 @@ function ListChatComponent({
     setValueSearch(searchTerm);
 
     if (searchTerm.trim() === "") {
-      setFriendList(originalFriendList);
+      setSearchResult(friendList);
     } else {
-      const filteredFriends = originalFriendList.filter((friend) =>
+      const filteredFriends = friendList.filter((friend) =>
         friend.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      setFriendList(filteredFriends);
+
+      setSearchResult(filteredFriends);
     }
   };
 
@@ -300,7 +297,7 @@ function ListChatComponent({
     }
     console.log("friend", friend, "conversation", conversation);
 
-    userChat(friend);
+    changeUserChat(friend);
   };
 
   return (
@@ -394,7 +391,7 @@ function ListChatComponent({
       <div className="h-[calc(100%-110px)] bg-white border overflow-y-auto">
         {isInputFocused ? (
           <>
-            {friendList.map((friend) => (
+            {searchResult.map((friend) => (
               <div
                 key={friend.id}
                 className="flex items-center justify-between hover:bg-gray-200 transition-colors duration-300 ease-in-out p-2"
@@ -419,7 +416,7 @@ function ListChatComponent({
               >
                 <div className="bg-blue w-14 ">
                   <img
-                    className="rounded-full w-14 h-14"
+                    className="rounded-full w-14 h-14 object-cover"
                     src={friend.avatar}
                     alt="cloud"
                   />
@@ -442,7 +439,7 @@ function ListChatComponent({
                   onMouseEnter={() => setIsHovered(true)}
                   onMouseLeave={() => setIsHovered(false)}
                   onClick={() => {
-                    userChat(friend);
+                    changeUserChat(friend);
                     setIsChatSelected(friend.id);
                   }}
                 >

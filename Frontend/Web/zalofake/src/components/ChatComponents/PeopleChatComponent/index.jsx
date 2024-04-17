@@ -17,7 +17,7 @@ import { RiDoubleQuotesR } from "react-icons/ri";
 import { FaArrowRotateLeft } from "react-icons/fa6";
 import { CiCircleCheck } from "react-icons/ci";
 import axiosInstance from "../../../api/axiosInstance";
-import { format, set } from "date-fns";
+import { format } from "date-fns";
 import { useSocketContext } from "../../../contexts/SocketContext";
 import EmojiPicker from "emoji-picker-react";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
@@ -34,7 +34,7 @@ function PeopleChatComponent({
   groupToChange,
 }) {
   // State for current user
-  const [thisUser, setThisUser] = useState(null);
+  const [thisUser, setThisUser] = useState(userChat);
 
   // State for chat content
   const [content, setContent] = useState("");
@@ -55,7 +55,6 @@ function PeopleChatComponent({
   const { getConversationByID, conversation } = useConversation();
   const {
     grLoading,
-    group,
     updateGroup,
     removeMember,
     deleteGroup,
@@ -79,33 +78,28 @@ function PeopleChatComponent({
   const [originalListMember, setOriginalListMember] = useState([]);
 
   useEffect(() => {
-    if (userChat) {
-      setThisUser(userChat);
-      console.log("thisUser", thisUser);
-    }
+    setThisUser(userChat);
 
     if (!userChat || userChat?.tag !== "group") {
       setSidebarVisible(false);
     }
-    if (userChat) {
-      if (userChat.admins?.includes(authUser._id)) {
-        if (userChat.creator?._id === authUser._id) {
-          setIsCreator(true);
-        }
-        setIsGroupAdmin(true);
-      } else {
-        setIsGroupAdmin(false);
+    if (userChat?.admins?.includes(authUser._id)) {
+      if (userChat?.creator?._id === authUser._id) {
+        setIsCreator(true);
       }
-      setName(userChat?.name);
+      setIsGroupAdmin(true);
+    } else {
+      setIsGroupAdmin(false);
+      setIsCreator(false);
+    }
+    setName(userChat?.name);
 
-      if (userChat.conversationId) {
-        getConversationByID(userChat.conversationId);
-      } else {
-        setMessages([]);
-      }
+    if (userChat?.conversationId) {
+      getConversationByID(userChat?.conversationId);
+    } else {
+      setMessages([]);
     }
   }, [userChat]);
-  console.log("userChat", userChat);
 
   useEffect(() => {
     if (conversation) {
@@ -113,17 +107,18 @@ function PeopleChatComponent({
       setListMembers(conversation.participants);
       setOriginalListMember(conversation.participants);
     }
-  }, [conversation, userChat]);
+  }, [conversation]);
 
   // socket event
   useEffect(() => {
     if (thisUser) {
       if (isNewSocket === "new_message") {
         const message = newSocketData;
+        console.log("new message", message);
 
         if (
-          message.conversationId === thisUser.conversationId ||
-          message.retrunMessage.receiverId === authUser._id
+          message.conversationId === thisUser.conversationId &&
+          message.retrunMessage.receiverId === thisUser.id
         ) {
           setMessages((prevMessages) => {
             const newMessages = [...prevMessages];
@@ -142,7 +137,8 @@ function PeopleChatComponent({
       if (isNewSocket === "delete_message") {
         const { conversationId, isDeleted } = newSocketData;
         if (isDeleted) {
-          setThisUser(null);
+          // setThisUser(null);
+          setMessages([]);
         } else {
           try {
             if (thisUser && thisUser.conversationId === conversationId) {
@@ -360,7 +356,7 @@ function PeopleChatComponent({
       if (response.status === 200) {
         if (messages.length === 1) {
           setMessages([]);
-          setThisUser(null);
+          // setThisUser(null);
         } else {
           const updatedMessagesResponse = await axiosInstance.get(
             `conversations/get/messages/${converId}`
@@ -504,7 +500,13 @@ function PeopleChatComponent({
     try {
       const response = await removeMember(thisUser.id, { members: [memberId] });
       if (response) {
-        getConversationByID(thisUser.conversationId);
+        getConversationByID(response.group?.conversation?._id);
+        setThisUser({
+          ...thisUser,
+          admins: response.group?.admins,
+        
+        })
+
         toast.success(
           language === "vi"
             ? "Xóa thành viên khỏi nhóm thành công"
@@ -568,9 +570,17 @@ function PeopleChatComponent({
       }
     } catch (error) {
       console.error(error);
-      toast.error(
-        language === "vi" ? "Rời khỏi nhóm thất bại" : "Leave group failed"
-      );
+      if (error.response.data.error === "Group must have at least 2 members") {
+        toast.error(
+          language === "vi"
+            ? "Nhóm phải có ít nhất 2 thành viên"
+            : "Group must have at least 2 members"
+        );
+      } else {
+        toast.error(
+          language === "vi" ? "Rời khỏi nhóm thất bại" : "Leave group failed"
+        );
+      }   
     }
   };
 
@@ -707,6 +717,7 @@ function PeopleChatComponent({
                                 <div className="ml-2 w-10 rounded-full">
                                   <img
                                     alt="avatar"
+                                    className="object-cover w-10 h-10 rounded-full"
                                     src={
                                       user.profile.avatar?.url || "/zalo.svg"
                                     }
@@ -1003,6 +1014,7 @@ function PeopleChatComponent({
                                   <div className="ml-2 w-10 rounded-full">
                                     <img
                                       alt="avatar"
+                                      className="object-cover w-10 h-10 rounded-full"
                                       src={
                                         user.profile.avatar?.url || "/zalo.svg"
                                       }
