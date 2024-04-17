@@ -7,34 +7,35 @@ import {
   TextInput,
   Pressable,
   Modal,
-  SafeAreaView, ActivityIndicator
+  SafeAreaView,
+  ActivityIndicator,
 } from "react-native";
 import ChatItem from "./ChatItem";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import axiosInstance from "../../../api/axiosInstance";
 import Toast from "react-native-toast-message";
 import { FontAwesome5 } from "@expo/vector-icons";
-import moment from 'moment-timezone';
+import moment from "moment-timezone";
 import { useAuthContext } from "../../../contexts/AuthContext";
 import { useSocketContext } from "../../../contexts/SocketContext";
 import useConversation from "../../../hooks/useConversation";
 import useGroup from "../../../hooks/useGroup";
-import useMessage from '../../../hooks/useMessage'
+import useMessage from "../../../hooks/useMessage";
 import useCreateGroup from "../../../hooks/useCreateGroup";
 
 function Chat({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
   const { conversations, getConversations } = useConversation();
   const { groups, getGroups } = useGroup();
-  // const [conversations, setConversations] = useState([]);
   const [listFriends, setListFriends] = useState([]);
   const [chats, setChats] = useState([]);
   const [isLoad, SetIsLoad] = useState(false);
   const { authUser } = useAuthContext();
-  const { socket } = useSocketContext();
-
-  const { getUserById } = useCreateGroup()
-
+  const [isModalVisibleXoa, setModalVisibleXoa] = useState(false);
+  const [isLoadXoa, setIsLoadXoa] = useState(false);
+  const { showToastSuccess, showToastError } = useMessage();
+  const { getUserById } = useCreateGroup();
+  const { isNewSocket, newSocketData } = useSocketContext();
 
   useEffect(() => {
     navigation.setOptions({
@@ -96,13 +97,16 @@ function Chat({ navigation }) {
       const friend = conversation.participants.find(
         (participant) => participant.phone !== authUser.phone
       );
-
       return {
         _id: friend?._id,
         conversation: conversation,
         name: friend?.profile.name,
-        avatar: friend?.profile.avatar?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
-        background: friend?.profile.background?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+        avatar:
+          friend?.profile.avatar?.url ||
+          "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+        background:
+          friend?.profile.background?.url ||
+          "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
         unread: conversation.messages.some(
           (message) => message.receiver === authUser.phone && !message.isRead
         ),
@@ -116,15 +120,19 @@ function Chat({ navigation }) {
         _id: group._id,
         conversation: group.conversation,
         name: group.groupName,
-        avatar: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
-        background: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+        avatar:
+          group.avatar.url ||
+          "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+        background:
+          group.avatar.url ||
+          "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
         lastMessage: group.lastMessage,
         tag: group.conversation.tag,
         createBy: group.createBy,
       };
     });
     listChat.push(...listGroup);
-    fetchDataConver(listChat)
+    fetchDataConver(listChat);
   };
 
   useEffect(() => {
@@ -132,54 +140,82 @@ function Chat({ navigation }) {
   }, [conversations, groups]);
 
   const fetchDataConver = async (listChat) => {
-
     let data = [];
-    let dataChat;
     let int = listChat.length;
-    // console.log(listChat)
-    for (let index = 0; index < int; index++) {
 
+    for (let index = 0; index < int; index++) {
       const conver = listChat[index];
+
       if (conver.lastMessage !== undefined && conver.lastMessage !== null) {
-        const getUser = await getUserById(conver?.lastMessage?.senderId)
-        if (authUser.profile.name === getUser.user.profile.name) {
-          dataChat = "Bạn"
-        } else {
-          dataChat = getUser.user.profile.name
-        }
-        if (conver.lastMessage.contents[0].type === "text") {
-          dataChat = dataChat + ': ' + conver.lastMessage.contents[0].data;
-        } else if (conver.lastMessage.contents[0].type === "image") {
-          dataChat = dataChat + ': [Hình ảnh]';
-        } else {
-          dataChat = dataChat + ': [Video]';
-        }
+        const dataChat = await setDataChat(conver.lastMessage, false);
         const conversationNew = {
           conver: conver,
           dataChat: dataChat,
-          time: handleGetTime(conver.lastMessage.timestamp)
+          time: handleGetTime(conver?.lastMessage?.timestamp),
         };
         data.push(conversationNew);
-
       }
-
-    };
+    }
+    sortTime(data);
+    setListFriends(data);
+  };
+  const sortTime = (data) => {
     data.sort((a, b) => {
-      const timeA = a.conver.lastMessage.timestamp || "";
-      const timeB = b.conver.lastMessage.timestamp || "";
+      const timeA = a?.conver?.lastMessage?.timestamp || "";
+      const timeB = b?.conver?.lastMessage?.timestamp || "";
       return timeB.localeCompare(timeA);
     });
-    setListFriends(data);
-
+    return data;
+  };
+  const setDataChat = async (conver, isDelete) => {
+    let dataChat = "";
+    if (conver) {
+      const getUser = await getUserById(conver.senderId);
+      if (authUser.profile.name === getUser.user.profile.name) {
+        dataChat = "Bạn";
+      } else {
+        dataChat = getUser.user.profile.name;
+      }
+      if (isDelete) {
+        dataChat = dataChat + ": đã thu hồi tin nhắn";
+      } else {
+        if (conver.contents[0].type === "text") {
+          dataChat = dataChat + ": " + conver.contents[0].data;
+        } else if (conver.contents[0].type === "image") {
+          dataChat = dataChat + ": [Hình ảnh]";
+        } else {
+          dataChat = dataChat + ": [Video]";
+        }
+      }
+    }
+    return dataChat;
+  };
+  const updatedListFriends = async (conversationId, message, isDelete) => {
+    const updatedListFriends = await Promise.all(
+      listFriends.map(async (item) => {
+        if (item.conver.conversation._id === conversationId) {
+          const dataChat = await setDataChat(message, isDelete);
+          return {
+            ...item,
+            conver: {
+              ...item?.conver,
+              lastMessage: message,
+            },
+            dataChat: dataChat,
+            time: handleGetTime(message?.timestamp),
+          };
+        }
+        return item;
+      })
+    );
+    return updatedListFriends;
   };
 
   useEffect(() => {
     const fetchDataListFriend = async () => {
       try {
-
         getConversations();
         getGroups();
-
       } catch (error) {
         console.log("getFriendError:", error);
       }
@@ -188,15 +224,53 @@ function Chat({ navigation }) {
       fetchDataListFriend();
       SetIsLoad(true);
     }
-  }, []);
+
+    const fetchSocket = async () => {
+      if (isNewSocket === "new_message") {
+        const message = newSocketData;
+        if (message) {
+          console.log("socket new message");
+          const update = await updatedListFriends(
+            message.conversationId,
+            message.retrunMessage,
+            false
+          );
+          const sortUpdate = sortTime(update);
+          setListFriends(sortUpdate);
+        }
+      }
+      if (isNewSocket === "delete_message") {
+        const { chatRemove, conversationId, isDeleted } = newSocketData;
+        if (chatRemove) {
+          if (isDeleted) {
+            console.log("delete_conversation", conversationId);
+            const updatedListFriends = listFriends.map((item) => {
+              if (item.conver.conversation._id === conversationId) {
+                console.log("hihi");
+              }
+            });
+          } else {
+            const update = await updatedListFriends(
+              conversationId,
+              chatRemove,
+              true
+            );
+            const sortUpdate = sortTime(update);
+            setListFriends(sortUpdate);
+          }
+        }
+      }
+    };
+    fetchSocket();
+  }, [isNewSocket, newSocketData]);
+
   const handleChatItemPress = (item) => {
-    navigation.navigate("Message", { conver: item.conver});
+    navigation.navigate("Message", { conver: item.conver });
   };
 
-
   const handleGetTime = (time) => {
-    const currentTime = moment().tz('Asia/Ho_Chi_Minh'); // Lấy thời gian hiện tại ở múi giờ Việt Nam
-    const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh'); // Chuyển đổi thời gian đã cho sang múi giờ Việt Nam
+    const currentTime = moment().tz("Asia/Ho_Chi_Minh"); // Lấy thời gian hiện tại ở múi giờ Việt Nam
+    const vietnamDatetime = moment(time).tz("Asia/Ho_Chi_Minh"); // Chuyển đổi thời gian đã cho sang múi giờ Việt Nam
     const timeDifference = moment.duration(currentTime.diff(vietnamDatetime)); // Tính khoảng cách thời gian
 
     const days = Math.floor(timeDifference.asDays()); // Số ngày
@@ -205,11 +279,9 @@ function Chat({ navigation }) {
 
     if (days >= 1) {
       return `${days} ngày`;
-    }
-    else if (hours >= 1) {
+    } else if (hours >= 1) {
       return `${hours} giờ`;
-    }
-    else {
+    } else {
       return `${minutes} phút`;
     }
   };
@@ -219,11 +291,11 @@ function Chat({ navigation }) {
       <FlatList
         data={listFriends}
         renderItem={({ item }) => (
-          <Pressable onPress={() => handleChatItemPress(item)} >
+          <Pressable onPress={() => handleChatItemPress(item)}>
             <ChatItem item={item} />
           </Pressable>
         )}
-      keyExtractor={(item) => item.conver.conversation._id}
+        keyExtractor={(item) => item.conver.conversation._id}
       />
       <Modal
         animationType="none"
@@ -342,7 +414,6 @@ function Chat({ navigation }) {
           </View>
         </Pressable>
       </Modal>
-      
     </SafeAreaView>
   );
 }
@@ -356,9 +427,8 @@ const styles = StyleSheet.create({
   modalButtonContainer1: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 20,
-
   },
   headerIcon: {
     padding: 10,
@@ -377,10 +447,10 @@ const styles = StyleSheet.create({
     marginLeft: 40,
   },
   button: {
-    backgroundColor: '#fff'
+    backgroundColor: "#fff",
   },
   pressedButton: {
-    backgroundColor: '#33c4c2'
+    backgroundColor: "#33c4c2",
   },
   modalContainer: {
     flex: 1,
@@ -393,7 +463,7 @@ const styles = StyleSheet.create({
     width: 300,
     padding: 20,
     borderRadius: 10,
-    display: 'flex',
+    display: "flex",
     flexDirection: "column",
   },
   modalHeaderText: {
@@ -407,7 +477,7 @@ const styles = StyleSheet.create({
   modalButtonContainer: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginTop: 20
+    marginTop: 20,
   },
   modalButton: {
     fontWeight: "bold",
@@ -415,9 +485,9 @@ const styles = StyleSheet.create({
     color: "#0091FF",
   },
   pressCol: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row'
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "row",
   },
 });
 

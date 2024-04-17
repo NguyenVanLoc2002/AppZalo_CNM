@@ -6,31 +6,35 @@ import {
   TextInput,
   Pressable,
   StyleSheet,
-  ScrollView, ActivityIndicator, Modal,
-  Image
+  ScrollView,
+  ActivityIndicator,
+  Modal,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import axiosInstance from "../../../api/axiosInstance";
-import moment from 'moment-timezone';
-import useMessage from '../../../hooks/useMessage'
+import moment from "moment-timezone";
+import useMessage from "../../../hooks/useMessage";
 import Toast from "react-native-toast-message";
 import useSendMessage from "../../../hooks/useSendMessage";
 import * as ImagePicker from "expo-image-picker";
 import { FontAwesome5 } from "@expo/vector-icons";
-import { useSocketContext } from "../../../contexts/SocketContext"
+import { useSocketContext } from "../../../contexts/SocketContext";
 import useCreateGroup from "../../../hooks/useCreateGroup";
 import { useAuthContext } from "../../../contexts/AuthContext";
-import * as DocumentPicker from 'expo-document-picker';
+import * as DocumentPicker from "expo-document-picker";
+import useConversation from "../../../hooks/useConversation";
 
 const Message = ({ navigation, route }) => {
   const { conver } = route.params;
-  const { getUserById, getAllGroup } = useCreateGroup()
-  const { authUser } = useAuthContext();
-  //nhi  
-  const [textMessage, setTextMessage] = useState(null)
-  const [isColorSend, setIsColorSend] = useState(false)
+  const { getUserById, getAllGroup } = useCreateGroup();
+  const { authUser, reloadAuthUser } = useAuthContext();
+  //nhi
+  const [textMessage, setTextMessage] = useState(null);
+  const [isColorSend, setIsColorSend] = useState(false);
   const { sendMessage, sendImage, sendVideo, sendFiles } = useSendMessage();
-  const { socket } = useSocketContext()
+  const { isNewSocket, newSocketData } = useSocketContext();
+  const { getConversationByID } = useConversation();
 
   //truc
   const [chats, setChats] = useState([]);
@@ -39,15 +43,20 @@ const Message = ({ navigation, route }) => {
   const [scrollViewHeight, setScrollViewHeight] = useState(0);
   const [isLoad, setIsLoad] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { renderMessageContent, renderMessageContentReply, showToastSuccess, showToastError } = useMessage();
+  const {
+    renderMessageContent,
+    renderMessageContentReply,
+    showToastSuccess,
+    showToastError,
+  } = useMessage();
   const [isModalVisible, setModalVisible] = useState(false);
   const [messageSelected, setMessageSelected] = useState("");
   const [isModalFriendVisible, setIsModalFriendVisible] = useState(false);
   const [friends, setFriends] = useState([]);
-  const [isLoadMess, setIsLoadMess] = useState(false)
-  const [isLoadChuyenTiep, setIsLoadChuyenTiep] = useState(false)
-  const [isLoadThuHoi, setIsLoadThuHoi] = useState(false)
-  const [isLoadXoa, setIsLoadXoa] = useState(false)
+  const [isLoadMess, setIsLoadMess] = useState(false);
+  const [isLoadChuyenTiep, setIsLoadChuyenTiep] = useState(false);
+  const [isLoadThuHoi, setIsLoadThuHoi] = useState(false);
+  const [isLoadXoa, setIsLoadXoa] = useState(false);
   const [replyChat, setReplyChat] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
 
@@ -57,51 +66,47 @@ const Message = ({ navigation, route }) => {
       if (file.canceled === false) {
         setSelectedFile(file);
 
-        setIsLoadMess(true)
-        let isGroup = false
+        setIsLoadMess(true);
+        let isGroup = false;
         if (conver.tag === "group") {
-          isGroup = true
+          isGroup = true;
         }
         let replyId = null;
         if (replyChat !== null) {
-          replyId = replyChat.chat._id
+          replyId = replyChat.chat._id;
         }
         for (const asset of file.assets) {
-
           const formData = new FormData();
-          const fileName = asset.uri.split('/').pop();
-          formData.append('data[]', {
+          const fileName = asset.uri.split("/").pop();
+          formData.append("data[]", {
             uri: asset.uri,
             name: fileName,
-            type: 'file/pdf', // Sử dụng 'application/pdf' cho loại tệp PDF
+            type: "file/pdf", // Sử dụng 'application/pdf' cho loại tệp PDF
           });
 
-          formData.append('isGroup', isGroup);
-          formData.append('replyMessageId', replyId);
-          
+          formData.append("isGroup", isGroup);
+          formData.append("replyMessageId", replyId);
+
           try {
-            const response = await sendFiles(conver._id, formData)
+            const response = await sendFiles(conver._id, formData);
             if (response.status === 201) {
-              setIsLoadMess(false)
-              setIsLoad(false)
+              setIsLoadMess(false);
+              setIsLoad(false);
               fetchChats();
               scrollToEnd();
               setReplyChat(null);
               console.log("send file success");
-            }
-            else if (response.status === 500) {
+            } else if (response.status === 500) {
               console.log("send file fail");
             }
           } catch (error) {
             console.log(error);
-            setIsLoadMess(false)
+            setIsLoadMess(false);
           }
-
         }
-
       }
     } catch (error) {
-      console.error('Error picking file:', error);
+      console.error("Error picking file:", error);
     }
   };
   const toggleModal = () => {
@@ -111,117 +116,147 @@ const Message = ({ navigation, route }) => {
     setIsModalFriendVisible(!isModalFriendVisible);
   };
   const fetchFriends = async () => {
-    let data = []
+    let data = [];
     try {
-      const response = await axiosInstance.get('/users/get/friends');
-      const newFriend = await Promise.all(response.data.friends.map(async (friend) => {
-        return {
-          _id: friend.userId,
-          name: friend.profile.name,
-          avatar: friend.profile.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
-          tag: 'friend'
-        }
-      }))
-      data.push(...newFriend)
+      const response = await axiosInstance.get("/users/get/friends");
+      const newFriend = await Promise.all(
+        response.data.friends.map(async (friend) => {
+          return {
+            _id: friend.userId,
+            name: friend.profile.name,
+            avatar:
+              friend.profile.avatar.url ||
+              "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+            tag: "friend",
+          };
+        })
+      );
+      data.push(...newFriend);
     } catch (error) {
       console.log("FetchGroupError: ", error);
     }
     try {
       const allGr = await getAllGroup();
-      const newGroup = await Promise.all(allGr.map(async (group) => {
-        return {
-          _id: group._id,
-          name: group.groupName,
-          avatar: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
-          tag: group.conversation.tag
-        }
-      }))
-      data.push(...newGroup)
+      const newGroup = await Promise.all(
+        allGr.map(async (group) => {
+          return {
+            _id: group._id,
+            name: group.groupName,
+            avatar:
+              group.avatar.url ||
+              "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+            tag: group.conversation.tag,
+          };
+        })
+      );
+      data.push(...newGroup);
     } catch (error) {
       console.log("FetchGroupError: ", error);
     }
-    setFriends(data)
-
+    setFriends(data);
   };
   const fetchChats = async () => {
     try {
-      if (conver.conversation._id === null || conver.conversation._id === undefined) {
+      if (
+        conver.conversation._id === null ||
+        conver.conversation._id === undefined
+      ) {
       } else {
-        const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversation._id}`);
+        const response = await axiosInstance.get(
+          `/conversations/get/messages/${conver.conversation._id}`
+        );
         const reversedChats = response.data;
 
         let data = [];
         let int = reversedChats.length;
         for (let index = 0; index < int; index++) {
           const chat = reversedChats[index];
-          const getUser = await getUserById(chat.senderId)
+          const getUser = await getUserById(chat.senderId);
           if (chat.replyMessageId === null) {
             const chatNew = {
               chat: chat,
               sender: getUser.user.profile,
-              nameReply: null
-            }
+              nameReply: null,
+            };
             data.push(chatNew);
           } else {
-            const getUserReply = await getUserById(chat.replyMessageId.senderId)
+            const getUserReply = await getUserById(
+              chat.replyMessageId.senderId
+            );
             const chatNew = {
               chat: chat,
               sender: getUser.user.profile,
               nameReply: getUserReply.user.profile.name,
-            }
+            };
             data.push(chatNew);
           }
-
-
         }
         setChats(data);
         fetchFriends();
-           }
-
+      }
     } catch (error) {
       console.log(error);
       return false;
     }
   };
   const scrollToEnd = () => {
-    fetchChats()
+    fetchChats();
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollToEnd({ animated: true });
       console.log("scrollToEnd");
     }
-  }
+  };
   useEffect(() => {
     fetchChats();
-
-    if (socket) {
-      socket.on("new_message", async ({ message }) => {
-        if (message.conversationId === conver.conversation._id) {
-          const getUser = await getUserById(message.retrunMessage.senderId)
-          setChats(prevChats => [
-            ...prevChats,
-            {
-              chat: message.retrunMessage,
-              sender: getUser.user.profile,
-              nameReply: null
-            }
-          ]);
-          scrollToEnd()
+    const fetchSocket = async () => {
+      if (isNewSocket === "new_message") {
+        const message = newSocketData;
+        if (message) {
+          reloadAuthUser();
+          console.log("socket new messagae");
+          if (
+            message.conversationId === conver.conversation._id ||
+            message.retrunMessage.receiverId === authUser._id
+          ) {
+            const getUser = await getUserById(message.retrunMessage.senderId);
+            setChats((prevChats) => [
+              ...prevChats,
+              {
+                chat: message.retrunMessage,
+                sender: getUser.user.profile,
+                nameReply: null,
+              },
+            ]);
+            scrollToEnd();
+          }
         }
-      });
-    }
-    return () => {
-      if (socket) {
-        socket.off("new_message");
+      }
+      if (isNewSocket === "delete_message") {
+        const { conversationId, isDeleted } = newSocketData;
+        if (isDeleted) {
+          setChats([]);
+        } else {
+          try {
+            if (conver && conver.conversation._id === conversationId) {
+              getConversationByID(conversationId);
+              console.log("socket delete messagae");
+            }
+          } catch (error) {
+            console.error(error);
+            setChats([]);
+          }
+        }
       }
     };
-  }, [socket, chats]);
-
-
+    fetchSocket();
+  }, [isNewSocket, newSocketData]);
 
   const handleGetTime = (time) => {
-    const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss');
-    const dateObject = new Date(vietnamDatetime)
-    return `${dateObject.getHours()}:${dateObject.getMinutes()}`
+    const vietnamDatetime = moment(time)
+      .tz("Asia/Ho_Chi_Minh")
+      .format("YYYY-MM-DD HH:mm:ss");
+    const dateObject = new Date(vietnamDatetime);
+    return `${dateObject.getHours()}:${dateObject.getMinutes()}`;
   };
 
   useEffect(() => {
@@ -255,8 +290,17 @@ const Message = ({ navigation, route }) => {
         </View>
       ),
       headerTitle: () => (
-        <View style={{ flexDirection: "row", alignItems: "center", width: '55%', marginRight: 100 }}>
-          <Text style={{ fontSize: 20, color: "white", fontWeight: 'bold' }}>{conver.name}</Text>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            width: "55%",
+            marginRight: 100,
+          }}
+        >
+          <Text style={{ fontSize: 20, color: "white", fontWeight: "bold" }}>
+            {conver.name}
+          </Text>
         </View>
       ),
       headerStyle: {
@@ -274,28 +318,32 @@ const Message = ({ navigation, route }) => {
   useEffect(() => {
     if (scrollViewRef.current && contentHeight > scrollViewHeight && !isLoad) {
       const offset = contentHeight - scrollViewHeight;
-      setIsLoad(true)
+      setIsLoad(true);
       scrollViewRef.current.scrollTo({ x: 0, y: offset, animated: true });
     }
   }, [contentHeight, scrollViewHeight]);
-
 
   // Khôi phục vị trí cuộn của ScrollView
   const restoreScrollPosition = () => {
     if (scrollViewRef.current) {
       scrollViewRef.current.measure((x, y, width, height, pageX, pageY) => {
-        scrollViewRef.current.scrollTo({ x: 0, y: height + scrollViewHeight, animated: false });
-
+        scrollViewRef.current.scrollTo({
+          x: 0,
+          y: height + scrollViewHeight,
+          animated: false,
+        });
       });
     }
   };
   const handleScrollToTop = () => {
-    setIsLoading(true)
+    setIsLoading(true);
     const fetchChats = async () => {
       try {
         // const response = await axiosInstance.get(`/chats/getHistoryMessage/${user._id}?lastTimestamp=${lastTimestamp}`);
-        const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversation._id}`);
-        const reversedChats = response.data;//.reverse();
+        const response = await axiosInstance.get(
+          `/conversations/get/messages/${conver.conversation._id}`
+        );
+        const reversedChats = response.data; //.reverse();
 
         // if (reversedChats && reversedChats.length > 0) {
         //   setChats(prevChats => [...reversedChats, ...prevChats]);
@@ -303,14 +351,12 @@ const Message = ({ navigation, route }) => {
         //   const lastElement = reversedChats[0]
         //   setLastTimestamp(lastElement.timestamp)
         // }
-        setIsLoading(false)
-
+        setIsLoading(false);
       } catch (error) {
         console.log(error);
       }
     };
     fetchChats();
-
   };
   const handleScroll = (event) => {
     const { y } = event.nativeEvent.contentOffset;
@@ -319,51 +365,55 @@ const Message = ({ navigation, route }) => {
     }
   };
   const handlePressIn = (message) => {
-    setMessageSelected(message)
-    setModalVisible(true)
+    setMessageSelected(message);
+    setModalVisible(true);
   };
   const removeItemById = (array, idToRemove) => {
-    const indexToRemove = array.findIndex(item => item._id === idToRemove);
+    const indexToRemove = array.findIndex((item) => item._id === idToRemove);
     if (indexToRemove !== -1) {
       array.splice(indexToRemove, 1);
     }
     return array;
   };
   const handleDeleteMess = () => {
-    setIsLoadThuHoi(true)
+    setIsLoadThuHoi(true);
     const thuHoi = async () => {
       try {
-        const response = await axiosInstance.post(`/chats/${messageSelected.chat._id}/delete`);
+        const response = await axiosInstance.post(
+          `/chats/${messageSelected.chat._id}/delete`
+        );
         // console.log(response)
         if (response.status === 200) {
           fetchChats();
-          showToastSuccess("Thu hồi thành công")
-          toggleModal()
-          setIsLoadThuHoi(false)
+          showToastSuccess("Thu hồi thành công");
+          toggleModal();
+          setIsLoadThuHoi(false);
         }
       } catch (error) {
         console.log(error);
-        setIsLoadThuHoi(false)
-        toggleModal()
+        setIsLoadThuHoi(false);
+        toggleModal();
       }
     };
     thuHoi();
   };
   const handleDeleteMessByStatus = () => {
-    setIsLoadXoa(true)
+    setIsLoadXoa(true);
     const deleteChat = async () => {
       try {
-        const response = await axiosInstance.post(`conversations/deleteOnMySelf/${conver.conversation._id}/${messageSelected.chat._id}`);
+        const response = await axiosInstance.post(
+          `conversations/deleteOnMySelf/${conver.conversation._id}/${messageSelected.chat._id}`
+        );
         if (response.status === 200) {
           fetchChats();
-          showToastSuccess("Xóa thành công")
-          toggleModal()
-          setIsLoadXoa(false)
+          showToastSuccess("Xóa thành công");
+          toggleModal();
+          setIsLoadXoa(false);
         }
       } catch (error) {
         console.log(error);
-        setIsLoadXoa(false)
-        toggleModal()
+        setIsLoadXoa(false);
+        toggleModal();
       }
     };
     deleteChat();
@@ -374,29 +424,33 @@ const Message = ({ navigation, route }) => {
   };
 
   const chuyenTiepChat = (friend) => {
-    setIsLoadChuyenTiep(true)
+    setIsLoadChuyenTiep(true);
     const handleSendMessage = async () => {
       try {
         let isGroup;
-        if (friend.tag === 'group') {
+        if (friend.tag === "group") {
           isGroup = true;
         } else {
           isGroup = false;
         }
-        const send = await sendMessage(friend._id, messageSelected.chat.contents[0], isGroup)
+        const send = await sendMessage(
+          friend._id,
+          messageSelected.chat.contents[0],
+          isGroup
+        );
         if (send) {
-          showToastSuccess("Chuyển tiếp thành công")
-          setIsLoadChuyenTiep(false)
+          showToastSuccess("Chuyển tiếp thành công");
+          setIsLoadChuyenTiep(false);
         } else {
-          showToastError("Chuyển tiếp thất bại")
+          showToastError("Chuyển tiếp thất bại");
         }
       } catch (error) {
-        console.log("error1:", error)
-        setIsLoadChuyenTiep(false)
+        console.log("error1:", error);
+        setIsLoadChuyenTiep(false);
         return false;
       }
       toggleModalFriend();
-    }
+    };
     handleSendMessage();
   };
 
@@ -415,79 +469,75 @@ const Message = ({ navigation, route }) => {
       allowsMultipleSelection: true,
       selectionLimit: 20,
       videoExportPreset: ImagePicker.VideoExportPreset.Passthrough,
-      videoMaxDuration: 10
+      videoMaxDuration: 10,
     });
     if (!pickerResult.canceled) {
-      setIsLoadMess(true)
-      let isGroup = false
+      setIsLoadMess(true);
+      let isGroup = false;
       if (conver.tag === "group") {
-        isGroup = true
+        isGroup = true;
       }
       let replyId = null;
       if (replyChat !== null) {
-        replyId = replyChat.chat._id
+        replyId = replyChat.chat._id;
       }
       for (const asset of pickerResult.assets) {
-        if (asset.type === 'image') {
+        if (asset.type === "image") {
           const formData = new FormData();
-          const fileName = asset.uri.split('/').pop();
-          formData.append('data[]', {
+          const fileName = asset.uri.split("/").pop();
+          formData.append("data[]", {
             uri: asset.uri,
             name: fileName,
-            type: 'image/jpeg',
-
+            type: "image/jpeg",
           });
-          formData.append('isGroup', isGroup);
-          formData.append('replyMessageId', replyId);
+          formData.append("isGroup", isGroup);
+          formData.append("replyMessageId", replyId);
           try {
-            const response = await sendImage(conver._id, formData)
+            const response = await sendImage(conver._id, formData);
             if (response.status === 201) {
-              setIsLoadMess(false)
-              setIsLoad(false)
+              setIsLoadMess(false);
+              setIsLoad(false);
               fetchChats();
               scrollToEnd();
               setReplyChat(null);
               console.log("send image success");
-            }
-            else if (response.status === 500) {
+            } else if (response.status === 500) {
               console.log("send image fail");
             }
           } catch (error) {
             console.log(error);
-            setIsLoadMess(false)
+            setIsLoadMess(false);
           }
-        } else if (asset.type === 'video') {
+        } else if (asset.type === "video") {
           const formData = new FormData();
-          const fileName = asset.uri.split('/').pop();
-          formData.append('data[]', {
+          const fileName = asset.uri.split("/").pop();
+          formData.append("data[]", {
             uri: asset.uri,
             name: fileName,
-            type: 'video/mp4',
-
+            type: "video/mp4",
           });
-          formData.append('isGroup', isGroup);
-          formData.append('replyMessageId', replyId);
+          formData.append("isGroup", isGroup);
+          formData.append("replyMessageId", replyId);
           try {
-            const response = await sendVideo(conver._id, formData)
+            const response = await sendVideo(conver._id, formData);
             if (response.status === 201) {
-              setIsLoadMess(false)
-              setIsLoad(false)
+              setIsLoadMess(false);
+              setIsLoad(false);
               fetchChats();
               scrollToEnd();
               setReplyChat(null);
               console.log("send video success");
-            }
-            else if (response.status === 500) {
+            } else if (response.status === 500) {
               console.log("send video fail");
             }
           } catch (error) {
             console.log(error);
-            setIsLoadMess(false)
+            setIsLoadMess(false);
           }
         }
       }
     }
-  }
+  };
 
   useEffect(() => {
     // Update send button color based on textMessage
@@ -501,41 +551,42 @@ const Message = ({ navigation, route }) => {
   const handleSendMessage = async () => {
     if (!textMessage) {
       console.log("message rỗng");
-    }
-    else {
-      setIsLoadMess(true)
-      let isGroup = false
+    } else {
+      setIsLoadMess(true);
+      let isGroup = false;
       if (conver.tag === "group") {
-        isGroup = true
+        isGroup = true;
       }
       let replyId = null;
       if (replyChat !== null) {
-        replyId = replyChat.chat._id
+        replyId = replyChat.chat._id;
       }
 
       try {
-        const response = await sendMessage(conver._id,
-          { type: 'text', data: textMessage }, replyId, isGroup)
+        const response = await sendMessage(
+          conver._id,
+          { type: "text", data: textMessage },
+          replyId,
+          isGroup
+        );
         if (response.status === 201) {
-          setIsLoadMess(false)
-          setIsLoad(false)
-          fetchChats()
-          scrollToEnd()
+          setIsLoadMess(false);
+          setIsLoad(false);
+          fetchChats();
+          scrollToEnd();
           console.log("send text success");
           setTextMessage(null);
           setReplyChat(null);
-        }
-        else if (response.status === 500) {
-          showToastError("Gửi tin nhắn thất bại")
+        } else if (response.status === 500) {
+          showToastError("Gửi tin nhắn thất bại");
           console.log("send text fail");
         }
-
       } catch (error) {
         console.log(error);
-        setIsLoadMess(false)
+        setIsLoadMess(false);
       }
     }
-  }
+  };
 
   const handleCheckIsSend = (message) => {
     // const getUser = await getUserById(message.senderId)
@@ -559,7 +610,8 @@ const Message = ({ navigation, route }) => {
           <View></View>
         )}
         <Toast />
-        <ScrollView ref={scrollViewRef}
+        <ScrollView
+          ref={scrollViewRef}
           onScroll={handleScroll}
           scrollEventThrottle={16}
           onLayout={(event) => {
@@ -570,90 +622,212 @@ const Message = ({ navigation, route }) => {
           }}
         >
           <View style={{ flex: 1 }}>
-            {chats.length > 0 ?
-              (chats.map((message, index) => (
-                <View key={index} style={{ display: 'flex', flexDirection: 'row', alignItems: "center", justifyContent: handleCheckIsSend(message) ? "flex-end" : "flex-start" }} >
-                  {handleCheckIsSend(message) ?
-                    (<View></View>) :
-                    (<View
-                      style={{ width: 35, height: 35, justifyContent: "center", alignItems: "center", marginLeft: 10, marginRight: 10 }} >
+            {chats.length > 0 ? (
+              chats.map((message, index) => (
+                <View
+                  key={index}
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: handleCheckIsSend(message)
+                      ? "flex-end"
+                      : "flex-start",
+                  }}
+                >
+                  {handleCheckIsSend(message) ? (
+                    <View></View>
+                  ) : (
+                    <View
+                      style={{
+                        width: 35,
+                        height: 35,
+                        justifyContent: "center",
+                        alignItems: "center",
+                        marginLeft: 10,
+                        marginRight: 10,
+                      }}
+                    >
                       <Image
-                        source={{ uri: message.sender.avatar?.url }}
-                        style={{ width: 35, height: 35, borderRadius: 25 }} />
-                    </View>)}
-                  <View style={[
-                    handleCheckIsSend(message) ? styles.styleSender : styles.styleRecive
-                  ]}>
-                    <Text style={{ paddingHorizontal: 10, fontSize: 12, color: 'gray', fontWeight: '700' }}>
+                        source={{
+                          uri:
+                            message.sender.avatar?.url ||
+                            "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+                        }}
+                        style={{ width: 35, height: 35, borderRadius: 25 }}
+                      />
+                    </View>
+                  )}
+                  <View
+                    style={[
+                      handleCheckIsSend(message)
+                        ? styles.styleSender
+                        : styles.styleRecive,
+                    ]}
+                  >
+                    <Text
+                      style={{
+                        paddingHorizontal: 10,
+                        fontSize: 12,
+                        color: "gray",
+                        fontWeight: "700",
+                      }}
+                    >
                       {message.sender.name}
                     </Text>
-                    {message.chat.replyMessageId === null ? (<View></View>) :
-                      (<View style={{ backgroundColor: '#89D5FB', display: 'flex', marginLeft: 10, borderLeftWidth: 2, borderColor: '#0072AB' }}>
-
-                        {message.chat.replyMessageId.contents.map((content, i) => (
-                          <View key={i} style={{ display: 'flex', paddingVertical: 10, alignItems: 'center', paddingRight: 5 }}>
-                            {content.type === 'text' ? (
-                              <View>
-                                <Text style={{ fontSize: 13, fontWeight: 'bold', paddingLeft: 15 }}>
-                                  {message.nameReply}
-                                </Text>
-                                {renderMessageContentReply(content)}
-                              </View>
-                            ) : (
-                              <View style={{ display: 'flex', paddingVertical: 5, alignItems: 'center', paddingRight: 5, flexDirection: 'row' }}>
-                                {renderMessageContentReply(content)}
+                    {message.chat.replyMessageId === null ? (
+                      <View></View>
+                    ) : (
+                      <View
+                        style={{
+                          backgroundColor: "#89D5FB",
+                          display: "flex",
+                          marginLeft: 10,
+                          borderLeftWidth: 2,
+                          borderColor: "#0072AB",
+                        }}
+                      >
+                        {message.chat.replyMessageId.contents.map(
+                          (content, i) => (
+                            <View
+                              key={i}
+                              style={{
+                                display: "flex",
+                                paddingVertical: 10,
+                                alignItems: "center",
+                                paddingRight: 5,
+                              }}
+                            >
+                              {content.type === "text" ? (
                                 <View>
-                                  <Text style={{ paddingLeft: 10, fontSize: 13, fontWeight: 'bold' }}>
+                                  <Text
+                                    style={{
+                                      fontSize: 13,
+                                      fontWeight: "bold",
+                                      paddingLeft: 15,
+                                    }}
+                                  >
                                     {message.nameReply}
                                   </Text>
-                                  <Text style={{ paddingLeft: 10, fontSize: 13, color: '#000' }}>
-                                    [{content.type}]
-                                  </Text>
+                                  {renderMessageContentReply(content)}
                                 </View>
-                              </View>
-                            )}
-                          </View>
-                        ))}
-
-                      </View>)
-                    }
+                              ) : (
+                                <View
+                                  style={{
+                                    display: "flex",
+                                    paddingVertical: 5,
+                                    alignItems: "center",
+                                    paddingRight: 5,
+                                    flexDirection: "row",
+                                  }}
+                                >
+                                  {renderMessageContentReply(content)}
+                                  <View>
+                                    <Text
+                                      style={{
+                                        paddingLeft: 10,
+                                        fontSize: 13,
+                                        fontWeight: "bold",
+                                      }}
+                                    >
+                                      {message.nameReply}
+                                    </Text>
+                                    <Text
+                                      style={{
+                                        paddingLeft: 10,
+                                        fontSize: 13,
+                                        color: "#000",
+                                      }}
+                                    >
+                                      [{content.type}]
+                                    </Text>
+                                  </View>
+                                </View>
+                              )}
+                            </View>
+                          )
+                        )}
+                      </View>
+                    )}
                     {message.chat.contents.map((content, i) => (
-                      <Pressable key={i}
-                        onPress={() => handlePressIn(message)}>
+                      <Pressable key={i} onPress={() => handlePressIn(message)}>
                         <View>
                           {renderMessageContent(content)}
                           {/* {console.log(content)} */}
-                          <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTime(message.timestamp)}</Text></View>
+                          <View
+                            style={{
+                              paddingLeft: 15,
+                              paddingRight: 15,
+                              paddingBottom: 5,
+                            }}
+                          >
+                            <Text style={{ fontSize: 14 }}>
+                              {handleGetTime(message.timestamp)}
+                            </Text>
+                          </View>
                         </View>
                       </Pressable>
                     ))}
                   </View>
-
                 </View>
-              ))) : (<View><Text style={{ fontSize: 16, fontWeight: '600', textAlign: 'center', paddingVertical: 10 }}>Chưa có tin nhắn nào!</Text></View>)}
-
+              ))
+            ) : (
+              <View>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "600",
+                    textAlign: "center",
+                    paddingVertical: 10,
+                  }}
+                >
+                  Chưa có tin nhắn nào!
+                </Text>
+              </View>
+            )}
           </View>
         </ScrollView>
-      </View >
+      </View>
       <View>
-        {replyChat === null ?
-          (<Text></Text>) :
-          (
-            <View style={{ backgroundColor: '#f5c4f2', marginLeft: 50, marginTop: 10 }}>
-              <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ paddingLeft: 15, fontSize: 13, color: '#000' }}>
-                  Trả lời: <Text style={{ paddingLeft: 15, fontSize: 12, color: 'gray' }}>{replyChat.sender.name} </Text>
+        {replyChat === null ? (
+          <Text></Text>
+        ) : (
+          <View
+            style={{
+              backgroundColor: "#f5c4f2",
+              marginLeft: 50,
+              marginTop: 10,
+            }}
+          >
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-between",
+              }}
+            >
+              <Text style={{ paddingLeft: 15, fontSize: 13, color: "#000" }}>
+                Trả lời:{" "}
+                <Text style={{ paddingLeft: 15, fontSize: 12, color: "gray" }}>
+                  {replyChat.sender.name}{" "}
                 </Text>
-                <Pressable onPress={() => { setReplyChat(null) }} style={{ marginRight: 20 }}><Text>Hủy</Text></Pressable>
-              </View>
-              <View
-              >{replyChat.chat.contents.map((content, i) => (
-                <View key={i} >
-                  {renderMessageContentReply(content)}
-                </View>
-              ))}</View>
+              </Text>
+              <Pressable
+                onPress={() => {
+                  setReplyChat(null);
+                }}
+                style={{ marginRight: 20 }}
+              >
+                <Text>Hủy</Text>
+              </Pressable>
             </View>
-          )}
+            <View>
+              {replyChat.chat.contents.map((content, i) => (
+                <View key={i}>{renderMessageContentReply(content)}</View>
+              ))}
+            </View>
+          </View>
+        )}
       </View>
       <View
         style={{
@@ -668,7 +842,7 @@ const Message = ({ navigation, route }) => {
           <Ionicons name="happy-outline" size={30} color="black" />
         </Pressable>
 
-        <View style={{ width: '54%' }}>
+        <View style={{ width: "54%" }}>
           <TextInput
             value={textMessage}
             onChangeText={setTextMessage}
@@ -677,13 +851,19 @@ const Message = ({ navigation, route }) => {
               height: 40,
               borderColor: "gray",
               borderRadius: 5,
-              fontSize: 17
+              fontSize: 17,
             }}
             placeholder="Tin nhắn"
           />
         </View>
 
-        <View style={{ flexDirection: 'row', width: '35%', justifyContent: 'space-between' }}>
+        <View
+          style={{
+            flexDirection: "row",
+            width: "35%",
+            justifyContent: "space-between",
+          }}
+        >
           <TouchableOpacity onPress={pickFile}>
             <Ionicons
               name="ellipsis-horizontal-outline"
@@ -693,11 +873,7 @@ const Message = ({ navigation, route }) => {
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => console.log("Pressed microphone")}>
-            <Ionicons
-              name="mic-outline"
-              size={30}
-              color="black"
-            />
+            <Ionicons name="mic-outline" size={30} color="black" />
           </TouchableOpacity>
 
           <TouchableOpacity onPress={openImagePicker}>
@@ -721,9 +897,7 @@ const Message = ({ navigation, route }) => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalHeaderText}>
-              Choose
-            </Text>
+            <Text style={styles.modalHeaderText}>Choose</Text>
             <View style={styles.modalButtonContainer1}>
               <Pressable style={styles.pressCol} onPress={handleGetModalFriend}>
                 <FontAwesome5
@@ -734,7 +908,10 @@ const Message = ({ navigation, route }) => {
                 />
                 <Text style={styles.modalButton}>Chuyển tiếp</Text>
               </Pressable>
-              <Pressable style={styles.pressCol} onPress={handleDeleteMessByStatus}>
+              <Pressable
+                style={styles.pressCol}
+                onPress={handleDeleteMessByStatus}
+              >
                 {isLoadXoa ? (
                   <ActivityIndicator color="black" size="large" />
                 ) : (
@@ -745,36 +922,33 @@ const Message = ({ navigation, route }) => {
                     style={{ marginRight: 8 }}
                   />
                 )}
-                <Text style={styles.modalButton} >Xóa</Text>
+                <Text style={styles.modalButton}>Xóa</Text>
               </Pressable>
-              {
-                messageSelected.sender?.name === authUser.profile.name
-                  ? (
-                    <Pressable style={styles.pressCol} onPress={handleDeleteMess}>
-                      {isLoadThuHoi ? (
-                        <ActivityIndicator color="black" size="large" />
-                      ) : (
-                        <FontAwesome5
-                          name="comment-slash"
-                          size={20}
-                          color="black"
-                          style={{ marginRight: 8 }}
-                        />
-                      )}
-                      <Text style={styles.modalButton}>Thu hồi</Text>
-                    </Pressable>
-
+              {messageSelected.sender?.name === authUser.profile.name ? (
+                <Pressable style={styles.pressCol} onPress={handleDeleteMess}>
+                  {isLoadThuHoi ? (
+                    <ActivityIndicator color="black" size="large" />
                   ) : (
-                    <Text></Text>
+                    <FontAwesome5
+                      name="comment-slash"
+                      size={20}
+                      color="black"
+                      style={{ marginRight: 8 }}
+                    />
                   )}
+                  <Text style={styles.modalButton}>Thu hồi</Text>
+                </Pressable>
+              ) : (
+                <Text></Text>
+              )}
             </View>
             <View style={styles.modalButtonContainer1}>
-              <Pressable style={styles.pressCol} >
+              <Pressable style={styles.pressCol}>
                 <FontAwesome5
                   name="list"
                   size={20}
                   color="black"
-                  style={{ margin: 'auto' }}
+                  style={{ margin: "auto" }}
                 />
                 <Text style={styles.modalButton}>Chọn nhiều</Text>
               </Pressable>
@@ -783,7 +957,7 @@ const Message = ({ navigation, route }) => {
                   name="reply"
                   size={20}
                   color="black"
-                  style={{ margin: 'auto' }}
+                  style={{ margin: "auto" }}
                 />
                 <Text style={styles.modalButton}>Trả lời</Text>
               </Pressable>
@@ -793,7 +967,7 @@ const Message = ({ navigation, route }) => {
               <Pressable onPress={toggleModal}>
                 <Text style={styles.modalButton}>HỦY</Text>
               </Pressable>
-              <Pressable >
+              <Pressable>
                 <Text style={styles.modalButton}>XÁC NHẬN</Text>
               </Pressable>
             </View>
@@ -808,9 +982,7 @@ const Message = ({ navigation, route }) => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalHeaderText}>
-              Choose
-            </Text>
+            <Text style={styles.modalHeaderText}>Choose</Text>
             <View style={styles.modalButtonContainer}>
               <ScrollView>
                 <View style={styles.friendList}>
@@ -824,23 +996,29 @@ const Message = ({ navigation, route }) => {
                   </View>
                   {friends.map((friend, index) => (
                     <View key={index} style={styles.friendRow}>
-                      <Pressable style={styles.friendItem} >
+                      <Pressable style={styles.friendItem}>
                         <View style={styles.friendInfo}>
                           <Image
                             source={{
-                              uri: friend.avatar
+                              uri: friend.avatar,
                             }}
                             style={styles.friendAvatar}
                           />
                           <Text style={styles.friendName}>{friend.name}</Text>
                         </View>
                         <View style={styles.friendActions}>
-                          <Pressable onPress={() => chuyenTiepChat(friend)} style={styles.pressCol}>
+                          <Pressable
+                            onPress={() => chuyenTiepChat(friend)}
+                            style={styles.pressCol}
+                          >
                             <FontAwesome5
                               name="arrow-right"
                               size={30}
                               color="black"
-                              style={{ alignContent: "center", alignItems: "center" }}
+                              style={{
+                                alignContent: "center",
+                                alignItems: "center",
+                              }}
                             />
                           </Pressable>
                         </View>
@@ -854,14 +1032,14 @@ const Message = ({ navigation, route }) => {
               <Pressable onPress={toggleModalFriend}>
                 <Text style={styles.modalButton}>HỦY</Text>
               </Pressable>
-              <Pressable >
+              <Pressable>
                 <Text style={styles.modalButton}>XÁC NHẬN</Text>
               </Pressable>
             </View>
           </View>
         </View>
       </Modal>
-    </View >
+    </View>
   );
 };
 const styles = StyleSheet.create({
@@ -888,7 +1066,7 @@ const styles = StyleSheet.create({
   modalButtonContainer: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginTop: 20
+    marginTop: 20,
   },
   modalButton: {
     fontWeight: "bold",
@@ -932,18 +1110,18 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   pressCol: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalButtonContainer1: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: 'center',
-    marginTop: 20
+    alignItems: "center",
+    marginTop: 20,
   },
   styleSender: {
     marginTop: 10,
-    justifyContent: 'space-around',
+    justifyContent: "space-around",
     borderRadius: 10,
     backgroundColor: "#cff0fe",
     alignItems: "flex-end",
@@ -955,10 +1133,9 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     alignItems: "flex-start",
     alignSelf: "flex-start",
-    justifyContent: 'space-around',
+    justifyContent: "space-around",
     borderRadius: 10,
-    paddingTop: 5
+    paddingTop: 5,
   },
-
 });
 export default Message;

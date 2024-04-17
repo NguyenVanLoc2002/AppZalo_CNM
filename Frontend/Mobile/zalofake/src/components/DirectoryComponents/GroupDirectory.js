@@ -56,16 +56,23 @@ const GroupDirectory = ({ navigation }) => {
 
         return {
           _id: group._id,
+          group : group,
           name: group.groupName,
           avatar: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
           conversation: group.conversation,
           createBy: group.createBy,
           lastMessage: lastMessage,
           sender: sender,
-          timeSend: handleGetTime(group?.lastMessage.timestamp),
+          timeSend: handleGetTime(group.lastMessage.timestamp),
           tag: group.conversation.tag
         }
       }))
+     
+      newGroup.sort((a, b) => {
+        const timeA = a.group.lastMessage.timestamp || ""
+        const timeB = b.group.lastMessage.timestamp || ""
+        return timeB.localeCompare(timeA);
+      });
       setGroupAll(newGroup)
       setLengthGroup(dem)
     } catch (error) {
@@ -97,17 +104,12 @@ const GroupDirectory = ({ navigation }) => {
       const response = await axiosInstance.get("/users/get/friends");
       if (response.status === 200) {
         setListFriends(response.data.friends)
-        const newRadioButtons = [];
-        for (const friend of response.data.friends) {
-          const item = {
-            _id: friend.userId,
-            name: friend.profile.name,
-            avatar: friend?.profile?.avatar?.url
-          }
-          newRadioButtons.push(item);
-
-        }
-        setRadioButton(newRadioButtons);
+        const newRadioButtons = response.data.friends.map(friend => ({
+          _id: friend.userId,
+          name: friend.profile.name,
+          avatar: friend?.profile?.avatar?.url
+        }))
+        setRadioButton(newRadioButtons)
       } else if (response.status === 404) {
         console.log("getFriendError:");
       }
@@ -140,16 +142,12 @@ const GroupDirectory = ({ navigation }) => {
       });
 
       if (filteredFriends.length > 0) {
-        const newRadioButtons = [];
-        for (const friend of filteredFriends) {
-          const item = {
-            _id: friend.userId,
-            name: friend.profile.name,
-            avatar: friend?.profile?.avatar?.url
-          }
-          newRadioButtons.push(item);
-        }
-        setListSearch(newRadioButtons);
+        const newRadioButtons = filteredFriends.map(friend => ({
+          _id: friend.userId,
+          name: friend.profile.name,
+          avatar: friend?.profile?.avatar?.url
+        }))
+        setListSearch(newRadioButtons)
       } else {
         showToast("Không tìm thấy", "error")
       }
@@ -234,7 +232,7 @@ const GroupDirectory = ({ navigation }) => {
             setSelectedFriends([])
             setModalCreateGr(false)
             fetchGroup()
-        
+
             const group = {
               _id: response.group._id,
               name: response.group.groupName,
@@ -289,7 +287,10 @@ const GroupDirectory = ({ navigation }) => {
                 source={{ uri: group.avatar }}
               />
               <View style={styles.groupTextContainer}>
-                <Text style={styles.groupTitle}>{group.name}</Text>
+                <View style={{ flexDirection: 'row' }}>
+                  <Ionicons name="people" size={20} color="gray" />
+                  <Text style={styles.groupTitle}>{group.name}</Text>
+                </View>
                 <Text style={styles.groupDescription}>
                   {group.sender ? `${group.sender}: ${group.lastMessage}` : "Chưa có tin nhắn nào"}
                 </Text>
@@ -315,7 +316,7 @@ const GroupDirectory = ({ navigation }) => {
             </View>
             <View style={styles.viewClose}>
               <Text style={{ fontWeight: '600', fontSize: 20 }}>Nhóm mới</Text>
-              {/* <Text style={{ color: '#979797', fontWeight: '600' }}>Đã chọn: 0</Text> */}
+              <Text style={{ color: '#979797', fontWeight: '600' }}>Đã chọn: {selectedFriends.length}</Text>
             </View>
             <View style={{ height: '7%', width: '80%', justifyContent: 'center' }}>
               <TextInput
@@ -514,7 +515,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     height: 30,
-    paddingRight: 20,
+    paddingLeft: 10,
   },
   groupDescription: {
     fontSize: 14,
