@@ -34,7 +34,6 @@ const MessageSettings = ({ navigation, route }) => {
   const [name, setName] = useState("");
   const [isGroupAdmin, setIsGroupAdmin] = useState(false);
   const { authUser } = useAuthContext();
-  const language = "vi";
   const [nameGroup, setNameGroup] = useState(null);
   const [textSearch, setTextSearch] = useState(null);
   const [radioButton, setRadioButton] = useState([]);
@@ -549,7 +548,7 @@ const MessageSettings = ({ navigation, route }) => {
               justifyContent: "center",
             }}
           >
-            <Text>{language === "vi" ? "Quản Trị Viên :" : "Admin :"}</Text>
+            <Text>{"Quản Trị Viên :"}</Text>
             <Text style={{ marginLeft: 10, fontWeight: "bold" }}>
               {conver?.createBy?.profile?.name}
             </Text>
@@ -573,7 +572,7 @@ const MessageSettings = ({ navigation, route }) => {
             }}
           >
             <Text style={{ fontSize: 18, fontWeight: "bold" }}>
-              {language === "vi" ? "Danh sách thành viên" : "Member list"}
+              {"Danh sách thành viên"}
             </Text>
             <Pressable
               style={{ position: "absolute", top: 10, right: 20 }}
@@ -671,7 +670,7 @@ const MessageSettings = ({ navigation, route }) => {
             }}
           >
             <Text style={{ fontSize: 18, fontWeight: "bold" }}>
-              {language === "vi" ? "Thiết lập nhóm" : "Group setting"}
+              {"Thiết lập nhóm"}
             </Text>
           </View>
           <View>
@@ -687,7 +686,7 @@ const MessageSettings = ({ navigation, route }) => {
               >
                 {/* <GrUserAdmin size={20} color="gray" /> */}
                 <Text style={{ color: "gray", marginLeft: 10 }}>
-                  {language === "vi" ? "Quản trị viên" : "Admin"}
+                  {"Quản trị viên"}
                 </Text>
               </Pressable>
             )}
@@ -703,13 +702,7 @@ const MessageSettings = ({ navigation, route }) => {
             >
               {/* <IoTrashOutline size={20} color="red" /> */}
               <Text style={{ color: "red", marginLeft: 10 }}>
-                {isGroupAdmin
-                  ? language === "vi"
-                    ? "Giải tán nhóm"
-                    : "Dissolve group"
-                  : language === "vi"
-                    ? "Rời nhóm"
-                    : "Leave group"}
+                {isGroupAdmin ? "Giải tán nhóm" : "Rời nhóm"}
               </Text>
             </Pressable>
           </View>
@@ -805,13 +798,27 @@ const MessageSettings = ({ navigation, route }) => {
             </ScrollView>
             <View
               style={{
-                width: "100%",
+                width: "95%",
                 height: "7%",
-                justifyContent: "center",
+                justifyContent: "space-evenly",
                 flexDirection: "row",
                 paddingHorizontal: 10,
+                marginBottom: 10
               }}
             >
+              <Pressable
+                style={{
+                  width: "45%",
+                  height: "90%",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  backgroundColor: "#FF1744",
+                  borderRadius: 10,
+                }}
+                onPress={handleHideAddMember}
+              >
+                <Text style={{ color: "white", fontSize: 18 , fontWeight:'bold'}}>Huỷ</Text>
+              </Pressable>
               <Pressable
                 style={{
                   width: "45%",
@@ -826,22 +833,9 @@ const MessageSettings = ({ navigation, route }) => {
                 {isLoadingAddMem ? (
                   <ActivityIndicator color="blue" size="large" />
                 ) : (
-                  <Text style={{ color: "white", fontSize: 18 }}>Thêm</Text>
+                  <Text style={{ color: "white", fontSize: 18, fontWeight:'bold'}}>Thêm</Text>
                 )}
 
-              </Pressable>
-              <Pressable
-                style={{
-                  width: "45%",
-                  height: "90%",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  backgroundColor: "#FF1744",
-                  borderRadius: 10,
-                }}
-                onPress={handleHideAddMember}
-              >
-                <Text style={{ color: "white", fontSize: 18 }}>Huỷ</Text>
               </Pressable>
             </View>
           </View>

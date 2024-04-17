@@ -58,7 +58,7 @@ exports.getConversation = async (req, res) => {
       },
       {
         path: "lastMessage",
-        select: "contents senderId",
+        select: "contents senderId ",
       },
     ]);
     if (!conversation) {
@@ -86,7 +86,7 @@ exports.getConversations = async (req, res) => {
       },
       {
         path: "lastMessage",
-        select: "senderId receiverId contents",
+        select: "senderId receiverId contents timestamp",
       },
     ]);
     if (!conversations) {
@@ -114,6 +114,7 @@ exports.getConversationByParticipants = async (req, res) => {
 
     const conversation = await Conversation.findOne({
       participants: { $all: participants },
+      tag: { $ne: "group" },
     }).populate([
       {
         path: "participants",

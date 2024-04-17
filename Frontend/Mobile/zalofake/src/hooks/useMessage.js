@@ -58,7 +58,7 @@ const useMessage = () => {
       return (
 
         <View style={{ paddingLeft: 15, paddingRight: 15 }}>
-          {console.log(content.data)}
+          {/* {console.log(content.data)} */}
           {/* {content.data!==null?(<PDFReader
           source={{ uri: content.data }}
            /> ):(<Text></Text>)

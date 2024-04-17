@@ -26,14 +26,12 @@ function Chat({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
   const { conversations, getConversations } = useConversation();
   const { groups, getGroups } = useGroup();
-  // const [conversations, setConversations] = useState([]);
   const [listFriends, setListFriends] = useState([]);
   const [chats, setChats] = useState([]);
   const [isLoad, SetIsLoad] = useState(false);
   const { authUser } = useAuthContext();
-  const { socket } = useSocketContext();
-
   const { getUserById } = useCreateGroup()
+  const { isNewSocket, newSocketData } = useSocketContext();
 
 
   useEffect(() => {
@@ -96,7 +94,6 @@ function Chat({ navigation }) {
       const friend = conversation.participants.find(
         (participant) => participant.phone !== authUser.phone
       );
-
       return {
         _id: friend?._id,
         conversation: conversation,
@@ -132,54 +129,85 @@ function Chat({ navigation }) {
   }, [conversations, groups]);
 
   const fetchDataConver = async (listChat) => {
-
     let data = [];
-    let dataChat;
     let int = listChat.length;
-    // console.log(listChat)
+
     for (let index = 0; index < int; index++) {
 
       const conver = listChat[index];
+
       if (conver.lastMessage !== undefined && conver.lastMessage !== null) {
-        const getUser = await getUserById(conver?.lastMessage?.senderId)
-        if (authUser.profile.name === getUser.user.profile.name) {
-          dataChat = "Bạn"
-        } else {
-          dataChat = getUser.user.profile.name
-        }
-        if (conver.lastMessage.contents[0].type === "text") {
-          dataChat = dataChat + ': ' + conver.lastMessage.contents[0].data;
-        } else if (conver.lastMessage.contents[0].type === "image") {
-          dataChat = dataChat + ': [Hình ảnh]';
-        } else {
-          dataChat = dataChat + ': [Video]';
-        }
+        const dataChat = await setDataChat(conver.lastMessage, false);
         const conversationNew = {
           conver: conver,
           dataChat: dataChat,
-          time: handleGetTime(conver.lastMessage.timestamp)
+          time: handleGetTime(conver?.lastMessage?.timestamp)
         };
         data.push(conversationNew);
 
       }
 
     };
-    data.sort((a, b) => {
-      const timeA = a.conver.lastMessage.timestamp || "";
-      const timeB = b.conver.lastMessage.timestamp || "";
-      return timeB.localeCompare(timeA);
-    });
+    sortTime(data)
     setListFriends(data);
 
   };
+  const sortTime = (data) => {
+    data.sort((a, b) => {
+      const timeA = a?.conver?.lastMessage?.timestamp || "";
+      const timeB = b?.conver?.lastMessage?.timestamp || "";
+      return timeB.localeCompare(timeA);
+    });
+    return data;
+  }
+  const setDataChat = async (conver, isDelete) => {
+    let dataChat = '';
+    if (conver) {
+      const getUser = await getUserById(conver.senderId)
+      if (authUser.profile.name === getUser.user.profile.name) {
+        dataChat = "Bạn"
+      } else {
+        dataChat = getUser.user.profile.name
+      }
+      if (isDelete) {
+        dataChat = dataChat + ": đã thu hồi tin nhắn";
+      }
+      else {
+        if (conver.contents[0].type === "text") {
+          dataChat = dataChat + ': ' + conver.contents[0].data;
+        } else if (conver.contents[0].type === "image") {
+          dataChat = dataChat + ': [Hình ảnh]';
+        } else {
+          dataChat = dataChat + ': [Video]';
+        }
+      }
+    }
+    return dataChat;
+  }
+  const updatedListFriends = async (conversationId, message, isDelete) => {
+    const updatedListFriends = await Promise.all(listFriends.map(async (item) => {
+      if (item.conver.conversation._id === conversationId) {
+        const dataChat = await setDataChat(message, isDelete);
+        return {
+          ...item,
+          conver: {
+            ...item?.conver,
+            lastMessage: message
+          },
+          dataChat: dataChat,
+          time: handleGetTime(message?.timestamp)
+        };
+      }
+      return item;
+    }));
+    return updatedListFriends;
+  }
 
   useEffect(() => {
     const fetchDataListFriend = async () => {
       try {
-
         getConversations();
         getGroups();
-
       } catch (error) {
         console.log("getFriendError:", error);
       }
@@ -188,9 +216,40 @@ function Chat({ navigation }) {
       fetchDataListFriend();
       SetIsLoad(true);
     }
-  }, []);
+
+    const fetchSocket = async () => {
+      if (isNewSocket === "new_message") {
+        const message = newSocketData;
+        if (message) {
+          console.log("socket new message");
+          const update = await updatedListFriends(message.conversationId, message.retrunMessage, false)
+          const sortUpdate = sortTime(update);
+          setListFriends(sortUpdate)
+        }
+      }
+      if (isNewSocket === "delete_message") {
+        const { chatRemove, conversationId, isDeleted } = newSocketData;
+        if (chatRemove) {
+          if (isDeleted) {
+            console.log("delete_conversation", conversationId);
+            const updatedListFriends = listFriends.map((item) => {
+              if (item.conver.conversation._id === conversationId) {
+                console.log("hihi");
+              }
+            })
+          } else {
+            const update = await updatedListFriends(conversationId, chatRemove, true)
+            const sortUpdate = sortTime(update);
+            setListFriends(sortUpdate)
+          }
+        }
+      }
+    }
+    fetchSocket()
+  }, [isNewSocket, newSocketData]);
+
   const handleChatItemPress = (item) => {
-    navigation.navigate("Message", { conver: item.conver});
+    navigation.navigate("Message", { conver: item.conver });
   };
 
 
@@ -223,7 +282,7 @@ function Chat({ navigation }) {
             <ChatItem item={item} />
           </Pressable>
         )}
-      keyExtractor={(item) => item.conver.conversation._id}
+        keyExtractor={(item) => item.conver.conversation._id}
       />
       <Modal
         animationType="none"
@@ -342,7 +401,7 @@ function Chat({ navigation }) {
           </View>
         </Pressable>
       </Modal>
-      
+
     </SafeAreaView>
   );
 }
