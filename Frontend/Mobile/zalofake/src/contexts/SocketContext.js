@@ -89,17 +89,26 @@ export const SocketContextProvider = ({ children }) => {
   }, [socket, authUser]);
 
   const handleReceiveFriendRequest = async (sender) => {
-    Toast.success(`${sender.sender.name} has sent you a friend request`);
+    Toast.show({
+      text1: `${sender.sender.name} has sent you a friend request`,
+      type: "success",
+    });
     await reloadAuthUser();
   };
 
   const handleFriendAcceptAction = async (sender) => {
-    Toast.success(`${sender.sender.name} has accepted your friend request`);
+    Toast.show({
+      text1: `${sender.sender.name} has accepted your friend request`,
+      type: "success",
+    });
     await reloadAuthUser();
   };
   const handleFriendRejectAction = async (sender) => {
     console.log("reject", sender);
-    Toast.error(`${sender.sender.name} has rejected your friend request`);
+    Toast.show({
+      text1: `${sender.sender.name} has rejected your friend request`,
+      type: "error",
+    });
     await reloadAuthUser();
   };
 
@@ -108,7 +117,7 @@ export const SocketContextProvider = ({ children }) => {
   };
 
   // handle for chat
-  const handleNewMessage = ({message}) => {
+  const handleNewMessage = ({ message }) => {
     setIsNewSocket("new_message");
     setNewSocketData(message);
   };

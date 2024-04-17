@@ -17,7 +17,7 @@ const ChatItem = ({ item }) => {
         style={{ width: "15%", justifyContent: "center", alignItems: "center" }}
       >
         <Image
-          source={{ uri: item.conversation.avatar, }}
+          source={{ uri: item.conversation.avatar }}
           style={{ width: 55, height: 55, borderRadius: 25 }}
         />
       </View>

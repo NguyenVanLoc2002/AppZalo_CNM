@@ -32,6 +32,7 @@ function Chat({ navigation }) {
   const { authUser } = useAuthContext();
   const { getUserById } = useCreateGroup()
   const { isNewSocket, newSocketData } = useSocketContext();
+  const { showToastSuccess } = useMessage();
 
   useEffect(() => {
     navigation.setOptions({
@@ -250,8 +251,8 @@ function Chat({ navigation }) {
         if (!listFriends.find(item => item.conversation._id === data.group._id)) {
           const group = data.group
           if (data.addMembers.includes(authUser._id)) {
-            console.log(`Bạn vừa được thêm vào nhóm ${data.group.groupName}`);
-            showToastSuccess(`Bạn vừa được thêm vào nhóm ${data.group.groupName}`)
+            console.log(`Bạn đã tham gia nhóm ${data.group.groupName}`);
+            showToastSuccess(`Bạn đã tham gia nhóm ${data.group.groupName}`)
           }
           const conver = await getConversationByID(group.conversation._id)
           group.lastMessage = conver.lastMessage
@@ -267,10 +268,7 @@ function Chat({ navigation }) {
           setListFriends(sortUpdate)
         }
       }
-      if(isNewSocket === "remove-from-group") {
-        const group = newSocketData;
-        console.log("group", JSON.stringify(group));
-      }
+     
     }
     fetchSocket()
   }, [isNewSocket, newSocketData]);
@@ -278,7 +276,6 @@ function Chat({ navigation }) {
   const handleChatItemPress = (item) => {
     navigation.navigate("Message", { conver: item.conversation });
   };
-
 
   const handleGetTime = (time) => {
     const currentTime = moment().tz('Asia/Ho_Chi_Minh'); // Lấy thời gian hiện tại ở múi giờ Việt Nam
@@ -302,7 +299,7 @@ function Chat({ navigation }) {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <Toast/>
+      <Toast />
       <FlatList
         data={listFriends}
         renderItem={({ item }) => (

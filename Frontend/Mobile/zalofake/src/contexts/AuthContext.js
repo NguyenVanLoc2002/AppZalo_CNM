@@ -101,10 +101,7 @@ export const AuthContextProvider = ({ children }) => {
       }
     } catch (error) {
       console.log(error);
-      Toast.error({
-        text1: "Failed to get user information",
-        type: "error",
-      });
+      // Toast.error("Failed to get user information");
       return false;
     }
   };
