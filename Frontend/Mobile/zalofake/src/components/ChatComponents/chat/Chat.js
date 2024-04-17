@@ -118,6 +118,7 @@ function Chat({ navigation }) {
         lastMessage: group.lastMessage,
         tag: group.conversation.tag,
         createBy: group.createBy,
+        admins: group?.admins
       };
     });
     listChat.push(...listGroup);

@@ -442,6 +442,9 @@ exports.leaveGroup = async (req, res) => {
 exports.changeAdmins = async (req, res) => {
   try {
     const { members, typeChange, groupId } = req.body;
+    console.log(members);
+    console.log(typeChange);
+    console.log(groupId);
     const token = req.headers.authorization.split(" ")[1];
     const uid = jwt.verify(token, process.env.JWT_SECRET);
     const group = await Group.findById(groupId).populate([
