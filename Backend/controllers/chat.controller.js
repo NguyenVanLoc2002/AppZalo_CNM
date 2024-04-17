@@ -10,11 +10,8 @@ exports.sendMessage = async (req, resp) => {
   try {
     const senderId = req.user.user_id;
     const receiverId = req.params.userId;
-    // Thêm biến này từ FE khi chọn conversation để trò chuyện nếu là Group thì truyền đi isGroup là true
-    //Còn là chat single thì không cần truyền chỉ cần truyền data nha FE
-    // const isGroup = req.body.isGroup === 'false' ? false : true;
-    const isGroup = JSON.parse(req.body.isGroup) || false;
-    const replyMessageId = req.body.replyMessageId === 'null' ?  null :req.body.replyMessageId ;
+    const isGroup = JSON.parse(req.body.isGroup || false);
+    const replyMessageId = req.body.replyMessageId || null;
     let contents = [];
     if (req.body.data) {
       contents.push({

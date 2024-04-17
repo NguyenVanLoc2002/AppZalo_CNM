@@ -330,6 +330,7 @@ exports.removeMember = async (req, res) => {
     if (!group) {
       return res.status(404).json({ error: "Group not found" });
     }
+
     if (
       group.createBy.toString() !== uid.user_id &&
       !group.admins.includes(uid.user_id)
@@ -339,6 +340,8 @@ exports.removeMember = async (req, res) => {
     if (!members || members.length < 1) {
       return res.status(400).json({ error: "Members is required" });
     }
+
+    const grMembers = group.conversation.participants;
 
     members.map(async (member) => {
       if (group.createBy.toString() === member) {
@@ -358,10 +361,18 @@ exports.removeMember = async (req, res) => {
           ));
       }
     });
+    if (group.conversation.participants.length <= 2) {
+      return res.status(400).json({
+        error: "Group must have at least 2 members",
+      });
+    }
+    await group.conversation.save();
+    await group.save();
 
-    group.conversation.participants.forEach(async (member) => {
+    grMembers.forEach(async (member) => {
       const memderSocketId = await getReciverSocketId(member);
       if (memderSocketId && members !== uid.user_id) {
+        console.log("remove-from-group", member);
         io.to(memderSocketId.socket_id).emit("remove-from-group", {
           group: {
             id: group._id,
@@ -372,14 +383,6 @@ exports.removeMember = async (req, res) => {
       }
     });
 
-    if (group.conversation.participants.length <= 2) {
-      return res.status(400).json({
-        error: "Group must have at least 2 members",
-      });
-    }
-
-    await group.conversation.save();
-    await group.save();
     return res.status(200).json(group);
   } catch (error) {
     console.error(error);
@@ -412,6 +415,13 @@ exports.leaveGroup = async (req, res) => {
       group.admins = group.admins.filter((a) => a.toString() !== uid.user_id);
     }
 
+    if (group.conversation.participants.length <= 2) {
+      return res.status(400).json({
+        error: "Group must have at least 2 members",
+      });
+    }
+
+    await group.conversation.save();
     members.forEach(async (member) => {
       const memderSocketId = await getReciverSocketId(member);
       if (memderSocketId) {
@@ -424,14 +434,6 @@ exports.leaveGroup = async (req, res) => {
         });
       }
     });
-
-    if (group.conversation.participants.length <= 2) {
-      return res.status(400).json({
-        error: "Group must have at least 2 members",
-      });
-    }
-
-    await group.conversation.save();
     return res.status(200).json(group);
   } catch (error) {
     console.error(error);
