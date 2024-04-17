@@ -6,12 +6,10 @@ import {
   Pressable,
   ScrollView,
   TextInput,
-  Modal, ActivityIndicator
+  Modal, ActivityIndicator, StyleSheet
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { Switch } from "react-native";
 import Toast from "react-native-toast-message";
 import axiosInstance from "../../../api/axiosInstance";
 import { useAuthContext } from "../../../contexts/AuthContext";
@@ -25,28 +23,25 @@ const MessageSettings = ({ navigation, route }) => {
   const { conver } = route.params;
   const { sendMessage } = useSendMessage();
   const { showToastError, showToastSuccess } = useMessage();
-  // const [isMarkAsCloseFriend, setMarkAsCloseFriend] = useState(false);
-  // const [isPinChat, setPinChat] = useState(false);
-  // const [isHideChat, setHideChat] = useState(false);
-  // const [isNotifyIncomingCalls, setNotifyIncomingCalls] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [modalAddMember, setModalAddMember] = useState(false);
   const [name, setName] = useState("");
   const [isGroupAdmin, setIsGroupAdmin] = useState(false);
   const { authUser } = useAuthContext();
-  const [nameGroup, setNameGroup] = useState(null);
   const [textSearch, setTextSearch] = useState(null);
-  const [radioButton, setRadioButton] = useState([]);
-  const [isHidden, setIsHidden] = useState(false);
+
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [listSearch, setListSearch] = useState([]);
   const [isLoadingUpdateName, setIsLoadingUpdateName] = useState(false);
   const [isLoadingUpdataAvatar, setIsLoadingUpdataAvatar] = useState(false);
   const [isLoadingAddMem, setIsLoadingAddMem] = useState(false);
+  const [isLoadingLeaveGroup, setIsLoadingLeaveGroup] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [memberSelected, setMemberSelected] = useState(null);
   const [listFriendCanSearch, setListFriendCanSearch] = useState([]);
-  
-  const { updateGroup, addMember, removeMember, deleteGroup, loading } =
+  const [isModalXacNhanXoa, setIsModalXacNhanXoa] = useState(false);
+
+  const { updateGroup, addMember, removeMember, deleteGroup, loading, leaveGroup } =
     useGroup();
   const { getConversationByID, conversation } = useConversation();
   const [selectedImage, setSelectedImage] = useState(null);
@@ -70,7 +65,7 @@ const MessageSettings = ({ navigation, route }) => {
         fontSize: 20,
       },
     });
-   fetchData();
+    fetchData();
   }, [navigation]);
   const fetchData = async () => {
     setName(conver.name);
@@ -150,9 +145,15 @@ const MessageSettings = ({ navigation, route }) => {
     }
 
   };
+
+  const toggleModal = () => {
+    setIsModalXacNhanXoa(!isModalXacNhanXoa);
+  };
+
   // xóa thành viên
   const removeMemberInGroup = async (member) => {
     try {
+      setIsLoadingAddMem(true);
       let selectedFrName = member.profile?.name;
       let selectedFr = [member._id]
 
@@ -166,10 +167,15 @@ const MessageSettings = ({ navigation, route }) => {
         let textMessage = authUser?.profile?.name + ' đã xóa ' + selectedFrName + ' khỏi nhóm!!!';
         await sendMessage(conver._id,
           { type: 'text', data: textMessage }, null, true)
+        toggleModal();
+        setIsLoadingAddMem(false);
         showToastSuccess('Xóa thành viên khỏi nhóm thành công')
+
       }
     } catch (error) {
       console.error(error);
+      toggleModal();
+      setIsLoadingAddMem(false);
       if (error.response.data.error === "Group must have at least 2 members") {
         showToastError('Nhóm phải có ít nhất 2 thành viên')
       } else {
@@ -211,8 +217,6 @@ const MessageSettings = ({ navigation, route }) => {
 
   // Search bạn để add vào group
   const handleSearch = () => {
-    console.log("Giá trị của radioButton:", radioButton);
-
     if (!textSearch) {
       showToastError("Bạn chưa nhập");
     } else {
@@ -251,17 +255,43 @@ const MessageSettings = ({ navigation, route }) => {
   //giải tán nhóm
   const handleDeleteGroup = async () => {
     try {
+      setIsLoadingLeaveGroup(true);
       const response = await deleteGroup(conver._id);
       if (response) {
         showToastSuccess(
           "Xóa nhóm thành công"
         );
+        setIsLoadingLeaveGroup(false);
         navigation.navigate("ChatComponent");
       }
     } catch (error) {
+      setIsLoadingLeaveGroup(false);
       console.error(error);
       showToastError(
         "Xóa nhóm thất bại"
+      );
+    }
+  };
+
+  //rời nhóm
+  const handleLeaveGroup = async () => {
+    try {
+      setIsLoadingLeaveGroup(true);
+      const response = await leaveGroup(conver._id);
+      if (response) {
+        let textMessage = authUser?.profile?.name + ' đã rời khỏi nhóm!';
+        await sendMessage(conver._id,
+          { type: 'text', data: textMessage }, null, true)
+        showToastSuccess(
+          "Rời nhóm thành công"
+        );
+        setIsLoadingLeaveGroup(false);
+        navigation.navigate("ChatComponent");
+      }
+    } catch (error) {
+      console.error(error); setIsLoadingLeaveGroup(false);
+      showToastError(
+        "Rời nhóm thất bại"
       );
     }
   };
@@ -274,7 +304,6 @@ const MessageSettings = ({ navigation, route }) => {
     } else {
       setSelectedFriends((prevState) => [...prevState, item]);
     }
-    setIsHidden(true);
   };
 
   const isFriendSelected = (friend) => {
@@ -293,7 +322,6 @@ const MessageSettings = ({ navigation, route }) => {
 
   useEffect(() => {
     if (selectedFriends.length === 0) {
-      setIsHidden(false);
     }
   }, [selectedFriends]);
 
@@ -378,13 +406,13 @@ const MessageSettings = ({ navigation, route }) => {
         uri: selectedImage,
         type: "image/jpeg",
         name: "avatar.jpg",
-      });   
-      const response = await updateGroup(conver._id,  formData );
+      });
+      const response = await updateGroup(conver._id, formData);
       if (response) {
         let textMessage = authUser?.profile?.name + ' đã cập nhật avatar mới';
         await sendMessage(conver._id,
           { type: 'text', data: textMessage }, null, true)
-        setIsLoadingUpdataAvatar(false);   
+        setIsLoadingUpdataAvatar(false);
         setSelectedAvatar(selectedImage);
         showToastSuccess(
           "Cập nhật avtar nhóm thành công"
@@ -639,7 +667,10 @@ const MessageSettings = ({ navigation, route }) => {
                       </Text>
                     </View>
                     {isGroupAdmin && (
-                      <Pressable onPress={() => { removeMemberInGroup(member) }}>
+                      <Pressable onPress={() => {
+                        setMemberSelected(member);
+                        toggleModal();
+                      }}>
                         {loading ? (
                           <ActivityIndicator size="small" color="blue" />
                         ) : (
@@ -698,12 +729,17 @@ const MessageSettings = ({ navigation, route }) => {
                 paddingVertical: 10,
                 paddingHorizontal: 20,
               }}
-              onPress={isGroupAdmin ? handleDeleteGroup : null}
+              onPress={isGroupAdmin ? handleDeleteGroup : handleLeaveGroup}
             >
               {/* <IoTrashOutline size={20} color="red" /> */}
-              <Text style={{ color: "red", marginLeft: 10 }}>
-                {isGroupAdmin ? "Giải tán nhóm" : "Rời nhóm"}
-              </Text>
+              {isLoadingLeaveGroup ? (
+                <ActivityIndicator color="blue" size="large" />
+              ) : (
+                <Text style={{ color: "red", marginLeft: 10, fontSize: 18 }}>
+                  {isGroupAdmin ? "Giải tán nhóm" : "Rời nhóm"}
+                </Text>
+              )}
+
             </Pressable>
           </View>
         </View>
@@ -817,7 +853,7 @@ const MessageSettings = ({ navigation, route }) => {
                 }}
                 onPress={handleHideAddMember}
               >
-                <Text style={{ color: "white", fontSize: 18 , fontWeight:'bold'}}>Huỷ</Text>
+                <Text style={{ color: "white", fontSize: 18, fontWeight: 'bold' }}>Huỷ</Text>
               </Pressable>
               <Pressable
                 style={{
@@ -833,7 +869,7 @@ const MessageSettings = ({ navigation, route }) => {
                 {isLoadingAddMem ? (
                   <ActivityIndicator color="blue" size="large" />
                 ) : (
-                  <Text style={{ color: "white", fontSize: 18, fontWeight:'bold'}}>Thêm</Text>
+                  <Text style={{ color: "white", fontSize: 18, fontWeight: 'bold' }}>Thêm</Text>
                 )}
 
               </Pressable>
@@ -904,8 +940,72 @@ const MessageSettings = ({ navigation, route }) => {
           </View>
         </View>
       </Modal>
+      {/* Modal xác nhận khi xóa thành viên */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isModalXacNhanXoa}
+        onRequestClose={toggleModal}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalHeaderText}>
+              Bạn có chắc chắn muốn xóa {memberSelected?.profile?.name} khỏi nhóm
+            </Text>
+
+            <View style={styles.modalButtonContainer}>
+              <Pressable onPress={toggleModal}>
+                <Text style={styles.modalButton}>HỦY</Text>
+              </Pressable>
+              <Pressable onPress={() => { removeMemberInGroup(memberSelected) }}>
+
+                {isLoadingAddMem ? (
+                  <ActivityIndicator color="blue" size={"large"} />
+                ) : (
+                  <Text style={styles.modalButton}>XÁC NHẬN</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
+
+const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    width: 300,
+    padding: 20,
+    borderRadius: 10,
+  },
+  modalHeaderText: {
+    fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  modalText: {
+    marginBottom: 20,
+  },
+  modalButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+  },
+  modalButton: {
+    fontWeight: "bold",
+    marginHorizontal: 10,
+    color: "#0091FF",
+  },
+
+
+});
 
 export default MessageSettings;
