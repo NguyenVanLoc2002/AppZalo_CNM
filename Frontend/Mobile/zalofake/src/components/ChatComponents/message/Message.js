@@ -177,7 +177,6 @@ const Message = ({ navigation, route }) => {
         setChats(data);
         fetchFriends();
       }
-
     } catch (error) {
       console.log(error);
       return false;
@@ -197,7 +196,7 @@ const Message = ({ navigation, route }) => {
       if (isNewSocket === "new_message") {
         const message = newSocketData;
         if (message) {
-          reloadAuthUser()
+          reloadAuthUser();
           console.log("socket new messagae");
           if (
             message.conversationId === conver.conversation._id ||
