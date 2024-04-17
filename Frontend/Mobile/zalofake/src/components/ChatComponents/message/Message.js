@@ -610,10 +610,10 @@ const Message = ({ navigation, route }) => {
                       {message.sender.name}
                     </Text>
                     {message.chat.replyMessageId === null ? (<View></View>) :
-                      (<View style={{ backgroundColor: '#89D5FB', display: 'flex', marginLeft: 10, borderLeftWidth: 2, borderColor: '#0072AB' }}>
+                      (<View style={{ backgroundColor: '#89D5FB', display: 'flex', marginLeft: 10, borderLeftWidth: 2, borderColor: '#0072AB',marginRight:10 }}>
 
                         {message.chat.replyMessageId.contents.map((content, i) => (
-                          <View key={i} style={{ display: 'flex', paddingVertical: 10, alignItems: 'center', paddingRight: 5 }}>
+                          <View key={i} style={{ display: 'flex', paddingVertical: 10, alignItems: 'center',  }}>
                             {content.type === 'text' ? (
                               <View>
                                 <Text style={{ fontSize: 13, fontWeight: 'bold', paddingLeft: 15 }}>
@@ -971,6 +971,8 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     alignSelf: "flex-end",
     paddingTop: 5,
+    marginLeft:30,
+    marginRight:10
   },
   styleRecive: {
     marginTop: 10,
@@ -979,7 +981,8 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     justifyContent: 'space-around',
     borderRadius: 10,
-    paddingTop: 5
+    paddingTop: 5,
+    marginRight:50
   },
 
 });
