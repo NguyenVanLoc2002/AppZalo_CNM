@@ -21,16 +21,18 @@ import { useSocketContext } from "../../../contexts/SocketContext"
 import useCreateGroup from "../../../hooks/useCreateGroup";
 import { useAuthContext } from "../../../contexts/AuthContext";
 import * as DocumentPicker from 'expo-document-picker';
+import useConversation from "../../../hooks/useConversation";
 
 const Message = ({ navigation, route }) => {
   const { conver } = route.params;
   const { getUserById, getAllGroup } = useCreateGroup()
-  const { authUser } = useAuthContext();
+  const { authUser, reloadAuthUser } = useAuthContext()
   //nhi  
   const [textMessage, setTextMessage] = useState(null)
   const [isColorSend, setIsColorSend] = useState(false)
   const { sendMessage, sendImage, sendVideo, sendFiles } = useSendMessage();
-  const { socket } = useSocketContext()
+  const { isNewSocket, newSocketData } = useSocketContext();
+  const { getConversationByID } = useConversation();
 
   //truc
   const [chats, setChats] = useState([]);
@@ -78,7 +80,7 @@ const Message = ({ navigation, route }) => {
 
           formData.append('isGroup', isGroup);
           formData.append('replyMessageId', replyId);
-          
+
           try {
             const response = await sendFiles(conver._id, formData)
             if (response.status === 201) {
@@ -171,12 +173,10 @@ const Message = ({ navigation, route }) => {
             }
             data.push(chatNew);
           }
-
-
         }
         setChats(data);
         fetchFriends();
-           }
+      }
 
     } catch (error) {
       console.log(error);
@@ -192,29 +192,52 @@ const Message = ({ navigation, route }) => {
   }
   useEffect(() => {
     fetchChats();
+    const fetchSocket = async () => {
 
-    if (socket) {
-      socket.on("new_message", async ({ message }) => {
-        if (message.conversationId === conver.conversation._id) {
-          const getUser = await getUserById(message.retrunMessage.senderId)
-          setChats(prevChats => [
-            ...prevChats,
-            {
-              chat: message.retrunMessage,
-              sender: getUser.user.profile,
-              nameReply: null
-            }
-          ]);
-          scrollToEnd()
+      if (isNewSocket === "new_message") {
+        const message = newSocketData;
+        if (message) {
+          reloadAuthUser()
+          console.log("socket new messagae");
+          if (
+            message.conversationId === conver.conversation._id ||
+            message.retrunMessage.receiverId === authUser._id
+          ) {
+            const getUser = await getUserById(message.retrunMessage.senderId)
+            setChats(prevChats => [
+              ...prevChats,
+              {
+                chat: message.retrunMessage,
+                sender: getUser.user.profile,
+                nameReply: null
+              }
+            ]);
+            scrollToEnd()
+          }
         }
-      });
-    }
-    return () => {
-      if (socket) {
-        socket.off("new_message");
       }
-    };
-  }, [socket, chats]);
+      if (isNewSocket === "delete_message") {
+        const { conversationId, isDeleted } = newSocketData;
+        if (isDeleted) {
+          setChats([])
+        } else {
+          try {
+            if (conver && conver.conversation._id === conversationId) {
+              getConversationByID(conversationId)
+              console.log("socket delete messagae");
+            }
+          } catch (error) {
+            console.error(error);
+            setChats([]);
+          }
+        }
+      }
+
+    }
+    fetchSocket()
+
+  }, [isNewSocket, newSocketData]);
+
 
 
 
@@ -578,7 +601,7 @@ const Message = ({ navigation, route }) => {
                     (<View
                       style={{ width: 35, height: 35, justifyContent: "center", alignItems: "center", marginLeft: 10, marginRight: 10 }} >
                       <Image
-                        source={{ uri: message.sender.avatar?.url }}
+                        source={{ uri: message.sender.avatar?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}
                         style={{ width: 35, height: 35, borderRadius: 25 }} />
                     </View>)}
                   <View style={[

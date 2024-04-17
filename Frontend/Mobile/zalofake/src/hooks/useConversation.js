@@ -21,7 +21,7 @@ const useConversation = () => {
             participants: conversation.participants,
             messages: conversation.messages,
             lastMessage: conversation.lastMessage,
-            tag : conversation.tag
+            tag : conversation.tag,
           };
         });
         setConversations(newConversationList);
@@ -69,23 +69,6 @@ const useConversation = () => {
       Toast.error("Failed to delete conversation");
     }
   };
-
-  // const getConversationByParticipants = async (participants) => {
-  //   try {
-  //     const response = await axiosInstance.post(
-  //       "conversations/getByParticipants",
-  //       {
-  //         participants,
-  //       }
-  //     );
-  //     if (response.status === 200) {
-  //       return response.data;
-  //     }
-  //   } catch (error) {
-  //     console.log(error);
-  //     Toast.error("Failed to get conversation");
-  //   }
-  // };
 
   const getConversationByID = async (conversationId) => {
     setLoading(true);
