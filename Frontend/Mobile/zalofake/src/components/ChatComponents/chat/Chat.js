@@ -30,9 +30,6 @@ function Chat({ navigation }) {
   const [chats, setChats] = useState([]);
   const [isLoad, SetIsLoad] = useState(false);
   const { authUser } = useAuthContext();
-  const [isModalVisibleXoa, setModalVisibleXoa] = useState(false);
-  const [isLoadXoa, setIsLoadXoa] = useState(false)
-  const { showToastSuccess, showToastError } = useMessage();
   const { getUserById } = useCreateGroup()
   const { isNewSocket, newSocketData } = useSocketContext();
 

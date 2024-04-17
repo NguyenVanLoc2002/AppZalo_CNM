@@ -32,7 +32,7 @@ const Message = ({ navigation, route }) => {
   const [isColorSend, setIsColorSend] = useState(false)
   const { sendMessage, sendImage, sendVideo, sendFiles } = useSendMessage();
   const { isNewSocket, newSocketData } = useSocketContext();
-  const { getConversationByID} = useConversation();
+  const { getConversationByID } = useConversation();
 
   //truc
   const [chats, setChats] = useState([]);
@@ -177,7 +177,6 @@ const Message = ({ navigation, route }) => {
         setChats(data);
         fetchFriends();
       }
-
     } catch (error) {
       console.log(error);
       return false;
@@ -197,7 +196,7 @@ const Message = ({ navigation, route }) => {
       if (isNewSocket === "new_message") {
         const message = newSocketData;
         if (message) {
-          reloadAuthUser()
+          reloadAuthUser();
           console.log("socket new messagae");
           if (
             message.conversationId === conver.conversation._id ||
@@ -216,13 +215,13 @@ const Message = ({ navigation, route }) => {
           }
         }
       }
-      if(isNewSocket === "delete_message"){
+      if (isNewSocket === "delete_message") {
         const { conversationId, isDeleted } = newSocketData;
-        if(isDeleted){
+        if (isDeleted) {
           setChats([])
         } else {
           try {
-            if(conver && conver.conversation._id === conversationId){
+            if (conver && conver.conversation._id === conversationId) {
               getConversationByID(conversationId)
               console.log("socket delete messagae");
             }
@@ -232,7 +231,7 @@ const Message = ({ navigation, route }) => {
           }
         }
       }
-     
+
     }
     fetchSocket()
 
@@ -601,7 +600,7 @@ const Message = ({ navigation, route }) => {
                     (<View
                       style={{ width: 35, height: 35, justifyContent: "center", alignItems: "center", marginLeft: 10, marginRight: 10 }} >
                       <Image
-                        source={{ uri: message.sender.avatar?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png"}}
+                        source={{ uri: message.sender.avatar?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}
                         style={{ width: 35, height: 35, borderRadius: 25 }} />
                     </View>)}
                   <View style={[
