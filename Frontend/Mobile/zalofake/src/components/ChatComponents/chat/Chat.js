@@ -24,7 +24,7 @@ import useCreateGroup from "../../../hooks/useCreateGroup";
 
 function Chat({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
-  const { conversations, getConversations } = useConversation();
+  const { conversations, getConversations, getConversationByID } = useConversation();
   const { groups, getGroups } = useGroup();
   const [listFriends, setListFriends] = useState([]);
   const [chats, setChats] = useState([]);
@@ -35,7 +35,6 @@ function Chat({ navigation }) {
   const { showToastSuccess, showToastError } = useMessage();
   const { getUserById } = useCreateGroup()
   const { isNewSocket, newSocketData } = useSocketContext();
-
 
   useEffect(() => {
     navigation.setOptions({
@@ -106,30 +105,32 @@ function Chat({ navigation }) {
         unread: conversation.messages.some(
           (message) => message.receiver === authUser.phone && !message.isRead
         ),
-        lastMessage: conversation.lastMessage,
+        lastMessage: conversation?.lastMessage,
         tag: conversation.tag,
       };
     });
 
     const listGroup = groups.map((group) => {
-      return {
-        _id: group._id,
-        conversation: group.conversation,
-        name: group.groupName,
-        avatar: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
-        background: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
-        lastMessage: group.lastMessage,
-        tag: group.conversation.tag,
-        createBy: group.createBy,
-      };
+      return addDataToGroup(group)
     });
     listChat.push(...listGroup);
     fetchDataConver(listChat)
   };
 
+  const addDataToGroup = (group) => {
+    return {
+      _id: group._id,
+      conversation: group.conversation,
+      name: group.groupName,
+      avatar: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+      background: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+      lastMessage: group.lastMessage,
+      tag: group.conversation.tag,
+      createBy: group.createBy,
+    };
+  }
   useEffect(() => {
     fetchDataChat();
-
   }, [conversations, groups]);
 
   const fetchDataConver = async (listChat) => {
@@ -140,10 +141,10 @@ function Chat({ navigation }) {
 
       const conver = listChat[index];
 
-      if (conver.lastMessage !== undefined && conver.lastMessage !== null) {
+      if (conver.lastMessage) {
         const dataChat = await setDataChat(conver.lastMessage, false);
         const conversationNew = {
-          conver: conver,
+          conversation: conver,
           dataChat: dataChat,
           time: handleGetTime(conver?.lastMessage?.timestamp)
         };
@@ -154,12 +155,11 @@ function Chat({ navigation }) {
     };
     sortTime(data)
     setListFriends(data);
-
   };
   const sortTime = (data) => {
     data.sort((a, b) => {
-      const timeA = a?.conver?.lastMessage?.timestamp || "";
-      const timeB = b?.conver?.lastMessage?.timestamp || "";
+      const timeA = a?.conversation?.lastMessage?.timestamp || "";
+      const timeB = b?.conversation?.lastMessage?.timestamp || "";
       return timeB.localeCompare(timeA);
     });
     return data;
@@ -194,8 +194,8 @@ function Chat({ navigation }) {
         const dataChat = await setDataChat(message, isDelete);
         return {
           ...item,
-          conver: {
-            ...item?.conver,
+          conversation: {
+            ...item?.conversation,
             lastMessage: message
           },
           dataChat: dataChat,
@@ -237,7 +237,7 @@ function Chat({ navigation }) {
           if (isDeleted) {
             console.log("delete_conversation", conversationId);
             const updatedListFriends = listFriends.map((item) => {
-              if (item.conver.conversation._id === conversationId) {
+              if (item.conversation.conversation._id === conversationId) {
                 console.log("hihi");
               }
             })
@@ -248,12 +248,38 @@ function Chat({ navigation }) {
           }
         }
       }
+      if (isNewSocket === "add-to-group") {
+        const data = newSocketData;
+        if (!listFriends.find(item => item.conversation._id === data.group._id)) {
+          const group = data.group
+          if (data.addMembers.includes(authUser._id)) {
+            console.log(`Bạn vừa được thêm vào nhóm ${data.group.groupName}`);
+            showToastSuccess(`Bạn vừa được thêm vào nhóm ${data.group.groupName}`)
+          }
+          const conver = await getConversationByID(group.conversation._id)
+          group.lastMessage = conver.lastMessage
+          const addGroup = addDataToGroup(group)
+          const dataChat = await setDataChat(addGroup.lastMessage, false);
+          const conversationNew = {
+            conversation: addGroup,
+            dataChat: dataChat,
+            time: handleGetTime(addGroup.lastMessage.timestamp)
+          };
+          const newListFriends = [...listFriends, conversationNew]
+          const sortUpdate = sortTime(newListFriends);
+          setListFriends(sortUpdate)
+        }
+      }
+      if(isNewSocket === "remove-from-group") {
+        const group = newSocketData;
+        console.log("group", JSON.stringify(group));
+      }
     }
     fetchSocket()
   }, [isNewSocket, newSocketData]);
 
   const handleChatItemPress = (item) => {
-    navigation.navigate("Message", { conver: item.conver });
+    navigation.navigate("Message", { conver: item.conversation });
   };
 
 
@@ -276,9 +302,10 @@ function Chat({ navigation }) {
       return `${minutes} phút`;
     }
   };
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <Toast />
+      <Toast/>
       <FlatList
         data={listFriends}
         renderItem={({ item }) => (
@@ -286,7 +313,7 @@ function Chat({ navigation }) {
             <ChatItem item={item} />
           </Pressable>
         )}
-        keyExtractor={(item) => item.conver.conversation._id}
+        keyExtractor={(item) => item.conversation.conversation._id}
       />
       <Modal
         animationType="none"

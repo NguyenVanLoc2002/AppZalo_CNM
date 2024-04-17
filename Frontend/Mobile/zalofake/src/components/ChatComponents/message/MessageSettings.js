@@ -201,7 +201,7 @@ const MessageSettings = ({ navigation, route }) => {
           i = true;
         }
       }
-      console.log('radio', newRadioButtons)
+      // console.log('radio', newRadioButtons)
       setListSearch(newRadioButtons);
       setListFriendCanSearch(newRadioButtons)
     } catch (error) {
@@ -211,7 +211,7 @@ const MessageSettings = ({ navigation, route }) => {
 
   // Search bạn để add vào group
   const handleSearch = () => {
-    console.log("Giá trị của radioButton:", radioButton);
+    // console.log("Giá trị của radioButton:", radioButton);
 
     if (!textSearch) {
       showToastError("Bạn chưa nhập");
@@ -241,10 +241,10 @@ const MessageSettings = ({ navigation, route }) => {
           newRadioButtons.push(item);
         }
         setListSearch(newRadioButtons);
-        console.log(
-          "Giá trị của radioButton sau khi tìm kiếm:",
-          newRadioButtons
-        );
+        // console.log(
+        //   "Giá trị của radioButton sau khi tìm kiếm:",
+        //   newRadioButtons
+        // );
       }
     }
   };

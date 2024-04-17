@@ -17,7 +17,7 @@ const ChatItem = ({ item }) => {
         style={{ width: "15%", justifyContent: "center", alignItems: "center" }}
       >
         <Image
-          source={{ uri: item.conver.avatar, }}
+          source={{ uri: item.conversation.avatar, }}
           style={{ width: 55, height: 55, borderRadius: 25 }}
         />
       </View>
@@ -29,8 +29,8 @@ const ChatItem = ({ item }) => {
         }}
       >
         <View style={{ flexDirection: 'row' }}>
-          {item.conver.tag === 'group' ? <Ionicons name="people" size={20} color="gray" /> : <View></View>}
-          <Text style={{ fontSize: 20, marginBottom: 5, paddingLeft: 5 }}>{item.conver.name}</Text>
+          {item.conversation.tag === 'group' ? <Ionicons name="people" size={20} color="gray" /> : <View></View>}
+          <Text style={{ fontSize: 20, marginBottom: 5, paddingLeft: 5 }}>{item.conversation.name}</Text>
         </View>
         <Text
           style={{

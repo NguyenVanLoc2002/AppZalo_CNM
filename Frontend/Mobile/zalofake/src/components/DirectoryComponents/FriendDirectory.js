@@ -89,7 +89,7 @@ const FriendDirectory = ({ navigation }) => {
     let conversation ;
     conversation = await getConversationsByParticipants(friend.userId);
 
-    console.log(conversation);
+    // console.log(conversation);
     const conversationNew = {
       id: friend.userId,
       conversation: conversation,
@@ -99,7 +99,7 @@ const FriendDirectory = ({ navigation }) => {
       lastMessage: conversation.lastMessage,
       tag: conversation.tag,
     };
-    console.log(conversationNew);
+    // console.log(conversationNew);
     navigation.navigate("Message",{ conver :conversationNew });
   };
 
