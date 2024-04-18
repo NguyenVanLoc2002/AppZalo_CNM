@@ -10,7 +10,7 @@ exports.sendMessage = async (req, resp) => {
     const senderId = req.user.user_id;
     const receiverId = req.params.userId;
     const isGroup = JSON.parse(req.body.isGroup || false);
-    const replyMessageId = req.body.replyMessageId || null;
+    const replyMessageId = req.body.replyMessageId === "null" ? null : req.body.replyMessageId;
     let contents = [];
     if (req.body.data) {
       contents.push({
