@@ -242,6 +242,7 @@ const GroupDirectory = ({ navigation }) => {
               avatar: response.group?.avatar?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
               conversation: response.group.conversation,
               tag: response.group.conversation.tag
+
             }
             navigation.navigate("Message", { conver: group })
           }

@@ -36,7 +36,7 @@ const Message = ({ navigation, route }) => {
   const { isNewSocket, newSocketData, socket } = useSocketContext();
   const { getConversationByID } = useConversation();
   const dispatch = useDispatch();
-  var isGroup = useSelector(state => state.isGroup.isGroup);
+  var isGroupRedux = useSelector(state => state.isGroup.isGroup);
   const [group, setGroup] = useState(null)
   // console.log("isGroup", isGroup);
 
@@ -198,7 +198,7 @@ const Message = ({ navigation, route }) => {
 
   useEffect(() => {
     fetchChats();
-  }, [isGroup])
+  }, [isGroupRedux])
 
   useEffect(() => {
     fetchChats();
@@ -246,12 +246,13 @@ const Message = ({ navigation, route }) => {
         // console.log("newSocketData",newSocketData);
         if(newSocketData.removeMembers){
           const gr = newSocketData
-          // console.log("gr", gr);
+          console.log("gr", gr);
           setGroup(gr)
-          // console.log("group123", group);
+          console.log("group123", group);
           if (group) {
             if (group.removeMembers?.includes(authUser._id)) {
               dispatch(setIsGroup())
+              console.log(`Bạn đã bị xoá khỏi nhóm ${group.name}`);
               showToastError(`Bạn đã bị xoá khỏi nhóm ${group.name}`)
               setGroup(null)
               navigation.navigate("ChatComponent");
@@ -259,13 +260,29 @@ const Message = ({ navigation, route }) => {
           }
         }
       }
+      if(isNewSocket === "delete-group"){
+        console.log("newSocketData", newSocketData);
+        if(newSocketData.name){
+          const gr = newSocketData
+          setGroup(gr)
+          if(group){
+            if (group.removeMembers?.includes(authUser._id)) {
+              console.log("groupM", group);
+              showToastSuccess(`Group ${group.name} đã bị xoá`)
+              dispatch(setIsGroup())
+              setGroup(null)
+              navigation.navigate("ChatComponent");
+            }
+            
+          }
+        }
+      }
     }
     
 
     fetchSocket()
-
+   
   }, [isNewSocket, newSocketData]);
-
 
 
 
