@@ -22,6 +22,8 @@ import useCreateGroup from "../../../hooks/useCreateGroup";
 import { useAuthContext } from "../../../contexts/AuthContext";
 import * as DocumentPicker from 'expo-document-picker';
 import useConversation from "../../../hooks/useConversation";
+import { useSelector, useDispatch } from "react-redux";
+import { setIsGroup } from "../../../redux/stateCreateGroupSlice";
 
 const Message = ({ navigation, route }) => {
   const { conver } = route.params;
@@ -31,8 +33,12 @@ const Message = ({ navigation, route }) => {
   const [textMessage, setTextMessage] = useState(null)
   const [isColorSend, setIsColorSend] = useState(false)
   const { sendMessage, sendImage, sendVideo, sendFiles } = useSendMessage();
-  const { isNewSocket, newSocketData } = useSocketContext();
+  const { isNewSocket, newSocketData, socket } = useSocketContext();
   const { getConversationByID } = useConversation();
+  const dispatch = useDispatch();
+  var isGroup = useSelector(state => state.isGroup.isGroup);
+  const [group, setGroup] = useState(null)
+  // console.log("isGroup", isGroup);
 
   //truc
   const [chats, setChats] = useState([]);
@@ -189,6 +195,11 @@ const Message = ({ navigation, route }) => {
       console.log("scrollToEnd");
     }
   }
+
+  useEffect(() => {
+    fetchChats();
+  }, [isGroup])
+
   useEffect(() => {
     fetchChats();
     const fetchSocket = async () => {
@@ -231,8 +242,26 @@ const Message = ({ navigation, route }) => {
           }
         }
       }
-
+      if (isNewSocket === "remove-from-group") {
+        // console.log("newSocketData",newSocketData);
+        if(newSocketData.removeMembers){
+          const gr = newSocketData
+          // console.log("gr", gr);
+          setGroup(gr)
+          // console.log("group123", group);
+          if (group) {
+            if (group.removeMembers?.includes(authUser._id)) {
+              dispatch(setIsGroup())
+              showToastError(`Bạn đã bị xoá khỏi nhóm ${group.name}`)
+              setGroup(null)
+              navigation.navigate("ChatComponent");
+            }
+          }
+        }
+      }
     }
+    
+
     fetchSocket()
 
   }, [isNewSocket, newSocketData]);
@@ -580,7 +609,7 @@ const Message = ({ navigation, route }) => {
         ) : (
           <View></View>
         )}
-        <Toast />
+        {/* <Toast /> */}
         <ScrollView ref={scrollViewRef}
           onScroll={handleScroll}
           scrollEventThrottle={16}
@@ -610,10 +639,10 @@ const Message = ({ navigation, route }) => {
                       {message.sender.name}
                     </Text>
                     {message.chat.replyMessageId === null ? (<View></View>) :
-                      (<View style={{ backgroundColor: '#89D5FB', display: 'flex', marginLeft: 10, borderLeftWidth: 2, borderColor: '#0072AB',marginRight:10 }}>
+                      (<View style={{ backgroundColor: '#89D5FB', display: 'flex', marginLeft: 10, borderLeftWidth: 2, borderColor: '#0072AB', marginRight: 10 }}>
 
                         {message.chat.replyMessageId.contents.map((content, i) => (
-                          <View key={i} style={{ display: 'flex', paddingVertical: 10, alignItems: 'center',  }}>
+                          <View key={i} style={{ display: 'flex', paddingVertical: 10, alignItems: 'center', }}>
                             {content.type === 'text' ? (
                               <View>
                                 <Text style={{ fontSize: 13, fontWeight: 'bold', paddingLeft: 15 }}>
@@ -971,8 +1000,8 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     alignSelf: "flex-end",
     paddingTop: 5,
-    marginLeft:30,
-    marginRight:10
+    marginLeft: 30,
+    marginRight: 10
   },
   styleRecive: {
     marginTop: 10,
@@ -982,7 +1011,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     borderRadius: 10,
     paddingTop: 5,
-    marginRight:50
+    marginRight: 50
   },
 
 });

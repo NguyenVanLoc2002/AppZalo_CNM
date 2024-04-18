@@ -21,6 +21,8 @@ import useConversation from "../../../hooks/useConversation";
 import useGroup from "../../../hooks/useGroup";
 import useMessage from '../../../hooks/useMessage'
 import useCreateGroup from "../../../hooks/useCreateGroup";
+import { useDispatch, useSelector } from "react-redux";
+import { setIsGroup } from "../../../redux/stateCreateGroupSlice";
 
 function Chat({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
@@ -31,8 +33,10 @@ function Chat({ navigation }) {
   const [isLoad, SetIsLoad] = useState(false);
   const { authUser } = useAuthContext();
   const { getUserById } = useCreateGroup()
-  const { isNewSocket, newSocketData } = useSocketContext();
+  const { isNewSocket, newSocketData, socket } = useSocketContext();
   const { showToastSuccess } = useMessage();
+  var isGroup = useSelector(state => state.isGroup.isGroup);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     navigation.setOptions({
@@ -154,6 +158,7 @@ function Chat({ navigation }) {
     sortTime(data)
     setListFriends(data);
   };
+
   const sortTime = (data) => {
     data.sort((a, b) => {
       const timeA = a?.conversation?.lastMessage?.timestamp || "";
@@ -205,6 +210,7 @@ function Chat({ navigation }) {
     return updatedListFriends;
   }
 
+
   useEffect(() => {
     const fetchDataListFriend = async () => {
       try {
@@ -223,6 +229,7 @@ function Chat({ navigation }) {
       if (isNewSocket === "new_message") {
         const message = newSocketData;
         if (message) {
+          // console.log("messagge", JSON.stringify(message));
           console.log("socket new message");
           const update = await updatedListFriends(message.conversationId, message.retrunMessage, false)
           const sortUpdate = sortTime(update);
@@ -268,10 +275,30 @@ function Chat({ navigation }) {
           setListFriends(sortUpdate)
         }
       }
-     
+
+      if (isNewSocket === "remove-from-group") {
+        if (newSocketData.removeMembers) {
+          var isChange = newSocketData
+          if (isChange) {
+            if (isChange.removeMembers?.includes(authUser._id)) {
+              console.log(`Bạn đã bị xoá khỏi nhóm ${isChange.name}`);
+              showToastSuccess(`Bạn đã bị xoá khỏi nhóm ${isChange.name}`)
+              const updatedConversationList = listFriends.filter(item => item.conversation._id !== isChange.id);
+              setListFriends(updatedConversationList)
+              getGroups()
+              fetchDataListFriend()
+              fetchDataChat()
+              isChange = null
+            }
+            isChange = null
+          }
+        }
+      }
+      
     }
     fetchSocket()
-  }, [isNewSocket, newSocketData]);
+    fetchDataListFriend()
+  }, [isNewSocket, newSocketData, isGroup]);
 
   const handleChatItemPress = (item) => {
     navigation.navigate("Message", { conver: item.conversation });
@@ -299,7 +326,6 @@ function Chat({ navigation }) {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <Toast />
       <FlatList
         data={listFriends}
         renderItem={({ item }) => (

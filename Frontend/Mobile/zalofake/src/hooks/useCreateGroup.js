@@ -95,7 +95,6 @@ const useCreateGroup = () => {
         name: nameGroup,
         members: idUser,            
       });
-      console.log("resp", response);
       if (response.status === 201) {
         console.log("Create group success");
         Toast.show({
