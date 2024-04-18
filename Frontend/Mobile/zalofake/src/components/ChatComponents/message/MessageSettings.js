@@ -27,10 +27,12 @@ const MessageSettings = ({ navigation, route }) => {
   const [modalAddMember, setModalAddMember] = useState(false);
   const [name, setName] = useState("");
   const [isGroupAdmin, setIsGroupAdmin] = useState(false);
+  const [isPhoAdmin, setIsPhoAdmin] = useState(false);
   const { authUser } = useAuthContext();
   const [textSearch, setTextSearch] = useState(null);
 
   const [selectedFriends, setSelectedFriends] = useState([]);
+  const [selectedAdmin, setSelectedAdmin] = useState([]);
   const [listSearch, setListSearch] = useState([]);
   const [isLoadingUpdateName, setIsLoadingUpdateName] = useState(false);
   const [isLoadingUpdataAvatar, setIsLoadingUpdataAvatar] = useState(false);
@@ -38,10 +40,14 @@ const MessageSettings = ({ navigation, route }) => {
   const [isLoadingLeaveGroup, setIsLoadingLeaveGroup] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [memberSelected, setMemberSelected] = useState(null);
+  const [adminSelected, setAdminSelected] = useState(null);
   const [listFriendCanSearch, setListFriendCanSearch] = useState([]);
   const [isModalXacNhanXoa, setIsModalXacNhanXoa] = useState(false);
+  const [isModalXacNhanXoaAdmin, setIsModalXacNhanXoaAdmin] = useState(false);
+  const [isModeQTV, setIsModeQTV] = useState(false);
+  const [listAdmin, setListAdmin] = useState([]);
 
-  const { updateGroup, addMember, removeMember, deleteGroup, loading, leaveGroup } =
+  const { updateGroup, addMember, removeMember, deleteGroup, loading, leaveGroup, AddAdmin } =
     useGroup();
   const { getConversationByID, conversation } = useConversation();
   const [selectedImage, setSelectedImage] = useState(null);
@@ -72,7 +78,10 @@ const MessageSettings = ({ navigation, route }) => {
     await getConversationByID(conver.conversation._id);
     if (conver?.createBy?._id === authUser._id) {
       setIsGroupAdmin(true);
+    } else if (conver.admins.includes(authUser._id)) {
+      setIsPhoAdmin(true);
     }
+    setListAdmin(conver?.admins);
     fetchFriends();
   };
   // cập nhật tên nhóm
@@ -149,6 +158,11 @@ const MessageSettings = ({ navigation, route }) => {
   const toggleModal = () => {
     setIsModalXacNhanXoa(!isModalXacNhanXoa);
   };
+
+  const toggleModalXoa = () => {
+    setIsModalXacNhanXoaAdmin(!isModalXacNhanXoaAdmin);
+  };
+
 
   // xóa thành viên
   const removeMemberInGroup = async (member) => {
@@ -273,6 +287,7 @@ const MessageSettings = ({ navigation, route }) => {
     }
   };
 
+
   //rời nhóm
   const handleLeaveGroup = async () => {
     try {
@@ -305,10 +320,10 @@ const MessageSettings = ({ navigation, route }) => {
       setSelectedFriends((prevState) => [...prevState, item]);
     }
   };
-
   const isFriendSelected = (friend) => {
     return selectedFriends.includes(friend);
   };
+
   const handleRemoveSearch = () => {
     setTextSearch(null);
     setListSearch(listFriendCanSearch);
@@ -320,11 +335,116 @@ const MessageSettings = ({ navigation, route }) => {
     );
   };
 
-  useEffect(() => {
-    if (selectedFriends.length === 0) {
-    }
-  }, [selectedFriends]);
 
+  // Thêm quyền phó nhóm
+  const toggleModalQTV = () => {
+    setSelectedAdmin([]);
+    setIsModeQTV(!isModeQTV);
+  };
+
+  // chọn bạn để làm admin
+  const handleFriendSelectionAdmin = (item) => {
+    if (selectedAdmin.includes(item)) {
+      setSelectedAdmin((prevState) =>
+        prevState.filter((friend) => friend.id !== item._id)
+      );
+    } else {
+      setSelectedAdmin((prevState) => [...prevState, item]);
+    }
+  };
+
+  const handleDeleteAdminSelected = (item) => {
+    setSelectedAdmin(
+      selectedAdmin.filter((friend) => friend._id !== item._id)
+    );
+  };
+
+  // chọn bạn để add group
+  const handleThemAdminList = (itemId) => {
+    if (listAdmin.includes(itemId)) {
+      setListAdmin((prevState) =>
+        prevState.filter((friend) => friend !== itemId)
+      );
+    } else {
+      setListAdmin((prevState) => [...prevState, itemId]);
+    }
+  };
+
+  const isAdminSelected = (friend) => {
+    return selectedAdmin.includes(friend);
+  };
+
+  // Thêm admin
+  const addAdminInGroup = async () => {
+    setIsLoadingAddMem(true);
+    if (selectedAdmin.length > 0) {
+      let selectedFr = []
+      let selectedFrName = "";
+      selectedAdmin.map((f) => {
+        selectedFr.push(f._id);
+        selectedFrName = selectedFrName + f?.profile?.name + ' - ';
+        handleThemAdminList(f._id)
+      }
+      )
+      const groupData = {
+        members: selectedFr,
+        typeChange: 'add',
+        groupId: conver._id,
+      };
+      const rs = await AddAdmin(
+        groupData
+      );
+      if (rs) {
+        handleThemAdminList(selectedAdmin._id);
+        setSelectedAdmin([]);
+        toggleModalQTV();
+        getConversationByID(conver.conversation._id);
+        let textMessage = authUser?.profile?.name + ' đã bổ nhiệm ' + selectedFrName + ' làm phó nhóm!!!';
+        await sendMessage(conver._id,
+          { type: 'text', data: textMessage }, null, true);
+
+
+      } else {
+        toggleModalQTV();
+        console.log("phân quyền admin vào nhóm thất bại");
+      }
+      setIsLoadingAddMem(false);
+    } else {
+      toggleModalQTV();
+      setIsLoadingAddMem(false);
+      console.log("Bạn chưa chọn thành viên");
+    }
+  };
+
+  // Xóa admin
+  const removeAdmin = async () => {
+    setIsLoadingAddMem(true);
+    const groupData = {
+      members: [adminSelected._id],
+      typeChange: 'remove',
+      groupId: conver._id,
+    };
+    const rs = await AddAdmin(
+      groupData
+    );
+    if (rs) {
+      setListAdmin(
+        listAdmin.filter((friend) => friend !== adminSelected._id)
+      );
+      setAdminSelected(null);
+     
+      toggleModalXoa();
+      getConversationByID(conver.conversation._id);
+      let textMessage = authUser?.profile?.name + ' đã xóa quyền admin của ' + adminSelected?.profile?.name + '!';
+      await sendMessage(conver._id,
+        { type: 'text', data: textMessage }, null, true);
+
+    } else {
+      toggleModalXoa();
+      console.log("Xóa quyền admin thất bại");
+    }
+    setIsLoadingAddMem(false);
+  };
   const renderListItem = (item, index) => (
 
     <Pressable
@@ -638,8 +758,7 @@ const MessageSettings = ({ navigation, route }) => {
               {conversation?.participants?.map((member, index) =>
               (<View key={index}>
                 {member._id !== authUser._id && (
-                  <Pressable
-
+                  <View
                     style={{
                       flexDirection: "row",
                       justifyContent: "space-between",
@@ -650,7 +769,6 @@ const MessageSettings = ({ navigation, route }) => {
                       marginBottom: 5,
                     }}
                   >
-
                     <View style={{ flexDirection: "row", alignItems: "center" }}>
                       <Image
                         source={{ uri: member.profile?.avatar?.url }}
@@ -666,23 +784,71 @@ const MessageSettings = ({ navigation, route }) => {
                         {member.profile?.name}
                       </Text>
                     </View>
-                    {isGroupAdmin && (
-                      <Pressable onPress={() => {
-                        setMemberSelected(member);
-                        toggleModal();
-                      }}>
-                        {loading ? (
-                          <ActivityIndicator size="small" color="blue" />
-                        ) : (
-                          <MaterialCommunityIcons
-                            name="minus"
-                            size={24}
-                            color="black"
-                          />
-                        )}
-                      </Pressable>
-                    )}
-                  </Pressable>
+                    <View style={{ flexDirection: "row" }}>
+                      <View style={{ width: 40, height: 40, alignItems: 'flex-end', justifyContent: 'center', marginRight: 20 }} >
+
+                        <View >
+                          {listAdmin.includes(member._id) && (
+
+                            // onPress={isGroupAdmin ? handleDeleteGroup : handleLeaveGroup}
+                            <Pressable
+                              onPress={isGroupAdmin ? () => {
+                                setAdminSelected(member);
+                                toggleModalXoa();
+                              } : null
+                              }>
+                              <FontAwesome5
+                                name="key"
+                                size={20}
+                                color="black"
+                              /></Pressable>
+                          )}
+                        </View>
+
+                      </View>
+                      {(isGroupAdmin || isPhoAdmin) && (
+                        <View >
+                          {
+                            (isModeQTV && !listAdmin.includes(member._id)) ? (
+
+                              <Pressable
+                                onPress={() => {
+                                  handleFriendSelectionAdmin(member)
+                                }}
+                              >
+                                <View style={{ padding: 13, width: 40, height: 40, backgroundColor: '#F3F5F6', borderRadius: 50, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#37333A' }}>
+                                  {isAdminSelected(member) ? (
+                                    <Pressable style={{ width: 40, height: 40, backgroundColor: '#0091FF', borderRadius: 50, alignItems: 'center', justifyContent: 'center' }} onPress={
+                                      () => handleDeleteAdminSelected(member)
+                                    }>
+                                      <Ionicons color='white' size={27} name="checkmark-circle" />
+                                    </Pressable>
+                                  ) : (
+                                    <View></View>
+                                  )}
+                                </View>
+                              </Pressable>
+                            )
+                              : (<Pressable onPress={() => {
+                                setMemberSelected(member);
+                                toggleModal();
+                              }}>
+                                {loading ? (
+                                  <ActivityIndicator size="small" color="blue" />
+                                ) : (
+                                  <MaterialCommunityIcons
+                                    name="minus"
+                                    size={24}
+                                    color="black"
+                                  />
+                                )}
+                              </Pressable>)
+                          }
+                        </View>
+                      )}
+                    </View>
+
+                  </View>
                 )
                 }
               </View>
@@ -706,20 +872,43 @@ const MessageSettings = ({ navigation, route }) => {
           </View>
           <View>
             {isGroupAdmin && (
-              <Pressable
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  paddingVertical: 10,
-                  paddingHorizontal: 20,
-                }}
-                onPress={handleDeleteGroup}
-              >
-                {/* <GrUserAdmin size={20} color="gray" /> */}
-                <Text style={{ color: "gray", marginLeft: 10 }}>
-                  {"Quản trị viên"}
-                </Text>
-              </Pressable>
+              <View>
+                {isModeQTV ? (
+                  <View>
+                    <Pressable
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        paddingVertical: 10,
+                        paddingHorizontal: 20,
+                      }}
+                      onPress={toggleModalQTV}
+                    >
+                      <Text style={{ color: "gray", marginLeft: 10 }}> Hủy </Text>
+                    </Pressable>
+                    <Pressable
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        paddingVertical: 10,
+                        paddingHorizontal: 20,
+                      }}
+                      onPress={addAdminInGroup}
+                    >
+                      <Text style={{ color: "gray", marginLeft: 10 }}>Xác nhận</Text>
+                    </Pressable>
+                  </View>) : (
+
+                  <Pressable
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      paddingVertical: 10,
+                      paddingHorizontal: 20,
+                    }}
+                    onPress={toggleModalQTV} >
+                    <Text style={{ color: "gray", marginLeft: 10 }}>Bổ nhiệm phó nhóm</Text></Pressable>)}
+              </View>
             )}
 
             <Pressable
@@ -969,6 +1158,37 @@ const MessageSettings = ({ navigation, route }) => {
           </View>
         </View>
       </Modal>
+
+      {/* Modal xác nhận khi xóa quyền admin */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isModalXacNhanXoaAdmin}
+        onRequestClose={toggleModalXoa}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalHeaderText}>
+              Bạn có chắc chắn muốn xóa quyền admin của {adminSelected?.profile?.name} không?
+            </Text>
+
+            <View style={styles.modalButtonContainer}>
+              <Pressable onPress={toggleModalXoa}>
+                <Text style={styles.modalButton}>HỦY</Text>
+              </Pressable>
+              <Pressable onPress={() => { removeAdmin(adminSelected) }}>
+
+                {isLoadingAddMem ? (
+                  <ActivityIndicator color="blue" size={"large"} />
+                ) : (
+                  <Text style={styles.modalButton}>XÁC NHẬN</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </ScrollView>
   );
 };

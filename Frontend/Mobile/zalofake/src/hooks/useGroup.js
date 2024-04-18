@@ -76,6 +76,8 @@ const useGroup = () => {
     }
   };
 
+
+
   const updateGroup = async (groupId, groupData) => {
     setGrLoading(true);
     try {
@@ -163,6 +165,30 @@ const useGroup = () => {
     }
   };
 
+  // const { members, typeChange, groupId } = req.body;
+  const AddAdmin = async (groupData) => {
+    setGrLoading(true);
+    try {
+      const response = await axiosInstance.post(`/groups/changeAdmins`, 
+      groupData
+      // {
+      //   members:members,
+      //   typeChange:typeChange,
+      //   groupId:groupId,
+      // }
+    );
+
+      if (response.status === 200) {
+        return true;
+      }
+    } catch (error) {
+      console.error(error);
+      throw error;
+    } finally {
+      setGrLoading(false);
+    }
+  };
+
   return {
     group,
     groups,
@@ -174,7 +200,8 @@ const useGroup = () => {
     updateGroup,
     addMember,
     removeMember,
-    leaveGroup
+    leaveGroup,
+    AddAdmin
   };
 };
 
