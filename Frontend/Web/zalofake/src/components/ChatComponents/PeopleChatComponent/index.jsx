@@ -17,7 +17,7 @@ import { RiDoubleQuotesR } from "react-icons/ri";
 import { FaArrowRotateLeft } from "react-icons/fa6";
 import { CiCircleCheck } from "react-icons/ci";
 import axiosInstance from "../../../api/axiosInstance";
-import { format, set } from "date-fns";
+import { format } from "date-fns";
 import { useSocketContext } from "../../../contexts/SocketContext";
 import EmojiPicker from "emoji-picker-react";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
@@ -34,7 +34,7 @@ function PeopleChatComponent({
   groupToChange,
 }) {
   // State for current user
-  const [thisUser, setThisUser] = useState(null);
+  const [thisUser, setThisUser] = useState(userChat);
 
   // State for chat content
   const [content, setContent] = useState("");
@@ -55,7 +55,6 @@ function PeopleChatComponent({
   const { getConversationByID, conversation } = useConversation();
   const {
     grLoading,
-    group,
     updateGroup,
     removeMember,
     deleteGroup,
@@ -69,6 +68,7 @@ function PeopleChatComponent({
   const [isGroupAdmin, setIsGroupAdmin] = useState(false);
   const [isCreator, setIsCreator] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isChangeAvatar, setIsChangeAvatar] = useState(false);
   const [name, setName] = useState("");
 
   //state for admin change modal
@@ -79,33 +79,28 @@ function PeopleChatComponent({
   const [originalListMember, setOriginalListMember] = useState([]);
 
   useEffect(() => {
-    if (userChat) {
-      setThisUser(userChat);
-      console.log("thisUser", thisUser);
-    }
+    setThisUser(userChat);
 
     if (!userChat || userChat?.tag !== "group") {
       setSidebarVisible(false);
     }
-    if (userChat) {
-      if (userChat.admins?.includes(authUser._id)) {
-        if (userChat.creator?._id === authUser._id) {
-          setIsCreator(true);
-        }
-        setIsGroupAdmin(true);
-      } else {
-        setIsGroupAdmin(false);
+    if (userChat?.admins?.includes(authUser._id)) {
+      if (userChat?.creator?._id === authUser._id) {
+        setIsCreator(true);
       }
-      setName(userChat?.name);
+      setIsGroupAdmin(true);
+    } else {
+      setIsGroupAdmin(false);
+      setIsCreator(false);
+    }
+    setName(userChat?.name);
 
-      if (userChat.conversationId) {
-        getConversationByID(userChat.conversationId);
-      } else {
-        setMessages([]);
-      }
+    if (userChat?.conversationId) {
+      getConversationByID(userChat?.conversationId);
+    } else {
+      setMessages([]);
     }
   }, [userChat]);
-  console.log("userChat", userChat);
 
   useEffect(() => {
     if (conversation) {
@@ -113,36 +108,39 @@ function PeopleChatComponent({
       setListMembers(conversation.participants);
       setOriginalListMember(conversation.participants);
     }
-  }, [conversation, userChat]);
+  }, [conversation]);
 
   // socket event
   useEffect(() => {
     if (thisUser) {
       if (isNewSocket === "new_message") {
         const message = newSocketData;
-
         if (
-          message.conversationId === thisUser.conversationId ||
-          message.retrunMessage.receiverId === authUser._id
+          message.conversationId === userChat.conversationId ||
+          (!thisUser.conversationId &&
+            message.retrunMessage.senderId === userChat.id &&
+            message.retrunMessage.isGroup === (thisUser.tag === "group"))
         ) {
-          setMessages((prevMessages) => {
-            const newMessages = [...prevMessages];
-            const index = newMessages.findIndex(
-              (m) => m._id === message.retrunMessage._id
-            );
-            if (index === -1) {
-              newMessages.push(message.retrunMessage);
-            } else {
-              newMessages[index] = message.retrunMessage;
-            }
-            return newMessages;
-          });
+          if (message.retrunMessage.senderId !== authUser._id) {
+            setMessages((prevMessages) => {
+              const newMessages = [...prevMessages];
+              const index = newMessages.findIndex(
+                (m) => m._id === message.retrunMessage._id
+              );
+              if (index === -1) {
+                newMessages.push(message.retrunMessage);
+              } else {
+                newMessages[index] = message.retrunMessage;
+              }
+              return newMessages;
+            });
+          }
         }
       }
       if (isNewSocket === "delete_message") {
         const { conversationId, isDeleted } = newSocketData;
         if (isDeleted) {
-          setThisUser(null);
+          setMessages([]);
         } else {
           try {
             if (thisUser && thisUser.conversationId === conversationId) {
@@ -178,6 +176,19 @@ function PeopleChatComponent({
               prevMembers.filter((m) => m._id !== member)
             );
           });
+        }
+      }
+
+      if (isNewSocket === "update-group") {
+        const group = newSocketData;
+        if (group.id === thisUser.id) {
+          setThisUser({
+            ...thisUser,
+            name: group.name,
+            avatar: group.avatar,
+            background: group.avatar,
+          });
+          setName(group.name);
         }
       }
 
@@ -361,7 +372,7 @@ function PeopleChatComponent({
       if (response.status === 200) {
         if (messages.length === 1) {
           setMessages([]);
-          setThisUser(null);
+          // setThisUser(null);
         } else {
           const updatedMessagesResponse = await axiosInstance.get(
             `conversations/get/messages/${converId}`
@@ -475,14 +486,25 @@ function PeopleChatComponent({
     setContextMenuStates({});
   };
 
-  const updateGroupInfo = async () => {
+  const updateGroupInfo = async (e) => {
     if (name.trim() === "") {
       setName(thisUser?.name);
       setIsEditing(false);
       return;
     }
     try {
-      const response = await updateGroup(thisUser.id, { name });
+      setIsChangeAvatar(true);
+      let response;
+      const avatar = e?.target?.files?.[0];
+      if (avatar) {
+        const formData = new FormData();
+        formData.append("name", name);
+        formData.append("avatar", avatar);
+        response = await updateGroup(thisUser.id, formData);
+      } else {
+        response = await updateGroup(thisUser.id, { name });
+      }
+
       if (response) {
         setIsEditing(false);
         toast.success(
@@ -491,6 +513,7 @@ function PeopleChatComponent({
             : "Update group info successfully"
         );
       }
+      setIsChangeAvatar(false);
     } catch (error) {
       console.error(error);
       toast.error(
@@ -498,6 +521,7 @@ function PeopleChatComponent({
           ? "Cập nhật thông tin nhóm thất bại"
           : "Update group info failed"
       );
+      setIsChangeAvatar(false);
     }
   };
 
@@ -505,7 +529,12 @@ function PeopleChatComponent({
     try {
       const response = await removeMember(thisUser.id, { members: [memberId] });
       if (response) {
-        getConversationByID(thisUser.conversationId);
+        getConversationByID(response.group?.conversation?._id);
+        setThisUser({
+          ...thisUser,
+          admins: response.group?.admins,
+        });
+
         toast.success(
           language === "vi"
             ? "Xóa thành viên khỏi nhóm thành công"
@@ -569,9 +598,17 @@ function PeopleChatComponent({
       }
     } catch (error) {
       console.error(error);
-      toast.error(
-        language === "vi" ? "Rời khỏi nhóm thất bại" : "Leave group failed"
-      );
+      if (error.response.data.error === "Group must have at least 2 members") {
+        toast.error(
+          language === "vi"
+            ? "Nhóm phải có ít nhất 2 thành viên"
+            : "Group must have at least 2 members"
+        );
+      } else {
+        toast.error(
+          language === "vi" ? "Rời khỏi nhóm thất bại" : "Leave group failed"
+        );
+      }
     }
   };
 
@@ -708,6 +745,7 @@ function PeopleChatComponent({
                                 <div className="ml-2 w-10 rounded-full">
                                   <img
                                     alt="avatar"
+                                    className="object-cover w-10 h-10 rounded-full"
                                     src={
                                       user.profile.avatar?.url || "/zalo.svg"
                                     }
@@ -726,7 +764,7 @@ function PeopleChatComponent({
                           } `}
                         >
                           {message.replyMessageId && (
-                            <div className="h-16 m-2 rounded-lg bg-sky-200 p-2 text-black">
+                            <div className="m-2 rounded-lg bg-sky-200 p-2 text-black ">
                               <div className="flex flex-col border-l-2 border-sky-300">
                                 {message.replyMessageId?.contents[0].type ===
                                 "text" ? (
@@ -734,7 +772,7 @@ function PeopleChatComponent({
                                     <p className="ml-2 text-base font-semibold">
                                       {thisUser.name}
                                     </p>
-                                    <p className="ml-2 text-sm">
+                                    <p className="ml-2 text-sm truncate">
                                       {message.replyMessageId.contents[0].data}
                                     </p>
                                   </div>
@@ -1004,6 +1042,7 @@ function PeopleChatComponent({
                                   <div className="ml-2 w-10 rounded-full">
                                     <img
                                       alt="avatar"
+                                      className="object-cover w-10 h-10 rounded-full"
                                       src={
                                         user.profile.avatar?.url || "/zalo.svg"
                                       }
@@ -1028,10 +1067,10 @@ function PeopleChatComponent({
                                 {message.replyMessageId.contents[0].type ===
                                 "text" ? (
                                   <div>
-                                    <p className="ml-2 text-base font-semibold">
+                                    <p className="ml-2 text-base font-semibold truncate">
                                       {thisUser.name}
                                     </p>
-                                    <p className="ml-2 text-sm">
+                                    <p className="ml-2 text-sm truncate">
                                       {message.replyMessageId.contents[0].data}
                                     </p>
                                   </div>
@@ -1524,7 +1563,26 @@ function PeopleChatComponent({
               <img
                 src={thisUser?.avatar}
                 alt="avatar"
-                className="w-20 h-20 object-cover rounded-full border-2 border-gray-200"
+                className={`w-20 h-20 object-cover rounded-full border-2 border-gray-200  ${
+                  !isEditing ? "" : "border border-success cursor-pointer"
+                }
+
+                ${
+                  isChangeAvatar ? "loading loading-spinner bg-blue-400 loading-sm" : ""
+                }
+                
+                `}
+                onClick={() => {
+                  if (isEditing) document.getElementById("groupAvt").click();
+                }}
+              />
+
+              <input
+                type="file"
+                name="groupAvt"
+                id="groupAvt"
+                hidden={true}
+                onChange={updateGroupInfo}
               />
             </div>
             <div className="relative flex justify-center items-center pt-2">
@@ -1593,7 +1651,7 @@ function PeopleChatComponent({
                   <IoPersonAddOutline size={20} color="green" />
                 </button>
               </div>
-              {grLoading ? (
+              {grLoading && !isChangeAvatar ? (
                 <div className="flex justify-center items-center h-[90%] w-full">
                   <span className="loading loading-spinner loading-lg"></span>
                 </div>
@@ -1638,7 +1696,7 @@ function PeopleChatComponent({
                                   handleRemoveMember(member._id);
                                 }}
                               >
-                                {grLoading ? (
+                                {grLoading && !isChangeAvatar ? (
                                   <span className="loading loading-spinner loading-sm"></span>
                                 ) : (
                                   <IoPersonRemoveOutline
@@ -1814,7 +1872,7 @@ function PeopleChatComponent({
                               handleChangeAdmin(member._id, "remove");
                             }}
                           >
-                            {grLoading ? (
+                            {grLoading   ? (
                               <span className="loading loading-spinner loading-sm"></span>
                             ) : (
                               <IoPersonRemoveOutline size={20} color="red" />

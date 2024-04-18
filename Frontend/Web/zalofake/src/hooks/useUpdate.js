@@ -10,7 +10,7 @@ const useUpdate = () => {
 
   const { reloadAuthUser } = useAuthContext();
 
-  const updateAvatar = async (file) => {
+  const  updateAvatar = async (file) => {
     setLoading(true);
     try {
       const formData = new FormData();

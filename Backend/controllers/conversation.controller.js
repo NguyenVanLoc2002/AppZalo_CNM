@@ -58,7 +58,7 @@ exports.getConversation = async (req, res) => {
       },
       {
         path: "lastMessage",
-        select: "contents senderId ",
+        select: "contents senderId timestamp",
       },
     ]);
     if (!conversation) {

@@ -107,7 +107,7 @@ function FriendListComponent({ language, friends }) {
                   <div className="flex items-center">
                     <img
                       src={friend.avatar}
-                      className="w-10 h-10 rounded-full"
+                      className="w-10 h-10 rounded-full object-cover"
                     />
                     <div className="ml-3">
                       <p className="font-semibold">{friend.name}</p>

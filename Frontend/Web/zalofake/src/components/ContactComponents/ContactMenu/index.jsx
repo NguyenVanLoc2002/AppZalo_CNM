@@ -38,8 +38,8 @@ function ContactMenu({ language, changeTab, isAddFriend, isAddGroup, friends }) 
 
   return (
     <>
-      <div className="border-r">
-        <div className="h-[70px] bg-white flex justify-between items-center">
+      <div className="border-r h-[10%]">
+        <div className="bg-white flex justify-between items-center h-[90%]">
           <div className="bg-gray-200 rounded-lg ml-5 w-8/12">
             <div
               className={`${
@@ -80,7 +80,7 @@ function ContactMenu({ language, changeTab, isAddFriend, isAddGroup, friends }) 
             )}
           </div>
         </div>
-        <div className="flex h-[35px] items-center px-5 mt-1 pb-2 text-sm">
+        <div className="flex h-[10%] items-center px-5 mt-1 pb-2 text-sm">
           {isInputFocused ? (
             <div>
               <p className="font-semibold">Tìm gần đây</p>
@@ -91,7 +91,7 @@ function ContactMenu({ language, changeTab, isAddFriend, isAddGroup, friends }) 
         </div>
       </div>
 
-      <div className="h-[calc(100%-70px)] bg-white border">
+      <div className="h-[90%] bg-white border">
         {isInputFocused ? (
           <>
             {friendList.map((friend) => (

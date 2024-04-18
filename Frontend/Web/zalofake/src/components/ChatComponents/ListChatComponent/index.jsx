@@ -9,11 +9,11 @@ import useConversation from "../../../hooks/useConversation";
 import useGroup from "../../../hooks/useGroup";
 import { useAuthContext } from "../../../contexts/AuthContext";
 import { useSocketContext } from "../../../contexts/SocketContext";
+import { Socket } from "socket.io-client";
 
 function ListChatComponent({
   language,
   showModal,
-  userChat,
   changeUserChat,
   friends,
   conversations,
@@ -24,24 +24,19 @@ function ListChatComponent({
   const [activeTab, setActiveTab] = useState("all");
   const [showUnread, setShowUnread] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false);
-  const [originalFriendList, setOriginalFriendList] = useState([]);
   const [listChatCurrent, setListChatCurrent] = useState([]);
   const [isChatSelected, setIsChatSelected] = useState("");
-  const { groups, getGroups } = useGroup();
   const { authUser } = useAuthContext();
   const { getConversationByID, getConversationByParticipants, conversation } =
     useConversation();
   const { isNewSocket, newSocketData } = useSocketContext();
+  const [searchResult, setSearchResult] = useState([]);
 
   
 
   useEffect(() => {
-    getGroups();
-    setOriginalFriendList(friends);
     setFriendList(friends);
-  }, [friends]);
 
-  useEffect(() => {
     const listChat = conversations.map((conversation) => {
       const friend = conversation.participants.find(
         (participant) => participant.phone !== authUser.phone
@@ -60,28 +55,20 @@ function ListChatComponent({
       };
     });
 
-    const listGroup = groups.map((group) => {
-      return {
-        id: group._id,
-        conversationId: group.conversation._id,
-        name: group.groupName,
-        avatar: group.avatar.url,
-        background: group.avatar.url,
-        lastMessage: group.lastMessage,
-        tag: group.conversation.tag,
-        creator: group.createBy,
-        admins: group.admins,
-      };
+    friendList.forEach((friend) => {
+      if (friend.tag === "group") {
+        listChat.push(friend);
+      }
     });
 
-    listChat.push(...listGroup);
     setListChatCurrent(listChat);
-  }, [conversations, groups]);
+    setSearchResult(friends);
+  }, [conversations, friends]);
 
   useEffect(() => {
     if (isNewSocket === "new_message") {
       const message = newSocketData;
-
+      console.log("new_message", message);
       const isExist = listChatCurrent.some(
         (chat) => chat.conversationId === message.conversationId
       );
@@ -95,7 +82,6 @@ function ListChatComponent({
           return newList;
         });
       } else {
-        console.log("getConversationByID", message);
         getConversationByID(message.conversationId);
       }
     }
@@ -103,7 +89,6 @@ function ListChatComponent({
     if (isNewSocket === "delete_message") {
       const { chatRemove, conversationId, isDeleted } = newSocketData;
       if (isDeleted) {
-        console.log("delete_conversation", conversationId);
         setListChatCurrent((prev) => {
           const newList = [...prev];
           const index = newList.findIndex(
@@ -129,8 +114,6 @@ function ListChatComponent({
     }
 
     if (isNewSocket === "add-to-group") {
-      console.log("newSocketData", newSocketData.group);
-      console.log("LastMessage", newSocketData.group.conversation.lastMessage);
       const data = newSocketData;
       const group = data?.group;
 
@@ -166,7 +149,8 @@ function ListChatComponent({
 
     if (isNewSocket === "remove-from-group") {
       const group = newSocketData;
-      if (group.removeMember?.includes(authUser._id)) {
+      console.log("remove-from-group", group);
+      if (group.removeMembers?.includes(authUser._id)) {
         if (authUser._id === group.createBy) {
           toast.error(
             language === "vi"
@@ -180,17 +164,16 @@ function ListChatComponent({
               : `You have been removed from the group ${group.name}`
           );
         }
+        setListChatCurrent((prev) => {
+          const newList = [...prev];
+          const index = newList.findIndex((chat) => chat.id === group.id);
+          if (index !== -1) {
+            newList.splice(index, 1);
+          }
+          return newList;
+        });
+        changeUserChat(null);
       }
-
-      setListChatCurrent((prev) => {
-        const newList = [...prev];
-        const index = newList.findIndex((chat) => chat.id === group.id);
-        if (index !== -1) {
-          newList.splice(index, 1);
-        }
-        return newList;
-      });
-      changeUserChat(null);
     }
 
     if (isNewSocket === "delete-group") {
@@ -231,6 +214,34 @@ function ListChatComponent({
       }
 
       changeUserChat(null);
+    }
+    if (isNewSocket === "update-group") {
+      const group = newSocketData;
+      const index = listChatCurrent.findIndex((chat) => chat.id === group.id);
+      if (index !== -1) {
+        setListChatCurrent((prev) => {
+          const newList = [...prev];
+          newList[index].name = group.name;
+          newList[index].avatar = group.avatar;
+          newList[index].background = group.avatar;
+          return newList;
+        });
+      }
+    }
+
+    if (isNewSocket === "change-admins") {
+      const { group, members, typeChange } = newSocketData;
+      const isChange = listChatCurrent.findIndex(
+        (chat) => chat.id === group.id
+      );
+
+      if (isChange != -1) {
+        setListChatCurrent((prev) => {
+          const newList = [...prev];
+          newList[isChange].admins = group.admins;
+          return newList;
+        });
+      }
     }
   }, [isNewSocket, newSocketData]);
 
@@ -279,12 +290,13 @@ function ListChatComponent({
     setValueSearch(searchTerm);
 
     if (searchTerm.trim() === "") {
-      setFriendList(originalFriendList);
+      setSearchResult(friendList);
     } else {
-      const filteredFriends = originalFriendList.filter((friend) =>
+      const filteredFriends = friendList.filter((friend) =>
         friend.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      setFriendList(filteredFriends);
+
+      setSearchResult(filteredFriends);
     }
   };
 
@@ -302,7 +314,7 @@ function ListChatComponent({
     }
     console.log("friend", friend, "conversation", conversation);
 
-    userChat(friend);
+    changeUserChat(friend);
   };
 
   return (
@@ -385,9 +397,7 @@ function ListChatComponent({
                     <FaSortDown className="pb-1" size={20} />
                   </button>
                 </div>
-                <button>
-                  <IoIosMore size={20} opacity={1.8} />
-                </button>
+                
               </div>
             </>
           )}
@@ -396,7 +406,7 @@ function ListChatComponent({
       <div className="h-[calc(100%-110px)] bg-white border overflow-y-auto">
         {isInputFocused ? (
           <>
-            {friendList.map((friend) => (
+            {searchResult.map((friend) => (
               <div
                 key={friend.id}
                 className="flex items-center justify-between hover:bg-gray-200 transition-colors duration-300 ease-in-out p-2"
@@ -421,7 +431,7 @@ function ListChatComponent({
               >
                 <div className="bg-blue w-14 ">
                   <img
-                    className="rounded-full w-14 h-14"
+                    className="rounded-full w-14 h-14 object-cover"
                     src={friend.avatar}
                     alt="cloud"
                   />
@@ -435,85 +445,96 @@ function ListChatComponent({
         ) : (
           <>
             <div className="h-full w-full max-h-full">
-              {listChatCurrent?.map((friend) => (
-                <div
-                  key={friend.id}
-                  className={`flex justify-between hover:bg-gray-200 transition-colors duration-300 ease-in-out p-2 ${
-                    isChatSelected === friend.id ? "bg-gray-200" : ""
-                  }`}
-                  onMouseEnter={() => setIsHovered(true)}
-                  onMouseLeave={() => setIsHovered(false)}
-                  onClick={() => {
-                    userChat(friend);
-                    setIsChatSelected(friend.id);
-                  }}
-                >
-                  <div className="bg-blue w-14 ">
-                    <img
-                      className="rounded-full w-14 h-14"
-                      src={friend.avatar}
-                      alt="cloud"
-                    />
-                  </div>
-                  <div className="flex-col mr-auto ml-2 p-1">
-                    <p className="font-semibold ">
-                      {friend?.name?.length > 15
-                        ? `${friend?.name.slice(0, 15)}...`
-                        : friend?.name}
-                    </p>
-                    <p
-                      className="text-gray-600 mt-auto "
-                      style={{ fontSize: 14 }}
-                    >
-                      {friend?.lastMessage?.senderId === authUser._id
-                        ? "Bạn: "
-                        : ""}
-                      {friend?.lastMessage?.contents
-                        ? friend.lastMessage.contents[0]?.type === "text"
-                          ? friend?.lastMessage?.contents[0].data.length > 15
-                            ? `${friend?.lastMessage?.contents[0].data.slice(
-                                0,
-                                15
-                              )}...`
-                            : friend?.lastMessage?.contents[0].data
-                          : friend?.lastMessage?.contents[0]?.type === "image"
-                          ? "Hình ảnh"
-                          : "Tệp đính kèm"
-                        : language === "vi"
-                        ? "Chưa có tin nhắn"
-                        : "No message yet"}
+              {listChatCurrent?.map((friend) => {
+                const time = new Date(friend.lastMessage?.timestamp);
+                const now = new Date();
+                const diff = now - time;
+                let timeString = "";
+                if (diff < 60000) {
+                  timeString = language === "vi" ? "Vừa xong" : "Just now";
+                } else if (diff < 3600000) {
+                  timeString = `${Math.floor(diff / 60000)} ${
+                    language === "vi" ? "phút trước" : "minutes ago"
+                  }`;
+                } else if (diff < 86400000) {
+                  timeString = `${Math.floor(diff / 3600000)} ${
+                    language === "vi" ? "giờ trước" : "hours ago"
+                  }`;
+                } else {
+                  timeString = `${Math.floor(diff / 86400000)} ${
+                    language === "vi" ? "ngày trước" : "days ago"
+                  }`;
+                }
 
-                      {friend?.unread ? (
-                        <span className="text-blue-500"> (1)</span>
-                      ) : (
-                        ""
-                      )}
-                    </p>
-                  </div>
-                  <div>
-                    <p
-                      className="text-sm hover:text-gray-600"
-                      style={{ fontSize: 12 }}
-                    >
-                      {isHovered ? (
-                        <button>
-                          <IoIosMore size={20} opacity={1.8} />
-                        </button>
-                      ) : !showUnread ? (
-                        friend.unread ? (
-                          "Chưa đọc"
+                return (
+                  <div
+                    key={friend.id}
+                    className={`flex justify-between hover:bg-gray-200 transition-colors duration-300 ease-in-out p-2 ${
+                      isChatSelected === friend.id ? "bg-gray-200" : ""
+                    }`}
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
+                    onClick={() => {
+                      changeUserChat(friend);
+                      setIsChatSelected(friend.id);
+                    }}
+                  >
+                    <div className="bg-blue w-14 ">
+                      <img
+                        className="rounded-full w-14 h-14"
+                        src={friend.avatar}
+                        alt="cloud"
+                      />
+                    </div>
+                    <div className="flex-col mr-auto ml-2 p-1">
+                      <p className="font-semibold ">
+                        {friend?.name?.length > 15
+                          ? `${friend?.name.slice(0, 15)}...`
+                          : friend?.name}
+                      </p>
+                      <p
+                        className="text-gray-600 mt-auto "
+                        style={{ fontSize: 14 }}
+                      >
+                        {friend?.lastMessage?.senderId === authUser._id
+                          ? "Bạn: "
+                          : ""}
+                        {friend?.lastMessage?.contents
+                          ? friend.lastMessage.contents[0]?.type === "text"
+                            ? friend?.lastMessage?.contents[0].data.length > 15
+                              ? `${friend?.lastMessage?.contents[0].data.slice(
+                                  0,
+                                  15
+                                )}...`
+                              : friend?.lastMessage?.contents[0].data
+                            : friend?.lastMessage?.contents[0]?.type === "image"
+                            ? "Hình ảnh"
+                            : "Tệp đính kèm"
+                          : language === "vi"
+                          ? "Chưa có tin nhắn"
+                          : "No message yet"}
+  
+                        {friend?.unread ? (
+                          <span className="text-blue-500"> (1)</span>
                         ) : (
-                          "Hôm qua"
-                        )
-                      ) : friend.unread ? (
-                        "Chưa đọc"
-                      ) : (
-                        "Hôm qua"
-                      )}
-                    </p>
+                          ""
+                        )}
+                      </p>
+                    </div>
+                    <div>
+                      <p
+                        className="text-sm hover:text-gray-600"
+                        style={{ fontSize: 12 }}
+                      >
+                        {
+                          timeString
+                        
+                        }
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </>
         )}

@@ -3,18 +3,14 @@ const Chats = require("../models/Chat.js");
 const Chat = require("../models/Chat.js");
 const Conversation = require("../models/Conversation.js");
 const Group = require("../models/Group.js");
-const User = require("../models/User.js");
 const { io, getReciverSocketId } = require("../socket/socket.io.js");
 
 exports.sendMessage = async (req, resp) => {
   try {
     const senderId = req.user.user_id;
     const receiverId = req.params.userId;
-    // Thêm biến này từ FE khi chọn conversation để trò chuyện nếu là Group thì truyền đi isGroup là true
-    //Còn là chat single thì không cần truyền chỉ cần truyền data nha FE
-    // const isGroup = req.body.isGroup === 'false' ? false : true;
-    const isGroup = JSON.parse(req.body.isGroup) || false;
-    const replyMessageId = req.body.replyMessageId === 'null' ?  null :req.body.replyMessageId ;
+    const isGroup = JSON.parse(req.body.isGroup || false);
+    const replyMessageId = req.body.replyMessageId || null;
     let contents = [];
     if (req.body.data) {
       contents.push({
@@ -46,21 +42,22 @@ exports.sendMessage = async (req, resp) => {
       replyMessageId,
     });
 
-    await message.save();
-    const retrunMessage = await Chat.findById(message._id).populate({
+    const saveMessage = (await message.save()).populate({
       path: "replyMessageId",
       model: "chats",
     });
+    const retrunMessage = await Promise.all([saveMessage]).then((values) => {
+      return values[0];
+    });
 
     const group = await Group.findById(receiverId).populate("conversation");
-  
+
     let conversation;
     if (!group) {
       conversation = await Conversation.findOne({
         participants: { $all: [senderId, receiverId] },
         tag: "friend",
       });
-    
     } else {
       conversation = group.conversation;
     }
@@ -78,8 +75,12 @@ exports.sendMessage = async (req, resp) => {
       }
     } else {
       const receiverSocketId = await getReciverSocketId(receiverId);
-      if (receiverSocketId) {
+      const senderSocketId = await getReciverSocketId(senderId);
+      if (receiverSocketId && senderSocketId) {
         io.to(receiverSocketId.socket_id).emit("new_message", {
+          message: { retrunMessage, conversationId: conversation._id },
+        });
+        io.to(senderSocketId.socket_id).emit("new_message", {
           message: { retrunMessage, conversationId: conversation._id },
         });
       }
@@ -361,4 +362,3 @@ exports.deleteChat = async (req, res) => {
       .json({ message: "An error occurred while deleting the message" });
   }
 };
-

@@ -26,7 +26,7 @@ function ChatComponents({ language }) {
   } = useFriend();
   const { authUser, reloadAuthUser } = useAuthContext();
   const { conversations, getConversations } = useConversation();
-  const { createGroup, addMember, grLoading } = useGroup();
+  const { createGroup, addMember, grLoading, getGroups, groups } = useGroup();
 
   const [phone, setPhone] = useState("");
   const [nameGroup, setNameGroup] = useState("");
@@ -46,7 +46,7 @@ function ChatComponents({ language }) {
 
   const [members, setMembers] = useState([]);
 
-  const sendMessage = async (data, receiverId) => {
+  const sendMessage = async (data, receiverId, isGroup) => {
     try {
       if (!data || data.trim === "") return;
       let messageType;
@@ -63,7 +63,7 @@ function ChatComponents({ language }) {
 
         await axiosInstance.post(
           `chats/${receiverId}/${messageType}`,
-          { data: data },
+          { data: data, isGroup },
           {
             headers: {
               "Content-Type": "multipart/form-data",
@@ -92,14 +92,36 @@ function ChatComponents({ language }) {
     };
     fetchFriends();
     getConversations();
+    getGroups();
   }, [authUser]);
 
   useEffect(() => {
-    setFriendList(friends);
+    const listGroup = groups.map((group) => {
+      return {
+        id: group._id,
+        conversationId: group.conversation._id,
+        name: group.groupName,
+        avatar: group.avatar.url,
+        background: group.avatar.url,
+        lastMessage: group.lastMessage,
+        tag: group.conversation.tag,
+        creator: group.createBy,
+        admins: group.admins,
+        timestamp: group.lastMessage.timestamp,
+      };
+    });
+    // sort list group by last message timestamp
+    listGroup.sort((a, b) => {
+      const lastTimeA = new Date(a.lastMessage.timestamp);
+      const lastTimeB = new Date(b.lastMessage.timestamp);
+      return lastTimeB - lastTimeA;
+    });
+
+    setFriendList([...friends, ...listGroup]);
     setOriginalFriendList(friends);
     setRecommentFriendList(recommendedFriends);
     setListChatCurrent(conversations);
-  }, [friends, recommendedFriends, conversations]);
+  }, [friends, recommendedFriends, conversations, groups]);
 
   const changeShowModal = (modal) => {
     setIsShowModal(modal);
@@ -142,22 +164,18 @@ function ChatComponents({ language }) {
     }
   };
 
-  const handleCheckboxChange = (friendId) => {
-    if (selectedFriends.includes(friendId)) {
-      setSelectedFriends(selectedFriends.filter((id) => id !== friendId));
+  const handleCheckboxChange = (friend) => {
+    if (selectedFriends.includes(friend.id)) {
+      setSelectedFriends(selectedFriends.filter((f) => f.id !== friend.id));
     } else {
-      setSelectedFriends([...selectedFriends, friendId]);
+      setSelectedFriends([...selectedFriends, friend]);
     }
   };
 
   const sendMessageToSelectedFriends = async (content) => {
-    for (const receiverId of selectedFriends) {
-      try {
-        await sendMessage(content, receiverId);
-      } catch (error) {
-        console.error(`Error sending message to user ${receiverId}:`, error);
-      }
-    }
+    selectedFriends.forEach((friend) => {
+      sendMessage(content, friend.id, friend.tag === "group");
+    });
   };
 
   const handleSendButtonClick = () => {
@@ -234,7 +252,6 @@ function ChatComponents({ language }) {
         <div className="h-screen w-full sm:w-96 bg-white">
           <ListChatComponent
             language={language}
-            userChat={setUserChat}
             changeUserChat={setUserChat}
             showModal={changeShowModal}
             friends={friendList}
@@ -320,7 +337,7 @@ function ChatComponents({ language }) {
                     >
                       <div className="bg-blue w-10 ">
                         <img
-                          className="rounded-full w-10 h-10"
+                          className="rounded-full w-10 h-10 object-cover"
                           src={friend.avatar || "/zalo.svg"}
                           alt="cloud"
                         />
@@ -484,7 +501,7 @@ function ChatComponents({ language }) {
                 >
                   <div className="w-14 h-10 ">
                     <img
-                      className="rounded-full w-10 h-10"
+                      className="rounded-full w-10 h-10 object-cover"
                       src={member.avatar || "/zalo.svg"}
                       alt="cloud"
                     />
@@ -508,44 +525,48 @@ function ChatComponents({ language }) {
                 {language == "vi" ? "Danh sách bạn bè" : "List of friends"}
               </p>
               <div className="flex-col max-h-44 mt-2">
-                {visibleFriends.map((friend) => (
-                  <div
-                    key={friend.id}
-                    onClick={() => {
-                      setMembers((prev) => {
-                        if (prev.includes(friend)) {
-                          return prev.filter((i) => i !== friend);
-                        }
-                        return [...prev, friend];
-                      });
-                    }}
-                    className="cursor-pointer flex items-center  justify-between hover:bg-gray-200 transition-colors duration-300 ease-in-out p-2"
-                  >
-                    <input
-                      type="checkbox"
-                      className="mr-2"
-                      checked={members.includes(friend)}
-                      onChange={() => {
-                        setMembers((prev) => {
-                          if (prev.includes(friend)) {
-                            return prev.filter((i) => i !== friend);
-                          }
-                          return [...prev, friend];
-                        });
-                      }}
-                    />
-                    <div className="bg-blue w-10 ">
-                      <img
-                        className="rounded-full w-10 h-10"
-                        src={friend.avatar}
-                        alt="cloud"
-                      />
-                    </div>
-                    <div className="flex mr-auto ml-2 p-1">
-                      <p className="font-semibold ">{friend.name}</p>
-                    </div>
-                  </div>
-                ))}
+                {visibleFriends.map((friend) => {
+                  if (friend.tag !== "group") {
+                    return (
+                      <div
+                        key={friend.id}
+                        onClick={() => {
+                          setMembers((prev) => {
+                            if (prev.includes(friend)) {
+                              return prev.filter((i) => i !== friend);
+                            }
+                            return [...prev, friend];
+                          });
+                        }}
+                        className="cursor-pointer flex items-center  justify-between hover:bg-gray-200 transition-colors duration-300 ease-in-out p-2"
+                      >
+                        <input
+                          type="checkbox"
+                          className="mr-2"
+                          checked={members.includes(friend)}
+                          onChange={() => {
+                            setMembers((prev) => {
+                              if (prev.includes(friend)) {
+                                return prev.filter((i) => i !== friend);
+                              }
+                              return [...prev, friend];
+                            });
+                          }}
+                        />
+                        <div className="bg-blue w-10 ">
+                          <img
+                            className="rounded-full w-10 h-10 object-cover"
+                            src={friend.avatar}
+                            alt="cloud"
+                          />
+                        </div>
+                        <div className="flex mr-auto ml-2 p-1">
+                          <p className="font-semibold ">{friend.name}</p>
+                        </div>
+                      </div>
+                    );
+                  }
+                })}
               </div>
               {!showAllNewFriends &&
                 visibleFriends.length <= 3 &&
@@ -650,11 +671,11 @@ function ChatComponents({ language }) {
                       <input
                         className=""
                         type="checkbox"
-                        checked={selectedFriends.includes(friend.id)}
-                        onChange={() => handleCheckboxChange(friend.id)}
+                        checked={selectedFriends.includes(friend)}
+                        onChange={() => handleCheckboxChange(friend)}
                       />
                       <img
-                        className="rounded-full w-10 h-10 ml-2"
+                        className="rounded-full w-10 h-10 ml-2 object-cover"
                         src={friend.avatar}
                         alt="cloud"
                       />
