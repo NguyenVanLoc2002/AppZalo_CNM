@@ -36,6 +36,7 @@ export const AuthContextProvider = ({ children }) => {
     };
 
     loadData();
+    reloadAuthUser();
   }, []);
   useEffect(() => {
     const saveData = async () => {
@@ -44,7 +45,7 @@ export const AuthContextProvider = ({ children }) => {
           await AsyncStorage.setItem("authUser", JSON.stringify(authUser));
         }
         if (accessToken) {
-          console.log("save accessToken", accessToken);
+          // console.log("save accessToken", accessToken);
           await AsyncStorage.setItem(
             "accessToken",
             JSON.stringify(accessToken)
@@ -91,7 +92,6 @@ export const AuthContextProvider = ({ children }) => {
       },
     }));
   };
-
   const reloadAuthUser = async () => {
     try {
       const response = await axiosInstance.get("users/get/me");

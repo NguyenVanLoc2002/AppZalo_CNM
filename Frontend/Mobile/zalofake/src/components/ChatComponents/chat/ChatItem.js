@@ -1,5 +1,6 @@
 import React from "react";
 import { Text, View, Image } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 const ChatItem = ({ item }) => {
   return (
@@ -16,7 +17,7 @@ const ChatItem = ({ item }) => {
         style={{ width: "15%", justifyContent: "center", alignItems: "center" }}
       >
         <Image
-          source={{  uri: item.friend?.profile?.avatar?.url, }}
+          source={{ uri: item.conver.avatar, }}
           style={{ width: 55, height: 55, borderRadius: 25 }}
         />
       </View>
@@ -27,7 +28,10 @@ const ChatItem = ({ item }) => {
           paddingLeft: 20,
         }}
       >
-        <Text style={{ fontSize: 20, marginBottom: 5 }}>{item.friend.profile.name}</Text>
+        <View style={{ flexDirection: 'row' }}>
+          {item.conver.tag === 'group' ? <Ionicons name="people" size={20} color="gray" /> : <View></View>}
+          <Text style={{ fontSize: 20, marginBottom: 5, paddingLeft: 5 }}>{item.conver.name}</Text>
+        </View>
         <Text
           style={{
             fontSize: 14,
@@ -35,10 +39,10 @@ const ChatItem = ({ item }) => {
           }}
           numberOfLines={1}
         >
-          {item.chat}
+          {item.dataChat}
         </Text>
       </View>
-      {/* <View
+      <View
         style={{
           width: "18%",
           justifyContent: "center",
@@ -46,8 +50,8 @@ const ChatItem = ({ item }) => {
         }}
       >
         <Text style={{ marginBottom: 5 }}>
-          {item.thoiGian === 0 ? "vừa xong" : `${item.thoiGian} phút`}
-        </Text> */}
+          {item.time === 0 ? "vừa xong" : `${item.time} `}
+        </Text>
         {/* <Text
           style={{
             backgroundColor: "red",
@@ -59,10 +63,10 @@ const ChatItem = ({ item }) => {
             fontWeight: "bold",
             display: item.soTNChuaDoc === 0 ? "none" : "flex",
           }}
-        > */}
+        >
           {/* {item.soTNChuaDoc} */}
         {/* </Text> */}
-      {/* </View> */}
+      </View>
     </View>
   );
 };

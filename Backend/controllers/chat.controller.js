@@ -52,13 +52,14 @@ exports.sendMessage = async (req, resp) => {
 
 
     const group = await Group.findById(receiverId).populate("conversation");
-
+  
     let conversation;
     if (!group) {
       conversation = await Conversation.findOne({
         participants: { $all: [senderId, receiverId] },
         tag: "friend",
       });
+    
     } else {
       conversation = group.conversation;
     }
@@ -102,11 +103,10 @@ exports.sendMessage = async (req, resp) => {
 };
 
 //Lấy danh sách tin nhắn cá nhân với một người dùng cụ thể
-exports.getHistoryMessage = async (req, resp) => {
+exports.getHistoryMessageMobile = async (req, resp) => {
   try {
     const userId = req.params.userId; //người nhận lấy từ param
     const currentUserId = req.user.user_id; // người dùng hiện đang đăng nhập
-
     const lastTimestamp = req.query.lastTimestamp; // Lấy tham số lastTimestamp từ query string
     let queryCondition = {
       $or: [
@@ -140,7 +140,7 @@ exports.getHistoryMessage = async (req, resp) => {
     resp.status(500).json({ success: false, massage: "Internal server error" });
   }
 };
-exports.getHistoryMessageMobile = async (req, resp) => {
+exports.getHistoryMessage = async (req, resp) => {
   try {
     const userId = req.params.userId; //người nhận lấy từ param
     const currentUserId = req.user.user_id; // người dùng hiện đang đăng nhập
@@ -154,18 +154,8 @@ exports.getHistoryMessageMobile = async (req, resp) => {
     // };
     let queryCondition = {
       $or: [
-        {
-          $and: [
-            { senderId: currentUserId, receiverId: userId },
-            { $or: [{ status: 0 }, { status: 2 }] },
-          ],
-        },
-        {
-          $and: [
-            { senderId: userId, receiverId: currentUserId },
-            { $or: [{ status: 0 }, { status: 1 }] },
-          ],
-        },
+        { senderId: currentUserId, receiverId: userId },
+        { senderId: userId, receiverId: currentUserId },
       ],
     };
 
@@ -374,3 +364,4 @@ exports.deleteChat = async (req, res) => {
       .json({ message: "An error occurred while deleting the message" });
   }
 };
+

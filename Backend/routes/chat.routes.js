@@ -19,6 +19,7 @@ const { formatBodyData } = require("../middlewares/bodyDataFormat");
 router.get("/:userId", getHistoryMessage);
 router.get("/getHistoryMessage/:userId", getHistoryMessageMobile);
 
+router.get("/gets/:userId", getHistoryMessageMobile);
 // Lấy danh sách tin nhắn cá nhân với một người dùng cụ thể với userId là người nhận
 router.get("/:userId/getFirstMessage", getFirstMessage);
 

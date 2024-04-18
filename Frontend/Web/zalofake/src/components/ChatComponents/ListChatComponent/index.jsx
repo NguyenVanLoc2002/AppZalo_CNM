@@ -32,6 +32,8 @@ function ListChatComponent({
   const { isNewSocket, newSocketData } = useSocketContext();
   const [searchResult, setSearchResult] = useState([]);
 
+  
+
   useEffect(() => {
     setFriendList(friends);
 
@@ -39,7 +41,6 @@ function ListChatComponent({
       const friend = conversation.participants.find(
         (participant) => participant.phone !== authUser.phone
       );
-
       return {
         id: friend?._id,
         conversationId: conversation.id,
@@ -281,6 +282,7 @@ function ListChatComponent({
       setShowUnread(false);
     }
   };
+  
 
   //Lọc dữ liệu tên bạn bè
   const handleInputChange = (e) => {
