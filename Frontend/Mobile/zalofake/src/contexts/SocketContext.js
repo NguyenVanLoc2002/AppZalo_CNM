@@ -67,6 +67,8 @@ export const SocketContextProvider = ({ children }) => {
       socket.on("add-to-group", handleAddToGroup);
       socket.on("remove-from-group", handleRemoveFromGroup);
       socket.on("leave-group", handleLeaveGroup);
+      socket.on("delete-group", handleDeleteGroup);
+      socket.on("change-admins", handleChangeAdminGroup);
 
       return () => {
         socket.off("force_logout");
@@ -83,23 +85,34 @@ export const SocketContextProvider = ({ children }) => {
         socket.off("add-to-group", handleAddToGroup);
         socket.off("remove-from-group", handleRemoveFromGroup);
         socket.off("leave-group", handleLeaveGroup);
+        socket.off("delete-group", handleDeleteGroup);
+        socket.off("change-admins", handleChangeAdminGroup);
 
       };
     }
   }, [socket, authUser]);
 
   const handleReceiveFriendRequest = async (sender) => {
-    Toast.success(`${sender.sender.name} has sent you a friend request`);
+    Toast.show({
+      text1: `${sender.sender.name} has sent you a friend request`,
+      type: "success",
+    });
     await reloadAuthUser();
   };
 
   const handleFriendAcceptAction = async (sender) => {
-    Toast.success(`${sender.sender.name} has accepted your friend request`);
+    Toast.show({
+      text1: `${sender.sender.name} has accepted your friend request`,
+      type: "success",
+    });
     await reloadAuthUser();
   };
   const handleFriendRejectAction = async (sender) => {
     console.log("reject", sender);
-    Toast.error(`${sender.sender.name} has rejected your friend request`);
+    Toast.show({
+      text1: `${sender.sender.name} has rejected your friend request`,
+      type: "error",
+    });
     await reloadAuthUser();
   };
 
@@ -108,7 +121,7 @@ export const SocketContextProvider = ({ children }) => {
   };
 
   // handle for chat
-  const handleNewMessage = ({message}) => {
+  const handleNewMessage = ({ message }) => {
     setIsNewSocket("new_message");
     setNewSocketData(message);
   };
@@ -133,6 +146,14 @@ export const SocketContextProvider = ({ children }) => {
     setIsNewSocket("leave-group");
     setNewSocketData(group);
   };
+  const handleDeleteGroup = ({ group }) => {
+    setIsNewSocket("delete-group");
+    setNewSocketData(group);
+  }
+  const handleChangeAdminGroup = ({ group, members, typeChange }) => {
+    setIsNewSocket("change-admins");
+    setNewSocketData({ group, members, typeChange });
+  }
 
   return (
     <SocketContext.Provider

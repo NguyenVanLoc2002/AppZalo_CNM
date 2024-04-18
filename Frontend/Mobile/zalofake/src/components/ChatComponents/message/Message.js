@@ -22,6 +22,8 @@ import useCreateGroup from "../../../hooks/useCreateGroup";
 import { useAuthContext } from "../../../contexts/AuthContext";
 import * as DocumentPicker from 'expo-document-picker';
 import useConversation from "../../../hooks/useConversation";
+import { useSelector, useDispatch } from "react-redux";
+import { setIsGroup } from "../../../redux/stateCreateGroupSlice";
 
 const Message = ({ navigation, route }) => {
   const { conver } = route.params;
@@ -31,8 +33,12 @@ const Message = ({ navigation, route }) => {
   const [textMessage, setTextMessage] = useState(null)
   const [isColorSend, setIsColorSend] = useState(false)
   const { sendMessage, sendImage, sendVideo, sendFiles } = useSendMessage();
-  const { isNewSocket, newSocketData } = useSocketContext();
+  const { isNewSocket, newSocketData, socket } = useSocketContext();
   const { getConversationByID } = useConversation();
+  const dispatch = useDispatch();
+  var isGroupRedux = useSelector(state => state.isGroup.isGroup);
+  const [group, setGroup] = useState(null)
+  // console.log("isGroup", isGroupRedux);
 
   //truc
   const [chats, setChats] = useState([]);
@@ -189,6 +195,11 @@ const Message = ({ navigation, route }) => {
       console.log("scrollToEnd");
     }
   }
+
+  useEffect(() => {
+    fetchChats();
+  }, [isGroupRedux])
+
   useEffect(() => {
     fetchChats();
     const fetchSocket = async () => {
@@ -231,14 +242,46 @@ const Message = ({ navigation, route }) => {
           }
         }
       }
+      if (isNewSocket === "remove-from-group") {
+        // console.log("newSocketData",newSocketData);
+        if (newSocketData.removeMembers) {
+          const gr = newSocketData
+          console.log("group", gr);
+          // setGroup(gr)
+          if (gr) {
+            if (gr.removeMembers?.includes(authUser._id)) {
+              dispatch(setIsGroup())
+              console.log(`Bạn đã bị xoá khỏi nhóm ${gr.name}`);
+              showToastError(`Bạn đã bị xoá khỏi nhóm ${gr.name}`)
+              // setGroup(null)
+              navigation.navigate("ChatComponent");
 
+            }
+          }
+        }
+      }
+      if (isNewSocket === "delete-group") {
+        console.log("newSocketData", newSocketData);
+        if (newSocketData.name) {
+          const gr = newSocketData
+          console.log("groupM", gr);
+          if (gr) {
+            showToastSuccess(`Group ${gr.name} đã bị xoá`)
+            dispatch(setIsGroup())
+            navigation.navigate("ChatComponent");
+          }
+        }
+      }
     }
+
+
     fetchSocket()
 
   }, [isNewSocket, newSocketData]);
 
-
-
+  useEffect(() => {
+    navigation.navigate("ChatComponent");
+  }, [isGroupRedux])
 
   const handleGetTime = (time) => {
     const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss');
@@ -580,7 +623,7 @@ const Message = ({ navigation, route }) => {
         ) : (
           <View></View>
         )}
-        <Toast />
+        {/* <Toast /> */}
         <ScrollView ref={scrollViewRef}
           onScroll={handleScroll}
           scrollEventThrottle={16}
@@ -610,10 +653,10 @@ const Message = ({ navigation, route }) => {
                       {message.sender.name}
                     </Text>
                     {message.chat.replyMessageId === null ? (<View></View>) :
-                      (<View style={{ backgroundColor: '#89D5FB', display: 'flex', marginLeft: 10, borderLeftWidth: 2, borderColor: '#0072AB',marginRight:10 }}>
+                      (<View style={{ backgroundColor: '#89D5FB', display: 'flex', marginLeft: 10, borderLeftWidth: 2, borderColor: '#0072AB', marginRight: 10 }}>
 
                         {message.chat.replyMessageId.contents.map((content, i) => (
-                          <View key={i} style={{ display: 'flex', paddingVertical: 10, alignItems: 'center',  }}>
+                          <View key={i} style={{ display: 'flex', paddingVertical: 10, alignItems: 'center', }}>
                             {content.type === 'text' ? (
                               <View>
                                 <Text style={{ fontSize: 13, fontWeight: 'bold', paddingLeft: 15 }}>
@@ -971,8 +1014,8 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     alignSelf: "flex-end",
     paddingTop: 5,
-    marginLeft:30,
-    marginRight:10
+    marginLeft: 30,
+    marginRight: 10
   },
   styleRecive: {
     marginTop: 10,
@@ -982,7 +1025,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     borderRadius: 10,
     paddingTop: 5,
-    marginRight:50
+    marginRight: 50
   },
 
 });

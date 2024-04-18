@@ -18,6 +18,9 @@ import useConversation from "../../../hooks/useConversation";
 import useMessage from "../../../hooks/useMessage";
 import useSendMessage from "../../../hooks/useSendMessage";
 import * as ImagePicker from "expo-image-picker";
+import { useSocketContext } from "../../../contexts/SocketContext";
+import { useDispatch } from "react-redux";
+import { setIsGroup } from "../../../redux/stateCreateGroupSlice";
 
 const MessageSettings = ({ navigation, route }) => {
   const { conver } = route.params;
@@ -52,6 +55,10 @@ const MessageSettings = ({ navigation, route }) => {
   const { getConversationByID, conversation } = useConversation();
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedAvatar, setSelectedAvatar] = useState(null);
+  const { isNewSocket, newSocketData, socket } = useSocketContext();
+  const dispatch = useDispatch()
+  const [group, setGroup] = useState(null)
+
   useEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
@@ -78,7 +85,7 @@ const MessageSettings = ({ navigation, route }) => {
     await getConversationByID(conver.conversation._id);
     if (conver?.createBy?._id === authUser._id) {
       setIsGroupAdmin(true);
-    } else if (conver.admins.includes(authUser._id)) {
+    } else if (conver.admins?.includes(authUser?._id)) {
       setIsPhoAdmin(true);
     }
     setListAdmin(conver?.admins);
@@ -138,7 +145,7 @@ const MessageSettings = ({ navigation, route }) => {
         let textMessage = authUser?.profile?.name + ' đã thêm ' + selectedFrName + ' vào nhóm!!!';
         await sendMessage(conver._id,
           { type: 'text', data: textMessage }, null, true);
-
+        dispatch(setIsGroup())
         getConversationByID(conver.conversation._id);
         setModalAddMember(false);
         setSelectedFriends([]);
@@ -182,6 +189,7 @@ const MessageSettings = ({ navigation, route }) => {
         await sendMessage(conver._id,
           { type: 'text', data: textMessage }, null, true)
         toggleModal();
+        dispatch(setIsGroup())
         setIsLoadingAddMem(false);
         showToastSuccess('Xóa thành viên khỏi nhóm thành công')
 
@@ -240,7 +248,7 @@ const MessageSettings = ({ navigation, route }) => {
         return (
           friend.name
             .toLowerCase()
-            .includes(textSearch.toLowerCase()) || friend.phone === textSearch
+            ?.includes(textSearch.toLowerCase()) || friend.phone === textSearch
         );
       });
       // console.log(filteredFriends)
@@ -276,6 +284,7 @@ const MessageSettings = ({ navigation, route }) => {
           "Xóa nhóm thành công"
         );
         setIsLoadingLeaveGroup(false);
+        dispatch(setIsGroup())
         navigation.navigate("ChatComponent");
       }
     } catch (error) {
@@ -301,6 +310,7 @@ const MessageSettings = ({ navigation, route }) => {
           "Rời nhóm thành công"
         );
         setIsLoadingLeaveGroup(false);
+        dispatch(setIsGroup())
         navigation.navigate("ChatComponent");
       }
     } catch (error) {
@@ -312,7 +322,7 @@ const MessageSettings = ({ navigation, route }) => {
   };
   // chọn bạn để add group
   const handleFriendSelection = (item) => {
-    if (selectedFriends.includes(item)) {
+    if (selectedFriends?.includes(item)) {
       setSelectedFriends((prevState) =>
         prevState.filter((friend) => friend.id !== item.id)
       );
@@ -321,7 +331,7 @@ const MessageSettings = ({ navigation, route }) => {
     }
   };
   const isFriendSelected = (friend) => {
-    return selectedFriends.includes(friend);
+    return selectedFriends?.includes(friend);
   };
 
   const handleRemoveSearch = () => {
@@ -344,7 +354,7 @@ const MessageSettings = ({ navigation, route }) => {
 
   // chọn bạn để làm admin
   const handleFriendSelectionAdmin = (item) => {
-    if (selectedAdmin.includes(item)) {
+    if (selectedAdmin?.includes(item)) {
       setSelectedAdmin((prevState) =>
         prevState.filter((friend) => friend.id !== item._id)
       );
@@ -433,6 +443,7 @@ const MessageSettings = ({ navigation, route }) => {
         listAdmin.filter((friend) => friend !== adminSelected._id)
       );
       setAdminSelected(null);
+
       toggleModalXoa();
       getConversationByID(conver.conversation._id);
       let textMessage = authUser?.profile?.name + ' đã xóa quyền admin của ' + adminSelected?.profile?.name + '!';
@@ -445,6 +456,35 @@ const MessageSettings = ({ navigation, route }) => {
     }
     setIsLoadingAddMem(false);
   };
+
+  useEffect(() => {
+    const fetchSocket = async () => {
+      if (isNewSocket === "add-to-group") {
+        getConversationByID(conver.conversation._id);
+      }
+      if(isNewSocket === "remove-from-group"){
+        getConversationByID(conver.conversation._id);
+      }
+      if (isNewSocket === "leave-group") {
+        const group = newSocketData;
+        getConversationByID(conver.conversation._id);
+      }
+      if (isNewSocket === "change-admins") {
+        const { group, members, typeChange } = newSocketData;
+        console.log("group", group);
+        console.log("members", members);
+        console.log("typeChange", typeChange);
+        if(members){
+          // const getUser = await getUserById(members)
+          // showToastSuccess("success")
+        }
+        
+      }
+
+    }
+    fetchSocket()
+  }, [isNewSocket, newSocketData])
+
   const renderListItem = (item, index) => (
 
     <Pressable

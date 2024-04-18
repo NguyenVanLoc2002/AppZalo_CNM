@@ -144,6 +144,11 @@ export const SocketContextProvider = ({ children }) => {
     setIsNewSocket("leave-group");
     setNewSocketData(group);
   };
+  
+  const handleDeleteGroup = ({ group }) => {
+    setIsNewSocket("delete-group");
+    setNewSocketData(group);
+  }
 
   const handleDeleteGroup = ({ group }) => {
     setIsNewSocket("delete-group");
