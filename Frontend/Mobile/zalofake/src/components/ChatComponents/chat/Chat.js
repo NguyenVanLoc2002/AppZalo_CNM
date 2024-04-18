@@ -258,6 +258,7 @@ function Chat({ navigation }) {
           if (isDeleted) {
             console.log("delete_conversation", conversationId);
             const updatedListFriends = listFriends.map((item) => {
+              
               if (item.conversation.conversation._id === conversationId) {
                 console.log("hihi");
               }

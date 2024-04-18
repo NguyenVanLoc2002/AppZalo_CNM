@@ -409,7 +409,7 @@ const MessageSettings = ({ navigation, route }) => {
         handleThemAdminList(selectedAdmin._id);
         setSelectedAdmin([]);
         toggleModalQTV();
-        getConversationByID(conver.conversation._id);
+        // getConversationByID(conver.conversation._id);
         let textMessage = authUser?.profile?.name + ' đã bổ nhiệm ' + selectedFrName + ' làm phó nhóm!!!';
         await sendMessage(conver._id,
           { type: 'text', data: textMessage }, null, true);
@@ -444,7 +444,7 @@ const MessageSettings = ({ navigation, route }) => {
       );
       setAdminSelected(null);
       toggleModalXoa();
-      getConversationByID(conver.conversation._id);
+      // getConversationByID(conver.conversation._id);
       let textMessage = authUser?.profile?.name + ' đã xóa quyền admin của ' + adminSelected?.profile?.name + '!';
       await sendMessage(conver._id,
         { type: 'text', data: textMessage }, null, true);
