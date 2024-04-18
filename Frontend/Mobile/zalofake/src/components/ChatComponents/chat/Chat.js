@@ -301,9 +301,9 @@ function Chat({ navigation }) {
       //         showToastSuccess(`Bạn đã bị xoá khỏi nhóm ${isChange.name}`)
       //         const updatedConversationList = listFriends.filter(item => item.conversation._id !== isChange.id);
       //         setListFriends(updatedConversationList)
-      //         getGroups()
-      //         fetchDataListFriend()
-      //         fetchDataChat()
+      //         // getGroups()
+      //         // fetchDataListFriend()
+      //         // fetchDataChat()
       //         isChange = null
       //       }
       //       isChange = null

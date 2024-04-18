@@ -38,7 +38,7 @@ const Message = ({ navigation, route }) => {
   const dispatch = useDispatch();
   var isGroupRedux = useSelector(state => state.isGroup.isGroup);
   const [group, setGroup] = useState(null)
-  // console.log("isGroup", isGroup);
+  // console.log("isGroup", isGroupRedux);
 
   //truc
   const [chats, setChats] = useState([]);
@@ -244,47 +244,44 @@ const Message = ({ navigation, route }) => {
       }
       if (isNewSocket === "remove-from-group") {
         // console.log("newSocketData",newSocketData);
-        if(newSocketData.removeMembers){
+        if (newSocketData.removeMembers) {
           const gr = newSocketData
-          console.log("gr", gr);
-          setGroup(gr)
-          console.log("group123", group);
-          if (group) {
-            if (group.removeMembers?.includes(authUser._id)) {
+          console.log("group", gr);
+          // setGroup(gr)
+          if (gr) {
+            if (gr.removeMembers?.includes(authUser._id)) {
               dispatch(setIsGroup())
-              console.log(`Bạn đã bị xoá khỏi nhóm ${group.name}`);
-              showToastError(`Bạn đã bị xoá khỏi nhóm ${group.name}`)
-              setGroup(null)
+              console.log(`Bạn đã bị xoá khỏi nhóm ${gr.name}`);
+              showToastError(`Bạn đã bị xoá khỏi nhóm ${gr.name}`)
+              // setGroup(null)
               navigation.navigate("ChatComponent");
+
             }
           }
         }
       }
-      if(isNewSocket === "delete-group"){
+      if (isNewSocket === "delete-group") {
         console.log("newSocketData", newSocketData);
-        if(newSocketData.name){
+        if (newSocketData.name) {
           const gr = newSocketData
-          setGroup(gr)
-          if(group){
-            if (group.removeMembers?.includes(authUser._id)) {
-              console.log("groupM", group);
-              showToastSuccess(`Group ${group.name} đã bị xoá`)
-              dispatch(setIsGroup())
-              setGroup(null)
-              navigation.navigate("ChatComponent");
-            }
-            
+          console.log("groupM", gr);
+          if (gr) {
+            showToastSuccess(`Group ${gr.name} đã bị xoá`)
+            dispatch(setIsGroup())
+            navigation.navigate("ChatComponent");
           }
         }
       }
     }
-    
+
 
     fetchSocket()
-   
+
   }, [isNewSocket, newSocketData]);
 
-
+  useEffect(() => {
+    navigation.navigate("ChatComponent");
+  }, [isGroupRedux])
 
   const handleGetTime = (time) => {
     const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss');
