@@ -37,6 +37,7 @@ exports.createGroup = async (req, res) => {
       },
       conversation: conversation._id,
       createBy: uid.user_id,
+      admins: [uid.user_id],
     });
 
     const initLastMessage = new Chats({
@@ -199,7 +200,22 @@ exports.updateGroup = async (req, res) => {
       group.avatar.url = result.secure_url;
       group.avatar.public_id = result.public_id;
     }
-    await group.save();
+    const change = (await group.save()).populate("conversation");
+    const newGroup = await Promise.all([change]);
+    
+    newGroup[0].conversation.participants.forEach(async (member) => {
+      const memderSocketId = await getReciverSocketId(member);
+      if (memderSocketId) {
+        io.to(memderSocketId.socket_id).emit("update-group", {
+          group: {
+            id: group._id,
+            name: group.groupName,
+            avatar: group.avatar.url,
+          },
+        });
+      }
+    });
+
     return res.status(200).json(group);
   } catch (error) {
     console.error(error);
@@ -351,8 +367,6 @@ exports.removeMember = async (req, res) => {
       }
       if (group.conversation.participants.includes(member)) {
         if (group.admins.includes(member)) {
-          console.log("remove admin", member);
-          console.log("group.admins", group.admins);
           group.admins = group.admins.filter((a) => a.toString() !== member);
         }
         return (group.conversation.participants =
@@ -372,7 +386,6 @@ exports.removeMember = async (req, res) => {
     grMembers.forEach(async (member) => {
       const memderSocketId = await getReciverSocketId(member);
       if (memderSocketId && members !== uid.user_id) {
-        console.log("remove-from-group", member);
         io.to(memderSocketId.socket_id).emit("remove-from-group", {
           group: {
             id: group._id,
