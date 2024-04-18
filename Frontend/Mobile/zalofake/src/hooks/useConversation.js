@@ -79,11 +79,13 @@ const useConversation = () => {
       if (response.status === 200) {
         setConversation(response.data);
         setLoading(false);
+        return response.data;
       }
     } catch (error) {
       console.log(error);
       Toast.error("Failed to get conversation");
       setLoading(false);
+      return null;
     }
   };
 

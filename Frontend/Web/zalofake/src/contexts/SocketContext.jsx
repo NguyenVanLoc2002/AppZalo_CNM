@@ -65,6 +65,7 @@ export const SocketContextProvider = ({ children }) => {
       socket.on("add-to-group", handleAddToGroup);
       socket.on("remove-from-group", handleRemoveFromGroup);
       socket.on("leave-group", handleLeaveGroup);
+      socket.on("delete-group", handleDeleteGroup);
       socket.on("change-admins", handleChangeAdminGroup);
 
       return () => {
@@ -82,6 +83,7 @@ export const SocketContextProvider = ({ children }) => {
         socket.off("add-to-group", handleAddToGroup);
         socket.off("remove-from-group", handleRemoveFromGroup);
         socket.off("leave-group", handleLeaveGroup);
+        socket.off("delete-group", handleDeleteGroup);
         socket.off("change-admins", handleChangeAdminGroup);
 
       };
@@ -133,6 +135,11 @@ export const SocketContextProvider = ({ children }) => {
     setIsNewSocket("leave-group");
     setNewSocketData(group);
   };
+  
+  const handleDeleteGroup = ({ group }) => {
+    setIsNewSocket("delete-group");
+    setNewSocketData(group);
+  }
 
   const handleChangeAdminGroup = ({ group, members, typeChange }) => {
     setIsNewSocket("change-admins");
