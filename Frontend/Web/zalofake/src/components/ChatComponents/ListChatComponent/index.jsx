@@ -9,6 +9,7 @@ import useConversation from "../../../hooks/useConversation";
 import useGroup from "../../../hooks/useGroup";
 import { useAuthContext } from "../../../contexts/AuthContext";
 import { useSocketContext } from "../../../contexts/SocketContext";
+import { Socket } from "socket.io-client";
 
 function ListChatComponent({
   language,
@@ -66,7 +67,7 @@ function ListChatComponent({
   useEffect(() => {
     if (isNewSocket === "new_message") {
       const message = newSocketData;
-
+      console.log("new_message", message);
       const isExist = listChatCurrent.some(
         (chat) => chat.conversationId === message.conversationId
       );
@@ -213,6 +214,20 @@ function ListChatComponent({
 
       changeUserChat(null);
     }
+    if (isNewSocket === "update-group") {
+      const group = newSocketData;
+      const index = listChatCurrent.findIndex((chat) => chat.id === group.id);
+      if (index !== -1) {
+        setListChatCurrent((prev) => {
+          const newList = [...prev];
+          newList[index].name = group.name;
+          newList[index].avatar = group.avatar;
+          newList[index].background = group.avatar;
+          return newList;
+        });
+      }
+    }
+
     if (isNewSocket === "change-admins") {
       const { group, members, typeChange } = newSocketData;
       const isChange = listChatCurrent.findIndex(
@@ -380,9 +395,7 @@ function ListChatComponent({
                     <FaSortDown className="pb-1" size={20} />
                   </button>
                 </div>
-                <button>
-                  <IoIosMore size={20} opacity={1.8} />
-                </button>
+                
               </div>
             </>
           )}
@@ -430,85 +443,96 @@ function ListChatComponent({
         ) : (
           <>
             <div className="h-full w-full max-h-full">
-              {listChatCurrent?.map((friend) => (
-                <div
-                  key={friend.id}
-                  className={`flex justify-between hover:bg-gray-200 transition-colors duration-300 ease-in-out p-2 ${
-                    isChatSelected === friend.id ? "bg-gray-200" : ""
-                  }`}
-                  onMouseEnter={() => setIsHovered(true)}
-                  onMouseLeave={() => setIsHovered(false)}
-                  onClick={() => {
-                    changeUserChat(friend);
-                    setIsChatSelected(friend.id);
-                  }}
-                >
-                  <div className="bg-blue w-14 ">
-                    <img
-                      className="rounded-full w-14 h-14"
-                      src={friend.avatar}
-                      alt="cloud"
-                    />
-                  </div>
-                  <div className="flex-col mr-auto ml-2 p-1">
-                    <p className="font-semibold ">
-                      {friend?.name?.length > 15
-                        ? `${friend?.name.slice(0, 15)}...`
-                        : friend?.name}
-                    </p>
-                    <p
-                      className="text-gray-600 mt-auto "
-                      style={{ fontSize: 14 }}
-                    >
-                      {friend?.lastMessage?.senderId === authUser._id
-                        ? "Bạn: "
-                        : ""}
-                      {friend?.lastMessage?.contents
-                        ? friend.lastMessage.contents[0]?.type === "text"
-                          ? friend?.lastMessage?.contents[0].data.length > 15
-                            ? `${friend?.lastMessage?.contents[0].data.slice(
-                                0,
-                                15
-                              )}...`
-                            : friend?.lastMessage?.contents[0].data
-                          : friend?.lastMessage?.contents[0]?.type === "image"
-                          ? "Hình ảnh"
-                          : "Tệp đính kèm"
-                        : language === "vi"
-                        ? "Chưa có tin nhắn"
-                        : "No message yet"}
+              {listChatCurrent?.map((friend) => {
+                const time = new Date(friend.lastMessage?.timestamp);
+                const now = new Date();
+                const diff = now - time;
+                let timeString = "";
+                if (diff < 60000) {
+                  timeString = language === "vi" ? "Vừa xong" : "Just now";
+                } else if (diff < 3600000) {
+                  timeString = `${Math.floor(diff / 60000)} ${
+                    language === "vi" ? "phút trước" : "minutes ago"
+                  }`;
+                } else if (diff < 86400000) {
+                  timeString = `${Math.floor(diff / 3600000)} ${
+                    language === "vi" ? "giờ trước" : "hours ago"
+                  }`;
+                } else {
+                  timeString = `${Math.floor(diff / 86400000)} ${
+                    language === "vi" ? "ngày trước" : "days ago"
+                  }`;
+                }
 
-                      {friend?.unread ? (
-                        <span className="text-blue-500"> (1)</span>
-                      ) : (
-                        ""
-                      )}
-                    </p>
-                  </div>
-                  <div>
-                    <p
-                      className="text-sm hover:text-gray-600"
-                      style={{ fontSize: 12 }}
-                    >
-                      {isHovered ? (
-                        <button>
-                          <IoIosMore size={20} opacity={1.8} />
-                        </button>
-                      ) : !showUnread ? (
-                        friend.unread ? (
-                          "Chưa đọc"
+                return (
+                  <div
+                    key={friend.id}
+                    className={`flex justify-between hover:bg-gray-200 transition-colors duration-300 ease-in-out p-2 ${
+                      isChatSelected === friend.id ? "bg-gray-200" : ""
+                    }`}
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
+                    onClick={() => {
+                      changeUserChat(friend);
+                      setIsChatSelected(friend.id);
+                    }}
+                  >
+                    <div className="bg-blue w-14 ">
+                      <img
+                        className="rounded-full w-14 h-14"
+                        src={friend.avatar}
+                        alt="cloud"
+                      />
+                    </div>
+                    <div className="flex-col mr-auto ml-2 p-1">
+                      <p className="font-semibold ">
+                        {friend?.name?.length > 15
+                          ? `${friend?.name.slice(0, 15)}...`
+                          : friend?.name}
+                      </p>
+                      <p
+                        className="text-gray-600 mt-auto "
+                        style={{ fontSize: 14 }}
+                      >
+                        {friend?.lastMessage?.senderId === authUser._id
+                          ? "Bạn: "
+                          : ""}
+                        {friend?.lastMessage?.contents
+                          ? friend.lastMessage.contents[0]?.type === "text"
+                            ? friend?.lastMessage?.contents[0].data.length > 15
+                              ? `${friend?.lastMessage?.contents[0].data.slice(
+                                  0,
+                                  15
+                                )}...`
+                              : friend?.lastMessage?.contents[0].data
+                            : friend?.lastMessage?.contents[0]?.type === "image"
+                            ? "Hình ảnh"
+                            : "Tệp đính kèm"
+                          : language === "vi"
+                          ? "Chưa có tin nhắn"
+                          : "No message yet"}
+  
+                        {friend?.unread ? (
+                          <span className="text-blue-500"> (1)</span>
                         ) : (
-                          "Hôm qua"
-                        )
-                      ) : friend.unread ? (
-                        "Chưa đọc"
-                      ) : (
-                        "Hôm qua"
-                      )}
-                    </p>
+                          ""
+                        )}
+                      </p>
+                    </div>
+                    <div>
+                      <p
+                        className="text-sm hover:text-gray-600"
+                        style={{ fontSize: 12 }}
+                      >
+                        {
+                          timeString
+                        
+                        }
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </>
         )}

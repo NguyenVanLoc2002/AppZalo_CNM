@@ -3,7 +3,6 @@ const Chats = require("../models/Chat.js");
 const Chat = require("../models/Chat.js");
 const Conversation = require("../models/Conversation.js");
 const Group = require("../models/Group.js");
-const User = require("../models/User.js");
 const { io, getReciverSocketId } = require("../socket/socket.io.js");
 
 exports.sendMessage = async (req, resp) => {
@@ -43,11 +42,14 @@ exports.sendMessage = async (req, resp) => {
       replyMessageId,
     });
 
-    await message.save();
-    const retrunMessage = await Chat.findById(message._id).populate({
+    const saveMessage = (await message.save()).populate({
       path: "replyMessageId",
       model: "chats",
     });
+    const retrunMessage = await Promise.all([saveMessage]).then((values) => {
+      return values[0];
+    });
+
 
     const group = await Group.findById(receiverId).populate("conversation");
 
@@ -74,8 +76,12 @@ exports.sendMessage = async (req, resp) => {
       }
     } else {
       const receiverSocketId = await getReciverSocketId(receiverId);
-      if (receiverSocketId) {
+      const senderSocketId = await getReciverSocketId(senderId);
+      if (receiverSocketId && senderSocketId) {
         io.to(receiverSocketId.socket_id).emit("new_message", {
+          message: { retrunMessage, conversationId: conversation._id },
+        });
+        io.to(senderSocketId.socket_id).emit("new_message", {
           message: { retrunMessage, conversationId: conversation._id },
         });
       }

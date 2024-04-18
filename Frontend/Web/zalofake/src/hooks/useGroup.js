@@ -80,6 +80,7 @@ const useGroup = () => {
 
   const updateGroup = async (groupId, groupData) => {
     setGrLoading(true);
+
     try {
       const response = await axiosInstance.put(
         `/groups/update/${groupId}`,

@@ -1,16 +1,11 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 
 import { CiUser, CiCircleInfo } from "react-icons/ci";
-import { IoSettingsOutline, IoSettingsSharp } from "react-icons/io5";
-import { GoDatabase } from "react-icons/go";
-import { FiTool } from "react-icons/fi";
+import { IoSettingsOutline} from "react-icons/io5";
 import { GrLanguage } from "react-icons/gr";
 import { IoIosArrowForward } from "react-icons/io";
-import { HiMiniLockClosed } from "react-icons/hi2";
-import { TiArrowSync } from "react-icons/ti";
-import { FaDatabase } from "react-icons/fa";
 import useLogout from "../../hooks/useLogout";
-import { checkPassword } from "../../utils/validation";
+import config from "../../api/config";
 
 function MenuComponent({ language, setLanguage, typeMenu, showModal, typeModal }) {
   const [tabSelected, setTabSelected] = useState("");
@@ -59,18 +54,18 @@ function MenuComponent({ language, setLanguage, typeMenu, showModal, typeModal }
 
   return typeMenu == "setting" ? (
     <>
-      <div className="h-[285px] w-[225px] bg-white rounded-sm shadow-xl absolute bottom-[85px] -left-16 z-40 grid grid-rows-7">
+      <div className="w-[225px] bg-white rounded-sm shadow-xl absolute bottom-[85px] -left-16 z-40 grid grid-rows-5">
         <div className="row-span-2">
           <div
             className="px-3 py-2  w-full flex items-center hover:bg-gray-200"
-            onClick={showModal}
+            onClick={toggleModalProfile}
           >
             <CiUser size={20} color="#555555" />
             <p className="text-sm ml-6">
               {language == "vi" ? "Thông tin tài khoản" : "Account infomation"}
             </p>
           </div>
-          <div className="p-3 w-full flex items-center hover:bg-gray-200">
+          <div className="p-3 w-full flex items-center hover:bg-gray-200" onClick={toggleModalSetting}>
             <IoSettingsOutline size={18} color="#555555" />
             <p className="text-sm ml-6">
               {language == "vi" ? "Cài đặt" : "Setting"}
@@ -79,63 +74,8 @@ function MenuComponent({ language, setLanguage, typeMenu, showModal, typeModal }
           <hr />
         </div>
 
-        <div className="row-span-4">
-          <div
-            className="px-3 py-[10px] w-full flex items-center hover:bg-gray-200 justify-between relative"
-            onClick={() => {
-              setTabSelected(tabSelected == "data" ? "" : "data");
-            }}
-          >
-            <GoDatabase size={20} color="#555555" />
-            <p className="text-sm w-full ml-8">
-              {language == "vi" ? "Dữ liệu" : "Data"}
-            </p>
-            <IoIosArrowForward size={16} color="#555555" />
-
-            <div
-              className={
-                tabSelected == "data"
-                  ? "z-50 bg-white rounded-sm shadow w-44 absolute -top-12 -right-48 mt-12 mr-4"
-                  : "z-50 bg-white rounded-sm shadow w-44 absolute -top-12 -right-48 mt-12 mr-4 hidden"
-              }
-            >
-              <ul className="py-2 text-sm text-gray-700">
-                <li>
-                  <a className="block px-4 py-2 hover:bg-gray-200">
-                    {language == "vi" ? "Quản lý File" : "File Manager"}
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div
-            className="px-3 py-[10px]  w-full flex items-center hover:bg-gray-200 justify-between relative"
-            onClick={() => {
-              setTabSelected(tabSelected == "tool" ? "" : "tool");
-            }}
-          >
-            <FiTool size={20} color="#555555" />
-            <p className="text-sm w-full ml-8">
-              {language == "vi" ? "Công cụ" : "Tool"}
-            </p>
-            <IoIosArrowForward size={16} color="#555555" />
-
-            <div
-              className={
-                tabSelected == "tool"
-                  ? "z-50 bg-white rounded-sm shadow w-44 absolute -top-12 -right-48 mt-12 mr-4 "
-                  : "z-50 bg-white rounded-sm shadow w-44 absolute -top-12 -right-48 mt-12 mr-4 hidden"
-              }
-            >
-              <ul className="py-2 text-sm text-gray-700">
-                <li>
-                  <a className="block px-4 py-2 hover:bg-gray-200">
-                    {language == "vi" ? "Gửi file logs" : "Send logs file"}
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
+        <div className="row-span-2">
+          
           <div
             className="px-3 py-[10px]  w-full flex items-center hover:bg-gray-200 justify-between relative"
             onClick={() => {
@@ -196,12 +136,10 @@ function MenuComponent({ language, setLanguage, typeMenu, showModal, typeModal }
             >
               <ul className="py-2 text-sm text-gray-700">
                 <li>
-                  <a className="block px-4 py-2 hover:bg-gray-200">
-                    {language == "vi" ? "Phiên bản" : "Version"}
+                  <a className="block px-4 py-2 hover:bg-gray-200" href={config.baseURL + "/terms_of_service"} target="_blank">
+                    {language == "vi" ? "Điều khoản dịch vụ" : "Terms of service"}
                   </a>
-                  <a className="block px-4 py-2 hover:bg-gray-200">
-                    {language == "vi" ? "Trung tâm hỗ trợ" : "Help center"}
-                  </a>
+                  
                 </li>
               </ul>
             </div>
