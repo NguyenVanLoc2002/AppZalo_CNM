@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import io from "socket.io-client";
 import { useAuthContext } from "./AuthContext";
 import toast from "react-hot-toast";
+import config from "../api/config";
 
 const SocketContext = createContext();
 export const useSocketContext = () => {
@@ -9,6 +10,7 @@ export const useSocketContext = () => {
 };
 
 export const SocketContextProvider = ({ children }) => {
+  const url = config.baseURL.replace("/api", "");
   const [socket, setSocket] = useState(null);
   const [onlineFriends, setOnlineFriends] = useState([]);
   const { refreshToken, authUser, setAuthUser, reloadAuthUser } =
@@ -18,7 +20,7 @@ export const SocketContextProvider = ({ children }) => {
   const [newSocketData, setNewSocketData] = useState(null);
 
   const connectSocket = (token) => {
-    const newSocket = io("http://localhost:3000", {
+    const newSocket = io(url, {
       query: {
         token: token,
       },
