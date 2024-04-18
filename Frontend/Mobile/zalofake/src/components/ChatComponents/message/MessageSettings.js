@@ -18,9 +18,9 @@ import useConversation from "../../../hooks/useConversation";
 import useMessage from "../../../hooks/useMessage";
 import useSendMessage from "../../../hooks/useSendMessage";
 import * as ImagePicker from "expo-image-picker";
+import { useSocketContext } from "../../../contexts/SocketContext";
 import { useDispatch } from "react-redux";
 import { setIsGroup } from "../../../redux/stateCreateGroupSlice";
-import { useSocketContext } from "../../../contexts/SocketContext";
 
 const MessageSettings = ({ navigation, route }) => {
   const { conver } = route.params;
@@ -55,8 +55,9 @@ const MessageSettings = ({ navigation, route }) => {
   const { getConversationByID, conversation } = useConversation();
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedAvatar, setSelectedAvatar] = useState(null);
-  const dispatch = useDispatch();
   const { isNewSocket, newSocketData, socket } = useSocketContext();
+  const dispatch = useDispatch()
+  const [group, setGroup] = useState(null)
 
   useEffect(() => {
     navigation.setOptions({
@@ -144,9 +145,8 @@ const MessageSettings = ({ navigation, route }) => {
         let textMessage = authUser?.profile?.name + ' đã thêm ' + selectedFrName + ' vào nhóm!!!';
         await sendMessage(conver._id,
           { type: 'text', data: textMessage }, null, true);
-
-        getConversationByID(conver.conversation._id);
         dispatch(setIsGroup())
+        getConversationByID(conver.conversation._id);
         setModalAddMember(false);
         setSelectedFriends([]);
         showToastSuccess("Thêm thành viên vào nhóm thành công");
@@ -189,9 +189,10 @@ const MessageSettings = ({ navigation, route }) => {
         await sendMessage(conver._id,
           { type: 'text', data: textMessage }, null, true)
         toggleModal();
+        dispatch(setIsGroup())
         setIsLoadingAddMem(false);
         showToastSuccess('Xóa thành viên khỏi nhóm thành công')
-        dispatch(setIsGroup())
+
       }
     } catch (error) {
       console.error(error);
@@ -228,7 +229,7 @@ const MessageSettings = ({ navigation, route }) => {
           i = true;
         }
       }
-      // console.log('radio', newRadioButtons)
+      console.log('radio', newRadioButtons)
       setListSearch(newRadioButtons);
       setListFriendCanSearch(newRadioButtons)
     } catch (error) {
@@ -266,10 +267,10 @@ const MessageSettings = ({ navigation, route }) => {
           newRadioButtons.push(item);
         }
         setListSearch(newRadioButtons);
-        // console.log(
-        //   "Giá trị của radioButton sau khi tìm kiếm:",
-        //   newRadioButtons
-        // );
+        console.log(
+          "Giá trị của radioButton sau khi tìm kiếm:",
+          newRadioButtons
+        );
       }
     }
   };
@@ -283,6 +284,7 @@ const MessageSettings = ({ navigation, route }) => {
           "Xóa nhóm thành công"
         );
         setIsLoadingLeaveGroup(false);
+        dispatch(setIsGroup())
         navigation.navigate("ChatComponent");
       }
     } catch (error) {
@@ -456,10 +458,28 @@ const MessageSettings = ({ navigation, route }) => {
 
   useEffect(() => {
     const fetchSocket = async () => {
+      if (isNewSocket === "add-to-group") {
+        getConversationByID(conver.conversation._id);
+      }
+      if(isNewSocket === "remove-from-group"){
+        getConversationByID(conver.conversation._id);
+      }
       if (isNewSocket === "leave-group") {
         const group = newSocketData;
         getConversationByID(conver.conversation._id);
       }
+      if (isNewSocket === "change-admins") {
+        const { group, members, typeChange } = newSocketData;
+        console.log("group", group);
+        console.log("members", members);
+        console.log("typeChange", typeChange);
+        if(members){
+          // const getUser = await getUserById(members)
+          // showToastSuccess("success")
+        }
+        
+      }
+
     }
     fetchSocket()
   }, [isNewSocket, newSocketData])

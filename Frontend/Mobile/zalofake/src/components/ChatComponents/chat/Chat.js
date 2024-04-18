@@ -93,6 +93,21 @@ function Chat({ navigation }) {
     });
   }, [navigation]);
 
+  // useEffect(() => {
+  //   const fetchDataListFriend = async () => {
+  //     try {
+  //       getConversations();
+  //       getGroups();
+  //     } catch (error) {
+  //       console.log("getFriendError:", error);
+  //     }
+  //   };
+  //   if (!isLoad) {
+  //     fetchDataListFriend();
+  //     SetIsLoad(true);
+  //   }
+  // }, [isGroup])
+
   const fetchDataChat = async () => {
     const listChat = conversations.map((conversation) => {
       const friend = conversation.participants.find(
@@ -129,11 +144,12 @@ function Chat({ navigation }) {
       lastMessage: group.lastMessage,
       tag: group.conversation.tag,
       createBy: group.createBy,
+      admins: group?.admins
     };
   }
   useEffect(() => {
     fetchDataChat();
-  }, [conversations, groups]);
+  }, [conversations, groups, isGroup]);
 
   const fetchDataConver = async (listChat) => {
     let data = [];
@@ -210,8 +226,8 @@ function Chat({ navigation }) {
     return updatedListFriends;
   }
 
-
   useEffect(() => {
+
     const fetchDataListFriend = async () => {
       try {
         getConversations();
@@ -276,29 +292,39 @@ function Chat({ navigation }) {
         }
       }
 
-      if (isNewSocket === "remove-from-group") {
-        if (newSocketData.removeMembers) {
-          var isChange = newSocketData
-          if (isChange) {
-            if (isChange.removeMembers?.includes(authUser._id)) {
-              console.log(`Bạn đã bị xoá khỏi nhóm ${isChange.name}`);
-              showToastSuccess(`Bạn đã bị xoá khỏi nhóm ${isChange.name}`)
-              const updatedConversationList = listFriends.filter(item => item.conversation._id !== isChange.id);
-              setListFriends(updatedConversationList)
-              getGroups()
-              fetchDataListFriend()
-              fetchDataChat()
-              isChange = null
-            }
-            isChange = null
-          }
-        }
+      // if (isNewSocket === "remove-from-group") {
+      //   if (newSocketData.removeMembers) {
+      //     var isChange = newSocketData
+      //     if (isChange) {
+      //       if (isChange.removeMembers?.includes(authUser._id)) {
+      //         console.log(`Bạn đã bị xoá khỏi nhóm ${isChange.name}`);
+      //         showToastSuccess(`Bạn đã bị xoá khỏi nhóm ${isChange.name}`)
+      //         const updatedConversationList = listFriends.filter(item => item.conversation._id !== isChange.id);
+      //         setListFriends(updatedConversationList)
+      //         getGroups()
+      //         fetchDataListFriend()
+      //         fetchDataChat()
+      //         isChange = null
+      //       }
+      //       isChange = null
+      //     }
+      //   }
+      // }
+      if (isNewSocket === "delete-group") {
+        // const group = newSocketData;
+        // // console.log("groupC", group);
+        // if(group){
+        //   showToastSuccess(`Group ${group.name} đã bị xoá`)
+        //   getGroups()
+        //   fetchDataListFriend()
+        //   fetchDataChat()
+        // }
       }
-      
     }
     fetchSocket()
     fetchDataListFriend()
   }, [isNewSocket, newSocketData, isGroup]);
+
 
   const handleChatItemPress = (item) => {
     navigation.navigate("Message", { conver: item.conversation });
