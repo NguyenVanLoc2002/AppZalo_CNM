@@ -83,6 +83,7 @@ const MessageSettings = ({ navigation, route }) => {
     }
     setListAdmin(conver?.admins);
     fetchFriends();
+    console.log(conver.createBy)
   };
   // cập nhật tên nhóm
   const updateGroupInfo = async () => {
@@ -361,17 +362,20 @@ const MessageSettings = ({ navigation, route }) => {
 
   // chọn bạn để add group
   const handleThemAdminList = (itemId) => {
-    if (listAdmin.includes(itemId)) {
+    // if(listAdmin.length!==0){
+    if (listAdmin?.includes(itemId)) {
       setListAdmin((prevState) =>
         prevState.filter((friend) => friend !== itemId)
       );
     } else {
       setListAdmin((prevState) => [...prevState, itemId]);
     }
+    // }
+
   };
 
   const isAdminSelected = (friend) => {
-    return selectedAdmin.includes(friend);
+    return selectedAdmin?.includes(friend);
   };
 
   // Thêm admin
@@ -432,7 +436,7 @@ const MessageSettings = ({ navigation, route }) => {
         listAdmin.filter((friend) => friend !== adminSelected._id)
       );
       setAdminSelected(null);
-     
+
       toggleModalXoa();
       getConversationByID(conver.conversation._id);
       let textMessage = authUser?.profile?.name + ' đã xóa quyền admin của ' + adminSelected?.profile?.name + '!';
@@ -788,28 +792,42 @@ const MessageSettings = ({ navigation, route }) => {
                       <View style={{ width: 40, height: 40, alignItems: 'flex-end', justifyContent: 'center', marginRight: 20 }} >
 
                         <View >
-                          {listAdmin.includes(member._id) && (
+                          {conver.createBy._id === member._id ? (<FontAwesome5
+                            name="key"
+                            size={20}
+                            color="#ffcd03"
+                           
+                            // style={{ borderColor: 'black', borderWidth: 1, borderStyle: 'solid' }}
+                          />) : (
+                            <View>
+                            {
+                              listAdmin?.includes(member._id) && (
 
-                            // onPress={isGroupAdmin ? handleDeleteGroup : handleLeaveGroup}
-                            <Pressable
-                              onPress={isGroupAdmin ? () => {
-                                setAdminSelected(member);
-                                toggleModalXoa();
-                              } : null
-                              }>
-                              <FontAwesome5
-                                name="key"
-                                size={20}
-                                color="black"
-                              /></Pressable>
+                              // onPress={isGroupAdmin ? handleDeleteGroup : handleLeaveGroup}
+                              <Pressable
+                                onPress={isGroupAdmin ? () => {
+                                  setAdminSelected(member);
+                                  toggleModalXoa();
+                                } : null
+                                }>
+                                <FontAwesome5
+                                  name="key"
+                                  size={20}
+                                  color="black"
+                                  regular={false}
+                                /></Pressable>
+                            )}</View>
                           )}
+
+
+
                         </View>
 
                       </View>
                       {(isGroupAdmin || isPhoAdmin) && (
                         <View >
                           {
-                            (isModeQTV && !listAdmin.includes(member._id)) ? (
+                            (isModeQTV && !listAdmin?.includes(member._id)) ? (
 
                               <Pressable
                                 onPress={() => {

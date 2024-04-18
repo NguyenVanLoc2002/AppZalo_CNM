@@ -55,15 +55,15 @@ const useMessage = () => {
         </View>
       );
     } else if (content.type === 'file') {
+      // console.log(content.data)
       return (
 
         <View style={{ paddingLeft: 15, paddingRight: 15 }}>
-          {/* {console.log(content.data)} */}
-          {/* {content.data!==null?(<PDFReader
-          source={{ uri: content.data }}
-           /> ):(<Text></Text>)
 
-          }  */}
+          {/* <PDFReader
+            source={{ uri: content.data }}
+          /> */}
+
         </View>
 
       );
@@ -74,13 +74,13 @@ const useMessage = () => {
   const renderMessageContentReply = (content) => {
     if (content.type === 'text') {
       return (
-        <View style={{ paddingHorizontal: 15}}>
+        <View style={{ paddingHorizontal: 15 }}>
           <Text style={{ fontSize: 14 }}>{content.data}</Text>
         </View>
       );
     } else if (content.type === 'image') {
       return (
-        <View style={{ paddingLeft: 10}}>
+        <View style={{ paddingLeft: 10 }}>
           <Image
             source={{ uri: content.data }}
             style={{ width: 100, height: 100, borderRadius: 10 }}
