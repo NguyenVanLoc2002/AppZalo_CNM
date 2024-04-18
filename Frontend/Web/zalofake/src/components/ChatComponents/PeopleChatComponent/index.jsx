@@ -852,10 +852,7 @@ function PeopleChatComponent({
                             const imagesCount = message.contents.filter(
                               (c) => c.type === "image"
                             ).length;
-                            const imagesPerRow = Math.min(
-                              imagesCount,
-                              maxImagesPerRow
-                            );
+                            const imagesPerRow = Math.ceil(imagesCount / maxImagesPerRow); 
                             const imageWidth = `calc(100% / ${imagesPerRow})`;
                             const imageHeight = "auto";
                             return (
@@ -876,10 +873,10 @@ function PeopleChatComponent({
                                   <img
                                     src={content.data}
                                     alt="image"
-                                    className="pr-2 pb-2"
+                                    className="pr-2 pb-2 flex flex-wrap"
                                     style={{
                                       width:
-                                        imagesCount === 1
+                                        imagesPerRow === 1
                                           ? "300px"
                                           : imageWidth,
                                       height: imageHeight,
@@ -1150,10 +1147,7 @@ function PeopleChatComponent({
                             const imagesCount = message.contents.filter(
                               (c) => c.type === "image"
                             ).length;
-                            const imagesPerRow = Math.min(
-                              imagesCount,
-                              maxImagesPerRow
-                            );
+                            const imagesPerRow = Math.ceil(imagesCount / maxImagesPerRow); 
                             const imageWidth = `calc(100% / ${imagesPerRow})`;
                             const imageHeight = "auto";
 
@@ -1176,10 +1170,10 @@ function PeopleChatComponent({
                                   <img
                                     src={content.data}
                                     alt="image"
-                                    className="pr-2 pb-2"
+                                    className="pr-2 pb-2 "
                                     style={{
                                       width:
-                                        imagesCount === 1
+                                        imagesPerRow === 1
                                           ? "300px"
                                           : imageWidth,
                                       height: imageHeight,
@@ -1475,7 +1469,7 @@ function PeopleChatComponent({
                     }
                     className={`w-full break-all outline-none px-5 py-2 ${
                       contentReply ? "h-[50%] max-h-fit" : "h-full"
-                    } border rounded-full focus:border-blue-200 focus:shadow-md`}
+                    }  rounded-full`}
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     onKeyPress={handleKeyPress}

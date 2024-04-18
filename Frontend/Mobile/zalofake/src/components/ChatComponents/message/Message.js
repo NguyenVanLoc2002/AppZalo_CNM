@@ -685,6 +685,7 @@ const Message = ({ navigation, route }) => {
                           marginLeft: 10,
                           borderLeftWidth: 2,
                           borderColor: "#0072AB",
+                          marginRight: 10,
                         }}
                       >
                         {message.chat.replyMessageId.contents.map(
@@ -695,7 +696,6 @@ const Message = ({ navigation, route }) => {
                                 display: "flex",
                                 paddingVertical: 10,
                                 alignItems: "center",
-                                paddingRight: 5,
                               }}
                             >
                               {content.type === "text" ? (
@@ -1127,6 +1127,8 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     alignSelf: "flex-end",
     paddingTop: 5,
+    marginLeft: 30,
+    marginRight: 10,
   },
   styleRecive: {
     marginTop: 10,
@@ -1136,6 +1138,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     borderRadius: 10,
     paddingTop: 5,
+    marginRight: 50,
   },
 });
 export default Message;

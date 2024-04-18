@@ -64,7 +64,8 @@ const GroupDirectory = ({ navigation }) => {
           lastMessage: lastMessage,
           sender: sender,
           timeSend: handleGetTime(group.lastMessage.timestamp),
-          tag: group.conversation.tag
+          tag: group.conversation.tag,
+          admins: group?.admins 
         }
       }))
      
