@@ -83,7 +83,6 @@ const MessageSettings = ({ navigation, route }) => {
     }
     setListAdmin(conver?.admins);
     fetchFriends();
-    console.log(conver.createBy)
   };
   // cập nhật tên nhóm
   const updateGroupInfo = async () => {
@@ -362,7 +361,6 @@ const MessageSettings = ({ navigation, route }) => {
 
   // chọn bạn để add group
   const handleThemAdminList = (itemId) => {
-    // if(listAdmin.length!==0){
     if (listAdmin?.includes(itemId)) {
       setListAdmin((prevState) =>
         prevState.filter((friend) => friend !== itemId)
@@ -370,7 +368,6 @@ const MessageSettings = ({ navigation, route }) => {
     } else {
       setListAdmin((prevState) => [...prevState, itemId]);
     }
-    // }
 
   };
 
@@ -436,7 +433,6 @@ const MessageSettings = ({ navigation, route }) => {
         listAdmin.filter((friend) => friend !== adminSelected._id)
       );
       setAdminSelected(null);
-
       toggleModalXoa();
       getConversationByID(conver.conversation._id);
       let textMessage = authUser?.profile?.name + ' đã xóa quyền admin của ' + adminSelected?.profile?.name + '!';
