@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import io from "socket.io-client";
 import { useAuthContext } from "./AuthContext";
 import toast from "react-hot-toast";
+import config from "../api/config";
 
 const SocketContext = createContext();
 export const useSocketContext = () => {
@@ -9,6 +10,7 @@ export const useSocketContext = () => {
 };
 
 export const SocketContextProvider = ({ children }) => {
+  const url = config.baseURL.replace("/api", "");
   const [socket, setSocket] = useState(null);
   const [onlineFriends, setOnlineFriends] = useState([]);
   const { refreshToken, authUser, setAuthUser, reloadAuthUser } =
@@ -18,7 +20,7 @@ export const SocketContextProvider = ({ children }) => {
   const [newSocketData, setNewSocketData] = useState(null);
 
   const connectSocket = (token) => {
-    const newSocket = io("http://localhost:3000", {
+    const newSocket = io(url, {
       query: {
         token: token,
       },
@@ -64,6 +66,7 @@ export const SocketContextProvider = ({ children }) => {
       // socket for group
       socket.on("add-to-group", handleAddToGroup);
       socket.on("remove-from-group", handleRemoveFromGroup);
+      socket.on("update-group", handleUpdateGroup);
       socket.on("leave-group", handleLeaveGroup);
       socket.on("delete-group", handleDeleteGroup);
       socket.on("change-admins", handleChangeAdminGroup);
@@ -82,6 +85,7 @@ export const SocketContextProvider = ({ children }) => {
         // socket for group
         socket.off("add-to-group", handleAddToGroup);
         socket.off("remove-from-group", handleRemoveFromGroup);
+        socket.off("update-group", handleUpdateGroup);
         socket.off("leave-group", handleLeaveGroup);
         socket.off("delete-group", handleDeleteGroup);
         socket.off("change-admins", handleChangeAdminGroup);
@@ -131,6 +135,11 @@ export const SocketContextProvider = ({ children }) => {
     setNewSocketData(group);
   };
 
+  const handleUpdateGroup = ({ group }) => {
+    setIsNewSocket("update-group");
+    setNewSocketData(group);
+  }
+
   const handleLeaveGroup = ({ group }) => {
     setIsNewSocket("leave-group");
     setNewSocketData(group);
@@ -141,10 +150,17 @@ export const SocketContextProvider = ({ children }) => {
     setNewSocketData(group);
   }
 
+  const handleDeleteGroup = ({ group }) => {
+    setIsNewSocket("delete-group");
+    setNewSocketData(group);
+  }
+
   const handleChangeAdminGroup = ({ group, members, typeChange }) => {
     setIsNewSocket("change-admins");
     setNewSocketData({ group, members, typeChange });
   }
+
+
 
   return (
     <SocketContext.Provider

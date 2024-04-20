@@ -107,8 +107,16 @@ function ChatComponents({ language }) {
         tag: group.conversation.tag,
         creator: group.createBy,
         admins: group.admins,
+        timestamp: group.lastMessage.timestamp,
       };
     });
+    // sort list group by last message timestamp
+    listGroup.sort((a, b) => {
+      const lastTimeA = new Date(a.lastMessage.timestamp);
+      const lastTimeB = new Date(b.lastMessage.timestamp);
+      return lastTimeB - lastTimeA;
+    });
+
     setFriendList([...friends, ...listGroup]);
     setOriginalFriendList(friends);
     setRecommentFriendList(recommendedFriends);

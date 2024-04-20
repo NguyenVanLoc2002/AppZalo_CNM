@@ -378,6 +378,7 @@ const MessageSettings = ({ navigation, route }) => {
     } else {
       setListAdmin((prevState) => [...prevState, itemId]);
     }
+
   };
 
   const isAdminSelected = (friend) => {
@@ -442,7 +443,6 @@ const MessageSettings = ({ navigation, route }) => {
         listAdmin.filter((friend) => friend !== adminSelected._id)
       );
       setAdminSelected(null);
-
       toggleModalXoa();
       getConversationByID(conver.conversation._id);
       let textMessage = authUser?.profile?.name + ' đã xóa quyền admin của ' + adminSelected?.profile?.name + '!';
@@ -461,7 +461,7 @@ const MessageSettings = ({ navigation, route }) => {
       if (isNewSocket === "add-to-group") {
         getConversationByID(conver.conversation._id);
       }
-      if(isNewSocket === "remove-from-group"){
+      if (isNewSocket === "remove-from-group") {
         getConversationByID(conver.conversation._id);
       }
       if (isNewSocket === "leave-group") {
@@ -473,11 +473,11 @@ const MessageSettings = ({ navigation, route }) => {
         console.log("group", group);
         console.log("members", members);
         console.log("typeChange", typeChange);
-        if(members){
+        if (members) {
           // const getUser = await getUserById(members)
           // showToastSuccess("success")
         }
-        
+
       }
 
     }
@@ -827,21 +827,35 @@ const MessageSettings = ({ navigation, route }) => {
                       <View style={{ width: 40, height: 40, alignItems: 'flex-end', justifyContent: 'center', marginRight: 20 }} >
 
                         <View >
-                          {listAdmin?.includes(member?._id) && (
+                          {conver.createBy._id === member._id ? (<FontAwesome5
+                            name="key"
+                            size={20}
+                            color="#ffcd03"
 
-                            // onPress={isGroupAdmin ? handleDeleteGroup : handleLeaveGroup}
-                            <Pressable
-                              onPress={isGroupAdmin ? () => {
-                                setAdminSelected(member);
-                                toggleModalXoa();
-                              } : null
-                              }>
-                              <FontAwesome5
-                                name="key"
-                                size={20}
-                                color="black"
-                              /></Pressable>
+                          // style={{ borderColor: 'black', borderWidth: 1, borderStyle: 'solid' }}
+                          />) : (
+                            <View>
+                              {
+                                listAdmin?.includes(member._id) && (
+
+                                  // onPress={isGroupAdmin ? handleDeleteGroup : handleLeaveGroup}
+                                  <Pressable
+                                    onPress={isGroupAdmin ? () => {
+                                      setAdminSelected(member);
+                                      toggleModalXoa();
+                                    } : null
+                                    }>
+                                    <FontAwesome5
+                                      name="key"
+                                      size={20}
+                                      color="black"
+                                      regular={false}
+                                    /></Pressable>
+                                )}</View>
                           )}
+
+
+
                         </View>
 
                       </View>

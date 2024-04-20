@@ -150,7 +150,7 @@ function ContactComponent({ language }) {
             friends={friendList}
           />
         </div>
-        <div className="h-screen sm:w-[calc(100%-24rem)] w-0 overflow-y-auto">
+        <div className="h-screen sm:w-[calc(100%-24rem)] w-0 overflow-auto">
           {tabSelected == 0 ? (
             <FriendListComponent language={language} friends={friendList} />
           ) : tabSelected == 1 ? (

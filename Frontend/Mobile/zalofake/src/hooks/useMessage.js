@@ -57,15 +57,15 @@ const useMessage = () => {
         </View>
       );
     } else if (content.type === 'file') {
+      // console.log(content.data)
       return (
 
         <View style={{ paddingLeft: 15, paddingRight: 15 }}>
-          {/* {console.log(content.data)} */}
-          {/* {content.data!==null?(<PDFReader
-          source={{ uri: content.data }}
-           /> ):(<Text></Text>)
 
-          }  */}
+          {/* <PDFReader
+            source={{ uri: content.data }}
+          /> */}
+
         </View>
 
       );
