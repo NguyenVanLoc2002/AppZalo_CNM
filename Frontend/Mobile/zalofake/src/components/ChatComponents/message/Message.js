@@ -11,9 +11,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import axiosInstance from "../../../api/axiosInstance";
-import moment from 'moment-timezone';
 import useMessage from '../../../hooks/useMessage'
-import Toast from "react-native-toast-message";
 import useSendMessage from "../../../hooks/useSendMessage";
 import * as ImagePicker from "expo-image-picker";
 import { FontAwesome5 } from "@expo/vector-icons";
@@ -28,16 +26,15 @@ import { setIsGroup } from "../../../redux/stateCreateGroupSlice";
 const Message = ({ navigation, route }) => {
   const { conver } = route.params;
   const { getUserById, getAllGroup } = useCreateGroup()
-  const { authUser, reloadAuthUser } = useAuthContext()
+  const { authUser } = useAuthContext()
   //nhi  
   const [textMessage, setTextMessage] = useState(null)
   const [isColorSend, setIsColorSend] = useState(false)
   const { sendMessage, sendImage, sendVideo, sendFiles } = useSendMessage();
-  const { isNewSocket, newSocketData, socket } = useSocketContext();
+  const { isNewSocket, newSocketData } = useSocketContext();
   const { getConversationByID } = useConversation();
   const dispatch = useDispatch();
   var isGroupRedux = useSelector(state => state.isGroup.isGroup);
-  const [group, setGroup] = useState(null)
   // console.log("isGroup", isGroupRedux);
 
   //truc
@@ -47,7 +44,7 @@ const Message = ({ navigation, route }) => {
   const [scrollViewHeight, setScrollViewHeight] = useState(0);
   const [isLoad, setIsLoad] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { renderMessageContent, renderMessageContentReply, showToastSuccess, showToastError } = useMessage();
+  const { renderMessageContent, renderMessageContentReply, showToastSuccess, showToastError, handleGetTimeInMessage } = useMessage();
   const [isModalVisible, setModalVisible] = useState(false);
   const [messageSelected, setMessageSelected] = useState("");
   const [isModalFriendVisible, setIsModalFriendVisible] = useState(false);
@@ -196,9 +193,9 @@ const Message = ({ navigation, route }) => {
     }
   }
 
-  useEffect(() => {
-    fetchChats();
-  }, [isGroupRedux])
+  // useEffect(() => {
+  //   fetchChats();
+  // }, [isGroupRedux])
 
   useEffect(() => {
     fetchChats();
@@ -207,7 +204,6 @@ const Message = ({ navigation, route }) => {
       if (isNewSocket === "new_message") {
         const message = newSocketData;
         if (message) {
-          reloadAuthUser();
           console.log("socket new messagae");
           if (
             message.conversationId === conver.conversation._id ||
@@ -250,11 +246,11 @@ const Message = ({ navigation, route }) => {
           // setGroup(gr)
           if (gr) {
             if (gr.removeMembers?.includes(authUser._id)) {
-              dispatch(setIsGroup())
+              // dispatch(setIsGroup())
               console.log(`Bạn đã bị xoá khỏi nhóm ${gr.name}`);
               showToastError(`Bạn đã bị xoá khỏi nhóm ${gr.name}`)
               // setGroup(null)
-              navigation.navigate("ChatComponent");
+              // navigation.navigate("ChatComponent");
 
             }
           }
@@ -267,8 +263,8 @@ const Message = ({ navigation, route }) => {
           console.log("groupM", gr);
           if (gr) {
             showToastSuccess(`Group ${gr.name} đã bị xoá`)
-            dispatch(setIsGroup())
-            navigation.navigate("ChatComponent");
+            // dispatch(setIsGroup())
+            // navigation.navigate("ChatComponent");
           }
         }
       }
@@ -279,15 +275,6 @@ const Message = ({ navigation, route }) => {
 
   }, [isNewSocket, newSocketData]);
 
-  useEffect(() => {
-    navigation.navigate("ChatComponent");
-  }, [isGroupRedux])
-
-  const handleGetTime = (time) => {
-    const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss');
-    const dateObject = new Date(vietnamDatetime)
-    return `${dateObject.getHours()}:${dateObject.getMinutes()}`
-  };
 
   useEffect(() => {
     navigation.setOptions({
@@ -464,15 +451,10 @@ const Message = ({ navigation, route }) => {
     }
     handleSendMessage();
   };
-
+  
   //nhi
   const openImagePicker = async () => {
-    const permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) {
-      console.log("Permission to access camera roll is required!");
-      return;
-    }
+
     const pickerResult = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: false,
@@ -579,7 +561,7 @@ const Message = ({ navigation, route }) => {
       }
 
       try {
-        const response = await sendMessage(conver._id,
+        const response = await sendText(conver._id,
           { type: 'text', data: textMessage }, replyId, isGroup)
         if (response.status === 201) {
           setIsLoadMess(false)
@@ -688,7 +670,7 @@ const Message = ({ navigation, route }) => {
                         <View>
                           {renderMessageContent(content)}
                           {/* {console.log(content)} */}
-                          <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTime(message.timestamp)}</Text></View>
+                          <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTimeInMessage(message.timestamp)}</Text></View>
                         </View>
                       </Pressable>
                     ))}

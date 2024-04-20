@@ -12,9 +12,6 @@ import {
 import ChatItem from "./ChatItem";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import axiosInstance from "../../../api/axiosInstance";
-import Toast from "react-native-toast-message";
-import { FontAwesome5 } from "@expo/vector-icons";
-import moment from 'moment-timezone';
 import { useAuthContext } from "../../../contexts/AuthContext";
 import { useSocketContext } from "../../../contexts/SocketContext";
 import useConversation from "../../../hooks/useConversation";
@@ -22,19 +19,17 @@ import useGroup from "../../../hooks/useGroup";
 import useMessage from '../../../hooks/useMessage'
 import useCreateGroup from "../../../hooks/useCreateGroup";
 import { useDispatch, useSelector } from "react-redux";
-import { setIsGroup } from "../../../redux/stateCreateGroupSlice";
 
 function Chat({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
   const { conversations, getConversations, getConversationByID } = useConversation();
   const { groups, getGroups } = useGroup();
   const [listFriends, setListFriends] = useState([]);
-  const [chats, setChats] = useState([]);
   const [isLoad, SetIsLoad] = useState(false);
   const { authUser } = useAuthContext();
   const { getUserById } = useCreateGroup()
-  const { isNewSocket, newSocketData, socket } = useSocketContext();
-  const { showToastSuccess } = useMessage();
+  const { isNewSocket, newSocketData } = useSocketContext();
+  const { showToastSuccess, handleGetTimeInChat } = useMessage();
   var isGroup = useSelector(state => state.isGroup.isGroup);
   const dispatch = useDispatch();
 
@@ -93,21 +88,6 @@ function Chat({ navigation }) {
     });
   }, [navigation]);
 
-  // useEffect(() => {
-  //   const fetchDataListFriend = async () => {
-  //     try {
-  //       getConversations();
-  //       getGroups();
-  //     } catch (error) {
-  //       console.log("getFriendError:", error);
-  //     }
-  //   };
-  //   if (!isLoad) {
-  //     fetchDataListFriend();
-  //     SetIsLoad(true);
-  //   }
-  // }, [isGroup])
-
   const fetchDataChat = async () => {
     const listChat = conversations.map((conversation) => {
       const friend = conversation.participants.find(
@@ -149,7 +129,7 @@ function Chat({ navigation }) {
   }
   useEffect(() => {
     fetchDataChat();
-  }, [conversations, groups, isGroup]);
+  }, [conversations, groups]);
 
   const fetchDataConver = async (listChat) => {
     let data = [];
@@ -164,7 +144,7 @@ function Chat({ navigation }) {
         const conversationNew = {
           conversation: conver,
           dataChat: dataChat,
-          time: handleGetTime(conver?.lastMessage?.timestamp)
+          time: handleGetTimeInChat(conver?.lastMessage?.timestamp)
         };
         data.push(conversationNew);
 
@@ -218,7 +198,7 @@ function Chat({ navigation }) {
             lastMessage: message
           },
           dataChat: dataChat,
-          time: handleGetTime(message?.timestamp)
+          time: handleGetTimeInChat(message?.timestamp)
         };
       }
       return item;
@@ -284,7 +264,7 @@ function Chat({ navigation }) {
           const conversationNew = {
             conversation: addGroup,
             dataChat: dataChat,
-            time: handleGetTime(addGroup.lastMessage.timestamp)
+            time: handleGetTimeInChat(addGroup.lastMessage.timestamp)
           };
           const newListFriends = [...listFriends, conversationNew]
           const sortUpdate = sortTime(newListFriends);
@@ -322,32 +302,12 @@ function Chat({ navigation }) {
       }
     }
     fetchSocket()
-    fetchDataListFriend()
-  }, [isNewSocket, newSocketData, isGroup]);
+    // fetchDataListFriend()
+  }, [isNewSocket, newSocketData]);
 
 
   const handleChatItemPress = (item) => {
     navigation.navigate("Message", { conver: item.conversation });
-  };
-
-  const handleGetTime = (time) => {
-    const currentTime = moment().tz('Asia/Ho_Chi_Minh'); // Lấy thời gian hiện tại ở múi giờ Việt Nam
-    const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh'); // Chuyển đổi thời gian đã cho sang múi giờ Việt Nam
-    const timeDifference = moment.duration(currentTime.diff(vietnamDatetime)); // Tính khoảng cách thời gian
-
-    const days = Math.floor(timeDifference.asDays()); // Số ngày
-    const hours = Math.abs(timeDifference.hours()); // Số giờ (dương)
-    const minutes = Math.abs(timeDifference.minutes()); // Số phút (dương)
-
-    if (days >= 1) {
-      return `${days} ngày`;
-    }
-    else if (hours >= 1) {
-      return `${hours} giờ`;
-    }
-    else {
-      return `${minutes} phút`;
-    }
   };
 
   return (
