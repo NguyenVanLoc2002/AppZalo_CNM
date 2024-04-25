@@ -2,10 +2,6 @@ import React from 'react';
 import { View, Text, Image } from 'react-native';
 import { Video } from 'expo-av';
 import Toast from "react-native-toast-message";
-// import Pdf from 'react-native-pdf';
-// import { openDocumentAsync } from 'expo-document-viewer';
-// import { WebView } from 'react-native-webview';
-// import PDFReader from 'rn-pdf-reader-js';
 const useMessage = () => {
 
   const showToastSuccess = (notice) => {

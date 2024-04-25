@@ -202,7 +202,7 @@ exports.updateGroup = async (req, res) => {
     }
     const change = (await group.save()).populate("conversation");
     const newGroup = await Promise.all([change]);
-    
+
     newGroup[0].conversation.participants.forEach(async (member) => {
       const memderSocketId = await getReciverSocketId(member);
       if (memderSocketId) {
@@ -249,6 +249,10 @@ exports.deleteGroup = async (req, res) => {
         });
       }
     });
+    group.conversation.messages.forEach(async (message) => {
+      await Chats.findByIdAndDelete(message);
+    });
+    await Chats.findByIdAndDelete(group.conversation.lastMessage);
     await Conversation.findByIdAndDelete(group.conversation);
 
     return res.status(200).json({ message: "Group deleted successfully" });
