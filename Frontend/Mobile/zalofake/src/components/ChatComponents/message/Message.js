@@ -451,7 +451,12 @@ const Message = ({ navigation, route }) => {
         } else {
           isGroup = false;
         }
-        const send = await sendMessage(friend._id, messageSelected.chat.contents[0], isGroup)
+        let replyId = null;
+        if (replyChat !== null) {
+          replyId = replyChat.chat._id
+        }
+  
+        const send = await sendMessage(friend._id, messageSelected.chat.contents[0],replyId, isGroup)
         if (send) {
           showToastSuccess("Chuyển tiếp thành công")
           setIsLoadChuyenTiep(false)
