@@ -123,7 +123,7 @@ const PersonalPage = ({ navigation }) => {
   const openModal = () => {
     setSelectedImage(
       authUser?.profile?.avatar?.url ||
-        "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png"
+      "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png"
     );
     setModalVisible(true);
   };
@@ -135,7 +135,7 @@ const PersonalPage = ({ navigation }) => {
   const openModalBia = () => {
     setModalVisibleBia(
       authUser?.profile?.background?.url ||
-        "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png"
+      "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png"
     );
     setModalVisibleBia(true);
   };
@@ -426,43 +426,29 @@ const PersonalPage = ({ navigation }) => {
           <View
             style={{ backgroundColor: "white", padding: 20, borderRadius: 10 }}
           >
-            <Image
-              source={{
-                uri:
-                  selectedImage ||
-                  authUser?.profile?.avatar?.url ||
-                  "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
-              }}
-              style={{ width: 200, height: 200, borderRadius: 100 }}
-            />
             <Pressable onPress={openImagePicker}>
-              <Text
-                style={{
-                  color: "#0091FF",
-                  textAlign: "center",
-                  paddingVertical: 20,
+              <Image
+                source={{
+                  uri:
+                    selectedImage ||
+                    authUser?.profile?.avatar?.url ||
+                    "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
                 }}
-              >
-                Chọn ảnh
-              </Text>
+                style={{ width: 200, height: 200, borderRadius: 100 }}
+              />
             </Pressable>
-            <Pressable onPress={handleUpdateAvatar}>
-              <Text
-                style={{
-                  color: "#0091FF",
-                  textAlign: "center",
-                  paddingVertical: 20,
-                }}
-              >
-                cập nhật
-              </Text>
-            </Pressable>
-
-            <Pressable onPress={closeModal}>
-              <Text style={{ color: "#0091FF", textAlign: "center" }}>
-                Đóng
-              </Text>
-            </Pressable>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', marginTop: 20 }}>
+              <Pressable style={{ backgroundColor: '#0091FF', height: 40, justifyContent: 'center', alignItems: 'center', borderRadius: 10, width: 85 }} onPress={closeModal}>
+                <Text style={{ color: "white", fontWeight: 'bold' }}>
+                  Đóng
+                </Text>
+              </Pressable>
+              <Pressable style={{ backgroundColor: '#0091FF', height: 40, justifyContent: 'center', alignItems: 'center', borderRadius: 10, width: 85 }} onPress={handleUpdateAvatar}>
+                <Text style={{ color: "white", fontWeight: 'bold' }}>
+                  Cập nhật
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </View>
       </Modal>

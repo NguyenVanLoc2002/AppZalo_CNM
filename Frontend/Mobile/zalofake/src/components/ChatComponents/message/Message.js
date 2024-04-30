@@ -7,12 +7,12 @@ import {
   Pressable,
   StyleSheet,
   ScrollView, ActivityIndicator, Modal,
-  Image
+  Image,
+  LogBox
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import axiosInstance from "../../../api/axiosInstance";
 import useMessage from '../../../hooks/useMessage'
-import useSendMessage from "../../../hooks/useSendMessage";
 import * as ImagePicker from "expo-image-picker";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useSocketContext } from "../../../contexts/SocketContext"
@@ -24,15 +24,15 @@ import { useSelector, useDispatch } from "react-redux";
 import { setIsGroup } from "../../../redux/stateCreateGroupSlice";
 
 const Message = ({ navigation, route }) => {
-  const { conver } = route.params;
+  const { chatItem } = route.params;
+  const [conver, setConver] = useState(chatItem)
   const { getUserById, getAllGroup } = useCreateGroup()
   const { authUser } = useAuthContext()
   //nhi  
   const [textMessage, setTextMessage] = useState(null)
   const [isColorSend, setIsColorSend] = useState(false)
-  const { sendMessage, sendImage, sendVideo, sendFiles } = useSendMessage();
-  const { isNewSocket, newSocketData } = useSocketContext();
-  const { getConversationByID } = useConversation();
+  const { isNewSocket, newSocketData, setNewSocketData } = useSocketContext();
+  const { getConverHaveParticipants } = useConversation();
   const dispatch = useDispatch();
   var isGroupRedux = useSelector(state => state.isGroup.isGroup);
   // console.log("isGroup", isGroupRedux);
@@ -44,7 +44,7 @@ const Message = ({ navigation, route }) => {
   const [scrollViewHeight, setScrollViewHeight] = useState(0);
   const [isLoad, setIsLoad] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { renderMessageContent, renderMessageContentReply, showToastSuccess, showToastError, handleGetTimeInMessage } = useMessage();
+  const { renderMessageContent, renderMessageContentReply, showToastSuccess, showToastError, handleGetTimeInMessage, addMessage, sendMessage } = useMessage();
   const [isModalVisible, setModalVisible] = useState(false);
   const [messageSelected, setMessageSelected] = useState("");
   const [isModalFriendVisible, setIsModalFriendVisible] = useState(false);
@@ -56,65 +56,115 @@ const Message = ({ navigation, route }) => {
   const [replyChat, setReplyChat] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
 
-  const pickFile = async () => {
-    try {
-      const file = await DocumentPicker.getDocumentAsync();
-      if (file.canceled === false) {
-        setSelectedFile(file);
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={{ flexDirection: "row" }}>
+          <Pressable onPress={() => console.log("Pressed call")}>
+            <Ionicons
+              name="call-outline"
+              size={27}
+              color="white"
+              style={{ padding: 4, paddingStart: 10 }}
+            />
+          </Pressable>
+          <Ionicons
+            name="videocam-outline"
+            size={27}
+            color="white"
+            style={{ padding: 4, marginRight: 10 }}
+          />
+          <Pressable
+            onPress={() => navigation.navigate("MessageSettings", { item: conver })}
+          >
+            <Ionicons
+              name="list-outline"
+              size={27}
+              color="white"
+              style={{ padding: 4 }}
+            />
+          </Pressable>
+        </View>
+      ),
+      headerTitle: () => (
+        <View style={{ flexDirection: "row", alignItems: "center", width: '55%', marginRight: 100 }}>
+          {conver.tag === 'group' ? (
+            <View style={{ width: '30%' }}>
+              <Image
+                source={{ uri: conver.avatar }}
+                style={{ width: 45, height: 40, borderRadius: 25 }}
+              /></View>
+          ) : (<View></View>)}
+          <Text style={{ fontSize: 19, color: "white", fontWeight: 'bold' }}>{conver.name}</Text>
+        </View>
+      ),
+      headerStyle: {
+        backgroundColor: "#0091FF",
+        shadowColor: "#fff",
+      },
+      headerTintColor: "#fff",
+      headerTitleStyle: {
+        fontWeight: "bold",
+        fontSize: 20,
+      },
+    });
+  }, [navigation, isGroupRedux]);
 
-        setIsLoadMess(true)
-        let isGroup = false
-        if (conver.tag === "group") {
-          isGroup = true
-        }
-        let replyId = null;
-        if (replyChat !== null) {
-          replyId = replyChat.chat._id
-        }
-        for (const asset of file.assets) {
-
-          const formData = new FormData();
-          const fileName = asset.uri.split('/').pop();
-          formData.append('data[]', {
-            uri: asset.uri,
-            name: fileName,
-            type: 'file/pdf', // Sử dụng 'application/pdf' cho loại tệp PDF
-          });
-
-          formData.append('isGroup', isGroup);
-          formData.append('replyMessageId', replyId);
-
-          try {
-            const response = await sendFiles(conver._id, formData)
-            if (response.status === 201) {
-              setIsLoadMess(false)
-              setIsLoad(false)
-              fetchChats();
-              scrollToEnd();
-              setReplyChat(null);
-              console.log("send file success");
-            }
-            else if (response.status === 500) {
-              console.log("send file fail");
-            }
-          } catch (error) {
-            console.log(error);
-            setIsLoadMess(false)
-          }
-
-        }
-
-      }
-    } catch (error) {
-      console.error('Error picking file:', error);
-    }
-  };
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
   };
   const toggleModalFriend = () => {
     setIsModalFriendVisible(!isModalFriendVisible);
   };
+  const fetchConversation = async () => {
+    const fetchConver = await getConverHaveParticipants(chatItem.conversation._id, conver)
+    setConver(fetchConver)
+  }
+  useEffect(() => {
+    fetchConversation()
+  }, [chatItem])
+
+  useEffect(() => {
+    if (conver && conver.messages) {
+      fetchChats();
+    }
+  }, [conver]);
+
+  const fetchChats = async () => {
+    try {
+      if (conver && conver.messages) {
+        const chatNew = await Promise.all(conver.messages.map(async (message) => {
+          let senderName
+          let nameReply
+          if (conver.participants.find((participant) => participant._id === message.senderId)) {
+            senderName = conver.participants.find((participant) => participant._id === message.senderId)
+          } else {
+            const getUser = await getUserById(message.senderId)
+            senderName = getUser.user
+          }
+          if (message.replyMessageId !== null) {
+            if (conver.participants.find((participant) => participant._id === message.replyMessageId.senderId)) {
+              nameReply = conver.participants.find((participant) => participant._id === message.replyMessageId.senderId)
+            } else {
+              const getUser = await getUserById(message.replyMessageId.senderId)
+              nameReply = getUser.user
+            }
+          }
+          return {
+            chat: message,
+            sender: senderName,
+            nameReply: nameReply?.profile.name || null
+          }
+        }))
+        setChats(chatNew);
+        fetchFriends();
+      }
+    } catch (error) {
+      console.log(error);
+      return false;
+    }
+  };
+
   const fetchFriends = async () => {
     let data = []
     try {
@@ -137,7 +187,7 @@ const Message = ({ navigation, route }) => {
         return {
           _id: group._id,
           name: group.groupName,
-          avatar: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+          avatar: group.avatar.url,
           tag: group.conversation.tag
         }
       }))
@@ -148,181 +198,78 @@ const Message = ({ navigation, route }) => {
     setFriends(data)
 
   };
-  const fetchChats = async () => {
-    try {
-      if (conver.conversation._id === null || conver.conversation._id === undefined) {
-      } else {
-        const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversation._id}`);
-        const reversedChats = response.data;
-
-        let data = [];
-        let int = reversedChats.length;
-        for (let index = 0; index < int; index++) {
-          const chat = reversedChats[index];
-          const getUser = await getUserById(chat.senderId)
-          if (chat.replyMessageId === null) {
-            const chatNew = {
-              chat: chat,
-              sender: getUser.user.profile,
-              nameReply: null
-            }
-            data.push(chatNew);
-          } else {
-            const getUserReply = await getUserById(chat.replyMessageId.senderId)
-            const chatNew = {
-              chat: chat,
-              sender: getUser.user.profile,
-              nameReply: getUserReply.user.profile.name,
-            }
-            data.push(chatNew);
-          }
-        }
-        setChats(data);
-        fetchFriends();
-      }
-    } catch (error) {
-      console.log(error);
-      return false;
-    }
-  };
   const scrollToEnd = () => {
-    fetchChats()
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollToEnd({ animated: true });
       console.log("scrollToEnd");
     }
   }
-
   // useEffect(() => {
   //   fetchChats();
   // }, [isGroupRedux])
-
+  // console.log("cover", JSON.stringify(conver));
   useEffect(() => {
-    fetchChats();
     const fetchSocket = async () => {
 
       if (isNewSocket === "new_message") {
         const message = newSocketData;
-        if (message) {
-          console.log("socket new messagae");
+        if (message && message.retrunMessage) {
+          // console.log("socket new messagae", message);
           if (
             message.conversationId === conver.conversation._id ||
             message.retrunMessage.receiverId === authUser._id
           ) {
-            const getUser = await getUserById(message.retrunMessage.senderId)
-            setChats(prevChats => [
-              ...prevChats,
-              {
-                chat: message.retrunMessage,
-                sender: getUser.user.profile,
-                nameReply: null
-              }
-            ]);
+            setChat(message.retrunMessage)
             scrollToEnd()
           }
         }
       }
       if (isNewSocket === "delete_message") {
         const { conversationId, isDeleted } = newSocketData;
-        if (isDeleted) {
+        console.log(("conversationId", conversationId));
+        console.log("isDeleted", isDeleted);
+        if (isDeleted && conver && conver.conversation._id === conversationId) {
           setChats([])
         } else {
-          try {
-            if (conver && conver.conversation._id === conversationId) {
-              getConversationByID(conversationId)
-              console.log("socket delete messagae");
-            }
-          } catch (error) {
-            console.error(error);
-            setChats([]);
+          if (conver && conver.conversation._id === conversationId) {
+            fetchConversation()
+            console.log("socket delete messagae");
           }
         }
       }
       if (isNewSocket === "remove-from-group") {
         // console.log("newSocketData",newSocketData);
-        if (newSocketData.removeMembers) {
-          const gr = newSocketData
-          console.log("group", gr);
-          // setGroup(gr)
-          if (gr) {
-            if (gr.removeMembers?.includes(authUser._id)) {
-              // dispatch(setIsGroup())
-              console.log(`Bạn đã bị xoá khỏi nhóm ${gr.name}`);
-              showToastError(`Bạn đã bị xoá khỏi nhóm ${gr.name}`)
-              // setGroup(null)
-              // navigation.navigate("ChatComponent");
-
-            }
+        const group = newSocketData
+        if (group && group.removeMembers) {
+          if (group.removeMembers.includes(authUser._id)) {
+            navigation.navigate("ChatComponent");
+            setNewSocketData(null)
           }
         }
       }
       if (isNewSocket === "delete-group") {
-        console.log("newSocketData", newSocketData);
-        if (newSocketData.name) {
-          const gr = newSocketData
-          console.log("groupM", gr);
-          if (gr) {
-            showToastSuccess(`Group ${gr.name} đã bị xoá`)
-            // dispatch(setIsGroup())
-            // navigation.navigate("ChatComponent");
-          }
+        // console.log("delete-group in message", newSocketData);
+        const group = newSocketData
+        if (group && group.id === conver._id) {
+          navigation.navigate("ChatComponent");
+          setNewSocketData(null)
+        }
+      }
+      if (isNewSocket === "update-group") {
+        const group = newSocketData
+        if (group && group.id === conver._id) {
+          // console.log("update-group",group);
+          setConver(preConver => ({
+            ...preConver,
+            name: group.name,
+            avatar: group.avatar
+          }))
+          dispatch(setIsGroup())
         }
       }
     }
-
-
     fetchSocket()
-
   }, [isNewSocket, newSocketData]);
-
-
-  useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <View style={{ flexDirection: "row" }}>
-          <Pressable onPress={() => console.log("Pressed call")}>
-            <Ionicons
-              name="call-outline"
-              size={27}
-              color="white"
-              style={{ padding: 5, paddingStart: 15, marginRight: 10 }}
-            />
-          </Pressable>
-          <Ionicons
-            name="videocam-outline"
-            size={27}
-            color="white"
-            style={{ padding: 5, marginRight: 10 }}
-          />
-          <Pressable
-            onPress={() => navigation.navigate("MessageSettings", { conver })}
-          >
-            <Ionicons
-              name="list-outline"
-              size={27}
-              color="white"
-              style={{ padding: 5 }}
-            />
-          </Pressable>
-        </View>
-      ),
-      headerTitle: () => (
-        <View style={{ flexDirection: "row", alignItems: "center", width: '55%', marginRight: 100 }}>
-          <Text style={{ fontSize: 20, color: "white", fontWeight: 'bold' }}>{conver.name}</Text>
-        </View>
-      ),
-      headerStyle: {
-        backgroundColor: "#0091FF",
-        shadowColor: "#fff",
-      },
-      headerTintColor: "#fff",
-      headerTitleStyle: {
-        fontWeight: "bold",
-        fontSize: 20,
-      },
-    });
-  }, [navigation]);
-
   useEffect(() => {
     if (scrollViewRef.current && contentHeight > scrollViewHeight && !isLoad) {
       const offset = contentHeight - scrollViewHeight;
@@ -383,43 +330,29 @@ const Message = ({ navigation, route }) => {
   };
   const handleDeleteMess = () => {
     setIsLoadThuHoi(true)
-    const thuHoi = async () => {
-      try {
-        const response = await axiosInstance.post(`/chats/${messageSelected.chat._id}/delete`);
-        // console.log(response)
-        if (response.status === 200) {
-          fetchChats();
-          showToastSuccess("Thu hồi thành công")
-          toggleModal()
-          setIsLoadThuHoi(false)
-        }
-      } catch (error) {
-        console.log(error);
-        setIsLoadThuHoi(false)
-        toggleModal()
-      }
-    };
-    thuHoi();
+    handleDelete(`/chats/${messageSelected.chat._id}/delete`, "Thu hồi thành công")
   };
   const handleDeleteMessByStatus = () => {
     setIsLoadXoa(true)
-    const deleteChat = async () => {
-      try {
-        const response = await axiosInstance.post(`conversations/deleteOnMySelf/${conver.conversation._id}/${messageSelected.chat._id}`);
-        if (response.status === 200) {
-          fetchChats();
-          showToastSuccess("Xóa thành công")
-          toggleModal()
-          setIsLoadXoa(false)
-        }
-      } catch (error) {
-        console.log(error);
+    handleDelete(`conversations/deleteOnMySelf/${conver.conversation._id}/${messageSelected.chat._id}`, "Xóa thành công")
+  };
+  const handleDelete = async (api, toast) => {
+    try {
+      const response = await axiosInstance.post(api)
+      if (response.status === 200) {
+        fetchConversation()
+        showToastSuccess(toast)
         setIsLoadXoa(false)
+        setIsLoadThuHoi(false)
         toggleModal()
       }
-    };
-    deleteChat();
-  };
+    } catch (error) {
+      console.log(error);
+      setIsLoadThuHoi(false)
+      setIsLoadThuHoi(false)
+      toggleModal()
+    }
+  }
   const handleGetModalFriend = () => {
     toggleModal();
     toggleModalFriend();
@@ -429,13 +362,12 @@ const Message = ({ navigation, route }) => {
     setIsLoadChuyenTiep(true)
     const handleSendMessage = async () => {
       try {
-        let isGroup;
-        if (friend.tag === 'group') {
-          isGroup = true;
-        } else {
-          isGroup = false;
+        const messagae = {
+          data : messageSelected.chat.contents[0],
+          replyMessageId: replyChat !== null ? replyChat.chat._id : null,
+          isGroup: friend.tag === "group" ? true : false
         }
-        const send = await sendMessage(friend._id, messageSelected.chat.contents[0], isGroup)
+        const send = await sendMessage(friend._id, messagae, 'sendText')
         if (send) {
           showToastSuccess("Chuyển tiếp thành công")
           setIsLoadChuyenTiep(false)
@@ -451,10 +383,78 @@ const Message = ({ navigation, route }) => {
     }
     handleSendMessage();
   };
-  
-  //nhi
-  const openImagePicker = async () => {
 
+
+  //nhi
+  const appendData = (formData, asset) => {
+    const fileName = asset.split('/').pop();
+    let type = null
+    if (asset?.type === 'image') { type = 'image/jpeg' }
+    else if (asset?.type === 'video') { type = 'video/mp4' }
+    else if (asset?.mimeType === 'application/pdf') { type = 'file/pdf' }
+    formData.append('data[]', {
+      uri: asset,
+      name: fileName,
+      type: type,
+    })
+  }
+  const appendIs = (formData, tag) => {
+    formData.append('isGroup', tag === 'group' ? true : false)
+    formData.append('replyMessageId', replyChat !== null ? replyChat.chat._id : null)
+  }
+  const setChat = async (dataChat) => {
+    let nameReply = null
+    let senderName = authUser
+    if (dataChat.replyMessageId) {
+      nameReply = conver.participants.find((participant) => participant._id === dataChat.replyMessageId.senderId)
+      if (!nameReply) {
+        const getUser = await getUserById(dataChat.replyMessageId.senderId)
+        nameReply = getUser.user
+      }
+    }
+    if (dataChat.senderId !== authUser._id) {
+      senderName = conver.participants.find(sender => sender._id === dataChat.senderId)
+    }
+    setChats(prevChats => [
+      ...prevChats,
+      {
+        chat: dataChat,
+        sender: senderName,
+        nameReply: nameReply?.profile?.name
+      }
+    ]);
+  }
+  const send = async (user, formData, typeSend) => {
+    setIsLoadMess(true)
+    try {
+      const response = await sendMessage(user, formData, typeSend)
+      if (response && response.status === 201) {
+        console.log(`${typeSend} success`);
+        setChat(response.data.data.message)
+        setReplyChat(null);
+        setIsLoadMess(false)
+        scrollToEnd();
+      } else {
+        console.log(`${typeSend} fail`);
+        setIsLoadMess(false)
+      }
+    } catch (error) {
+      console.log(`Send ${typeSend} error:`, error);
+      setIsLoadMess(false)
+    }
+  }
+  const pickFile = async () => {
+    try {
+      const file = await DocumentPicker.getDocumentAsync();
+      if (file.canceled === false) {
+        setSelectedFile(file);
+        handleSendFile(file, 'sendFiles')
+      }
+    } catch (error) {
+      console.error('Error picking file:', error);
+    }
+  };
+  const openImagePicker = async () => {
     const pickerResult = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: false,
@@ -464,78 +464,36 @@ const Message = ({ navigation, route }) => {
       videoExportPreset: ImagePicker.VideoExportPreset.Passthrough,
       videoMaxDuration: 10
     });
+
     if (!pickerResult.canceled) {
-      setIsLoadMess(true)
-      let isGroup = false
-      if (conver.tag === "group") {
-        isGroup = true
-      }
-      let replyId = null;
-      if (replyChat !== null) {
-        replyId = replyChat.chat._id
-      }
-      for (const asset of pickerResult.assets) {
-        if (asset.type === 'image') {
-          const formData = new FormData();
-          const fileName = asset.uri.split('/').pop();
-          formData.append('data[]', {
-            uri: asset.uri,
-            name: fileName,
-            type: 'image/jpeg',
-
-          });
-          formData.append('isGroup', isGroup);
-          formData.append('replyMessageId', replyId);
-          try {
-            const response = await sendImage(conver._id, formData)
-            if (response.status === 201) {
-              setIsLoadMess(false)
-              setIsLoad(false)
-              fetchChats();
-              scrollToEnd();
-              setReplyChat(null);
-              console.log("send image success");
-            }
-            else if (response.status === 500) {
-              console.log("send image fail");
-            }
-          } catch (error) {
-            console.log(error);
-            setIsLoadMess(false)
-          }
-        } else if (asset.type === 'video') {
-          const formData = new FormData();
-          const fileName = asset.uri.split('/').pop();
-          formData.append('data[]', {
-            uri: asset.uri,
-            name: fileName,
-            type: 'video/mp4',
-
-          });
-          formData.append('isGroup', isGroup);
-          formData.append('replyMessageId', replyId);
-          try {
-            const response = await sendVideo(conver._id, formData)
-            if (response.status === 201) {
-              setIsLoadMess(false)
-              setIsLoad(false)
-              fetchChats();
-              scrollToEnd();
-              setReplyChat(null);
-              console.log("send video success");
-            }
-            else if (response.status === 500) {
-              console.log("send video fail");
-            }
-          } catch (error) {
-            console.log(error);
-            setIsLoadMess(false)
-          }
-        }
-      }
+      handleSendFile(pickerResult, 'sendImages')
     }
   }
-
+  const handleSendFile = async (file, typeSend) => {
+    // setIsLoadMess(true)
+    const formData = new FormData()
+    const formDataVideo = new FormData()
+    let isVideo = false
+    let is = false
+    for (const asset of file.assets) {
+      if (asset.type === 'video') {
+        appendData(formDataVideo, asset.uri)
+        isVideo = true
+      }
+      else {
+        appendData(formData, asset.uri)
+        is = true
+      }
+    }
+    if (is) {
+      appendIs(formData, conver.tag)
+      send(conver._id, formData, typeSend)
+    }
+    if (isVideo) {
+      appendIs(formDataVideo, conver.tag)
+      send(conver._id, formDataVideo, 'sendVideo')
+    }
+  }
   useEffect(() => {
     // Update send button color based on textMessage
     if (!textMessage) {
@@ -546,47 +504,13 @@ const Message = ({ navigation, route }) => {
   }, [textMessage]);
 
   const handleSendMessage = async () => {
-    if (!textMessage) {
-      console.log("message rỗng");
-    }
-    else {
-      setIsLoadMess(true)
-      let isGroup = false
-      if (conver.tag === "group") {
-        isGroup = true
-      }
-      let replyId = null;
-      if (replyChat !== null) {
-        replyId = replyChat.chat._id
-      }
-
-      try {
-        const response = await sendText(conver._id,
-          { type: 'text', data: textMessage }, replyId, isGroup)
-        if (response.status === 201) {
-          setIsLoadMess(false)
-          setIsLoad(false)
-          fetchChats()
-          scrollToEnd()
-          console.log("send text success");
-          setTextMessage(null);
-          setReplyChat(null);
-        }
-        else if (response.status === 500) {
-          showToastError("Gửi tin nhắn thất bại")
-          console.log("send text fail");
-        }
-
-      } catch (error) {
-        console.log(error);
-        setIsLoadMess(false)
-      }
+    if (textMessage) {
+      send(conver._id, addMessage(textMessage, conver.tag, replyChat), 'sendText')
+      setTextMessage(null);
     }
   }
-
   const handleCheckIsSend = (message) => {
-    // const getUser = await getUserById(message.senderId)
-    if (authUser.profile.name === message.sender.name) {
+    if (authUser.profile.name === message.sender.profile.name) {
       return true;
     } else {
       return false;
@@ -605,7 +529,6 @@ const Message = ({ navigation, route }) => {
         ) : (
           <View></View>
         )}
-        {/* <Toast /> */}
         <ScrollView ref={scrollViewRef}
           onScroll={handleScroll}
           scrollEventThrottle={16}
@@ -625,14 +548,14 @@ const Message = ({ navigation, route }) => {
                     (<View
                       style={{ width: 35, height: 35, justifyContent: "center", alignItems: "center", marginLeft: 10, marginRight: 10 }} >
                       <Image
-                        source={{ uri: message.sender.avatar?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}
+                        source={{ uri: message.sender.profile.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}
                         style={{ width: 35, height: 35, borderRadius: 25 }} />
                     </View>)}
                   <View style={[
                     handleCheckIsSend(message) ? styles.styleSender : styles.styleRecive
                   ]}>
                     <Text style={{ paddingHorizontal: 10, fontSize: 12, color: 'gray', fontWeight: '700' }}>
-                      {message.sender.name}
+                      {message.sender.profile.name}
                     </Text>
                     {message.chat.replyMessageId === null ? (<View></View>) :
                       (<View style={{ backgroundColor: '#89D5FB', display: 'flex', marginLeft: 10, borderLeftWidth: 2, borderColor: '#0072AB', marginRight: 10 }}>
@@ -642,7 +565,7 @@ const Message = ({ navigation, route }) => {
                             {content.type === 'text' ? (
                               <View>
                                 <Text style={{ fontSize: 13, fontWeight: 'bold', paddingLeft: 15 }}>
-                                  {message.nameReply}
+                                  {message?.nameReply}
                                 </Text>
                                 {renderMessageContentReply(content)}
                               </View>
@@ -651,7 +574,7 @@ const Message = ({ navigation, route }) => {
                                 {renderMessageContentReply(content)}
                                 <View>
                                   <Text style={{ paddingLeft: 10, fontSize: 13, fontWeight: 'bold' }}>
-                                    {message.nameReply}
+                                    {message?.nameReply}
                                   </Text>
                                   <Text style={{ paddingLeft: 10, fontSize: 13, color: '#000' }}>
                                     [{content.type}]
@@ -689,7 +612,7 @@ const Message = ({ navigation, route }) => {
             <View style={{ backgroundColor: '#f5c4f2', marginLeft: 50, marginTop: 10 }}>
               <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={{ paddingLeft: 15, fontSize: 13, color: '#000' }}>
-                  Trả lời: <Text style={{ paddingLeft: 15, fontSize: 12, color: 'gray' }}>{replyChat.sender.name} </Text>
+                  Trả lời: <Text style={{ paddingLeft: 15, fontSize: 12, color: 'gray' }}>{replyChat?.sender?.name} </Text>
                 </Text>
                 <Pressable onPress={() => { setReplyChat(null) }} style={{ marginRight: 20 }}><Text>Hủy</Text></Pressable>
               </View>
@@ -760,6 +683,7 @@ const Message = ({ navigation, route }) => {
           </TouchableOpacity>
         </View>
       </View>
+      {/* modal lựa chọn */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -795,7 +719,7 @@ const Message = ({ navigation, route }) => {
                 <Text style={styles.modalButton} >Xóa</Text>
               </Pressable>
               {
-                messageSelected.sender?.name === authUser.profile.name
+                messageSelected?.sender?.profile?.name === authUser.profile.name
                   ? (
                     <Pressable style={styles.pressCol} onPress={handleDeleteMess}>
                       {isLoadThuHoi ? (
@@ -847,6 +771,7 @@ const Message = ({ navigation, route }) => {
           </View>
         </View>
       </Modal>
+      {/* modal load danh sách bạn bè để chuyển tiếp */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -862,12 +787,13 @@ const Message = ({ navigation, route }) => {
               <ScrollView>
                 <View style={styles.friendList}>
                   <View style={styles.friendListHeader}>
-                    <Text style={styles.sectionTitle}>#</Text>
+                    <Text style={styles.sectionTitle}></Text>
                     {isLoadChuyenTiep ? (
                       <ActivityIndicator color="black" size="large" />
                     ) : (
                       <View></View>
                     )}
+                    <Pressable onPress={(toggleModalFriend)}><Ionicons name="close" size={30} color="black" /></Pressable>
                   </View>
                   {friends.map((friend, index) => (
                     <View key={index} style={styles.friendRow}>

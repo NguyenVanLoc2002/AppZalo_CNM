@@ -12,10 +12,10 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import axiosInstance from "../../api/axiosInstance";
-import moment from 'moment-timezone';
 import Toast from "react-native-toast-message";
 import useCreateGroup from "../../hooks/useCreateGroup";
 import { useAuthContext } from "../../contexts/AuthContext";
+import useMessage from "../../hooks/useMessage";
 
 const GroupDirectory = ({ navigation }) => {
   const [listFriends, setListFriends] = useState([])
@@ -30,6 +30,7 @@ const GroupDirectory = ({ navigation }) => {
   const [isHidden, setIsHidden] = useState(false)
   const [groupAll, setGroupAll] = useState([])
   const { getAllGroup, getConversationById, createGroup, getUserById } = useCreateGroup()
+  const { handleGetTimeInChat } = useMessage()
   const { authUser } = useAuthContext();
 
   const fetchGroup = async () => {
@@ -56,19 +57,19 @@ const GroupDirectory = ({ navigation }) => {
 
         return {
           _id: group._id,
-          group : group,
+          group: group,
           name: group.groupName,
-          avatar: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+          avatar: group.avatar.url,
           conversation: group.conversation,
           createBy: group.createBy,
           lastMessage: lastMessage,
           sender: sender,
-          timeSend: handleGetTime(group.lastMessage.timestamp),
+          timeSend: handleGetTimeInChat(group.lastMessage.timestamp),
           tag: group.conversation.tag,
           admins: group?.admins
         }
       }))
-     
+
       newGroup.sort((a, b) => {
         const timeA = a.group.lastMessage.timestamp || ""
         const timeB = b.group.lastMessage.timestamp || ""
@@ -80,26 +81,6 @@ const GroupDirectory = ({ navigation }) => {
       console.log("FetchGroupError: ", error);
     }
   }
-
-  const handleGetTime = (time) => {
-    const currentTime = moment().tz('Asia/Ho_Chi_Minh'); // Lấy thời gian hiện tại ở múi giờ Việt Nam
-    const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh'); // Chuyển đổi thời gian đã cho sang múi giờ Việt Nam
-    const timeDifference = moment.duration(currentTime.diff(vietnamDatetime)); // Tính khoảng cách thời gian
-
-    const days = Math.floor(timeDifference.asDays()); // Số ngày
-    const hours = Math.abs(timeDifference.hours()); // Số giờ (dương)
-    const minutes = Math.abs(timeDifference.minutes()); // Số phút (dương)
-
-    if (days >= 1) {
-      return `${days} ngày`;
-    }
-    else if (hours >= 1) {
-      return `${hours} giờ`;
-    }
-    else {
-      return `${minutes} phút`;
-    }
-  };
   const fetchFriend = async () => {
     try {
       const response = await axiosInstance.get("/users/get/friends");
@@ -237,14 +218,14 @@ const GroupDirectory = ({ navigation }) => {
             const group = {
               _id: response.group._id,
               name: response.group.groupName,
-              createAt: handleGetTime(response.group.createAt),
+              createAt: handleGetTimeInChat(response.group.createAt),
               createBy: response.group.createBy,
-              avatar: response.group?.avatar?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+              avatar: response.group.avatar.url,
               conversation: response.group.conversation,
-              tag: response.group.conversation.tag
-
+              tag: response.group.conversation.tag,
+              admins: response.group?.admins
             }
-            navigation.navigate("Message", { conver: group })
+            navigation.navigate("Message", { chatItem: group })
           }
         } catch (error) {
           console.log("CreateGroupError:", error);
@@ -283,7 +264,7 @@ const GroupDirectory = ({ navigation }) => {
             </Pressable>
           </View>
           {groupAll?.map((group, index) => (
-            <Pressable key={index} style={styles.groupItem} onPress={() => navigation.navigate("Message", { conver: group })}>
+            <Pressable key={index} style={styles.groupItem} onPress={() => navigation.navigate("Message", { chatItem: group })}>
               <Image
                 style={styles.avatar}
                 source={{ uri: group.avatar }}

@@ -83,11 +83,24 @@ const useConversation = () => {
       }
     } catch (error) {
       console.log(error);
-      Toast.error("Failed to get conversation");
+      // Toast.error("Failed to get conversation");
       setLoading(false);
       return null;
     }
   };
+
+  const getConverHaveParticipants = async (conversationId, conver) => {
+    try {
+      const fetchConver = await getConversationByID(conversationId)
+      const updateConver = { ...conver }
+      updateConver.participants = fetchConver.participants
+      updateConver.messages = fetchConver.messages
+      return updateConver;
+    } catch (error) {
+      console.log("Error fetch conversation", error);
+      return null;
+    }
+  }
 
   return {
     conversations,
@@ -96,8 +109,8 @@ const useConversation = () => {
     getConversations,
     deleteConversation,
     getConversationByID,
-    getConversationsByParticipants
-    // getConversationByParticipants,
+    getConversationsByParticipants,
+    getConverHaveParticipants
   };
 };
 

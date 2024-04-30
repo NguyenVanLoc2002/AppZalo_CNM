@@ -180,7 +180,8 @@ const useCreateGroup = () => {
     createGroup,
     removeMember,
     addMember,
-    deleteGroup,getUserById
+    deleteGroup,
+    getUserById
   };
 };
 

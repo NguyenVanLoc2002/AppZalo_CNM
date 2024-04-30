@@ -3,6 +3,7 @@ import { View, Text, Image } from 'react-native';
 import { Video } from 'expo-av';
 import Toast from "react-native-toast-message";
 import moment from 'moment-timezone';
+import axiosInstance from '../api/axiosInstance';
 // import Pdf from 'react-native-pdf';
 // import { openDocumentAsync } from 'expo-document-viewer';
 // import { WebView } from 'react-native-webview';
@@ -15,7 +16,7 @@ const useMessage = () => {
       text1: notice,
       type: "success",
       topOffset: 0,
-      position: "top",
+      position: "bottom",
     });
   };
   const showToastError = (notice) => {
@@ -23,7 +24,7 @@ const useMessage = () => {
       text1: notice,
       type: "error",
       topOffset: 0,
-      position: "top",
+      position: "bottom",
     });
   };
   const renderMessageContent = (content) => {
@@ -147,9 +148,36 @@ const useMessage = () => {
   }
   const handleGetTimeInMessage = (time) => {
     const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss');
-    const dateObject = new Date(vietnamDatetime)
-    return `${dateObject.getHours()}:${dateObject.getMinutes()}`
+    const dateObject = new Date(vietnamDatetime);
+    const hours = dateObject.getHours().toString().padStart(2, '0');
+    const minutes = dateObject.getMinutes().toString().padStart(2, '0'); // Sử dụng padStart để đảm bảo số phút có 2 chữ số
+    return `${hours}:${minutes}`;
   };
+  const addMessage = (textMessage, tag, replyChat) => {
+    return {
+      data: {
+        type: 'text', data: textMessage
+      },
+      replyMessageId: replyChat !== null ? replyChat.chat._id : null,
+      isGroup: tag === "group" ? true : false
+    }
+  }
+  const sendMessage = async (user, message, typeSend) => {
+    try {
+      let headers = {}
+      if (typeSend === 'sendImages' || typeSend === 'sendVideo') {
+        headers = {
+          "Content-Type": "multipart/form-data",
+        }
+      }
+      const response = await axiosInstance.post(`/chats/${user}/${typeSend}`, message, { headers })
+      return response;
+
+    } catch (error) {
+      console.log("Error send message:", error)
+      return false;
+    }
+  }
 
   return {
     renderMessageContent,
@@ -157,7 +185,9 @@ const useMessage = () => {
     showToastSuccess,
     renderMessageContentReply,
     handleGetTimeInChat,
-    handleGetTimeInMessage
+    handleGetTimeInMessage,
+    addMessage,
+    sendMessage
   };
 };
 

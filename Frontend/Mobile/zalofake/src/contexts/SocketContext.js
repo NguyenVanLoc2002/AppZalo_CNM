@@ -65,6 +65,7 @@ export const SocketContextProvider = ({ children }) => {
       socket.on("delete_message", handleDeleteMessage);
       // socket for group
       socket.on("add-to-group", handleAddToGroup);
+      socket.on("update-group", handleUpdateGroup);
       socket.on("remove-from-group", handleRemoveFromGroup);
       socket.on("leave-group", handleLeaveGroup);
       socket.on("delete-group", handleDeleteGroup);
@@ -83,6 +84,7 @@ export const SocketContextProvider = ({ children }) => {
         socket.off("delete_message", handleDeleteMessage);
         // socket for group
         socket.off("add-to-group", handleAddToGroup);
+        socket.off("update-group", handleUpdateGroup);
         socket.off("remove-from-group", handleRemoveFromGroup);
         socket.off("leave-group", handleLeaveGroup);
         socket.off("delete-group", handleDeleteGroup);
@@ -136,7 +138,10 @@ export const SocketContextProvider = ({ children }) => {
     setIsNewSocket("add-to-group");
     setNewSocketData(data);
   };
-
+  const handleUpdateGroup = ({ group }) => {
+    setIsNewSocket("update-group");
+    setNewSocketData(group);
+  }
   const handleRemoveFromGroup = ({ group }) => {
     setIsNewSocket("remove-from-group");
     setNewSocketData(group);
@@ -157,7 +162,7 @@ export const SocketContextProvider = ({ children }) => {
 
   return (
     <SocketContext.Provider
-      value={{ socket, onlineFriends, isNewSocket, newSocketData }}
+      value={{ socket, onlineFriends, isNewSocket, newSocketData, setNewSocketData }}
     >
       {children}
     </SocketContext.Provider>
