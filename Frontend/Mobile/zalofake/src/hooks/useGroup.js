@@ -4,10 +4,8 @@ import axiosInstance from "../api/axiosInstance";
 const useGroup = () => {
   const [group, setGroup] = useState(null);
   const [groups, setGroups] = useState([]);
-  const [grLoading, setGrLoading] = useState(false);
 
   const createGroup = async (groupData) => {
-    setGrLoading(true);
     try {
       const response = await axiosInstance.post("/groups/create", groupData);
       console.log(response);
@@ -15,36 +13,30 @@ const useGroup = () => {
 
       if (status === 201) {
         setGroup(data.group);
-        setGrLoading(false);
         return true;
       }
     } catch (error) {
       console.error(error);
       throw error;
     } finally {
-      setGrLoading(false);
     }
   };
 
   const getGroup = async (groupId) => {
-    setGrLoading(true);
     try {
       const response = await axiosInstance.get(`/groups/get/${groupId}`);
       const { data, status } = response;
-
       if (status === 200) {
         setGroup(data.group);
+        return data
       }
     } catch (error) {
       console.error(error);
-      throw error;
-    } finally {
-      setGrLoading(false);
+      return null
     }
   };
 
   const getGroups = async () => {
-    setGrLoading(true);
     try {
       const response = await axiosInstance.get("/groups/all");
       const { data, status } = response;
@@ -55,12 +47,10 @@ const useGroup = () => {
       console.error(error);
       throw error;
     } finally {
-      setGrLoading(false);
     }
   };
 
   const deleteGroup = async (groupId) => {
-    setGrLoading(true);
     try {
       const response = await axiosInstance.delete(`/groups/delete/${groupId}`);
       const { status } = response;
@@ -72,14 +62,12 @@ const useGroup = () => {
       console.error(error);
       throw error;
     } finally {
-      setGrLoading(false);
     }
   };
 
 
 
   const updateGroup = async (groupId, groupData) => {
-    setGrLoading(true);
     try {
       const response = await axiosInstance.put(
         `/groups/update/${groupId}`,
@@ -94,41 +82,29 @@ const useGroup = () => {
         return true;
       }
     } catch (error) {
-
       console.log('1')
       console.error(error);
       return false;
-      // throw error;
-    } finally {
-      setGrLoading(false);
     }
   };
 
   const addMember = async (groupId, members) => {
-    setGrLoading(true);
-    console.log(groupId);
-    console.log(members)
     try {
       const response = await axiosInstance.post(
         `/groups/addMembers/${groupId}`,
         members
       );
       const { data, status } = response;
-
       if (status === 200) {
         setGroup(data.group);
         return data.message;
       }
     } catch (error) {
       console.error(error);
-      throw error;
-    } finally {
-      setGrLoading(false);
     }
   };
 
   const removeMember = async (groupId, memberData) => {
-    setGrLoading(true);
     try {
       const response = await axiosInstance.post(
         `/groups/removeMembers/${groupId}`,
@@ -141,13 +117,9 @@ const useGroup = () => {
       }
     } catch (error) {
       console.error(error);
-      throw error;
-    } finally {
-      setGrLoading(false);
     }
   };
   const leaveGroup = async (groupId) => {
-    setGrLoading(true);
     try {
       const response = await axiosInstance.post(
         `/groups/leave/${groupId}`
@@ -159,40 +131,32 @@ const useGroup = () => {
       }
     } catch (error) {
       console.error(error);
-      throw error;
-    } finally {
-      setGrLoading(false);
     }
   };
 
   // const { members, typeChange, groupId } = req.body;
-  const AddAdmin = async (groupData) => {
-    setGrLoading(true);
+  const addAdmin = async (groupData) => {
     try {
-      const response = await axiosInstance.post(`/groups/changeAdmins`, 
-      groupData
-      // {
-      //   members:members,
-      //   typeChange:typeChange,
-      //   groupId:groupId,
-      // }
-    );
+      const response = await axiosInstance.post(`/groups/changeAdmins`,
+        groupData
+        // {
+        //   members:members,
+        //   typeChange:typeChange,
+        //   groupId:groupId,
+        // }
+      );
 
       if (response.status === 200) {
         return true;
       }
     } catch (error) {
       console.error(error);
-      throw error;
-    } finally {
-      setGrLoading(false);
     }
   };
 
   return {
     group,
     groups,
-    grLoading,
     createGroup,
     getGroup,
     getGroups,
@@ -201,7 +165,7 @@ const useGroup = () => {
     addMember,
     removeMember,
     leaveGroup,
-    AddAdmin
+    addAdmin
   };
 };
 

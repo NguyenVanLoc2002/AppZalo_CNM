@@ -1,5 +1,5 @@
 import React from "react";
-import { Text, View, Image } from "react-native";
+import { Text, View, Image, LogBox } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 const ChatItem = ({ item }) => {
@@ -17,7 +17,7 @@ const ChatItem = ({ item }) => {
         style={{ width: "15%", justifyContent: "center", alignItems: "center" }}
       >
         <Image
-          source={{ uri: item.conversation.avatar }}
+          source={{ uri: item.chat.avatar}}
           style={{ width: 55, height: 55, borderRadius: 25 }}
         />
       </View>
@@ -29,8 +29,8 @@ const ChatItem = ({ item }) => {
         }}
       >
         <View style={{ flexDirection: 'row' }}>
-          {item.conversation.tag === 'group' ? <Ionicons name="people" size={20} color="gray" /> : <View></View>}
-          <Text style={{ fontSize: 20, marginBottom: 5, paddingLeft: 5 }}>{item.conversation.name}</Text>
+          {item.chat.tag === 'group' ? <Ionicons name="people" size={20} color="gray" /> : <View></View>}
+          <Text style={{ fontSize: 20, marginBottom: 5, paddingLeft: 5 }}>{item.chat.name}</Text>
         </View>
         <Text
           style={{
@@ -50,7 +50,8 @@ const ChatItem = ({ item }) => {
         }}
       >
         <Text style={{ marginBottom: 5 }}>
-          {item.time === 0 ? "vừa xong" : `${item.time} `}
+          {/* {item.time === 0 ? "vừa xong" : `${item.time} `} */}
+          {item.time}
         </Text>
         {/* <Text
           style={{
