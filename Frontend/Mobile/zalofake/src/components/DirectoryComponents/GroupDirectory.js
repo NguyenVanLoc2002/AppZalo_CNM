@@ -59,7 +59,7 @@ const GroupDirectory = ({ navigation }) => {
           _id: group._id,
           group: group,
           name: group.groupName,
-          avatar: group.avatar.url,
+          avatar: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
           conversation: group.conversation,
           createBy: group.createBy,
           lastMessage: lastMessage,

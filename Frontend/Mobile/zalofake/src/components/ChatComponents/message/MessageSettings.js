@@ -6,7 +6,7 @@ import {
   Pressable,
   ScrollView,
   TextInput,
-  Modal, ActivityIndicator, StyleSheet
+  Modal, ActivityIndicator, StyleSheet, TouchableOpacity
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
@@ -88,7 +88,7 @@ const MessageSettings = ({ navigation, route }) => {
     setIdGroupAdmin(conver.createBy._id)
     if (conver?.createBy?._id === authUser._id) {
       setIsGroupAdmin(true);
-    } else if (conver.admins?.includes(authUser?._id)) {
+    } else if (getGroupData?.admins?.includes(authUser?._id)) {
       setIsPhoAdmin(true);
     }
     console.log("getGroupData?.admins",getGroupData?.admins);
@@ -127,6 +127,7 @@ const MessageSettings = ({ navigation, route }) => {
 
   // Thêm thành viên
   const addMemberToGroup = async () => {
+    
     setIsLoadingAddMem(true);
     if (selectedFriends.length > 0) {
       let selectedFr = []
@@ -628,7 +629,7 @@ const MessageSettings = ({ navigation, route }) => {
               editable={isEditing}
               onChangeText={setName}
             />
-            {isGroupAdmin && (
+            {(isGroupAdmin || isPhoAdmin) && (
               <View style={{ display: 'flex', flexDirection: "row", justifyContent: 'flex-end', alignItems: 'flex-end', alignSelf: 'flex-end' }}>
                 {isEditing ? (
                   <View style={{ flexDirection: 'row', padding: 5 }}>

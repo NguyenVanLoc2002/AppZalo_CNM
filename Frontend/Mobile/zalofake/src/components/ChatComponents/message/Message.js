@@ -36,6 +36,7 @@ const Message = ({ navigation, route }) => {
   const dispatch = useDispatch();
   var isGroupRedux = useSelector(state => state.isGroup.isGroup);
   // console.log("isGroup", isGroupRedux);
+  const [modalImage, setModalImage] = useState(false);
 
   //truc
   const [chats, setChats] = useState([]);
@@ -321,6 +322,7 @@ const Message = ({ navigation, route }) => {
     setMessageSelected(message)
     setModalVisible(true)
   };
+
   const removeItemById = (array, idToRemove) => {
     const indexToRemove = array.findIndex(item => item._id === idToRemove);
     if (indexToRemove !== -1) {
@@ -361,18 +363,13 @@ const Message = ({ navigation, route }) => {
   const chuyenTiepChat = (friend) => {
     setIsLoadChuyenTiep(true)
     const handleSendMessage = async () => {
-      try {
+      try { 
         const messagae = {
           data : messageSelected.chat.contents[0],
           replyMessageId: replyChat !== null ? replyChat.chat._id : null,
           isGroup: friend.tag === "group" ? true : false
         }
-        let replyId = null;
-        if (replyChat !== null) {
-          replyId = replyChat.chat._id
-        }
-  
-        const send = await sendMessage(friend._id, messageSelected.chat.contents[0],replyId, isGroup)
+        const send = await sendMessage(friend._id, messagae, 'sendText')
         if (send) {
           showToastSuccess("Chuyển tiếp thành công")
           setIsLoadChuyenTiep(false)
@@ -388,7 +385,6 @@ const Message = ({ navigation, route }) => {
     }
     handleSendMessage();
   };
-
 
   //nhi
   const appendData = (formData, asset) => {
@@ -525,6 +521,9 @@ const Message = ({ navigation, route }) => {
     setReplyChat(messageSelected);
     toggleModal();
   };
+  const handleXemAnh = () => {
+    setModalImage(true)
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#E5E9EB" }}>
@@ -594,7 +593,8 @@ const Message = ({ navigation, route }) => {
                     }
                     {message.chat.contents.map((content, i) => (
                       <Pressable key={i}
-                        onPress={() => handlePressIn(message)}>
+                      onPress={() => handlePressIn(message)}>
+                      
                         <View>
                           {renderMessageContent(content)}
                           {/* {console.log(content)} */}
@@ -763,15 +763,26 @@ const Message = ({ navigation, route }) => {
                 />
                 <Text style={styles.modalButton}>Trả lời</Text>
               </Pressable>
+              {
+                messageSelected?.chat?.contents[0].type==='image'
+                  && (
+                    <Pressable style={styles.pressCol} onPress={handleXemAnh}>
+                    <FontAwesome5
+                      name="image"
+                      size={25}
+                      color="black"
+                      style={{ margin: 'auto' }}
+                    />
+                    <Text style={styles.modalButton}>Xem ảnh</Text>
+                  </Pressable>
+                  )}
             </View>
 
             <View style={styles.modalButtonContainer}>
               <Pressable onPress={toggleModal}>
                 <Text style={styles.modalButton}>HỦY</Text>
               </Pressable>
-              <Pressable >
-                <Text style={styles.modalButton}>XÁC NHẬN</Text>
-              </Pressable>
+              
             </View>
           </View>
         </View>
@@ -839,6 +850,23 @@ const Message = ({ navigation, route }) => {
           </View>
         </View>
       </Modal>
+
+      {/* modalImage */}
+      <Modal
+        visible={modalImage}
+        transparent={true}
+        onRequestClose={() => setModalImage(false)}
+      >
+        <View style={styles.modalContainer}>
+          <TouchableOpacity style={styles.modalImageContainer} onPress={() => setModalImage(false)}>
+            <Image
+              source={{ uri: messageSelected?.chat?.contents[0].data }} 
+              style={{ width: null, height: '100%', aspectRatio: 1, borderRadius: 10 }}
+              resizeMode="contain" 
+            />
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View >
   );
 };
@@ -848,6 +876,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#e2e8f1",
+  },
+  modalImageContainer: {
+    width:'100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height:'70%'
+  },
+  modalImage: {
+    width: '90%',
+    height: '90%',
   },
   modalContent: {
     backgroundColor: "#fff",
