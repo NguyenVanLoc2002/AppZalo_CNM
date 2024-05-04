@@ -124,6 +124,12 @@ const Message = ({ navigation, route }) => {
   useEffect(() => {
     fetchConversation()
   }, [chatItem])
+  
+  useEffect(() => {
+    if(isLoad===true){
+      scrollToEnd();
+    }
+  }, [isLoad]);
 
   useEffect(() => {
     if (conver && conver.messages) {
@@ -158,6 +164,7 @@ const Message = ({ navigation, route }) => {
           }
         }))
         setChats(chatNew);
+        setIsLoad(true);
         fetchFriends();
       }
     } catch (error) {
@@ -202,7 +209,6 @@ const Message = ({ navigation, route }) => {
   const scrollToEnd = () => {
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollToEnd({ animated: true });
-      console.log("scrollToEnd");
     }
   }
   // useEffect(() => {
@@ -271,53 +277,54 @@ const Message = ({ navigation, route }) => {
     }
     fetchSocket()
   }, [isNewSocket, newSocketData]);
-  useEffect(() => {
-    if (scrollViewRef.current && contentHeight > scrollViewHeight && !isLoad) {
-      const offset = contentHeight - scrollViewHeight;
-      setIsLoad(true)
-      scrollViewRef.current.scrollTo({ x: 0, y: offset, animated: true });
-    }
-  }, [contentHeight, scrollViewHeight]);
+  // useEffect(() => {
+  //   // if (scrollViewRef.current && contentHeight > scrollViewHeight && !isLoad) {
+  //   //   const offset = contentHeight - scrollViewHeight;
+  //   //   setIsLoad(true)
+  //   //   scrollViewRef.current.scrollTo({ x: 0, y: offset, animated: true });
+  //   // }
+    
+  // }, [contentHeight, scrollViewHeight]);
 
 
-  // Khôi phục vị trí cuộn của ScrollView
-  const restoreScrollPosition = () => {
-    if (scrollViewRef.current) {
-      scrollViewRef.current.measure((x, y, width, height, pageX, pageY) => {
-        scrollViewRef.current.scrollTo({ x: 0, y: height + scrollViewHeight, animated: false });
+  // // Khôi phục vị trí cuộn của ScrollView
+  // const restoreScrollPosition = () => {
+  //   if (scrollViewRef.current) {
+  //     scrollViewRef.current.measure((x, y, width, height, pageX, pageY) => {
+  //       scrollViewRef.current.scrollTo({ x: 0, y: height + scrollViewHeight, animated: false });
 
-      });
-    }
-  };
-  const handleScrollToTop = () => {
-    setIsLoading(true)
-    const fetchChats = async () => {
-      try {
-        // const response = await axiosInstance.get(`/chats/getHistoryMessage/${user._id}?lastTimestamp=${lastTimestamp}`);
-        const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversation._id}`);
-        const reversedChats = response.data;//.reverse();
+  //     });
+  //   }
+  // };
+  // const handleScrollToTop = () => {
+  //   setIsLoading(true)
+  //   const fetchChats = async () => {
+  //     try {
+  //       // const response = await axiosInstance.get(`/chats/getHistoryMessage/${user._id}?lastTimestamp=${lastTimestamp}`);
+  //       const response = await axiosInstance.get(`/conversations/get/messages/${conver.conversation._id}`);
+  //       const reversedChats = response.data;//.reverse();
 
-        // if (reversedChats && reversedChats.length > 0) {
-        //   setChats(prevChats => [...reversedChats, ...prevChats]);
-        //   restoreScrollPosition();
-        //   const lastElement = reversedChats[0]
-        //   setLastTimestamp(lastElement.timestamp)
-        // }
-        setIsLoading(false)
+  //       // if (reversedChats && reversedChats.length > 0) {
+  //       //   setChats(prevChats => [...reversedChats, ...prevChats]);
+  //       //   restoreScrollPosition();
+  //       //   const lastElement = reversedChats[0]
+  //       //   setLastTimestamp(lastElement.timestamp)
+  //       // }
+  //       setIsLoading(false)
 
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchChats();
+  //     } catch (error) {
+  //       console.log(error);
+  //     }
+  //   };
+  //   fetchChats();
 
-  };
-  const handleScroll = (event) => {
-    const { y } = event.nativeEvent.contentOffset;
-    if (y === 0) {
-      handleScrollToTop();
-    }
-  };
+  // };
+  // const handleScroll = (event) => {
+  //   const { y } = event.nativeEvent.contentOffset;
+  //   if (y === 0) {
+  //     handleScrollToTop();
+  //   }
+  // };
   const handlePressIn = (message) => {
     setMessageSelected(message)
     setModalVisible(true)
@@ -432,7 +439,7 @@ const Message = ({ navigation, route }) => {
       const response = await sendMessage(user, formData, typeSend)
       if (response && response.status === 201) {
         console.log(`${typeSend} success`);
-        setChat(response.data.data.message)
+        // setChat(response.data.data.message)
         setReplyChat(null);
         setIsLoadMess(false)
         scrollToEnd();
@@ -550,14 +557,6 @@ const Message = ({ navigation, route }) => {
           <View></View>
         )}
         <ScrollView ref={scrollViewRef}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          onLayout={(event) => {
-            setScrollViewHeight(event.nativeEvent.layout.height);
-          }}
-          onContentSizeChange={(width, height) => {
-            setContentHeight(height);
-          }}
         >
           <View style={{ flex: 1 }}>
             {chats.length > 0 ?
