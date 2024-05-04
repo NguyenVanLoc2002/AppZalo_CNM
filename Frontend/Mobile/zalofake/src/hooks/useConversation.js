@@ -21,7 +21,7 @@ const useConversation = () => {
             participants: conversation.participants,
             messages: conversation.messages,
             lastMessage: conversation.lastMessage,
-            tag : conversation.tag,
+            tag: conversation.tag,
           };
         });
         setConversations(newConversationList);
@@ -40,7 +40,7 @@ const useConversation = () => {
       participants.push(participant)
       // console.log(participants)
       const response = await axiosInstance.post(
-        "/conversations/getByParticipants",{participants}
+        "/conversations/getByParticipants", { participants }
       );
       if (response.status === 200) {
         // console.log(response.data)
@@ -89,12 +89,14 @@ const useConversation = () => {
     }
   };
 
-  const getConverHaveParticipants = async (conversationId, conver) => {
+  const getConverHaveParticipants = async (conversationId, conver, isMessage) => {
     try {
       const fetchConver = await getConversationByID(conversationId)
       const updateConver = { ...conver }
       updateConver.participants = fetchConver.participants
-      updateConver.messages = fetchConver.messages
+      if (isMessage) {
+        updateConver.messages = fetchConver.messages
+      }
       return updateConver;
     } catch (error) {
       console.log("Error fetch conversation", error);

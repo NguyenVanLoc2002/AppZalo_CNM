@@ -117,12 +117,12 @@ const Message = ({ navigation, route }) => {
     setIsModalFriendVisible(!isModalFriendVisible);
   };
   const fetchConversation = async () => {
-    const fetchConver = await getConverHaveParticipants(chatItem.conversation._id, conver)
+    const fetchConver = await getConverHaveParticipants(chatItem.conversation._id, conver, true)
     setConver(fetchConver)
   }
   useEffect(() => {
     fetchConversation()
-  }, [chatItem])
+  }, [chatItem,isGroupRedux])
 
   useEffect(() => {
     if (conver && conver.messages) {
@@ -520,7 +520,6 @@ const Message = ({ navigation, route }) => {
     setReplyChat(messageSelected);
     toggleModal();
   };
-
   return (
     <View style={{ flex: 1, backgroundColor: "#E5E9EB" }}>
       <View style={{ flex: 1, justifyContent: "center" }}>
@@ -592,8 +591,7 @@ const Message = ({ navigation, route }) => {
                         onPress={() => handlePressIn(message)}>
                         <View>
                           {renderMessageContent(content)}
-                          {/* {console.log(content)} */}
-                          <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTimeInMessage(message.timestamp)}</Text></View>
+                          <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTimeInMessage(message.chat.timestamp)}</Text></View>
                         </View>
                       </Pressable>
                     ))}
