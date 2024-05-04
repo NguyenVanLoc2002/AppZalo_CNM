@@ -118,12 +118,12 @@ const Message = ({ navigation, route }) => {
     setIsModalFriendVisible(!isModalFriendVisible);
   };
   const fetchConversation = async () => {
-    const fetchConver = await getConverHaveParticipants(chatItem.conversation._id, conver)
+    const fetchConver = await getConverHaveParticipants(chatItem.conversation._id, conver, true)
     setConver(fetchConver)
   }
   useEffect(() => {
     fetchConversation()
-  }, [chatItem])
+  }, [chatItem,isGroupRedux])
   
   useEffect(() => {
     if(isLoad===true){

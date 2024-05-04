@@ -81,18 +81,19 @@ const MessageSettings = ({ navigation, route }) => {
   }, [item])
 
   const fetchData = async () => {
-    const fetchConver = await getConverHaveParticipants(item.conversation._id, conver)
-    const getGroupData = await getGroup(conver._id)
+    const fetchConver = await getConverHaveParticipants(item.conversation?._id, conver,false)
     setConver(fetchConver)
     setName(conver.name);
-    setIdGroupAdmin(conver.createBy._id)
-    if (conver?.createBy?._id === authUser._id) {
-      setIsGroupAdmin(true);
-    } else if (getGroupData?.admins?.includes(authUser?._id)) {
-      setIsPhoAdmin(true);
+    if (conver.tag === 'group') {
+      const getGroupData = await getGroup(conver?._id)
+      setIdGroupAdmin(conver.createBy?._id)
+      if (conver?.createBy?._id === authUser._id) {
+        setIsGroupAdmin(true);
+      } else if (getGroupData.admins?.includes(authUser?._id)) {
+        setIsPhoAdmin(true);
+      }
+      setListAdmin(getGroupData?.admins);
     }
-    console.log("getGroupData?.admins",getGroupData?.admins);
-    setListAdmin(getGroupData?.admins);
   };
   // cập nhật tên nhóm
   const updateGroupInfo = async () => {
@@ -112,6 +113,7 @@ const MessageSettings = ({ navigation, route }) => {
         if (response) {
           let textMessage = authUser?.profile?.name + ' đã cập nhật tên nhóm thành ' + name;
           await sendMessage(conver._id, addMessage(textMessage, conver.tag, null), 'sendText')
+          dispatch(setIsGroup())
           setIsEditing(false);
           setIsLoadingUpdateName(false);
           showToastSuccess("Cập nhật thông tin nhóm thành công");
@@ -124,7 +126,6 @@ const MessageSettings = ({ navigation, route }) => {
       }
     }
   };
-
   // Thêm thành viên
   const addMemberToGroup = async () => {
     
@@ -140,14 +141,12 @@ const MessageSettings = ({ navigation, route }) => {
         groupId: conver._id,
         members: selectedFr
       };
-      const rs = await addMember(
-        conver._id,
-        groupData
-      );
+      const rs = await addMember(conver._id, groupData);
       if (rs) {
         let textMessage = authUser?.profile?.name + ' đã thêm ' + selectedFrName + ' vào nhóm!!!';
         await sendMessage(conver._id, addMessage(textMessage, conver.tag, null), 'sendText');
-        fetchData()
+        // setConver({ ...conver, participants: updateParticipants })
+        dispatch(setIsGroup())
         setModalAddMember(false);
         setSelectedFriends([]);
         showToastSuccess("Thêm thành viên vào nhóm thành công");
@@ -186,6 +185,9 @@ const MessageSettings = ({ navigation, route }) => {
         let textMessage = authUser?.profile?.name + ' đã xóa ' + selectedFrName + ' khỏi nhóm!!!';
         await sendMessage(conver._id, addMessage(textMessage, conver.tag, null), 'sendText')
         toggleModal();
+        // const updateParticipants = conver.participants.filter(item => item._id !== member._id)
+        // setConver({ ...conver, participants: updateParticipants })
+        dispatch(setIsGroup())
         setIsLoadingAddMem(false);
         showToastSuccess('Xóa thành viên khỏi nhóm thành công')
       }
@@ -273,7 +275,6 @@ const MessageSettings = ({ navigation, route }) => {
       if (response) {
         showToastSuccess("Giải tán nhóm thành công");
         setIsLoadingLeaveGroup(false);
-        dispatch(setIsGroup())
         navigation.navigate("ChatComponent");
       }
     } catch (error) {
@@ -290,9 +291,7 @@ const MessageSettings = ({ navigation, route }) => {
       if (response) {
         let textMessage = authUser?.profile?.name + ' đã rời khỏi nhóm!';
         await sendMessage(conver._id, addMessage(textMessage, conver.tag, null), 'sendText')
-        showToastSuccess(
-          "Rời nhóm thành công"
-        );
+        showToastSuccess("Rời nhóm thành công");
         setIsLoadingLeaveGroup(false);
         dispatch(setIsGroup())
         navigation.navigate("ChatComponent");
@@ -368,29 +367,34 @@ const MessageSettings = ({ navigation, route }) => {
   const isAdminSelected = (friend) => {
     return selectedAdmin?.includes(friend);
   };
+  const handleAddOrDeleteAdmin = async (type) => {
+    let selectedFr = []
+    let selectedFrName = "";
+    selectedAdmin.map((f) => {
+      selectedFr.push(f._id);
+      selectedFrName = selectedFrName + f?.profile?.name + ' - ';
+    }
+    )
+    const groupData = {
+      members: selectedFr,
+      typeChange: type,
+      groupId: conver._id,
+    };
+    const rs = await addAdmin(groupData)
+    return { rs, selectedFrName };
+  }
   // Thêm admin
   const addAdminInGroup = async () => {
     setIsLoadingAddMem(true);
     if (selectedAdmin.length > 0) {
-      let selectedFr = []
-      let selectedFrName = "";
-      selectedAdmin.map((f) => {
-        selectedFr.push(f._id);
-        selectedFrName = selectedFrName + f?.profile?.name + ' - ';
-      }
-      )
-      const groupData = {
-        members: selectedFr,
-        typeChange: 'add',
-        groupId: conver._id,
-      };
-      const rs = await addAdmin(groupData);
+      const { rs, selectedFrName } = await handleAddOrDeleteAdmin('add')
       if (rs) {
         setSelectedAdmin([]);
         toggleModalQTV();
         // getConversationByID(conver.conversation._id);
         let textMessage = authUser?.profile?.name + ' đã bổ nhiệm ' + selectedFrName + ' làm phó nhóm!!!';
         await sendMessage(conver._id, addMessage(textMessage, conver.tag, null), 'sendText');
+        dispatch(setIsGroup())
       } else {
         toggleModalQTV();
         setSelectedAdmin([]);
@@ -406,24 +410,13 @@ const MessageSettings = ({ navigation, route }) => {
   // Xóa admin
   const removeAdmin = async () => {
     setIsLoadingAddMem(true);
-    let selectedFr = []
-    let selectedFrName = "";
-    selectedAdmin.map((f) => {
-      selectedFr.push(f._id);
-      selectedFrName = selectedFrName + f?.profile?.name + ' - ';
-    }
-    )
-    const groupData = {
-      members: selectedFr,
-      typeChange: 'remove',
-      groupId: conver._id,
-    };
-    const rs = await addAdmin(groupData);
+    const { rs, selectedFrName } = await handleAddOrDeleteAdmin('remove')
     if (rs) {
       setIsModeDeleteQTV(false);
       setSelectedAdmin([]);
       let textMessage = authUser?.profile?.name + ' đã xóa quyền admin của ' + selectedFrName + '!';
       await sendMessage(conver._id, addMessage(textMessage, conver.tag, null), 'sendText');
+      dispatch(setIsGroup())
     } else {
       setIsModeDeleteQTV(false);
       setSelectedAdmin([]);
@@ -656,20 +649,22 @@ const MessageSettings = ({ navigation, route }) => {
               </View>
             )}
           </View>
-          <View style={{ flexDirection: "row", alignItems: "center", width: "90%", borderWidth: 1, borderColor: "orange", borderRadius: 20, marginTop: 20, marginHorizontal: 10, padding: 10, justifyContent: "center", }} >
-            <Text>{"Quản Trị Viên :"}</Text>
-            <Text style={{ marginLeft: 10, fontWeight: "bold" }}>
-              {conver?.createBy?.profile?.name}
-            </Text>
-          </View>
+          {conver.tag === 'friend' ? (<View></View>) : (
+            <View style={{ flexDirection: "row", alignItems: "center", width: "90%", borderWidth: 1, borderColor: "orange", borderRadius: 20, marginTop: 20, marginHorizontal: 10, padding: 10, justifyContent: "center", }} >
+              <Text>{"Quản Trị Viên :"}</Text>
+              <Text style={{ marginLeft: 10, fontWeight: "bold" }}>
+                {conver?.createBy?.profile?.name}
+              </Text>
+            </View>)}
         </View>
         <View
           style={{ backgroundColor: "white", alignItems: "center", marginTop: 1, }}>
           <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", paddingTop: 10, position: "relative", width: "100%", }}>
             <Text style={{ fontSize: 18, fontWeight: "bold" }}>{"Danh sách thành viên"}</Text>
-            <Pressable style={{ position: "absolute", top: 10, right: 20 }} onPress={handleShowAddMember}>
-              <Ionicons name="person-add" size={22} color="#1b93ff" />
-            </Pressable>
+            {conver.tag === 'friend' ? (<View></View>) : (
+              <Pressable style={{ position: "absolute", top: 10, right: 20 }} onPress={handleShowAddMember}>
+                <Ionicons name="person-add" size={22} color="#1b93ff" />
+              </Pressable>)}
           </View>
           <ScrollView style={{ flex: 1, marginTop: 5, marginHorizontal: 10, width: "100%", paddingHorizontal: 10, }}>
             {conver?.participants?.map((member, index) =>
@@ -686,7 +681,7 @@ const MessageSettings = ({ navigation, route }) => {
                       {member._id === authUser._id ? <Text style={{ marginLeft: 5, color: 'gray', fontWeight: '600' }}>(Bạn)</Text> : null}
                     </View>
                     <View style={{ paddingTop: 5, marginLeft: 5 }}>
-                      {conver.createBy._id === member._id ? (
+                      {conver.createBy?._id === member._id ? (
                         <View style={{ flexDirection: 'row', width: '42%', justifyContent: 'space-between' }}>
                           <FontAwesome5 name="key" size={16} color="#ffcd03" />
                           <Text style={{ color: 'gray' }}>Trưởng nhóm</Text>
@@ -755,51 +750,54 @@ const MessageSettings = ({ navigation, route }) => {
             ))}
           </ScrollView>
         </View>
-
-        <View style={{ backgroundColor: "white", marginTop: 1 }}>
-          <View
-            style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", paddingTop: 10, }}>
-            <Text style={{ fontSize: 18, fontWeight: "bold" }}>
-              {"Thiết lập nhóm"}
-            </Text>
-          </View>
-          <View>
-            {isGroupAdmin && (
-              <View>
-                {isModeQTV || isModeDeleteQTV ? (
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', marginTop: 5 }}>
-                    <Pressable style={{ justifyContent: "center", alignItems: 'center', width: 80, height: 40, borderRadius: 10, backgroundColor: '#abe9fa' }}
-                      onPress={() => { setIsModeQTV(false);; setIsModeDeleteQTV(false); }}>
-                      <Text style={{ color: "gray", fontSize: 16, fontWeight: 'bold' }}> Hủy </Text>
-                    </Pressable>
-                    <Pressable style={{ justifyContent: "center", alignItems: 'center', width: 90, height: 40, borderRadius: 10, backgroundColor: '#abe9fa' }}
-                      onPress={handlePhanQuyen}>
-                      <Text style={{ color: "gray", fontSize: 16, fontWeight: 'bold' }}>Xác nhận</Text>
-                    </Pressable>
-                  </View>) : (
-                  <View>
-                    <Pressable style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 10, paddingHorizontal: 20, }}
-                      onPress={toggleModalQTV} >
-                      <Text style={{ color: "gray", marginLeft: 10, fontSize: 16, fontWeight: 'bold' }}>Bổ nhiệm phó nhóm</Text></Pressable>
-                    <Pressable style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 10, paddingHorizontal: 20, }}
-                      onPress={toggleModalDeleteQTV} >
-                      <Text style={{ color: "gray", marginLeft: 10, fontSize: 16, fontWeight: 'bold' }}>Xoá bổ nhiệm phó nhóm</Text></Pressable>
-                  </View>)}
-              </View>
-            )}
-
-            <Pressable style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 10, paddingHorizontal: 20, }}
-              onPress={isGroupAdmin ? handleDeleteGroup : handleLeaveGroup}>
-              {isLoadingLeaveGroup ? (
-                <ActivityIndicator color="blue" size="large" />
-              ) : (
-                <Text style={{ color: "red", marginLeft: 10, fontSize: 16, fontWeight: 'bold' }}>
-                  {isGroupAdmin ? "Giải tán nhóm" : "Rời nhóm"}
-                </Text>
+        {conver.tag === 'friend' ? (<View></View>) : (
+          <View style={{ backgroundColor: "white", marginTop: 1 }}>
+            <View
+              style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", paddingTop: 10, }}>
+              <Text style={{ fontSize: 18, fontWeight: "bold" }}>
+                {"Thiết lập nhóm"}
+              </Text>
+            </View>
+            <View>
+              {isGroupAdmin && (
+                <View>
+                  {isModeQTV || isModeDeleteQTV ? (
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', marginTop: 5 }}>
+                      <Pressable style={{ justifyContent: "center", alignItems: 'center', width: 80, height: 40, borderRadius: 10, backgroundColor: '#abe9fa' }}
+                        onPress={() => { setIsModeQTV(false);; setIsModeDeleteQTV(false); }}>
+                        <Text style={{ color: "gray", fontSize: 16, fontWeight: 'bold' }}> Hủy </Text>
+                      </Pressable>
+                      <Pressable style={{ justifyContent: "center", alignItems: 'center', width: 90, height: 40, borderRadius: 10, backgroundColor: '#abe9fa' }}
+                        onPress={handlePhanQuyen}>
+                        {isLoadingAddMem ? (
+                          <ActivityIndicator color="white" size="large" />
+                        ) : (
+                          <Text style={{ color: "gray", fontSize: 16, fontWeight: 'bold' }}>Xác nhận</Text>
+                        )}
+                      </Pressable>
+                    </View>) : (
+                    <View>
+                      <Pressable style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 10, paddingHorizontal: 20, }}
+                        onPress={toggleModalQTV} >
+                        <Text style={{ color: "gray", marginLeft: 10, fontSize: 16, fontWeight: 'bold' }}>Bổ nhiệm phó nhóm</Text></Pressable>
+                      <Pressable style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 10, paddingHorizontal: 20, }}
+                        onPress={toggleModalDeleteQTV} >
+                        <Text style={{ color: "gray", marginLeft: 10, fontSize: 16, fontWeight: 'bold' }}>Xoá bổ nhiệm phó nhóm</Text></Pressable>
+                    </View>)}
+                </View>
               )}
-            </Pressable>
-          </View>
-        </View>
+              <Pressable style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 10, paddingHorizontal: 20, }}
+                onPress={isGroupAdmin ? handleDeleteGroup : handleLeaveGroup}>
+                {isLoadingLeaveGroup ? (
+                  <ActivityIndicator color="blue" size="large" />
+                ) : (
+                  <Text style={{ color: "red", marginLeft: 10, fontSize: 16, fontWeight: 'bold' }}>
+                    {isGroupAdmin ? "Giải tán nhóm" : "Rời nhóm"}
+                  </Text>
+                )}
+              </Pressable>
+            </View>
+          </View>)}
       </View>
 
       <Modal animationType="slide" transparent={true} visible={modalAddMember}>
