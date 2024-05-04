@@ -338,6 +338,7 @@ const Message = ({ navigation, route }) => {
     setIsLoadXoa(true)
     handleDelete(`conversations/deleteOnMySelf/${conver.conversation._id}/${messageSelected.chat._id}`, "Xóa thành công")
   };
+
   const handleDelete = async (api, toast) => {
     try {
       const response = await axiosInstance.post(api)
@@ -363,9 +364,9 @@ const Message = ({ navigation, route }) => {
   const chuyenTiepChat = (friend) => {
     setIsLoadChuyenTiep(true)
     const handleSendMessage = async () => {
-      try { 
+      try {
         const messagae = {
-          data : messageSelected.chat.contents[0],
+          data: messageSelected.chat.contents[0],
           replyMessageId: replyChat !== null ? replyChat.chat._id : null,
           isGroup: friend.tag === "group" ? true : false
         }
@@ -517,6 +518,21 @@ const Message = ({ navigation, route }) => {
       return false;
     }
   };
+
+  const handleCheckShow = (message) => {
+    if (message.sender._id === authUser._id) {
+      if (message.chat.status === 0 || message.chat.status === 2) { 
+        return true;
+      } else {
+         return false; }
+    } else {
+      if (message.chat.status === 0 || message.chat.status === 1) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  };
   const handleReplyChat = () => {
     setReplyChat(messageSelected);
     toggleModal();
@@ -546,65 +562,74 @@ const Message = ({ navigation, route }) => {
           <View style={{ flex: 1 }}>
             {chats.length > 0 ?
               (chats.map((message, index) => (
-                <View key={index} style={{ display: 'flex', flexDirection: 'row', alignItems: "center", justifyContent: handleCheckIsSend(message) ? "flex-end" : "flex-start" }} >
-                  {handleCheckIsSend(message) ?
-                    (<View></View>) :
-                    (<View
-                      style={{ width: 35, height: 35, justifyContent: "center", alignItems: "center", marginLeft: 10, marginRight: 10 }} >
-                      <Image
-                        source={{ uri: message.sender.profile.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}
-                        style={{ width: 35, height: 35, borderRadius: 25 }} />
-                    </View>)}
-                  <View style={[
-                    handleCheckIsSend(message) ? styles.styleSender : styles.styleRecive
-                  ]}>
-                    <Text style={{ paddingHorizontal: 10, fontSize: 12, color: 'gray', fontWeight: '700' }}>
-                      {message.sender.profile.name}
-                    </Text>
-                    {message.chat.replyMessageId === null ? (<View></View>) :
-                      (<View style={{ backgroundColor: '#89D5FB', display: 'flex', marginLeft: 10, borderLeftWidth: 2, borderColor: '#0072AB', marginRight: 10 }}>
+                <View key={index}>
+                  {
+                    handleCheckShow(message) && (
+                      <View style={{ display: 'flex', flexDirection: 'row', alignItems: "center", justifyContent: handleCheckIsSend(message) ? "flex-end" : "flex-start" }} >
+                        {handleCheckIsSend(message) ?
+                          (<View></View>) :
+                          (<View
+                            style={{ width: 35, height: 35, justifyContent: "center", alignItems: "center", marginLeft: 10, marginRight: 10 }} >
+                            <Image
+                              source={{ uri: message.sender.profile.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}
+                              style={{ width: 35, height: 35, borderRadius: 25 }} />
+                          </View>)}
+                        <View style={[
+                          handleCheckIsSend(message) ? styles.styleSender : styles.styleRecive
+                        ]}>
+                          <Text style={{ paddingHorizontal: 10, fontSize: 12, color: 'gray', fontWeight: '700' }}>
+                            {message.sender.profile.name}
+                          </Text>
+                          {message.chat.replyMessageId === null ? (<View></View>) :
+                            (<View style={{ backgroundColor: '#89D5FB', display: 'flex', marginLeft: 10, borderLeftWidth: 2, borderColor: '#0072AB', marginRight: 10 }}>
 
-                        {message.chat.replyMessageId.contents.map((content, i) => (
-                          <View key={i} style={{ display: 'flex', paddingVertical: 10, alignItems: 'center', }}>
-                            {content.type === 'text' ? (
-                              <View>
-                                <Text style={{ fontSize: 13, fontWeight: 'bold', paddingLeft: 15 }}>
-                                  {message?.nameReply}
-                                </Text>
-                                {renderMessageContentReply(content)}
-                              </View>
-                            ) : (
-                              <View style={{ display: 'flex', paddingVertical: 5, alignItems: 'center', paddingRight: 5, flexDirection: 'row' }}>
-                                {renderMessageContentReply(content)}
-                                <View>
-                                  <Text style={{ paddingLeft: 10, fontSize: 13, fontWeight: 'bold' }}>
-                                    {message?.nameReply}
-                                  </Text>
-                                  <Text style={{ paddingLeft: 10, fontSize: 13, color: '#000' }}>
-                                    [{content.type}]
-                                  </Text>
+                              {message.chat.replyMessageId.contents.map((content, i) => (
+                                <View key={i} style={{ display: 'flex', paddingVertical: 10, alignItems: 'center', }}>
+                                  {content.type === 'text' ? (
+                                    <View>
+                                      <Text style={{ fontSize: 13, fontWeight: 'bold', paddingLeft: 15 }}>
+                                        {message?.nameReply}
+                                      </Text>
+                                      {renderMessageContentReply(content)}
+                                    </View>
+                                  ) : (
+                                    <View style={{ display: 'flex', paddingVertical: 5, alignItems: 'center', paddingRight: 5, flexDirection: 'row' }}>
+                                      {renderMessageContentReply(content)}
+                                      <View>
+                                        <Text style={{ paddingLeft: 10, fontSize: 13, fontWeight: 'bold' }}>
+                                          {message?.nameReply}
+                                        </Text>
+                                        <Text style={{ paddingLeft: 10, fontSize: 13, color: '#000' }}>
+                                          [{content.type}]
+                                        </Text>
+                                      </View>
+                                    </View>
+                                  )}
                                 </View>
+                              ))}
+
+                            </View>)
+                          }
+                          {message.chat.contents.map((content, i) => (
+                            <Pressable key={i}
+                              onPress={() => handlePressIn(message)}>
+
+                              <View>
+                                {renderMessageContent(content)}
+                                {/* {console.log(content)} */}
+                                <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTimeInMessage(message.chat.timestamp)}</Text></View>
                               </View>
-                            )}
-                          </View>
-                        ))}
-
-                      </View>)
-                    }
-                    {message.chat.contents.map((content, i) => (
-                      <Pressable key={i}
-                      onPress={() => handlePressIn(message)}>
-                      
-                        <View>
-                          {renderMessageContent(content)}
-                          {/* {console.log(content)} */}
-                          <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTimeInMessage(message.timestamp)}</Text></View>
+                            </Pressable>
+                          ))}
                         </View>
-                      </Pressable>
-                    ))}
-                  </View>
 
+                      </View>
+                    )
+                  }
                 </View>
+
+
+
               ))) : (<View><Text style={{ fontSize: 16, fontWeight: '600', textAlign: 'center', paddingVertical: 10 }}>Chưa có tin nhắn nào!</Text></View>)}
 
           </View>
@@ -764,9 +789,9 @@ const Message = ({ navigation, route }) => {
                 <Text style={styles.modalButton}>Trả lời</Text>
               </Pressable>
               {
-                messageSelected?.chat?.contents[0].type==='image'
-                  && (
-                    <Pressable style={styles.pressCol} onPress={handleXemAnh}>
+                messageSelected?.chat?.contents[0].type === 'image'
+                && (
+                  <Pressable style={styles.pressCol} onPress={handleXemAnh}>
                     <FontAwesome5
                       name="image"
                       size={25}
@@ -775,14 +800,14 @@ const Message = ({ navigation, route }) => {
                     />
                     <Text style={styles.modalButton}>Xem ảnh</Text>
                   </Pressable>
-                  )}
+                )}
             </View>
 
             <View style={styles.modalButtonContainer}>
               <Pressable onPress={toggleModal}>
                 <Text style={styles.modalButton}>HỦY</Text>
               </Pressable>
-              
+
             </View>
           </View>
         </View>
@@ -860,9 +885,9 @@ const Message = ({ navigation, route }) => {
         <View style={styles.modalContainer}>
           <TouchableOpacity style={styles.modalImageContainer} onPress={() => setModalImage(false)}>
             <Image
-              source={{ uri: messageSelected?.chat?.contents[0].data }} 
+              source={{ uri: messageSelected?.chat?.contents[0].data }}
               style={{ width: null, height: '100%', aspectRatio: 1, borderRadius: 10 }}
-              resizeMode="contain" 
+              resizeMode="contain"
             />
           </TouchableOpacity>
         </View>
@@ -878,10 +903,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#e2e8f1",
   },
   modalImageContainer: {
-    width:'100%',
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    height:'70%'
+    height: '70%'
   },
   modalImage: {
     width: '90%',
