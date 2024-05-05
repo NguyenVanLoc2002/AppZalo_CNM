@@ -32,7 +32,6 @@ const MessageSettings = ({ navigation, route }) => {
   const [isPhoAdmin, setIsPhoAdmin] = useState(false);
   const { authUser } = useAuthContext();
   const [textSearch, setTextSearch] = useState(null);
-
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [selectedAdmin, setSelectedAdmin] = useState([]);
   const [listSearch, setListSearch] = useState([]);
@@ -54,6 +53,7 @@ const MessageSettings = ({ navigation, route }) => {
   const [idGroupAdmin, setIdGroupAdmin] = useState(null)
   const { isNewSocket, newSocketData, setNewSocketData } = useSocketContext();
   const dispatch = useDispatch()
+  const [allFriend, setAllFriend] = useState([])
 
   useEffect(() => {
     navigation.setOptions({
@@ -78,10 +78,11 @@ const MessageSettings = ({ navigation, route }) => {
 
   useEffect(() => {
     fetchData()
+    fetchFriends()
   }, [item])
 
   const fetchData = async () => {
-    const fetchConver = await getConverHaveParticipants(item.conversation?._id, conver,false)
+    const fetchConver = await getConverHaveParticipants(item.conversation?._id, conver, false)
     setConver(fetchConver)
     setName(conver.name);
     if (conver.tag === 'group') {
@@ -144,7 +145,6 @@ const MessageSettings = ({ navigation, route }) => {
       if (rs) {
         let textMessage = authUser?.profile?.name + ' đã thêm ' + selectedFrName + ' vào nhóm!!!';
         await sendMessage(conver._id, addMessage(textMessage, conver.tag, null), 'sendText');
-        // setConver({ ...conver, participants: updateParticipants })
         dispatch(setIsGroup())
         setModalAddMember(false);
         setSelectedFriends([]);
@@ -183,9 +183,7 @@ const MessageSettings = ({ navigation, route }) => {
       if (response) {
         let textMessage = authUser?.profile?.name + ' đã xóa ' + selectedFrName + ' khỏi nhóm!!!';
         await sendMessage(conver._id, addMessage(textMessage, conver.tag, null), 'sendText')
-        toggleModal();
-        // const updateParticipants = conver.participants.filter(item => item._id !== member._id)
-        // setConver({ ...conver, participants: updateParticipants })
+        toggleModal()
         dispatch(setIsGroup())
         setIsLoadingAddMem(false);
         showToastSuccess('Xóa thành viên khỏi nhóm thành công')
@@ -201,56 +199,42 @@ const MessageSettings = ({ navigation, route }) => {
       }
     }
   };
-  // load danh sách bạn, set danh sách bạn có thể add vào group
-  // sau khi thêm thành viênn, load lại danh sách thêm vào
   const fetchFriends = async () => {
     try {
       const response = await axiosInstance.get("/users/get/friends");
-      const newRadioButtons = [];
-      let i = true;
-      for (const friend of response.data.friends) {
-        for (const friend1 of conver?.conversation?.participants) {
-          if (friend.userId === friend1) {
-            i = false;
-          }
-        }
-        if (i === true) {
-          const item = {
-            id: friend.userId,
-            name: friend?.profile?.name,
-            avatar: friend?.profile?.avatar?.url,
-            phone: friend.phone
-          };
-          newRadioButtons.push(item);
-        } else {
-          i = true;
-        }
-      }
-      setListSearch(newRadioButtons);
-      setListFriendCanSearch(newRadioButtons)
+      setAllFriend(response.data.friends)
     } catch (error) {
       console.log(error);
     }
-  };
-
+  }
+  // load danh sách bạn, set danh sách bạn có thể add vào group
+  const filterFriendToAdd = () => {
+    const filterFriend = allFriend.filter((itemAllFriend) => {
+      return !conver.participants.some((itemConver) => itemConver._id === itemAllFriend.userId)
+    }).map((friend) => {
+      return {
+        id: friend.userId,
+        name: friend.profile.name,
+        avatar: friend.profile.avatar?.url,
+        phone: friend.phone
+      }
+    })
+    console.log("filterFriend", filterFriend);
+    setListSearch(filterFriend);
+    setListFriendCanSearch(filterFriend)
+  }
   // Search bạn để add vào group
   const handleSearch = () => {
     if (!textSearch) {
       showToastError("Bạn chưa nhập");
     } else {
       const filteredFriends = listFriendCanSearch.filter((friend) => {
-        // console.log(textSearch)
-        // console.log(friend)
         return (
-          friend.name
-            .toLowerCase()
-            ?.includes(textSearch.toLowerCase()) || friend.phone === textSearch
+          friend.name.toLowerCase()?.includes(textSearch.toLowerCase()) || friend.phone === textSearch
         );
       });
-      // console.log(filteredFriends)
       if (filteredFriends.length === 0) {
         showToastError("Không tìm thấy");
-
       } else {
         const newRadioButtons = [];
         for (const friend of filteredFriends) {
@@ -533,8 +517,7 @@ const MessageSettings = ({ navigation, route }) => {
   );
 
   const handleShowAddMember = () => {
-    fetchFriends()
-    console.log("showFriend");
+    filterFriendToAdd()
     setModalAddMember(true);
   };
 

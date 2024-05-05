@@ -216,8 +216,8 @@ const Message = ({ navigation, route }) => {
         if (message && message.retrunMessage) {
           // console.log("socket new messagae", message);
           if (
-            message.conversationId === conver.conversation._id ||
-            message.retrunMessage.receiverId === authUser._id
+            message.conversationId === conver.conversation._id &&
+            message.retrunMessage.receiverId === authUser._id && message.retrunMessage.senderId !== authUser._id
           ) {
             setChat(message.retrunMessage)
             scrollToEnd()
@@ -384,8 +384,6 @@ const Message = ({ navigation, route }) => {
     handleSendMessage();
   };
 
-
-  //nhi
   const appendData = (formData, asset) => {
     const fileName = asset.split('/').pop();
     let type = null
