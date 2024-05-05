@@ -16,7 +16,7 @@ import useMessage from '../../../hooks/useMessage'
 import * as ImagePicker from "expo-image-picker";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useSocketContext } from "../../../contexts/SocketContext"
-import useCreateGroup from "../../../hooks/useCreateGroup";
+import useGroup from "../../../hooks/useGroup";
 import { useAuthContext } from "../../../contexts/AuthContext";
 import * as DocumentPicker from 'expo-document-picker';
 import useConversation from "../../../hooks/useConversation";
@@ -26,9 +26,8 @@ import { setIsGroup } from "../../../redux/stateCreateGroupSlice";
 const Message = ({ navigation, route }) => {
   const { chatItem } = route.params;
   const [conver, setConver] = useState(chatItem)
-  const { getUserById, getAllGroup } = useCreateGroup()
+  const { getGroups, getUserById } = useGroup()
   const { authUser } = useAuthContext()
-  //nhi  
   const [textMessage, setTextMessage] = useState(null)
   const [isColorSend, setIsColorSend] = useState(false)
   const { isNewSocket, newSocketData, setNewSocketData } = useSocketContext();
@@ -37,7 +36,6 @@ const Message = ({ navigation, route }) => {
   var isGroupRedux = useSelector(state => state.isGroup.isGroup);
   // console.log("isGroup", isGroupRedux);
 
-  //truc
   const [chats, setChats] = useState([]);
   const scrollViewRef = useRef();
   const [contentHeight, setContentHeight] = useState(0);
@@ -122,7 +120,7 @@ const Message = ({ navigation, route }) => {
   }
   useEffect(() => {
     fetchConversation()
-  }, [chatItem,isGroupRedux])
+  }, [chatItem, isGroupRedux])
 
   useEffect(() => {
     if (conver && conver.messages) {
@@ -182,7 +180,7 @@ const Message = ({ navigation, route }) => {
       console.log("FetchGroupError: ", error);
     }
     try {
-      const allGr = await getAllGroup();
+      const allGr = await getGroups();
       const newGroup = await Promise.all(allGr.map(async (group) => {
         return {
           _id: group._id,
@@ -204,10 +202,7 @@ const Message = ({ navigation, route }) => {
       console.log("scrollToEnd");
     }
   }
-  // useEffect(() => {
-  //   fetchChats();
-  // }, [isGroupRedux])
-  // console.log("cover", JSON.stringify(conver));
+
   useEffect(() => {
     const fetchSocket = async () => {
 
@@ -363,7 +358,7 @@ const Message = ({ navigation, route }) => {
     const handleSendMessage = async () => {
       try {
         const messagae = {
-          data : messageSelected.chat.contents[0],
+          data: messageSelected.chat.contents[0],
           replyMessageId: replyChat !== null ? replyChat.chat._id : null,
           isGroup: friend.tag === "group" ? true : false
         }
@@ -431,6 +426,7 @@ const Message = ({ navigation, route }) => {
         setChat(response.data.data.message)
         setReplyChat(null);
         setIsLoadMess(false)
+        dispatch(setIsGroup())
         scrollToEnd();
       } else {
         console.log(`${typeSend} fail`);

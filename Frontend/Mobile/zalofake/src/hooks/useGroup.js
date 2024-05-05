@@ -5,20 +5,21 @@ const useGroup = () => {
   const [group, setGroup] = useState(null);
   const [groups, setGroups] = useState([]);
 
-  const createGroup = async (groupData) => {
+  const createGroup = async (nameGroup, idUser) => {
     try {
-      const response = await axiosInstance.post("/groups/create", groupData);
-      console.log(response);
-      const { data, status } = response;
-
-      if (status === 201) {
-        setGroup(data.group);
-        return true;
+      const response = await axiosInstance.post("/groups/create", {
+        name: nameGroup,
+        members: idUser,            
+      });
+      if (response.status === 201) {
+        return response.data;
+      } else if (response.status === 500) {
+        console.log("Create group fail");
+        return null;
       }
     } catch (error) {
-      console.error(error);
-      throw error;
-    } finally {
+      console.log("CreateGroupError:", error);
+      return null;
     }
   };
 
@@ -42,11 +43,11 @@ const useGroup = () => {
       const { data, status } = response;
       if (status === 200) {
         setGroups(data);
+        return data;
       }
     } catch (error) {
       console.error(error);
-      throw error;
-    } finally {
+      return null;
     }
   };
 
@@ -154,6 +155,18 @@ const useGroup = () => {
     }
   };
 
+  const getUserById = async (id) => {
+    try {
+      const response = await axiosInstance.get(`/users/get/uid/${id}`)
+      if (response.status === 200) {
+        return response.data;
+      }
+    } catch (error) {
+      console.log("GetUserError", error);
+      return null;
+    }
+  };
+
   return {
     group,
     groups,
@@ -165,7 +178,8 @@ const useGroup = () => {
     addMember,
     removeMember,
     leaveGroup,
-    addAdmin
+    addAdmin,
+    getUserById
   };
 };
 

@@ -30,7 +30,7 @@ const ChatItem = ({ item }) => {
       >
         <View style={{ flexDirection: 'row' }}>
           {item.chat.tag === 'group' ? <Ionicons name="people" size={20} color="gray" /> : <View></View>}
-          <Text style={{ fontSize: 20, marginBottom: 5, paddingLeft: 5 }}>{item.chat.name}</Text>
+          <Text style={{ fontSize: 18, marginBottom: 5, paddingLeft: 5, fontWeight: 'bold' }}>{item.chat.name}</Text>
         </View>
         <Text
           style={{
@@ -50,7 +50,6 @@ const ChatItem = ({ item }) => {
         }}
       >
         <Text style={{ marginBottom: 5 }}>
-          {/* {item.time === 0 ? "vừa xong" : `${item.time} `} */}
           {item.time}
         </Text>
         {/* <Text
