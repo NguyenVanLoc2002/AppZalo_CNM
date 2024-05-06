@@ -96,7 +96,7 @@ export const SocketContextProvider = ({ children }) => {
 
   const handleReceiveFriendRequest = async (sender) => {
     Toast.show({
-      text1: `${sender.sender.name} has sent you a friend request`,
+      text1: `${sender.sender.name} đã gửi một yêu cầu kết bạn`,
       type: "success",
     });
     await reloadAuthUser();
@@ -104,7 +104,7 @@ export const SocketContextProvider = ({ children }) => {
 
   const handleFriendAcceptAction = async (sender) => {
     Toast.show({
-      text1: `${sender.sender.name} has accepted your friend request`,
+      text1: `${sender.sender.name} đã chấp nhận yêu cầu kết bạn`,
       type: "success",
     });
     await reloadAuthUser();
@@ -112,7 +112,7 @@ export const SocketContextProvider = ({ children }) => {
   const handleFriendRejectAction = async (sender) => {
     console.log("reject", sender);
     Toast.show({
-      text1: `${sender.sender.name} has rejected your friend request`,
+      text1: `${sender.sender.name} đã từ chối yêu cầu kết bạn`,
       type: "error",
     });
     await reloadAuthUser();
@@ -162,8 +162,7 @@ export const SocketContextProvider = ({ children }) => {
 
   return (
     <SocketContext.Provider
-      value={{ socket, onlineFriends, isNewSocket, newSocketData, setNewSocketData }}
-    >
+      value={{ socket, onlineFriends, isNewSocket, newSocketData, setNewSocketData }}>
       {children}
     </SocketContext.Provider>
   );

@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, Pressable, Image, StyleSheet } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-
 import { useAuthContext } from "../../contexts/AuthContext";
 import useFriend from "../../hooks/useFriend";
+import { useDispatch } from "react-redux";
+import { setIsGroup } from "../../redux/stateCreateGroupSlice";
 
-function FriendRequestComponent() {
-  const navigation = useNavigation();
+function FriendRequestComponent({navigation}) {
+  const dispatch = useDispatch();
+
   useEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
@@ -34,13 +35,7 @@ function FriendRequestComponent() {
     });
   }, [navigation]);
   const { authUser, reloadAuthUser } = useAuthContext();
-  const {
-    getAllFriends,
-    getFriendById,
-    acceptFriend,
-    rejectFriend,
-    cancelFriendRequest,
-  } = useFriend();
+  const { getAllFriends, getFriendById, acceptFriend, rejectFriend, cancelFriendRequest, } = useFriend();
   const [friendRequests, setFriendRequests] = useState([]);
   const [friendReceived, setFriendReceived] = useState([]);
 
@@ -58,6 +53,7 @@ function FriendRequestComponent() {
 
   const handleAcceptFriend = async (friend) => {
     await acceptFriend(friend.phone);
+    dispatch(setIsGroup())
     await reloadAuthUser();
   };
 

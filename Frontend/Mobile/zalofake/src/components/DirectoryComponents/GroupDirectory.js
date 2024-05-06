@@ -17,6 +17,7 @@ import { useAuthContext } from "../../contexts/AuthContext";
 import useMessage from "../../hooks/useMessage";
 import useGroup from "../../hooks/useGroup";
 import { useSocketContext } from "../../contexts/SocketContext";
+import { useSelector } from "react-redux";
 
 const GroupDirectory = ({ navigation }) => {
   const [listFriends, setListFriends] = useState([])
@@ -34,6 +35,7 @@ const GroupDirectory = ({ navigation }) => {
   const { handleGetTimeInChat, setDataChat, showToastSuccess, showToastError, sortTime } = useMessage()
   const { authUser } = useAuthContext();
   const { isNewSocket, newSocketData, setNewSocketData } = useSocketContext();
+  var isGroupRedux = useSelector(state => state.isGroup.isGroup);
 
   const fetchGroup = async () => {
     try {
@@ -87,7 +89,7 @@ const GroupDirectory = ({ navigation }) => {
   useEffect(() => {
     fetchFriend()
     fetchGroup()
-  }, [])
+  }, [isGroupRedux])
 
   const handleSearch = () => {
     if (!textSearch) {

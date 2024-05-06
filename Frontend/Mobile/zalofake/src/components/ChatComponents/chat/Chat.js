@@ -27,7 +27,7 @@ function Chat({ navigation }) {
   const { isNewSocket, newSocketData, setNewSocketData } = useSocketContext();
   const { showToastSuccess, handleGetTimeInChat, setDataChat, sortTime } = useMessage();
   var isGroupRedux = useSelector(state => state.isGroup.isGroup);
-
+  
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -114,7 +114,6 @@ function Chat({ navigation }) {
       conversation: group.conversation,
       name: group.groupName,
       avatar: group.avatar.url,
-      background: group.avatar.url,
       lastMessage: group.lastMessage || group.conversation.lastMessage,
       tag: group.conversation.tag,
       createBy: group.createBy,
@@ -173,7 +172,6 @@ function Chat({ navigation }) {
       }
     };
     fetchDataListFriend();
-    console.log("isGroupRedux", isGroupRedux);
   }, [isGroupRedux])
 
   useEffect(() => {

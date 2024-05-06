@@ -8,7 +8,6 @@ import {
   StyleSheet,
   ScrollView, ActivityIndicator, Modal,
   Image,
-  LogBox
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import axiosInstance from "../../../api/axiosInstance";
@@ -34,8 +33,6 @@ const Message = ({ navigation, route }) => {
   const { getConverHaveParticipants } = useConversation();
   const dispatch = useDispatch();
   var isGroupRedux = useSelector(state => state.isGroup.isGroup);
-  // console.log("isGroup", isGroupRedux);
-
   const [chats, setChats] = useState([]);
   const scrollViewRef = useRef();
   const [contentHeight, setContentHeight] = useState(0);
@@ -514,6 +511,7 @@ const Message = ({ navigation, route }) => {
     setReplyChat(messageSelected);
     toggleModal();
   };
+
   return (
     <View style={{ flex: 1, backgroundColor: "#E5E9EB" }}>
       <View style={{ flex: 1, justifyContent: "center" }}>
@@ -601,19 +599,21 @@ const Message = ({ navigation, route }) => {
         {replyChat === null ?
           (<Text></Text>) :
           (
-            <View style={{ backgroundColor: '#f5c4f2', marginLeft: 50, marginTop: 10 }}>
-              <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ paddingLeft: 15, fontSize: 13, color: '#000' }}>
-                  Trả lời: <Text style={{ paddingLeft: 15, fontSize: 12, color: 'gray' }}>{replyChat?.sender?.name} </Text>
-                </Text>
-                <Pressable onPress={() => { setReplyChat(null) }} style={{ marginRight: 20 }}><Text>Hủy</Text></Pressable>
-              </View>
-              <View
-              >{replyChat.chat.contents.map((content, i) => (
-                <View key={i} >
-                  {renderMessageContentReply(content)}
+            <View style={{ backgroundColor: 'white', padding: 10 }}>
+              <View style={{ borderLeftWidth: 2, marginLeft: 10}}>
+                <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <Text style={{ paddingLeft: 15, fontSize: 14, color: '#000' }}>
+                    Trả lời: <Text style={{ paddingLeft: 15, fontSize: 14, color: 'gray', fontWeight: 'bold' }}>{replyChat?.sender?.profile.name} </Text>
+                  </Text>
+                  <Pressable onPress={() => { setReplyChat(null) }} style={{ marginRight: 20 }}><Ionicons name="close" size={30} color="gray" /></Pressable>
                 </View>
-              ))}</View>
+                <View>
+                  {replyChat.chat.contents.map((content, i) => (
+                  <View key={i} >
+                    {renderMessageContentReply(content)}
+                  </View>
+                ))}</View>
+              </View>
             </View>
           )}
       </View>
