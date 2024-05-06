@@ -62,14 +62,11 @@ const useMessage = () => {
         </View>
       );
     } else if (content.type === 'file') {
-      // console.log(content.data)
       return (
 
         <View style={{ paddingLeft: 15, paddingRight: 15 }}>
 
-          {/* <PDFReader
-            source={{ uri: content.data }}
-          /> */}
+      
 
         </View>
 
@@ -111,10 +108,16 @@ const useMessage = () => {
     }
     else if (content.type === 'file') {
       return (
-        <WebView
-          source={{ uri: content.data }}
-          style={{ flex: 1 }}
-        />
+        
+        <View style={{ paddingLeft: 15, paddingRight: 15 }}>
+
+      
+
+        </View>
+        // <WebView
+        //   source={{ uri: content.data }}
+        //   style={{ flex: 1 }}
+        // />
         // <Video
         // source={{ uri: content.data  }}
         // resizeMode="contain"

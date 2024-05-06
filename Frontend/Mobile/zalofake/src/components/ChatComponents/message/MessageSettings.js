@@ -6,7 +6,7 @@ import {
   Pressable,
   ScrollView,
   TextInput,
-  Modal, ActivityIndicator, StyleSheet
+  Modal, ActivityIndicator, StyleSheet, TouchableOpacity
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
@@ -129,6 +129,7 @@ const MessageSettings = ({ navigation, route }) => {
   };
   // Thêm thành viên
   const addMemberToGroup = async () => {
+    
     setIsLoadingAddMem(true);
     if (selectedFriends.length > 0) {
       let selectedFr = []
@@ -374,6 +375,7 @@ const MessageSettings = ({ navigation, route }) => {
       if (rs) {
         setSelectedAdmin([]);
         toggleModalQTV();
+        // getConversationByID(conver.conversation._id);
         let textMessage = authUser?.profile?.name + ' đã bổ nhiệm ' + selectedFrName + ' làm phó nhóm!!!';
         await sendMessage(conver._id, addMessage(textMessage, conver.tag, null), 'sendText');
         dispatch(setIsGroup())

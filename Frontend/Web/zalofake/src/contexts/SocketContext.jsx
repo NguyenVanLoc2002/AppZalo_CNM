@@ -150,10 +150,6 @@ export const SocketContextProvider = ({ children }) => {
     setNewSocketData(group);
   }
 
-  const handleDeleteGroup = ({ group }) => {
-    setIsNewSocket("delete-group");
-    setNewSocketData(group);
-  }
 
   const handleChangeAdminGroup = ({ group, members, typeChange }) => {
     setIsNewSocket("change-admins");

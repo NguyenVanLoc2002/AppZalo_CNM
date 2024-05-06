@@ -94,9 +94,6 @@ function Chat({ navigation }) {
         name: friend?.profile.name,
         avatar: friend?.profile.avatar?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
         background: friend?.profile.background?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
-        unread: conversation.messages.some(
-          (message) => message.receiver === authUser.phone && !message.isRead
-        ),
         lastMessage: conversation?.lastMessage,
         tag: conversation.tag,
       };
