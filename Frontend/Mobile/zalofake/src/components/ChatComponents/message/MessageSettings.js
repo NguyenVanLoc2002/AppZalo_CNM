@@ -80,18 +80,22 @@ const MessageSettings = ({ navigation, route }) => {
   }, [item])
 
   const fetchData = async () => {
-    const fetchConver = await getConverHaveParticipants(item.conversation?._id, conver,false)
-    setConver(fetchConver)
-    setName(conver.name);
-    if (conver.tag === 'group') {
-      const getGroupData = await getGroup(conver?._id)
-      setIdGroupAdmin(conver.createBy?._id)
-      if (conver?.createBy?._id === authUser._id) {
-        setIsGroupAdmin(true);
-      } else if (getGroupData.admins?.includes(authUser?._id)) {
-        setIsPhoAdmin(true);
+    if(item.conversation!==null){
+      const fetchConver = await getConverHaveParticipants(item.conversation?._id, conver,false)
+      setConver(fetchConver)
+      setName(conver.name);
+      if (conver.tag === 'group') {
+        const getGroupData = await getGroup(conver?._id)
+        setIdGroupAdmin(conver.createBy?._id)
+        if (conver?.createBy?._id === authUser._id) {
+          setIsGroupAdmin(true);
+        } else if (getGroupData.admins?.includes(authUser?._id)) {
+          setIsPhoAdmin(true);
+        }
+        setListAdmin(getGroupData?.admins);
       }
-      setListAdmin(getGroupData?.admins);
+    }else{
+      setName(conver.name);
     }
   };
   // cập nhật tên nhóm

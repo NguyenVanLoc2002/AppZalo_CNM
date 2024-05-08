@@ -89,7 +89,7 @@ const Message = ({ navigation, route }) => {
         </View>
       ),
       headerTitle: () => (
-        <View style={{ flexDirection: "row", alignItems: "center", width: '55%', marginRight: 100 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", width: '55%', marginRight: 200}}>
           {conver.tag === 'group' ? (
             <View style={{ width: '30%' }}>
               <Image
@@ -119,8 +119,11 @@ const Message = ({ navigation, route }) => {
     setIsModalFriendVisible(!isModalFriendVisible);
   };
   const fetchConversation = async () => {
-    const fetchConver = await getConverHaveParticipants(chatItem.conversation._id, conver, true)
-    setConver(fetchConver)
+    if (chatItem.conversation !== null) {
+      const fetchConver = await getConverHaveParticipants(chatItem.conversation?._id, conver, true)
+      setConver(fetchConver)
+    }
+
   }
   useEffect(() => {
     fetchConversation()
@@ -224,8 +227,8 @@ const Message = ({ navigation, route }) => {
         if (message && message.retrunMessage) {
           // console.log("socket new messagae", message);
           if (
-            message.conversationId === conver.conversation._id ||
-            message.retrunMessage.receiverId === authUser._id
+            message.conversationId === conver.conversation._id &&
+            message.retrunMessage.receiverId === authUser._id && message.retrunMessage.senderId !== authUser._id
           ) {
             setChat(message.retrunMessage)
             scrollToEnd()
@@ -515,6 +518,7 @@ const Message = ({ navigation, route }) => {
 
   const handleSendMessage = async () => {
     if (textMessage) {
+      console.log('conver',conver)
       send(conver._id, addMessage(textMessage, conver.tag, replyChat), 'sendText')
       setTextMessage(null);
     }
@@ -912,7 +916,7 @@ const Message = ({ navigation, route }) => {
           </TouchableOpacity>
           {messageSelected?.chat?.contents[0].type === 'image' ? (<Image
             source={{ uri: messageSelected?.chat?.contents[0].data }}
-            style={{ width: '90%', height:null, aspectRatio: 1, borderRadius: 10 }}
+            style={{ width: '90%', height: null, aspectRatio: 1, borderRadius: 10 }}
             resizeMode="contain"
           />) : (<Video
             source={{ uri: messageSelected?.chat?.contents[0].data }}
