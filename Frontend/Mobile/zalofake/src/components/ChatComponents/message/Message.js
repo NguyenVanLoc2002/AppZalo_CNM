@@ -10,6 +10,7 @@ import {
   Image,
   LogBox
 } from "react-native";
+import { Video } from 'expo-av';
 import { Ionicons } from "@expo/vector-icons";
 import axiosInstance from "../../../api/axiosInstance";
 import useMessage from '../../../hooks/useMessage'
@@ -123,10 +124,10 @@ const Message = ({ navigation, route }) => {
   }
   useEffect(() => {
     fetchConversation()
-  }, [chatItem,isGroupRedux])
-  
+  }, [chatItem, isGroupRedux])
+
   useEffect(() => {
-    if(isLoad===true){
+    if (isLoad === true) {
       scrollToEnd();
     }
   }, [isLoad]);
@@ -283,7 +284,7 @@ const Message = ({ navigation, route }) => {
   //   //   setIsLoad(true)
   //   //   scrollViewRef.current.scrollTo({ x: 0, y: offset, animated: true });
   //   // }
-    
+
   // }, [contentHeight, scrollViewHeight]);
 
 
@@ -439,7 +440,7 @@ const Message = ({ navigation, route }) => {
       const response = await sendMessage(user, formData, typeSend)
       if (response && response.status === 201) {
         console.log(`${typeSend} success`);
-        // setChat(response.data.data.message)
+        setChat(response.data.data.message)
         setReplyChat(null);
         setIsLoadMess(false)
         scrollToEnd();
@@ -528,10 +529,11 @@ const Message = ({ navigation, route }) => {
 
   const handleCheckShow = (message) => {
     if (message.sender._id === authUser._id) {
-      if (message.chat.status === 0 || message.chat.status === 2) { 
+      if (message.chat.status === 0 || message.chat.status === 2) {
         return true;
       } else {
-         return false; }
+        return false;
+      }
     } else {
       if (message.chat.status === 0 || message.chat.status === 1) {
         return true;
@@ -800,6 +802,19 @@ const Message = ({ navigation, route }) => {
                     <Text style={styles.modalButton}>Xem ảnh</Text>
                   </Pressable>
                 )}
+              {
+                messageSelected?.chat?.contents[0].type === 'video'
+                && (
+                  <Pressable style={styles.pressCol} onPress={handleXemAnh}>
+                    <FontAwesome5
+                      name="video"
+                      size={25}
+                      color="black"
+                      style={{ margin: 'auto' }}
+                    />
+                    <Text style={styles.modalButton}>Xem video</Text>
+                  </Pressable>
+                )}
             </View>
 
             <View style={styles.modalButtonContainer}>
@@ -882,13 +897,30 @@ const Message = ({ navigation, route }) => {
         onRequestClose={() => setModalImage(false)}
       >
         <View style={styles.modalContainer}>
-          <TouchableOpacity style={styles.modalImageContainer} onPress={() => setModalImage(false)}>
-            <Image
-              source={{ uri: messageSelected?.chat?.contents[0].data }}
-              style={{ width: null, height: '100%', aspectRatio: 1, borderRadius: 10 }}
-              resizeMode="contain"
-            />
+          <TouchableOpacity style={{ paddingLeft: '80%' }} onPress={() => {
+            setModalImage(false);
+            toggleModal()
+          }}>
+            <View>
+              <FontAwesome5
+                name="times"
+                size={30}
+                color="black"
+                style={{ alignContent: "center", alignItems: "center" }}
+              />
+            </View>
           </TouchableOpacity>
+          {messageSelected?.chat?.contents[0].type === 'image' ? (<Image
+            source={{ uri: messageSelected?.chat?.contents[0].data }}
+            style={{ width: '90%', height:null, aspectRatio: 1, borderRadius: 10 }}
+            resizeMode="contain"
+          />) : (<Video
+            source={{ uri: messageSelected?.chat?.contents[0].data }}
+            useNativeControls
+            resizeMode="contain"
+            style={{ width: '90%', height: null, aspectRatio: 1, borderRadius: 10 }}
+          />)
+          }
         </View>
       </Modal>
     </View >

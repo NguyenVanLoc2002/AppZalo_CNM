@@ -1,8 +1,8 @@
-import { View, Text, Image, Pressable } from "react-native";
+import { View, Text, Image, Pressable, Modal } from "react-native";
 import React, { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Switch } from "react-native";
-
+import moment from 'moment-timezone';
 const FriendProfileSettings = ({ navigation, route }) => {
   const { user } = route.params;
   const [isFavorite, setFavorite] = useState(false);
@@ -12,11 +12,12 @@ const FriendProfileSettings = ({ navigation, route }) => {
   const [isBlockJournal, setBlockJournal] = useState(true);
 
   const [isHideJournal, setHideJournal] = useState(true);
+  const [isModalVisible, setModalVisible] = useState(false);
 
   navigation.setOptions({
     headerTitle: () => (
       <View style={{ flexDirection: "row", alignItems: "center" }}>
-        {user.ten}
+        <Text style={{ fontSize: 25, paddingStart: 45, fontWeight: "500", color: 'white' }}>{user.profile.name}</Text>
       </View>
     ),
     headerStyle: {
@@ -29,12 +30,13 @@ const FriendProfileSettings = ({ navigation, route }) => {
       fontSize: 20,
     },
   });
-
+  
   return (
     <View style={{ flex: 1, backgroundColor: "#E5E9EB" }}>
       <View style={{ backgroundColor: "white" }}>
         <Pressable
           style={{ height: 50, paddingStart: 22, justifyContent: "center" }}
+          onPress={() => setModalVisible(!isModalVisible)}
         >
           <Text style={{ fontSize: 18 }}>Thông tin</Text>
         </Pressable>
@@ -205,6 +207,128 @@ const FriendProfileSettings = ({ navigation, route }) => {
           }}
         />
       </View>
+      {/* Modal xem thông tin  */}
+      <Modal animationType="slide" transparent={true} visible={isModalVisible}>
+        <Pressable
+          style={{
+            flex: 1,
+            justifyContent: "flex-end",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+          }}
+          onPress={() => setModalVisible(!isModalVisible)}
+        >
+          <View>
+            <Image
+              source={{
+                uri:
+                  user?.profile?.background?.url ||
+                  "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+              }}
+              style={{ width: "100%", height: 250 }}
+            />
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                marginTop: -100,
+                alignItems: "left",
+                paddingBottom: 10,
+                paddingLeft: 10,
+              }}
+            >
+              <Pressable onPress={() => setModalVisible(true)}>
+                <Image
+                  source={{
+                    uri:
+                      user?.profile?.avatar?.url ||
+                      "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+                  }}
+                  style={{ width: 75, height: 75, borderRadius: 48 }}
+                />
+              </Pressable>
+              <View
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  paddingLeft: 20,
+                }}
+              >
+                <Text style={{ fontSize: 18, fontWeight: "bold", color: "#fff" }}>
+                  {user?.profile?.name}
+                </Text>
+              </View>
+            </View>
+            <View
+              style={{ backgroundColor: "#fff", paddingTop: 15, paddingLeft: 10 }}
+            >
+              <Text
+                style={{ fontSize: 18, fontWeight: "500", paddingBottom: 10 }}
+              >
+                Thông tin cá nhân
+              </Text>
+              <View>
+                
+                <View  style={{display:'flex', flexDirection:'row'}}
+                >
+                  <Text style={{ width: "30%", fontSize: 16, fontWeight: "400" }}>
+                  Giới tính
+                </Text>
+                  {user?.profile?.gender === 'male' ? (
+                    <Text>Nam</Text>
+                  ) : (
+                    <View>
+                      {
+                        user?.profile?.gender === 'female' ? (<Text>Nữ</Text>) : (<Text>Khác</Text>)
+                      }</View>
+                  )
+                  }
+
+
+                </View>
+
+                
+                <View
+                  style={{
+                    height: 50,
+                    paddingTop: 15,
+                    display: "flex",
+                    flexDirection: "row",
+                  }}
+                >
+                  <Text style={{ width: "30%", fontSize: 16, fontWeight: "400" }}>
+                  Ngày sinh
+                </Text>
+                  <Text>{moment(user?.profile?.dob).format("DD/MM/YYYY")}</Text>
+                </View>
+                <View
+                  style={{
+                    height: 100,
+                    display: "flex",
+                    flexDirection: "row",
+                  }}
+                >
+                  <Text style={{ width: "30%", fontSize: 16, fontWeight: "400" }}>
+                    Điện thoại
+                  </Text>
+                  <View
+                    style={{
+                      width: "67%",
+                      display: "flex",
+                      flexDirection: "column",
+                    }}
+                  >
+                    <Text>
+                      +84 {user?.phone.substring(1)}
+                    </Text>
+                  </View>
+                </View>
+
+              </View>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 };
