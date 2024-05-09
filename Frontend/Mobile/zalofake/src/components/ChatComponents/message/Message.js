@@ -8,6 +8,7 @@ import {
   StyleSheet,
   ScrollView, ActivityIndicator, Modal,
   Image,
+  LogBox,Linking 
 } from "react-native";
 import { Video } from 'expo-av';
 import { Ionicons } from "@expo/vector-icons";
@@ -509,7 +510,6 @@ const Message = ({ navigation, route }) => {
 
   const handleSendMessage = async () => {
     if (textMessage) {
-      console.log('conver',conver)
       send(conver._id, addMessage(textMessage, conver.tag, replyChat), 'sendText')
       setTextMessage(null);
     }
@@ -543,6 +543,15 @@ const Message = ({ navigation, route }) => {
   };
   const handleXemAnh = () => {
     setModalImage(true)
+  };
+  const handleXemFile = async () => {
+    const url = messageSelected?.chat?.contents[0].data;
+    const supported = await Linking.canOpenURL(url);
+    if (supported) {
+      await Linking.openURL(url);
+    } else {
+      console.error("Don't know how to open URI: " + url);
+    }
   };
 
   return (
@@ -803,6 +812,19 @@ const Message = ({ navigation, route }) => {
                       style={{ margin: 'auto' }}
                     />
                     <Text style={styles.modalButton}>Xem video</Text>
+                  </Pressable>
+                )}
+                {
+                messageSelected?.chat?.contents[0].type === 'file'
+                && (
+                  <Pressable style={styles.pressCol} onPress={handleXemFile}>
+                    <FontAwesome5
+                      name="list"
+                      size={25}
+                      color="black"
+                      style={{ margin: 'auto' }}
+                    />
+                    <Text style={styles.modalButton}>Xem file</Text>
                   </Pressable>
                 )}
             </View>
