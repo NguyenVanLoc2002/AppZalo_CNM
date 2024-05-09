@@ -174,8 +174,10 @@ function Chat({ navigation }) {
         dataChat = dataChat + ': ' + conver.contents[0].data;
       } else if (conver.contents[0].type === "image") {
         dataChat = dataChat + ': [Hình ảnh]';
-      } else {
+      } else if (conver.contents[0].type === "video"){
         dataChat = dataChat + ': [Video]';
+      }else{
+        dataChat = dataChat + ': [File]';
       }
     }
     return dataChat;
