@@ -71,20 +71,31 @@ const FriendDirectory = ({ navigation }) => {
 
   const handleFriendMessage = async (friend) => {
     let conversation;
+    console.log(friend)
     conversation = await getConversationsByParticipants(friend.userId);
-
-    // console.log(conversation);
-    const conversationNew = {
-      id: friend.userId,
-      conversation: conversation,
-      name: friend?.profile.name,
-      avatar: friend?.profile.avatar?.url,
-      background: friend?.profile.background?.url,
-      lastMessage: conversation.lastMessage,
-      tag: conversation.tag,
-    };
-    // console.log(conversationNew);
-    navigation.navigate("Message", { conver: conversationNew });
+    if (conversation === null) {
+      const conversationNew = {
+        _id: friend.userId,
+        conversation: null,
+        name: friend?.profile.name,
+        avatar: friend?.profile.avatar?.url,
+        background: friend?.profile.background?.url,
+        tag: 'friend',
+      };
+      navigation.navigate("Message", { chatItem: conversationNew });
+    }
+    else{
+      const conversationNew = {
+        _id: friend.userId,
+        conversation: conversation,
+        name: friend?.profile.name,
+        avatar: friend?.profile.avatar?.url,
+        background: friend?.profile.background?.url,
+        lastMessage: conversation.lastMessage,
+        tag: conversation.tag,
+      };
+      navigation.navigate("Message", { chatItem: conversationNew });
+    }
   };
 
   useEffect(() => {

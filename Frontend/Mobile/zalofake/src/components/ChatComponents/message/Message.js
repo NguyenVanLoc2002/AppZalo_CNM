@@ -9,6 +9,7 @@ import {
   ScrollView, ActivityIndicator, Modal,
   Image,
 } from "react-native";
+import { Video } from 'expo-av';
 import { Ionicons } from "@expo/vector-icons";
 import axiosInstance from "../../../api/axiosInstance";
 import useMessage from '../../../hooks/useMessage'
@@ -83,7 +84,7 @@ const Message = ({ navigation, route }) => {
         </View>
       ),
       headerTitle: () => (
-        <View style={{ flexDirection: "row", alignItems: "center", width: '55%', marginRight: 100 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", width: '55%', marginRight: 200}}>
           {conver.tag === 'group' ? (
             <View style={{ width: '30%' }}>
               <Image
@@ -113,8 +114,11 @@ const Message = ({ navigation, route }) => {
     setIsModalFriendVisible(!isModalFriendVisible);
   };
   const fetchConversation = async () => {
-    const fetchConver = await getConverHaveParticipants(chatItem.conversation._id, conver, true)
-    setConver(fetchConver)
+    if (chatItem.conversation !== null) {
+      const fetchConver = await getConverHaveParticipants(chatItem.conversation?._id, conver, true)
+      setConver(fetchConver)
+    }
+
   }
   useEffect(() => {
     fetchConversation()
@@ -430,7 +434,7 @@ const Message = ({ navigation, route }) => {
       const response = await sendMessage(user, formData, typeSend)
       if (response && response.status === 201) {
         console.log(`${typeSend} success`);
-        // setChat(response.data.data.message)
+        setChat(response.data.data.message)
         setReplyChat(null);
         setIsLoadMess(false)
         dispatch(setIsGroup())
@@ -506,6 +510,7 @@ const Message = ({ navigation, route }) => {
 
   const handleSendMessage = async () => {
     if (textMessage) {
+      console.log('conver',conver)
       send(conver._id, addMessage(textMessage, conver.tag, replyChat), 'sendText')
       setTextMessage(null);
     }
@@ -788,6 +793,19 @@ const Message = ({ navigation, route }) => {
                     <Text style={styles.modalButton}>Xem ảnh</Text>
                   </Pressable>
                 )}
+              {
+                messageSelected?.chat?.contents[0].type === 'video'
+                && (
+                  <Pressable style={styles.pressCol} onPress={handleXemAnh}>
+                    <FontAwesome5
+                      name="video"
+                      size={25}
+                      color="black"
+                      style={{ margin: 'auto' }}
+                    />
+                    <Text style={styles.modalButton}>Xem video</Text>
+                  </Pressable>
+                )}
             </View>
 
             <View style={styles.modalButtonContainer}>
@@ -870,13 +888,30 @@ const Message = ({ navigation, route }) => {
         onRequestClose={() => setModalImage(false)}
       >
         <View style={styles.modalContainer}>
-          <TouchableOpacity style={styles.modalImageContainer} onPress={() => setModalImage(false)}>
-            <Image
-              source={{ uri: messageSelected?.chat?.contents[0].data }}
-              style={{ width: null, height: '100%', aspectRatio: 1, borderRadius: 10 }}
-              resizeMode="contain"
-            />
+          <TouchableOpacity style={{ paddingLeft: '80%' }} onPress={() => {
+            setModalImage(false);
+            toggleModal()
+          }}>
+            <View>
+              <FontAwesome5
+                name="times"
+                size={30}
+                color="black"
+                style={{ alignContent: "center", alignItems: "center" }}
+              />
+            </View>
           </TouchableOpacity>
+          {messageSelected?.chat?.contents[0].type === 'image' ? (<Image
+            source={{ uri: messageSelected?.chat?.contents[0].data }}
+            style={{ width: '90%', height: null, aspectRatio: 1, borderRadius: 10 }}
+            resizeMode="contain"
+          />) : (<Video
+            source={{ uri: messageSelected?.chat?.contents[0].data }}
+            useNativeControls
+            resizeMode="contain"
+            style={{ width: '90%', height: null, aspectRatio: 1, borderRadius: 10 }}
+          />)
+          }
         </View>
       </Modal>
     </View >

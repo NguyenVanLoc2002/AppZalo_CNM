@@ -20,7 +20,6 @@ import * as ImagePicker from "expo-image-picker";
 import { useSocketContext } from "../../../contexts/SocketContext";
 import { useDispatch } from "react-redux";
 import { setIsGroup } from "../../../redux/stateCreateGroupSlice";
-
 const MessageSettings = ({ navigation, route }) => {
   const { item } = route.params
   const [conver, setConver] = useState(item);
@@ -82,18 +81,22 @@ const MessageSettings = ({ navigation, route }) => {
   }, [item])
 
   const fetchData = async () => {
-    const fetchConver = await getConverHaveParticipants(item.conversation?._id, conver, false)
-    setConver(fetchConver)
-    setName(conver.name);
-    if (conver.tag === 'group') {
-      const getGroupData = await getGroup(conver?._id)
-      setIdGroupAdmin(conver.createBy?._id)
-      if (conver?.createBy?._id === authUser._id) {
-        setIsGroupAdmin(true);
-      } else if (getGroupData.admins?.includes(authUser?._id)) {
-        setIsPhoAdmin(true);
+    if(item.conversation!==null){
+      const fetchConver = await getConverHaveParticipants(item.conversation?._id, conver,false)
+      setConver(fetchConver)
+      setName(conver.name);
+      if (conver.tag === 'group') {
+        const getGroupData = await getGroup(conver?._id)
+        setIdGroupAdmin(conver.createBy?._id)
+        if (conver?.createBy?._id === authUser._id) {
+          setIsGroupAdmin(true);
+        } else if (getGroupData.admins?.includes(authUser?._id)) {
+          setIsPhoAdmin(true);
+        }
+        setListAdmin(getGroupData?.admins);
       }
-      setListAdmin(getGroupData?.admins);
+    }else{
+      setName(conver.name);
     }
   };
   // cập nhật tên nhóm
@@ -632,7 +635,9 @@ const MessageSettings = ({ navigation, route }) => {
               </View>
             )}
           </View>
-          {conver.tag === 'friend' ? (<View></View>) : (
+          {conver.tag === 'friend' ? (<View>
+            <Pressable onPress={() => navigation.navigate("FriendProfile", { user: conver })}><Text>Xem trang cá nhân</Text></Pressable>
+          </View>) : (
             <View style={{ flexDirection: "row", alignItems: "center", width: "90%", borderWidth: 1, borderColor: "orange", borderRadius: 20, marginTop: 20, marginHorizontal: 10, padding: 10, justifyContent: "center", }} >
               <Text>{"Quản Trị Viên :"}</Text>
               <Text style={{ marginLeft: 10, fontWeight: "bold" }}>
