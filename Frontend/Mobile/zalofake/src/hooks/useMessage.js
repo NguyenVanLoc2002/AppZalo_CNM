@@ -172,7 +172,7 @@ const useMessage = () => {
   const sendMessage = async (user, message, typeSend) => {
     try {
       let headers = {}
-      if (typeSend === 'sendImages' || typeSend === 'sendVideo') {
+      if (typeSend === 'sendImages' || typeSend === 'sendVideo' || typeSend === 'sendFiles') {
         headers = {
           "Content-Type": "multipart/form-data",
         }
@@ -201,8 +201,10 @@ const useMessage = () => {
         dataChat = dataChat + ': ' + conver.contents[0].data;
       } else if (conver.contents[0].type === "image") {
         dataChat = dataChat + ': [Hình ảnh]';
-      } else {
+      } else if (conver.contents[0].type === "video"){
         dataChat = dataChat + ': [Video]';
+      } else {
+        dataChat = dataChat + ': [File]';
       }
     }
     return dataChat;

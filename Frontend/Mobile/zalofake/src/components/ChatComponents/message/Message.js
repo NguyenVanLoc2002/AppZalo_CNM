@@ -391,13 +391,13 @@ const Message = ({ navigation, route }) => {
   };
 
   const appendData = (formData, asset) => {
-    const fileName = asset.split('/').pop();
+    const fileName = asset.uri.split('/').pop();
     let type = null
     if (asset?.type === 'image') { type = 'image/jpeg' }
     else if (asset?.type === 'video') { type = 'video/mp4' }
     else if (asset?.mimeType === 'application/pdf') { type = 'file/pdf' }
     formData.append('data[]', {
-      uri: asset,
+      uri: asset.uri,
       name: fileName,
       type: type,
     })
@@ -475,18 +475,17 @@ const Message = ({ navigation, route }) => {
     }
   }
   const handleSendFile = async (file, typeSend) => {
-    // setIsLoadMess(true)
     const formData = new FormData()
     const formDataVideo = new FormData()
     let isVideo = false
     let is = false
     for (const asset of file.assets) {
       if (asset.type === 'video') {
-        appendData(formDataVideo, asset.uri)
+        appendData(formDataVideo, asset)
         isVideo = true
       }
       else {
-        appendData(formData, asset.uri)
+        appendData(formData, asset)
         is = true
       }
     }
@@ -597,7 +596,7 @@ const Message = ({ navigation, route }) => {
                                           {message?.nameReply}
                                         </Text>
                                         <Text style={{ paddingLeft: 10, fontSize: 13, color: '#000' }}>
-                                          [{content.type}]
+                                          [{content.type === 'image' ? 'Hình ảnh' : content.type}]
                                         </Text>
                                       </View>
                                     </View>

@@ -636,7 +636,10 @@ const MessageSettings = ({ navigation, route }) => {
             )}
           </View>
           {conver.tag === 'friend' ? (<View>
-            <Pressable onPress={() => navigation.navigate("FriendProfile", { user: conver })}><Text>Xem trang cá nhân</Text></Pressable>
+            <Pressable style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}} onPress={() => navigation.navigate("FriendProfile", { user: conver })}>
+              <Ionicons name="person-circle-outline" size={26} color='black'></Ionicons>
+              <Text style={{fontSize: 16, marginLeft: 4, fontWeight: '500'}}>Xem trang cá nhân</Text>
+              </Pressable>
           </View>) : (
             <View style={{ flexDirection: "row", alignItems: "center", width: "90%", borderWidth: 1, borderColor: "orange", borderRadius: 20, marginTop: 20, marginHorizontal: 10, padding: 10, justifyContent: "center", }} >
               <Text>{"Quản Trị Viên :"}</Text>
