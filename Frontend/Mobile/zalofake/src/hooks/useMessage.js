@@ -4,10 +4,7 @@ import { Video } from 'expo-av';
 import Toast from "react-native-toast-message";
 import moment from 'moment-timezone';
 import axiosInstance from '../api/axiosInstance';
-// import Pdf from 'react-native-pdf';
-// import { openDocumentAsync } from 'expo-document-viewer';
-// import { WebView } from 'react-native-webview';
-// import PDFReader from 'rn-pdf-reader-js';
+
 
 const useMessage = () => {
 
@@ -62,7 +59,7 @@ const useMessage = () => {
 
         <View style={{ paddingLeft: 15, paddingRight: 15 }}>
 
-      
+          <Text style={{ fontSize: 14 }}>{content.data}</Text>
 
         </View>
 
@@ -104,22 +101,10 @@ const useMessage = () => {
     }
     else if (content.type === 'file') {
       return (
-        
         <View style={{ paddingLeft: 15, paddingRight: 15 }}>
-
-      
-
+          <Text style={{ fontSize: 14 }}>{content.data}</Text>
         </View>
-        // <WebView
-        //   source={{ uri: content.data }}
-        //   style={{ flex: 1 }}
-        // />
-        // <Video
-        // source={{ uri: content.data  }}
-        // resizeMode="contain"
-        // useNativeControls
-        // style={{ flex: 1 }}
-        // />
+
       );
     }
     else {
@@ -168,7 +153,7 @@ const useMessage = () => {
   const sendMessage = async (user, message, typeSend) => {
     try {
       let headers = {}
-      if (typeSend === 'sendImages' || typeSend === 'sendVideo') {
+      if (typeSend === 'sendImages' || typeSend === 'sendVideo' || typeSend === 'sendFiles') {
         headers = {
           "Content-Type": "multipart/form-data",
         }

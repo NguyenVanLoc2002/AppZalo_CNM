@@ -8,7 +8,7 @@ import {
   StyleSheet,
   ScrollView, ActivityIndicator, Modal,
   Image,
-  LogBox
+  LogBox,Linking 
 } from "react-native";
 import { Video } from 'expo-av';
 import { Ionicons } from "@expo/vector-icons";
@@ -400,13 +400,13 @@ const Message = ({ navigation, route }) => {
 
   //nhi
   const appendData = (formData, asset) => {
-    const fileName = asset.split('/').pop();
+    const fileName = asset.uri.split('/').pop();
     let type = null
     if (asset?.type === 'image') { type = 'image/jpeg' }
     else if (asset?.type === 'video') { type = 'video/mp4' }
     else if (asset?.mimeType === 'application/pdf') { type = 'file/pdf' }
     formData.append('data[]', {
-      uri: asset,
+      uri: asset.uri,
       name: fileName,
       type: type,
     })
@@ -490,11 +490,11 @@ const Message = ({ navigation, route }) => {
     let is = false
     for (const asset of file.assets) {
       if (asset.type === 'video') {
-        appendData(formDataVideo, asset.uri)
+        appendData(formDataVideo, asset)
         isVideo = true
       }
       else {
-        appendData(formData, asset.uri)
+        appendData(formData, asset)
         is = true
       }
     }
@@ -518,7 +518,6 @@ const Message = ({ navigation, route }) => {
 
   const handleSendMessage = async () => {
     if (textMessage) {
-      console.log('conver',conver)
       send(conver._id, addMessage(textMessage, conver.tag, replyChat), 'sendText')
       setTextMessage(null);
     }
@@ -552,6 +551,15 @@ const Message = ({ navigation, route }) => {
   };
   const handleXemAnh = () => {
     setModalImage(true)
+  };
+  const handleXemFile = async () => {
+    const url = messageSelected?.chat?.contents[0].data;
+    const supported = await Linking.canOpenURL(url);
+    if (supported) {
+      await Linking.openURL(url);
+    } else {
+      console.error("Don't know how to open URI: " + url);
+    }
   };
 
   return (
@@ -817,6 +825,19 @@ const Message = ({ navigation, route }) => {
                       style={{ margin: 'auto' }}
                     />
                     <Text style={styles.modalButton}>Xem video</Text>
+                  </Pressable>
+                )}
+                {
+                messageSelected?.chat?.contents[0].type === 'file'
+                && (
+                  <Pressable style={styles.pressCol} onPress={handleXemFile}>
+                    <FontAwesome5
+                      name="list"
+                      size={25}
+                      color="black"
+                      style={{ margin: 'auto' }}
+                    />
+                    <Text style={styles.modalButton}>Xem file</Text>
                   </Pressable>
                 )}
             </View>
