@@ -152,6 +152,7 @@ const Message = ({ navigation, route }) => {
 
   };
   const fetchChats = async () => {
+
     try {
       if (conver.conversation._id === null || conver.conversation._id === undefined) {
       } else {
@@ -227,6 +228,7 @@ const Message = ({ navigation, route }) => {
         }
       }
       if (isNewSocket === "delete_message") {
+        console.log("delete");
         const { conversationId, isDeleted } = newSocketData;
         if (isDeleted) {
           setChats([])
@@ -269,20 +271,16 @@ const Message = ({ navigation, route }) => {
             showToastSuccess(`Group ${gr.name} đã bị xoá`)
             dispatch(setIsGroup())
             navigation.navigate("ChatComponent");
+           
           }
         }
       }
+    
     }
 
 
     fetchSocket()
-
   }, [isNewSocket, newSocketData]);
-
-  useEffect(() => {
-    navigation.navigate("ChatComponent");
-  }, [isGroupRedux])
-
   const handleGetTime = (time) => {
     const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss');
     const dateObject = new Date(vietnamDatetime)

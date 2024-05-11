@@ -351,7 +351,7 @@ const PersonalPage = ({ navigation }) => {
               Happy New Year
             </Text>
           </View>
-          <View
+          {/* <View
             style={{
               flexDirection: "row",
               flexWrap: "wrap",
@@ -372,7 +372,7 @@ const PersonalPage = ({ navigation }) => {
               source={require("../../../assets/status-HPNY-3.png")}
               style={{ width: "31%", aspectRatio: 1, marginBottom: 8 }}
             />
-          </View>
+          </View> */}
           <View style={{ flexDirection: "row", padding: 8 }}>
             <Pressable
               style={{

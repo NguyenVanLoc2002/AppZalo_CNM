@@ -98,20 +98,20 @@ const useMessage = () => {
         </View>
       );
     }
-    else if (content.type === 'file') {
-      return (
-        <WebView
-          source={{ uri: content.data }}
-          style={{ flex: 1 }}
-        />
-        // <Video
-        // source={{ uri: content.data  }}
-        // resizeMode="contain"
-        // useNativeControls
-        // style={{ flex: 1 }}
-        // />
-      );
-    }
+    // else if (content.type === 'file') {
+    //   return (
+    //     // <WebView
+    //     //   source={{ uri: content.data }}
+    //     //   style={{ flex: 1 }}
+    //     // />
+    //     // <Video
+    //     // source={{ uri: content.data  }}
+    //     // resizeMode="contain"
+    //     // useNativeControls
+    //     // style={{ flex: 1 }}
+    //     // />
+    //   );
+    // }
     else {
       return null; // Loại nội dung không được hỗ trợ
     }

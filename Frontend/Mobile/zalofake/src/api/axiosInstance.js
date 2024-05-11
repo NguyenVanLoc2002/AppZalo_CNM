@@ -10,7 +10,8 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   async (config) => {
     try {
-      config.headers["User-Agent"] = "Mobile";
+      config.headers["User-Agent"] +=  "Mobile"
+
       if (!config.url.includes("/auth/login")) {
         const token = JSON.parse( await AsyncStorage.getItem("accessToken"));
         if (token) {
@@ -41,6 +42,7 @@ axiosInstance.interceptors.response.use(
         const refreshToken = JSON.parse(
           await AsyncStorage.getItem("refreshToken")
         );
+        console.log("refreshToken", refreshToken);
         if (!refreshToken) {
           showErrorToast("Your session has expired. Please login again.");
           throw new Error("No refresh token available.");
