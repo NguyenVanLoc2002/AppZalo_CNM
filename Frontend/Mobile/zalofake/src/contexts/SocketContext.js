@@ -70,6 +70,8 @@ export const SocketContextProvider = ({ children }) => {
       socket.on("leave-group", handleLeaveGroup);
       socket.on("delete-group", handleDeleteGroup);
       socket.on("change-admins", handleChangeAdminGroup);
+      socket.on("update-group", handleUpdateGroup);
+
 
       return () => {
         socket.off("force_logout");
@@ -89,6 +91,7 @@ export const SocketContextProvider = ({ children }) => {
         socket.off("leave-group", handleLeaveGroup);
         socket.off("delete-group", handleDeleteGroup);
         socket.off("change-admins", handleChangeAdminGroup);
+        socket.off("update-group", handleUpdateGroup);
 
       };
     }
@@ -145,6 +148,7 @@ export const SocketContextProvider = ({ children }) => {
   const handleRemoveFromGroup = ({ group }) => {
     setIsNewSocket("remove-from-group");
     setNewSocketData(group);
+    setIsNewSocket(null);
   };
 
   const handleLeaveGroup = ({ group }) => {
@@ -159,7 +163,6 @@ export const SocketContextProvider = ({ children }) => {
     setIsNewSocket("change-admins");
     setNewSocketData({ group, members, typeChange });
   }
-
   return (
     <SocketContext.Provider
       value={{ socket, onlineFriends, isNewSocket, newSocketData, setNewSocketData }}>

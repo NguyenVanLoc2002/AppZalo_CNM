@@ -100,10 +100,10 @@ function Chat({ navigation }) {
     });
 
     const listGroup = groups.map((group) => {
-      return addDataToGroup(group)
+      return addDataToGroup(group);
     });
     listChat.push(...listGroup);
-    fetchDataConver(listChat)
+    fetchDataConver(listChat);
   };
   const addDataToGroup = (group) => {
     return {
@@ -116,7 +116,7 @@ function Chat({ navigation }) {
       createBy: group.createBy,
       createAt: group?.createAt,
     };
-  }
+  };
   useEffect(() => {
     fetchDataChat();
   }, [conversations, groups]);
@@ -179,7 +179,9 @@ function Chat({ navigation }) {
           // console.log("new_message:", message);
           const update = await updatedListFriends(message.conversationId, message.retrunMessage, false)
           const sortUpdate = sortTime(update);
-          setListFriends(sortUpdate)
+          setListFriends(sortUpdate);
+          setIsNewSocket(null);
+          setNewSocketData(null);
         }
       }
       if (isNewSocket === "delete_message") {
@@ -190,7 +192,7 @@ function Chat({ navigation }) {
               if (item.chat.conversation._id === conversationId) {
 
               }
-            })
+            });
           } else {
             // console.log("delete_message:", chatRemove);
             const update = await updatedListFriends(conversationId, chatRemove, true)
@@ -282,7 +284,7 @@ function Chat({ navigation }) {
       <FlatList
         data={listFriends}
         renderItem={({ item }) => (
-          <Pressable onPress={() => handleChatItemPress(item)} >
+          <Pressable onPress={() => handleChatItemPress(item)}>
             <ChatItem item={item} />
           </Pressable>
         )}
@@ -405,7 +407,6 @@ function Chat({ navigation }) {
           </View>
         </Pressable>
       </Modal>
-
     </SafeAreaView>
   );
 }
@@ -419,9 +420,8 @@ const styles = StyleSheet.create({
   modalButtonContainer1: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 20,
-
   },
   headerIcon: {
     padding: 10,
@@ -440,10 +440,10 @@ const styles = StyleSheet.create({
     marginLeft: 40,
   },
   button: {
-    backgroundColor: '#fff'
+    backgroundColor: "#fff",
   },
   pressedButton: {
-    backgroundColor: '#33c4c2'
+    backgroundColor: "#33c4c2",
   },
   modalContainer: {
     flex: 1,
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
     width: 300,
     padding: 20,
     borderRadius: 10,
-    display: 'flex',
+    display: "flex",
     flexDirection: "column",
   },
   modalHeaderText: {
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
   modalButtonContainer: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginTop: 20
+    marginTop: 20,
   },
   modalButton: {
     fontWeight: "bold",
@@ -478,9 +478,9 @@ const styles = StyleSheet.create({
     color: "#0091FF",
   },
   pressCol: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row'
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "row",
   },
 });
 

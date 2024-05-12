@@ -229,6 +229,7 @@ const Message = ({ navigation, route }) => {
         }
       }
       if (isNewSocket === "delete_message") {
+        console.log("delete");
         const { conversationId, isDeleted } = newSocketData;
         console.log(("conversationId", conversationId));
         console.log("isDeleted", isDeleted);
@@ -271,6 +272,7 @@ const Message = ({ navigation, route }) => {
           dispatch(setIsGroup())
         }
       }
+    
     }
     fetchSocket()
   }, [isNewSocket, newSocketData]);
