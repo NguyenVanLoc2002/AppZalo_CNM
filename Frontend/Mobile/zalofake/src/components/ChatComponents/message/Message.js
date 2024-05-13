@@ -32,7 +32,7 @@ const Message = ({ navigation, route }) => {
   const [textMessage, setTextMessage] = useState(null)
   const [isColorSend, setIsColorSend] = useState(false)
   const { isNewSocket, newSocketData, setNewSocketData } = useSocketContext();
-  const { getConverHaveParticipants } = useConversation();
+  const { getConversationByID } = useConversation();
   const dispatch = useDispatch();
   var isGroupRedux = useSelector(state => state.isGroup.isGroup);
   const [modalImage, setModalImage] = useState(false);
@@ -52,7 +52,6 @@ const Message = ({ navigation, route }) => {
   const [isLoadThuHoi, setIsLoadThuHoi] = useState(false)
   const [isLoadXoa, setIsLoadXoa] = useState(false)
   const [replyChat, setReplyChat] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
 
   useEffect(() => {
     navigation.setOptions({
@@ -114,9 +113,13 @@ const Message = ({ navigation, route }) => {
   const toggleModalFriend = () => {
     setIsModalFriendVisible(!isModalFriendVisible);
   };
+  
   const fetchConversation = async () => {
     if (chatItem.conversation !== null) {
-      const fetchConver = await getConverHaveParticipants(chatItem.conversation?._id, conver, true)
+      const fetchConver = await getConversationByID(chatItem.conversation?._id)
+      const updateConver = { ...conver }
+      updateConver.participants = fetchConver.participants
+      updateConver.messages = fetchConver.messages
       setConver(fetchConver)
     }
 
@@ -455,7 +458,6 @@ const Message = ({ navigation, route }) => {
     try {
       const file = await DocumentPicker.getDocumentAsync();
       if (file.canceled === false) {
-        setSelectedFile(file);
         handleSendFile(file, 'sendFiles')
       }
     } catch (error) {

@@ -71,7 +71,7 @@ export const SocketContextProvider = ({ children }) => {
       socket.on("delete-group", handleDeleteGroup);
       socket.on("change-admins", handleChangeAdminGroup);
       socket.on("update-group", handleUpdateGroup);
-
+      socket.on("member-to-admin", handleMakeAdmin);
 
       return () => {
         socket.off("force_logout");
@@ -92,7 +92,7 @@ export const SocketContextProvider = ({ children }) => {
         socket.off("delete-group", handleDeleteGroup);
         socket.off("change-admins", handleChangeAdminGroup);
         socket.off("update-group", handleUpdateGroup);
-
+        socket.off("member-to-admin", handleMakeAdmin);
       };
     }
   }, [socket, authUser]);
@@ -162,6 +162,10 @@ export const SocketContextProvider = ({ children }) => {
   const handleChangeAdminGroup = ({ group, members, typeChange }) => {
     setIsNewSocket("change-admins");
     setNewSocketData({ group, members, typeChange });
+  }
+  const handleMakeAdmin = ({ group }) => {
+    setIsNewSocket("member-to-admin");
+    setNewSocketData({ group });
   }
   return (
     <SocketContext.Provider

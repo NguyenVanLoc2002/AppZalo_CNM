@@ -9,7 +9,7 @@ const useGroup = () => {
     try {
       const response = await axiosInstance.post("/groups/create", {
         name: nameGroup,
-        members: idUser,            
+        members: idUser,
       });
       if (response.status === 201) {
         return response.data;
@@ -135,16 +135,10 @@ const useGroup = () => {
     }
   };
 
-  // const { members, typeChange, groupId } = req.body;
   const addAdmin = async (groupData) => {
     try {
       const response = await axiosInstance.post(`/groups/changeAdmins`,
         groupData
-        // {
-        //   members:members,
-        //   typeChange:typeChange,
-        //   groupId:groupId,
-        // }
       );
 
       if (response.status === 200) {
@@ -167,6 +161,23 @@ const useGroup = () => {
     }
   };
 
+  const changeAdmins = async (groupId, memberData) => {
+    try {
+      const response = await axiosInstance.post(
+        "/groups/make-member-to-admin",
+        {
+          userId: memberData,
+          groupId,
+        }
+      );
+      const { data, status } = response;
+      if (status === 200) {
+        return data;
+      }
+    } catch (error) {
+      console.error(error);
+    } 
+  };
   return {
     group,
     groups,
@@ -179,7 +190,8 @@ const useGroup = () => {
     removeMember,
     leaveGroup,
     addAdmin,
-    getUserById
+    getUserById,
+    changeAdmins
   };
 };
 

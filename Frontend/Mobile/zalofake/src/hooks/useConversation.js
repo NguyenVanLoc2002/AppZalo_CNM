@@ -77,20 +77,6 @@ const useConversation = () => {
     }
   };
 
-  const getConverHaveParticipants = async (conversationId, conver, isMessage) => {
-    try {
-      const fetchConver = await getConversationByID(conversationId)
-      const updateConver = { ...conver }
-      updateConver.participants = fetchConver.participants
-      if (isMessage) {
-        updateConver.messages = fetchConver.messages
-      }
-      return updateConver;
-    } catch (error) {
-      console.log("Error fetch conversation", error);
-      return null;
-    }
-  }
 
   return {
     conversations,
@@ -99,7 +85,6 @@ const useConversation = () => {
     deleteConversation,
     getConversationByID,
     getConversationsByParticipants,
-    getConverHaveParticipants
   };
 };
 
