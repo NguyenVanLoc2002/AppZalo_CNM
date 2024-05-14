@@ -334,14 +334,10 @@ const GroupDirectory = ({ navigation }) => {
           </View>
           {groupAll?.map((group, index) => (
             <Pressable key={index} style={styles.groupItem} onPress={() => navigation.navigate("Message", { chatItem: group })}>
-              {group.avatar === "https://res.cloudinary.com/dq3pxd9eq/image/upload/group_avatar.jpg" ? (
-                <Image
-                  source={avatarGr}
-                  style={styles.avatar}
-                />) : (<Image
-                  source={{ uri: group.avatar }}
-                  style={styles.avatar}
-                />)}
+              <Image
+                source={group.avatar === "https://res.cloudinary.com/dq3pxd9eq/image/upload/group_avatar.jpg" ? avatarGr : { uri: group.avatar }}
+                style={styles.avatar}
+              />
               <View style={styles.groupTextContainer}>
                 <View style={{ flexDirection: 'row' }}>
                   <Ionicons name="people" size={20} color="gray" />

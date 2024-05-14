@@ -650,14 +650,10 @@ const MessageSettings = ({ navigation, route }) => {
         <View style={{ backgroundColor: "white", alignItems: "center", paddingTop: 10, }}       >
           <View style={{ justifyContent: "center" }}>
             <Pressable onPress={openModal}>
-              {conver.avatar === "https://res.cloudinary.com/dq3pxd9eq/image/upload/group_avatar.jpg" ? (
-                <Image
-                  source={avatarGr}
-                  style={{ width: 100, height: 100, borderRadius: 50, borderWidth: 2, borderColor: "#ccc", }}
-                />) : (<Image
-                  source={{ uri: conver.avatar }}
-                  style={{ width: 100, height: 100, borderRadius: 50, borderWidth: 2, borderColor: "#ccc", }}
-                />)}
+              <Image
+                source={conver.avatar === "https://res.cloudinary.com/dq3pxd9eq/image/upload/group_avatar.jpg" ? avatarGr : { uri: conver.avatar }}
+                style={{ width: 100, height: 100, borderRadius: 50, borderWidth: 2, borderColor: "#ccc", }}
+              />
             </Pressable>
           </View>
           <View style={{ display: 'flex', justifyContent: "center", alignItems: "center", paddingTop: 10, }}     >

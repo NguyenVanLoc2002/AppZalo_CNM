@@ -16,13 +16,9 @@ const ChatItem = ({ item }) => {
       }}>
       <View
         style={{ width: "15%", justifyContent: "center", alignItems: "center" }}>
-        {item.chat.avatar === "https://res.cloudinary.com/dq3pxd9eq/image/upload/group_avatar.jpg" ? (
-          <Image
-            source={avatar}
-            style={{ width: 55, height: 55, borderRadius: 25 }} />) : (
-          <Image
-            source={{ uri: item.chat.avatar }}
-            style={{ width: 55, height: 55, borderRadius: 25 }} />)}
+        <Image
+          source={item.chat.avatar === "https://res.cloudinary.com/dq3pxd9eq/image/upload/group_avatar.jpg" ? avatar : { uri: item.chat.avatar }}
+          style={{ width: 55, height: 55, borderRadius: 25 }} />
       </View>
       <View
         style={{

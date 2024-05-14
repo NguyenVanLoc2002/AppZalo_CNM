@@ -8,7 +8,7 @@ import {
   StyleSheet,
   ScrollView, ActivityIndicator, Modal,
   Image,
-  Linking
+  Linking,
 } from "react-native";
 import { Video } from 'expo-av';
 import { Ionicons } from "@expo/vector-icons";
@@ -87,18 +87,14 @@ const Message = ({ navigation, route }) => {
       ),
       headerTitle: () => (
         <View style={{ flexDirection: "row", alignItems: "center", width: '55%', marginRight: 200 }}>
-          {conver.tag === 'group' ? (
+          {conver.tag === 'group' && (
             <View style={{ width: '30%' }}>
-              {conver.avatar === "https://res.cloudinary.com/dq3pxd9eq/image/upload/group_avatar.jpg" ? (
-                <Image
-                  source={avatarGr}
-                  style={{ width: 45, height: 40, borderRadius: 25 }}
-                />) : (<Image
-                  source={{ uri: conver.avatar }}
-                  style={{ width: 45, height: 40, borderRadius: 25 }}
-                />)}
+              <Image
+                source={conver.avatar === "https://res.cloudinary.com/dq3pxd9eq/image/upload/group_avatar.jpg" ? avatarGr : { uri: conver.avatar }}
+                style={{ width: 45, height: 40, borderRadius: 25 }}
+              />
             </View>
-          ) : (<View></View>)}
+          )}
           <Text style={{ fontSize: 19, color: "white", fontWeight: 'bold' }}>{conver.name}</Text>
         </View>
       ),
@@ -124,16 +120,12 @@ const Message = ({ navigation, route }) => {
   const fetchConversation = async () => {
     if (chatItem.conversation !== null) {
       const fetchConver = await getConversationByID(chatItem.conversation?._id)
-      const updateConver = { ...conver }
-      updateConver.participants = fetchConver.participants
-      updateConver.messages = fetchConver.messages
-      setConver(fetchConver)
+      setConver({ ...conver, participants: fetchConver.participants, messages: fetchConver.messages })
     }
-
   }
   useEffect(() => {
     fetchConversation()
-  }, [chatItem, isGroupRedux])
+  }, [isGroupRedux])
 
   useEffect(() => {
     if (isLoad === true) {
