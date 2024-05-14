@@ -8,7 +8,7 @@ import {
   StyleSheet,
   ScrollView, ActivityIndicator, Modal,
   Image,
-  LogBox,Linking 
+  Linking
 } from "react-native";
 import { Video } from 'expo-av';
 import { Ionicons } from "@expo/vector-icons";
@@ -23,6 +23,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import useConversation from "../../../hooks/useConversation";
 import { useSelector, useDispatch } from "react-redux";
 import { setIsGroup } from "../../../redux/stateCreateGroupSlice";
+import avatarGroup from '../../../../assets/avatarGroup.png'
 
 const Message = ({ navigation, route }) => {
   const { chatItem } = route.params;
@@ -52,6 +53,7 @@ const Message = ({ navigation, route }) => {
   const [isLoadThuHoi, setIsLoadThuHoi] = useState(false)
   const [isLoadXoa, setIsLoadXoa] = useState(false)
   const [replyChat, setReplyChat] = useState(null);
+  const [avatarGr] = useState(avatarGroup)
 
   useEffect(() => {
     navigation.setOptions({
@@ -84,13 +86,18 @@ const Message = ({ navigation, route }) => {
         </View>
       ),
       headerTitle: () => (
-        <View style={{ flexDirection: "row", alignItems: "center", width: '55%', marginRight: 200}}>
+        <View style={{ flexDirection: "row", alignItems: "center", width: '55%', marginRight: 200 }}>
           {conver.tag === 'group' ? (
             <View style={{ width: '30%' }}>
-              <Image
-                source={{ uri: conver.avatar }}
-                style={{ width: 45, height: 40, borderRadius: 25 }}
-              /></View>
+              {conver.avatar === "https://res.cloudinary.com/dq3pxd9eq/image/upload/group_avatar.jpg" ? (
+                <Image
+                  source={avatarGr}
+                  style={{ width: 45, height: 40, borderRadius: 25 }}
+                />) : (<Image
+                  source={{ uri: conver.avatar }}
+                  style={{ width: 45, height: 40, borderRadius: 25 }}
+                />)}
+            </View>
           ) : (<View></View>)}
           <Text style={{ fontSize: 19, color: "white", fontWeight: 'bold' }}>{conver.name}</Text>
         </View>
@@ -113,7 +120,7 @@ const Message = ({ navigation, route }) => {
   const toggleModalFriend = () => {
     setIsModalFriendVisible(!isModalFriendVisible);
   };
-  
+
   const fetchConversation = async () => {
     if (chatItem.conversation !== null) {
       const fetchConver = await getConversationByID(chatItem.conversation?._id)
@@ -275,7 +282,7 @@ const Message = ({ navigation, route }) => {
           dispatch(setIsGroup())
         }
       }
-    
+
     }
     fetchSocket()
   }, [isNewSocket, newSocketData]);
@@ -581,7 +588,8 @@ const Message = ({ navigation, route }) => {
                             style={{ width: 35, height: 35, justifyContent: "center", alignItems: "center", marginLeft: 10, marginRight: 10 }} >
                             <Image
                               source={{ uri: message.sender.profile.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}
-                              style={{ width: 35, height: 35, borderRadius: 25 }} />
+                              style={{ width: 35, height: 35, borderRadius: 25 }}
+                            />
                           </View>)}
                         <View style={[
                           handleCheckIsSend(message) ? styles.styleSender : styles.styleRecive
@@ -684,6 +692,7 @@ const Message = ({ navigation, route }) => {
               fontSize: 17
             }}
             placeholder="Tin nhắn"
+            placeholderTextColor="gray"
           />
         </View>
 
@@ -818,7 +827,7 @@ const Message = ({ navigation, route }) => {
                     <Text style={styles.modalButton}>Xem video</Text>
                   </Pressable>
                 )}
-                {
+              {
                 messageSelected?.chat?.contents[0].type === 'file'
                 && (
                   <Pressable style={styles.pressCol} onPress={handleXemFile}>

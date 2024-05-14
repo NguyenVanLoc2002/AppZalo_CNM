@@ -6,7 +6,7 @@ import {
   Pressable,
   ScrollView,
   TextInput,
-  Modal, ActivityIndicator, StyleSheet, TouchableOpacity
+  Modal, ActivityIndicator, StyleSheet
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,6 +19,8 @@ import * as ImagePicker from "expo-image-picker";
 import { useSocketContext } from "../../../contexts/SocketContext";
 import { useDispatch } from "react-redux";
 import { setIsGroup } from "../../../redux/stateCreateGroupSlice";
+import avatarGroup from '../../../../assets/avatarGroup.png'
+
 const MessageSettings = ({ navigation, route }) => {
   const { item } = route.params
   const [conver, setConver] = useState(item);
@@ -55,6 +57,7 @@ const MessageSettings = ({ navigation, route }) => {
   const dispatch = useDispatch()
   const [allFriend, setAllFriend] = useState([])
   const [isXacNhan, setIsXacNhan] = useState(false)
+  const [avatarGr] = useState(avatarGroup)
 
   useEffect(() => {
     navigation.setOptions({
@@ -544,11 +547,7 @@ const MessageSettings = ({ navigation, route }) => {
       >
         <View style={{ padding: 10 }}>
           <Image
-            source={{
-              uri: item.avatar
-                ? item.avatar
-                : "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
-            }}
+            source={{ uri: item.avatar || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}
             style={{ width: 50, height: 50, borderRadius: 25 }}
           />
         </View>
@@ -651,7 +650,14 @@ const MessageSettings = ({ navigation, route }) => {
         <View style={{ backgroundColor: "white", alignItems: "center", paddingTop: 10, }}       >
           <View style={{ justifyContent: "center" }}>
             <Pressable onPress={openModal}>
-              <Image source={{ uri: conver.avatar }} style={{ width: 100, height: 100, borderRadius: 50, borderWidth: 2, borderColor: "#ccc", }} />
+              {conver.avatar === "https://res.cloudinary.com/dq3pxd9eq/image/upload/group_avatar.jpg" ? (
+                <Image
+                  source={avatarGr}
+                  style={{ width: 100, height: 100, borderRadius: 50, borderWidth: 2, borderColor: "#ccc", }}
+                />) : (<Image
+                  source={{ uri: conver.avatar }}
+                  style={{ width: 100, height: 100, borderRadius: 50, borderWidth: 2, borderColor: "#ccc", }}
+                />)}
             </Pressable>
           </View>
           <View style={{ display: 'flex', justifyContent: "center", alignItems: "center", paddingTop: 10, }}     >

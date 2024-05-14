@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Text, View, Image, LogBox } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import avatarGroup from '../../../../assets/avatarGroup.png'
 
 const ChatItem = ({ item }) => {
+  const [avatar] = useState(avatarGroup)
   return (
     <View
       style={{
@@ -11,15 +13,16 @@ const ChatItem = ({ item }) => {
         paddingHorizontal: 20,
         paddingVertical: 10,
         backgroundColor: "white",
-      }}
-    >
+      }}>
       <View
-        style={{ width: "15%", justifyContent: "center", alignItems: "center" }}
-      >
-        <Image
-          source={{ uri: item.chat.avatar}}
-          style={{ width: 55, height: 55, borderRadius: 25 }}
-        />
+        style={{ width: "15%", justifyContent: "center", alignItems: "center" }}>
+        {item.chat.avatar === "https://res.cloudinary.com/dq3pxd9eq/image/upload/group_avatar.jpg" ? (
+          <Image
+            source={avatar}
+            style={{ width: 55, height: 55, borderRadius: 25 }} />) : (
+          <Image
+            source={{ uri: item.chat.avatar }}
+            style={{ width: 55, height: 55, borderRadius: 25 }} />)}
       </View>
       <View
         style={{

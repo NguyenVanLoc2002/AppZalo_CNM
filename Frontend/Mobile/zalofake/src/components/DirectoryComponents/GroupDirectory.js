@@ -18,6 +18,7 @@ import useMessage from "../../hooks/useMessage";
 import useGroup from "../../hooks/useGroup";
 import { useSocketContext } from "../../contexts/SocketContext";
 import { useSelector } from "react-redux";
+import avatarGroup from '../../../assets/avatarGroup.png'
 
 const GroupDirectory = ({ navigation }) => {
   const [listFriends, setListFriends] = useState([])
@@ -36,6 +37,7 @@ const GroupDirectory = ({ navigation }) => {
   const { authUser } = useAuthContext();
   const { isNewSocket, newSocketData, setNewSocketData } = useSocketContext();
   var isGroupRedux = useSelector(state => state.isGroup.isGroup);
+  const [avatarGr] = useState(avatarGroup)
 
   const fetchGroup = async () => {
     try {
@@ -141,9 +143,10 @@ const GroupDirectory = ({ navigation }) => {
 
         <View style={{ padding: 10 }}>
           <Image
-            source={{ uri: item.avatar ? item.avatar : "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}
+            source={{ uri: item.avatar || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}
             style={{ width: 50, height: 50, borderRadius: 25 }}
-          /></View>
+          />
+        </View>
         <Text style={{ fontWeight: "500", marginLeft: 0 }}>{item.name}</Text>
       </View>
       <Pressable
@@ -331,10 +334,14 @@ const GroupDirectory = ({ navigation }) => {
           </View>
           {groupAll?.map((group, index) => (
             <Pressable key={index} style={styles.groupItem} onPress={() => navigation.navigate("Message", { chatItem: group })}>
-              <Image
-                style={styles.avatar}
-                source={{ uri: group.avatar }}
-              />
+              {group.avatar === "https://res.cloudinary.com/dq3pxd9eq/image/upload/group_avatar.jpg" ? (
+                <Image
+                  source={avatarGr}
+                  style={styles.avatar}
+                />) : (<Image
+                  source={{ uri: group.avatar }}
+                  style={styles.avatar}
+                />)}
               <View style={styles.groupTextContainer}>
                 <View style={{ flexDirection: 'row' }}>
                   <Ionicons name="people" size={20} color="gray" />
@@ -387,7 +394,7 @@ const GroupDirectory = ({ navigation }) => {
                 placeholder="Tìm tên hoặc số điện thoại"
                 placeholderTextColor='gray'
                 style={{ fontSize: 18, height: '80%', width: '80%', paddingHorizontal: 10 }}></TextInput>
-              <Pressable onPress={() => { setTextSearch(null) }}>
+              <Pressable onPress={() => { setTextSearch(null); setListSearch([]) }}>
                 <Ionicons name="close-circle" size={30} color="gray" />
               </Pressable>
             </View>

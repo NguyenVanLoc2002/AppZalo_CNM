@@ -71,7 +71,7 @@ const FriendDirectory = ({ navigation }) => {
 
   const handleFriendMessage = async (friend) => {
     let conversation;
-    console.log(friend)
+
     conversation = await getConversationsByParticipants(friend.userId);
     if (conversation === null) {
       const conversationNew = {

@@ -7,10 +7,9 @@ import {
   TextInput,
   ScrollView,
   Modal,
+  ActivityIndicator
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcons from "react-native-vector-icons/FontAwesome5";
 import { useAuthContext } from "../../contexts/AuthContext";
@@ -22,6 +21,7 @@ const PersonalPage = ({ navigation }) => {
   const [modalVisibleBia, setModalVisibleBia] = useState(false);
   const [selectedImageBia, setSelectedImageBia] = useState();
   const [status, setStatus] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     navigation.setOptions({
@@ -82,6 +82,7 @@ const PersonalPage = ({ navigation }) => {
   };
 
   const handleUpdateAvatar = async () => {
+    setIsLoading(true)
     try {
       const formData = new FormData();
       formData.append("avatar", {
@@ -106,13 +107,16 @@ const PersonalPage = ({ navigation }) => {
       const avatarUrl = responseUrl.avatar.url;
 
       if (avatarUrl) {
+        setIsLoading(false)
         setSelectedImage(avatarUrl);
         updateAvatar(avatarUrl, responseUrl.avatar.public_id);
         console.log("Success", "Avatar updated successfully");
       } else {
+        setIsLoading(false)
         throw new Error("Failed to update avatar");
       }
     } catch (error) {
+      setIsLoading(false)
       console.error(error);
       console.log("Error", error.message || "Failed to update avatar");
     } finally {
@@ -133,7 +137,7 @@ const PersonalPage = ({ navigation }) => {
   };
 
   const openModalBia = () => {
-    setModalVisibleBia(
+    setSelectedImageBia(
       authUser?.profile?.background?.url ||
       "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png"
     );
@@ -145,6 +149,7 @@ const PersonalPage = ({ navigation }) => {
   };
 
   const handleUpdateBia = async () => {
+    setIsLoading(true)
     try {
       const formData = new FormData();
       formData.append("background", {
@@ -169,13 +174,16 @@ const PersonalPage = ({ navigation }) => {
       const backgroundUrl = responseUrl.background.url;
 
       if (backgroundUrl) {
+        setIsLoading(false)
         setSelectedImage(backgroundUrl);
         updateBia(backgroundUrl, responseUrl.background.public_id);
         console.log("Success", "background updated successfully");
       } else {
+        setIsLoading(false)
         throw new Error("Failed to update background");
       }
     } catch (error) {
+      setIsLoading(false)
       console.error(error);
       console.log("Error", error.message || "Failed to update background");
     } finally {
@@ -220,6 +228,7 @@ const PersonalPage = ({ navigation }) => {
             alignItems: "center",
             marginBottom: 16,
           }}
+          onPress={() => { navigation.navigate("PersonalInfo") }}
         >
           <FontAwesomeIcons name="pen" size={14} color="#66a1f0" />
           <Text style={{ color: "#66a1f0", marginLeft: 8 }}>
@@ -337,7 +346,7 @@ const PersonalPage = ({ navigation }) => {
             marginBottom: 8,
           }}
         >
-          <Text style={{ fontWeight: "500" }}>8 tháng 9, 2020</Text>
+          <Text style={{ fontWeight: "500" }}>13 tháng 5, 2024</Text>
         </View>
         <View
           style={{
@@ -351,15 +360,7 @@ const PersonalPage = ({ navigation }) => {
               Happy New Year
             </Text>
           </View>
-          {/* <View
-            style={{
-              flexDirection: "row",
-              flexWrap: "wrap",
-              justifyContent: "space-between",
-              paddingHorizontal: 8,
-              marginBottom: 8,
-            }}
-          >
+          <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", paddingHorizontal: 8, marginBottom: 8, }}>
             <Image
               source={require("../../../assets/status-HPNY-1.png")}
               style={{ width: "31%", aspectRatio: 1, marginBottom: 8 }}
@@ -372,7 +373,7 @@ const PersonalPage = ({ navigation }) => {
               source={require("../../../assets/status-HPNY-3.png")}
               style={{ width: "31%", aspectRatio: 1, marginBottom: 8 }}
             />
-          </View> */}
+          </View>
           <View style={{ flexDirection: "row", padding: 8 }}>
             <Pressable
               style={{
@@ -415,17 +416,9 @@ const PersonalPage = ({ navigation }) => {
         visible={modalVisible}
         onRequestClose={closeModal}
       >
-        <View
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: "rgba(0,0,0,0.5)",
-          }}
-        >
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.5)", }}>
           <View
-            style={{ backgroundColor: "white", padding: 20, borderRadius: 10 }}
-          >
+            style={{ backgroundColor: "white", padding: 20, borderRadius: 10 }}>
             <Pressable onPress={openImagePicker}>
               <Image
                 source={{
@@ -434,8 +427,7 @@ const PersonalPage = ({ navigation }) => {
                     authUser?.profile?.avatar?.url ||
                     "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
                 }}
-                style={{ width: 200, height: 200, borderRadius: 100 }}
-              />
+                style={{ width: 200, height: 200, borderRadius: 100 }} />
             </Pressable>
             <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', marginTop: 20 }}>
               <Pressable style={{ backgroundColor: '#0091FF', height: 40, justifyContent: 'center', alignItems: 'center', borderRadius: 10, width: 85 }} onPress={closeModal}>
@@ -444,9 +436,13 @@ const PersonalPage = ({ navigation }) => {
                 </Text>
               </Pressable>
               <Pressable style={{ backgroundColor: '#0091FF', height: 40, justifyContent: 'center', alignItems: 'center', borderRadius: 10, width: 85 }} onPress={handleUpdateAvatar}>
-                <Text style={{ color: "white", fontWeight: 'bold' }}>
-                  Cập nhật
-                </Text>
+                {isLoading ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text style={{ color: "white", fontWeight: 'bold' }}>
+                    Cập nhật
+                  </Text>
+                )}
               </Pressable>
             </View>
           </View>
@@ -468,46 +464,33 @@ const PersonalPage = ({ navigation }) => {
             backgroundColor: "rgba(0,0,0,0.5)",
           }}
         >
-          <View
-            style={{ backgroundColor: "white", padding: 20, borderRadius: 10 }}
-          >
-            <Image
-              source={{
-                uri:
-                  selectedImageBia ||
-                  authUser?.profile?.background?.url ||
-                  "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
-              }}
-              style={{ width: 200, height: 200, borderRadius: 20 }}
-            />
+          <View style={{ backgroundColor: "white", padding: 20, borderRadius: 10 }}>
             <Pressable onPress={openImagePicker}>
-              <Text
-                style={{
-                  color: "#0091FF",
-                  textAlign: "center",
-                  paddingVertical: 20,
+              <Image
+                source={{
+                  uri:
+                    selectedImageBia ||
+                    authUser?.profile?.background?.url ||
+                    "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
                 }}
-              >
-                Chọn ảnh
-              </Text>
+                style={{ width: 200, height: 200, borderRadius: 20 }} />
             </Pressable>
-            <Pressable onPress={handleUpdateBia}>
-              <Text
-                style={{
-                  color: "#0091FF",
-                  textAlign: "center",
-                  paddingVertical: 20,
-                }}
-              >
-                cập nhật
-              </Text>
-            </Pressable>
-
-            <Pressable onPress={closeModalBia}>
-              <Text style={{ color: "#0091FF", textAlign: "center" }}>
-                Đóng
-              </Text>
-            </Pressable>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', marginTop: 20 }}>
+              <Pressable style={{ backgroundColor: '#0091FF', height: 40, justifyContent: 'center', alignItems: 'center', borderRadius: 10, width: 85 }} onPress={closeModalBia}>
+                <Text style={{ color: "white", fontWeight: 'bold' }}>
+                  Đóng
+                </Text>
+              </Pressable>
+              <Pressable style={{ backgroundColor: '#0091FF', height: 40, justifyContent: 'center', alignItems: 'center', borderRadius: 10, width: 85 }} onPress={handleUpdateBia}>
+                {isLoading ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text style={{ color: "white", fontWeight: 'bold' }}>
+                    Cập nhật
+                  </Text>
+                )}
+              </Pressable>
+            </View>
           </View>
         </View>
       </Modal>
