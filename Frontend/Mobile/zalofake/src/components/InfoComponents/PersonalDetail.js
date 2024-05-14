@@ -45,7 +45,7 @@ const PersonalDetail = ({ navigation }) => {
         >
           <Text style={{ fontSize: 16 }}>Thông tin</Text>
         </Pressable>
-        <Pressable
+        {/* <Pressable
           style={{
             marginLeft: 2,
             marginTop: 2,
@@ -68,7 +68,7 @@ const PersonalDetail = ({ navigation }) => {
           }}
         >
           <Text style={{ fontSize: 16 }}>Đổi ảnh bìa</Text>
-        </Pressable>
+        </Pressable> */}
         <Pressable
           style={{
             marginLeft: 2,

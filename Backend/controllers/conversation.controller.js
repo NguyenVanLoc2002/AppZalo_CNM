@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const Chats = require("../models/Chat");
 const Conversation = require("../models/Conversation");
 const jwt = require("jsonwebtoken");
@@ -173,22 +174,25 @@ exports.deleteOnMySelf = async (req, res) => {
     const userIdCurrent = req.user.user_id; // người dùng hiện đang đăng nhập
 
     const chat = await Chats.findById(chatIdToDelete);
+    console.log("chat to delete is: ", chat);
     if (!chat) {
       return res.status(404).json({ error: "Not Found" });
     }
 
     if (chat.senderId.equals(userIdCurrent)) {
       if (chat.status === 0 || chat.status === null) {
-        chat.status = 1;
-        await chat.save();
+
+        await chat.updateOne({ status: 1 });
+
         res.status(200).json({ message: "Update status success" });
       } else {
         try {
           await Chats.findByIdAndDelete(chatIdToDelete);
           const deleteChatInMessOfConver = await Conversation.findByIdAndUpdate(
             conversationId,
-            { $pull: { messages: chatIdToDelete } }
+            { $pull: { messages: new mongoose.Types.ObjectId(chatIdToDelete)  } }
           );
+          console.log("deleteChatInMessOfConver: ", deleteChatInMessOfConver);
           if (!deleteChatInMessOfConver) {
             return res.status(404).json({ message: "Conversation not found" });
           } else {
@@ -203,17 +207,16 @@ exports.deleteOnMySelf = async (req, res) => {
       }
     } else {
       if (chat.status === 0 || chat.status === null) {
-        console.log("Đang đổi status");
-        chat.status = 2;
-        await chat.save();
+
+        await chat.updateOne({ status: 2 });
+        
         res.status(200).json({ message: "Update status success" });
       } else {
-        console.log("Đang xóa");
         try {
           await Chats.findByIdAndDelete(chatIdToDelete);
           const deleteChatInMessOfConver = await Conversation.findByIdAndUpdate(
             conversationId,
-            { $pull: { messages: chatIdToDelete } }
+            { $pull: { messages: new mongoose.Types.ObjectId(chatIdToDelete) } }
           );
           if (!deleteChatInMessOfConver) {
             return res.status(404).json({ message: "Conversation not found" });

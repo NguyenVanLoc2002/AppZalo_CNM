@@ -99,6 +99,80 @@ exports.getGroup = async (req, res) => {
   }
 };
 
+exports.getGroupByParticipants = async (req, res) => {
+  try {
+    const { participants } = req.body;
+    const token = req.headers.authorization.split(" ")[1];
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    if (!participants || participants.length < 1) {
+      return res.status(400).json({ error: "Participants are required" });
+    }
+
+    participants.push(user.user_id);
+    const groups = await Group.aggregate([
+      {
+        $lookup: {
+          from: "conversations",
+          localField: "conversation",
+          foreignField: "_id",
+          as: "conversation",
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "createBy",
+          foreignField: "_id",
+          as: "createBy",
+        },
+      },
+      {
+        $unwind: "$conversation",
+      },
+      {
+        $match: {
+          "conversation.participants": {
+            $all: participants.map((p) => new mongoose.Types.ObjectId(p)),
+          },
+        },
+      },
+      {
+        $project: {
+          groupName: 1,
+          avatar: 1,
+          createBy: {
+            $arrayElemAt: [
+              {
+                $map: {
+                  input: "$createBy",
+                  as: "creator",
+                  in: {
+                    profile: "$$creator.profile",
+                    _id: "$$creator._id",
+                  },
+                },
+              },
+              0,
+            ],
+          },
+          conversation: {
+            _id: 1,
+            participants: 1,
+            lastMessage: 1,
+            tag: 1,
+          },
+          admins: 1,
+        },
+      },
+    ]);
+
+    return res.status(200).json(groups);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+};
+
 exports.getAllGroup = async (req, res) => {
   try {
     const token = req.headers.authorization.split(" ")[1];
@@ -202,7 +276,7 @@ exports.updateGroup = async (req, res) => {
     }
     const change = (await group.save()).populate("conversation");
     const newGroup = await Promise.all([change]);
-    
+
     newGroup[0].conversation.participants.forEach(async (member) => {
       const memderSocketId = await getReciverSocketId(member);
       if (memderSocketId) {
@@ -249,6 +323,10 @@ exports.deleteGroup = async (req, res) => {
         });
       }
     });
+    group.conversation.messages.forEach(async (message) => {
+      await Chats.findByIdAndDelete(message);
+    });
+    await Chats.findByIdAndDelete(group.conversation.lastMessage);
     await Conversation.findByIdAndDelete(group.conversation);
 
     return res.status(200).json({ message: "Group deleted successfully" });
@@ -457,9 +535,6 @@ exports.leaveGroup = async (req, res) => {
 exports.changeAdmins = async (req, res) => {
   try {
     const { members, typeChange, groupId } = req.body;
-    console.log(members);
-    console.log(typeChange);
-    console.log(groupId);
     const token = req.headers.authorization.split(" ")[1];
     const uid = jwt.verify(token, process.env.JWT_SECRET);
     const group = await Group.findById(groupId).populate([
@@ -570,6 +645,87 @@ exports.changeAdmins = async (req, res) => {
     });
 
     return res.status(200).json({ group, result });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+};
+
+exports.makeMemberToAdmin = async (req, res) => {
+  try {
+    const { groupId, userId } = req.body;
+    if (!userId || !groupId) {
+      return res.status(400).json({ error: "Missing paramaster !" });
+    }
+
+    const token = req.headers.authorization.split(" ")[1];
+    const uid = jwt.verify(token, process.env.JWT_SECRET);
+    const group = await Group.findById(groupId).populate([
+      {
+        path: "conversation",
+        select: "-messages -createdAt -__v",
+        populate: {
+          path: "participants",
+          select: "profile _id",
+        },
+      },
+      {
+        path: "createBy",
+        select: "profile _id",
+      },
+    ]);
+
+    if (!group) {
+      return res.status(404).json({ error: "Group not found" });
+    }
+
+    if (group.createBy._id.toString() !== uid.user_id) {
+      return res.status(403).json({ error: "You don't have permisiion !" });
+    }
+
+    if (
+      !group.conversation.participants.some((p) => p._id.toString() === userId)
+    ) {
+      return res.status(404).json({ error: "User not in group" });
+    }
+
+    if (!group.admins.includes(userId)) {
+      group.admins.push(userId);
+    }
+    const user = await User.findById(userId);
+    group.createBy = user;
+    group.admins = group.admins.filter((a) => a.toString() !== uid.user_id);
+    await group.save();
+    
+    group.conversation.participants.forEach(async (member) => {
+      if (member.toString() !== uid.user_id) {
+        const memderSocketId = await getReciverSocketId(member);
+        if (memderSocketId) {
+          io.to(memderSocketId.socket_id).emit("member-to-admin", {
+            group: {
+              id: group._id,
+              name: group.groupName,
+              admins: group.admins,
+              createBy: group.createBy,
+            },
+          });
+        }
+      }
+    });
+
+    return res.status(200).json({
+      group: {
+        _id: group._id,
+        groupName: group.groupName,
+        admins: group.admins,
+        createBy: {
+          profile: user.profile,
+          _id: user._id,
+        },
+        conversation: group.conversation,
+        avatar: group.avatar,
+      }
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Something went wrong" });

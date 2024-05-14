@@ -11,7 +11,7 @@ import {
 } from "react-icons/io5";
 import { HiMagnifyingGlass } from "react-icons/hi2";
 import { LuPencilLine, LuSticker } from "react-icons/lu";
-import { MdOutlineCancel } from "react-icons/md";
+import { MdOutlineCancel, MdOutlinePublishedWithChanges  } from "react-icons/md";
 import { PiTagSimpleLight } from "react-icons/pi";
 import { RiDoubleQuotesR } from "react-icons/ri";
 import { FaArrowRotateLeft } from "react-icons/fa6";
@@ -73,6 +73,8 @@ function PeopleChatComponent({
 
   //state for admin change modal
   const [isShowAdminChange, setIsShowAdminChange] = useState(false);
+  const [isShowConfirmChange, setIsShowConfirmChange] = useState(false);
+  const [memberChange, setMemberChange] = useState(null);
   const [typeModal, setTypeModal] = useState("removeAdmin");
   const [isInputFocusGroup, setIsInputFocusGroup] = useState(false);
   const [valueSearch, setValueSearch] = useState("");
@@ -249,8 +251,23 @@ function PeopleChatComponent({
           }
         }
       }
+      if (isNewSocket === "member-to-admin") {
+        const group = newSocketData;
+        console.log("group on socket :", group);
+        if (group?.id === thisUser.id) {
+          console.log("thisUser on socket :", thisUser);
+
+          setThisUser({
+            ...thisUser,
+            creator: group?.createBy
+          });
+        }
+      }
+
     }
   }, [isNewSocket, newSocketData]);
+
+  console.log("thisUser", thisUser);
 
   const scrollToBottom = () => {
     if (scrollRef.current) {
@@ -650,6 +667,32 @@ function PeopleChatComponent({
       );
     }
   };
+
+  const makeMemberToAdmin = async (memberId) => {
+    try {
+      const response = await changeAdmins(thisUser.id, memberId, "makeAdmin");
+      if (response) {
+        setThisUser({
+          ...thisUser,
+          admins: response.group?.admins,
+          creator: response.group?.createBy,
+        });
+        setListMembers(response.group?.conversation?.participants);
+        toast.success(
+          language === "vi"
+            ? "Thay đổi quyền quản trị viên thành công"
+            : "Change admin successfully"
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        language === "vi"
+          ? "Thay đổi quyền quản trị viên thất bại"
+          : "Change admin failed"
+      );
+    }
+  }
 
   return (
     <>
@@ -1801,7 +1844,7 @@ function PeopleChatComponent({
           {/* tab change type modal */}
           <div className="flex justify-center items-center mx-5 my-3 h-[4%]">
             <button
-              className={`mx-5 w-[50%] h-full ${
+              className={`mx-5 w-1/3 h-full ${
                 typeModal === "removeAdmin" ? "border-b-blue-400 border-b " : ""
               }`}
               onClick={() => setTypeModal("removeAdmin")}
@@ -1815,7 +1858,7 @@ function PeopleChatComponent({
               </p>
             </button>
             <button
-              className={`mx-5 w-[50%] h-full ${
+              className={`mx-5 w-1/3 h-full ${
                 typeModal === "addAdmin" ? "border-b-blue-400 border-b " : ""
               }`}
               onClick={() => setTypeModal("addAdmin")}
@@ -1826,6 +1869,20 @@ function PeopleChatComponent({
                 }`}
               >
                 {language == "vi" ? "Thêm quản trị viên" : "Add admin"}
+              </p>
+            </button>
+            <button
+              className={`mx-5 w-1/3 h-full ${
+                typeModal === "changeAdmin" ? "border-b-blue-400 border-b " : ""
+              }`}
+              onClick={() => setTypeModal("changeAdmin")}
+            >
+              <p
+                className={`text-md ${
+                  typeModal === "changeAdmin" ? "font-semibold" : ""
+                }`}
+              >
+                {language == "vi" ? "Chuyển Trưởng Nhóm" : "Change Admin"}
               </p>
             </button>
           </div>
@@ -1876,7 +1933,7 @@ function PeopleChatComponent({
                       </div>
                     )
                   );
-                } else {
+                } else if (typeModal === "addAdmin") {
                   return (
                     !isAdmin && (
                       <div
@@ -1907,10 +1964,75 @@ function PeopleChatComponent({
                       </div>
                     )
                   );
+                }else{
+                  return (
+                    !isMe && (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between w-full p-3 hover:bg-gray-200"
+                      >
+                        <div className="flex items-center">
+                          <img
+                            src={member.profile?.avatar?.url}
+                            alt="avatar"
+                            className="w-10 h-10 object-cover rounded-full border"
+                          />
+                          <p className="ml-2">{member.profile?.name}</p>
+                        </div>
+                        <div className="flex items-center">
+                          <button
+                            onClick={() => {
+                              setIsShowConfirmChange(true);
+                              setMemberChange(member);
+                            }}
+                          >
+                            {grLoading ? (
+                              <span className="loading loading-spinner loading-sm"></span>
+                            ) : (
+                              <MdOutlinePublishedWithChanges  size={22} color="orange" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  );
                 }
               })}
             </div>
           </div>
+
+          {/* Modal to comfirm change member to admin  */}
+          {isShowConfirmChange && (
+            <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1/3 h-[20%] bg-white rounded-lg shadow-lg flex flex-col items-center">
+              <p className="text-lg font-semibold text-center m-3">
+                {language == "vi"
+                  ? "Xác nhận thay đổi quản trị viên"
+                  : "Confirm change admin"}
+              </p>
+              <div className="flex items-center justify-center w-full mt-12">
+                <button
+                  className="mx-2 btn btn-outline w-[40%]"
+                  onClick={() => {
+                    setIsShowConfirmChange(false);
+                    setMemberChange(null);
+                  }}
+                >
+                  <MdOutlineCancel size={25} color="red" />
+                </button>
+                <button
+                  className="mx-2 btn btn-outline w-[40%]"
+                  onClick={() => {
+                    makeMemberToAdmin(memberChange._id);
+                    setMemberChange(null);
+                    setIsShowConfirmChange(false);
+                    setIsShowAdminChange(false);
+                  }}
+                >
+                  <CiCircleCheck size={25} color="green" />
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center justify-end border-t h-[10%]">
             <button
