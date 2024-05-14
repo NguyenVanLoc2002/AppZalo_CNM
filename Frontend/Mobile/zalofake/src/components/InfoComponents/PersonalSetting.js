@@ -324,7 +324,7 @@ const PersonalSetting = ({ navigation }) => {
         </Pressable>
 
         {/* Chuyển tài khoản*/}
-        <Pressable
+        {/* <Pressable
           style={{
             backgroundColor: "white",
             flexDirection: "row",
@@ -339,7 +339,7 @@ const PersonalSetting = ({ navigation }) => {
             <Text style={{ fontSize: 16 }}>Chuyển tài khoản</Text>
           </View>
           <Entypo name="chevron-small-right" size={24} color="#cccccc" />
-        </Pressable>
+        </Pressable> */}
 
         <Pressable
           style={{

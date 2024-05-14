@@ -110,7 +110,7 @@ const useFriend = () => {
         phone,
       });
       if (response.status === 200) {
-        showSuccessToast("Friend request sent");
+        showSuccessToast("Chấp nhận yêu cầu kết bạn thành công");
       }
     } catch (error) {
       console.log(error);
@@ -130,12 +130,12 @@ const useFriend = () => {
         phone,
       });
       if (response.status === 200) {
-        showSuccessToast("Friend request accepted");
+        showSuccessToast("Chấp nhận yêu cầu kết bạn thành công");
         await reloadAuthUser();
       }
     } catch (error) {
       console.log(error);
-      showErrorToast("Failed to accept friend request");
+      showErrorToast("Chấp nhận yêu cầu kết bạn thất bại");
     }
     setLoading(false);
   };
@@ -163,17 +163,11 @@ const useFriend = () => {
     try {
       setLoading(true);
       const response = await axiosInstance.post(
-        "/users/cancel-request-add-friend",
-        {
-          phone,
-        }
-      );
+        "/users/cancel-request-add-friend", { phone });
       if (response.status === 200) {
-        showSuccessToast("Friend request canceled");
       }
     } catch (error) {
       console.log(error);
-      showErrorToast("Failed to cancel friend request");
     }
     setLoading(false);
   };
@@ -186,6 +180,7 @@ const useFriend = () => {
       });
       if (response.status === 200) {
         await reloadAuthUser();
+        showSuccessToast("Huỷ kết bạn thành công");
         return true;
       }
     } catch (error) {
@@ -209,6 +204,8 @@ const useFriend = () => {
     rejectFriend,
     cancelFriendRequest,
     unFriend,
+    showErrorToast,
+    showSuccessToast
   };
 };
 

@@ -6,11 +6,9 @@ import Toast from "react-native-toast-message";
 const useConversation = () => {
   const [conversations, setConversations] = useState([]);
   const [conversation, setConversation] = useState({});
-  const [loading, setLoading] = useState(true);
 
   const getConversations = async () => {
     try {
-      setLoading(true);
       const response = await axiosInstance.get(
         "/conversations/getConversations"
       );
@@ -30,12 +28,10 @@ const useConversation = () => {
       console.log(error);
       // toast.error("Failed to get conversations");
     }
-    setLoading(false);
   };
 
   const getConversationsByParticipants = async (participant) => {
     try {
-      setLoading(true);
       const participants = []
       participants.push(participant)
       // console.log(participants)
@@ -43,17 +39,13 @@ const useConversation = () => {
         "/conversations/getByParticipants", { participants }
       );
       if (response.status === 200) {
-        // console.log(response.data)
         return response.data;
         // setConversation(response.data);
         // console.log(conversation)
       }
     } catch (error) {
-      console.log(error);
       return null;
-      // toast.error("Failed to get conversations");
     }
-    setLoading(false);
   };
   const deleteConversation = async (conversationId) => {
     try {
@@ -71,48 +63,28 @@ const useConversation = () => {
   };
 
   const getConversationByID = async (conversationId) => {
-    setLoading(true);
     try {
       const response = await axiosInstance.get(
         `conversations/get/${conversationId}`
       );
       if (response.status === 200) {
         setConversation(response.data);
-        setLoading(false);
         return response.data;
       }
     } catch (error) {
       console.log(error);
-      // Toast.error("Failed to get conversation");
-      setLoading(false);
       return null;
     }
   };
 
-  const getConverHaveParticipants = async (conversationId, conver, isMessage) => {
-    try {
-      const fetchConver = await getConversationByID(conversationId)
-      const updateConver = { ...conver }
-      updateConver.participants = fetchConver.participants
-      if (isMessage) {
-        updateConver.messages = fetchConver.messages
-      }
-      return updateConver;
-    } catch (error) {
-      console.log("Error fetch conversation", error);
-      return null;
-    }
-  }
 
   return {
     conversations,
     conversation,
-    loading,
     getConversations,
     deleteConversation,
     getConversationByID,
     getConversationsByParticipants,
-    getConverHaveParticipants
   };
 };
 

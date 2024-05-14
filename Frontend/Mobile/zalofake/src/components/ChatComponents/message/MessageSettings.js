@@ -6,7 +6,7 @@ import {
   Pressable,
   ScrollView,
   TextInput,
-  Modal, ActivityIndicator, StyleSheet, TouchableOpacity
+  Modal, ActivityIndicator, StyleSheet
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
@@ -14,12 +14,13 @@ import Toast from "react-native-toast-message";
 import axiosInstance from "../../../api/axiosInstance";
 import { useAuthContext } from "../../../contexts/AuthContext";
 import useGroup from "../../../hooks/useGroup";
-import useConversation from "../../../hooks/useConversation";
 import useMessage from "../../../hooks/useMessage";
 import * as ImagePicker from "expo-image-picker";
 import { useSocketContext } from "../../../contexts/SocketContext";
 import { useDispatch } from "react-redux";
 import { setIsGroup } from "../../../redux/stateCreateGroupSlice";
+import avatarGroup from '../../../../assets/avatarGroup.png'
+
 const MessageSettings = ({ navigation, route }) => {
   const { item } = route.params
   const [conver, setConver] = useState(item);
@@ -31,7 +32,6 @@ const MessageSettings = ({ navigation, route }) => {
   const [isPhoAdmin, setIsPhoAdmin] = useState(false);
   const { authUser } = useAuthContext();
   const [textSearch, setTextSearch] = useState(null);
-
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [selectedAdmin, setSelectedAdmin] = useState([]);
   const [listSearch, setListSearch] = useState([]);
@@ -39,20 +39,25 @@ const MessageSettings = ({ navigation, route }) => {
   const [isLoadingUpdataAvatar, setIsLoadingUpdataAvatar] = useState(false);
   const [isLoadingAddMem, setIsLoadingAddMem] = useState(false);
   const [isLoadingLeaveGroup, setIsLoadingLeaveGroup] = useState(false);
+  const [isLoadingRemoveGroup, setIsLoadingRemoveGroup] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [memberSelected, setMemberSelected] = useState(null);
   const [listFriendCanSearch, setListFriendCanSearch] = useState([]);
   const [isModalXacNhanXoa, setIsModalXacNhanXoa] = useState(false);
   const [isModalXacNhanXoaAdmin, setIsModalXacNhanXoaAdmin] = useState(false);
+  const [isModalMakeAdminToOut, setIsModalMakeAdminToOut] = useState(false);
   const [isModeQTV, setIsModeQTV] = useState(false);
   const [isModeDeleteQTV, setIsModeDeleteQTV] = useState(false);
+  const [isMakeAdmin, setIsMakeAdmin] = useState(false)
   const [listAdmin, setListAdmin] = useState([]);
-  const { updateGroup, addMember, removeMember, deleteGroup, leaveGroup, addAdmin, getGroup } = useGroup();
-  const { getConverHaveParticipants } = useConversation();
+  const { updateGroup, addMember, removeMember, deleteGroup, leaveGroup, addAdmin, getGroup, changeAdmins } = useGroup();
   const [selectedImage, setSelectedImage] = useState(null);
   const [idGroupAdmin, setIdGroupAdmin] = useState(null)
   const { isNewSocket, newSocketData, setNewSocketData } = useSocketContext();
   const dispatch = useDispatch()
+  const [allFriend, setAllFriend] = useState([])
+  const [isXacNhan, setIsXacNhan] = useState(false)
+  const [avatarGr] = useState(avatarGroup)
 
   useEffect(() => {
     navigation.setOptions({
@@ -77,27 +82,36 @@ const MessageSettings = ({ navigation, route }) => {
 
   useEffect(() => {
     fetchData()
+    fetchFriends()
   }, [item])
 
   const fetchData = async () => {
-    if(item.conversation!==null){
-      const fetchConver = await getConverHaveParticipants(item.conversation?._id, conver,false)
-      setConver(fetchConver)
-      setName(conver.name);
+    if (item.conversation !== null) {
       if (conver.tag === 'group') {
-        const getGroupData = await getGroup(conver?._id)
-        setIdGroupAdmin(conver.createBy?._id)
-        if (conver?.createBy?._id === authUser._id) {
+        const getGroupData = await getGroup(conver._id)
+        setConver({ ...conver, createBy: getGroupData.createBy, admins: getGroupData.admins, participants: getGroupData.conversation.participants })
+        setIdGroupAdmin(getGroupData.createBy?._id)
+        setName(getGroupData.groupName);
+        if (getGroupData?.createBy?._id === authUser._id) {
           setIsGroupAdmin(true);
         } else if (getGroupData.admins?.includes(authUser?._id)) {
           setIsPhoAdmin(true);
         }
         setListAdmin(getGroupData?.admins);
+      } else {
+        setConver({ ...conver, participants: conver.conversation.participants })
+        setName(conver.name);
       }
-    }else{
+    } else {
       setName(conver.name);
+      const converNew = [
+        { profile: { name: conver.name, avatar: conver.avatar }, _id: conver._id },
+        { profile: { name: authUser.profile.name, avatar: authUser.profile.avatar }, _id: authUser._id }
+      ]
+      setConver({ ...conver, participants: converNew })
     }
   };
+
   // cập nhật tên nhóm
   const updateGroupInfo = async () => {
     setIsLoadingUpdateName(true);
@@ -131,7 +145,7 @@ const MessageSettings = ({ navigation, route }) => {
   };
   // Thêm thành viên
   const addMemberToGroup = async () => {
-    
+
     setIsLoadingAddMem(true);
     if (selectedFriends.length > 0) {
       let selectedFr = []
@@ -146,9 +160,8 @@ const MessageSettings = ({ navigation, route }) => {
       };
       const rs = await addMember(conver._id, groupData);
       if (rs) {
-        let textMessage = authUser?.profile?.name + ' đã thêm ' + selectedFrName + ' vào nhóm!!!';
+        let textMessage = authUser?.profile?.name + ' đã thêm ' + selectedFrName + ' vào nhóm!';
         await sendMessage(conver._id, addMessage(textMessage, conver.tag, null), 'sendText');
-        // setConver({ ...conver, participants: updateParticipants })
         dispatch(setIsGroup())
         setModalAddMember(false);
         setSelectedFriends([]);
@@ -185,11 +198,9 @@ const MessageSettings = ({ navigation, route }) => {
       };
       const response = await removeMember(conver._id, groupData);
       if (response) {
-        let textMessage = authUser?.profile?.name + ' đã xóa ' + selectedFrName + ' khỏi nhóm!!!';
+        let textMessage = authUser?.profile?.name + ' đã xóa ' + selectedFrName + ' khỏi nhóm!';
         await sendMessage(conver._id, addMessage(textMessage, conver.tag, null), 'sendText')
-        toggleModal();
-        // const updateParticipants = conver.participants.filter(item => item._id !== member._id)
-        // setConver({ ...conver, participants: updateParticipants })
+        toggleModal()
         dispatch(setIsGroup())
         setIsLoadingAddMem(false);
         showToastSuccess('Xóa thành viên khỏi nhóm thành công')
@@ -205,56 +216,41 @@ const MessageSettings = ({ navigation, route }) => {
       }
     }
   };
-  // load danh sách bạn, set danh sách bạn có thể add vào group
-  // sau khi thêm thành viênn, load lại danh sách thêm vào
   const fetchFriends = async () => {
     try {
       const response = await axiosInstance.get("/users/get/friends");
-      const newRadioButtons = [];
-      let i = true;
-      for (const friend of response.data.friends) {
-        for (const friend1 of conver?.conversation?.participants) {
-          if (friend.userId === friend1) {
-            i = false;
-          }
-        }
-        if (i === true) {
-          const item = {
-            id: friend.userId,
-            name: friend?.profile?.name,
-            avatar: friend?.profile?.avatar?.url,
-            phone: friend.phone
-          };
-          newRadioButtons.push(item);
-        } else {
-          i = true;
-        }
-      }
-      setListSearch(newRadioButtons);
-      setListFriendCanSearch(newRadioButtons)
+      setAllFriend(response.data.friends)
     } catch (error) {
       console.log(error);
     }
-  };
-
+  }
+  // load danh sách bạn, set danh sách bạn có thể add vào group
+  const filterFriendToAdd = () => {
+    const filterFriend = allFriend.filter((itemAllFriend) => {
+      return !conver.participants.some((itemConver) => itemConver._id === itemAllFriend.userId)
+    }).map((friend) => {
+      return {
+        id: friend.userId,
+        name: friend.profile.name,
+        avatar: friend.profile.avatar?.url,
+        phone: friend.phone
+      }
+    })
+    setListSearch(filterFriend);
+    setListFriendCanSearch(filterFriend)
+  }
   // Search bạn để add vào group
   const handleSearch = () => {
     if (!textSearch) {
       showToastError("Bạn chưa nhập");
     } else {
       const filteredFriends = listFriendCanSearch.filter((friend) => {
-        // console.log(textSearch)
-        // console.log(friend)
         return (
-          friend.name
-            .toLowerCase()
-            ?.includes(textSearch.toLowerCase()) || friend.phone === textSearch
+          friend.name.toLowerCase()?.includes(textSearch.toLowerCase()) || friend.phone === textSearch
         );
       });
-      // console.log(filteredFriends)
       if (filteredFriends.length === 0) {
         showToastError("Không tìm thấy");
-
       } else {
         const newRadioButtons = [];
         for (const friend of filteredFriends) {
@@ -273,37 +269,39 @@ const MessageSettings = ({ navigation, route }) => {
   //giải tán nhóm
   const handleDeleteGroup = async () => {
     try {
-      setIsLoadingLeaveGroup(true);
+      setIsLoadingRemoveGroup(true);
       const response = await deleteGroup(conver._id);
       if (response) {
         showToastSuccess("Giải tán nhóm thành công");
-        setIsLoadingLeaveGroup(false);
+        setIsLoadingRemoveGroup(false);
         navigation.navigate("ChatComponent");
       }
     } catch (error) {
-      setIsLoadingLeaveGroup(false);
+      setIsLoadingRemoveGroup(false);
       console.error(error);
       showToastError("Giải tán nhóm thất bại");
     }
   };
   //rời nhóm
   const handleLeaveGroup = async () => {
-    try {
-      setIsLoadingLeaveGroup(true);
-      const response = await leaveGroup(conver._id);
-      if (response) {
-        let textMessage = authUser?.profile?.name + ' đã rời khỏi nhóm!';
-        await sendMessage(conver._id, addMessage(textMessage, conver.tag, null), 'sendText')
-        showToastSuccess("Rời nhóm thành công");
-        setIsLoadingLeaveGroup(false);
-        dispatch(setIsGroup())
-        navigation.navigate("ChatComponent");
+    if (idGroupAdmin === authUser._id) {
+      setIsModalMakeAdminToOut(true)
+    } else {
+      try {
+        setIsLoadingLeaveGroup(true);
+        const response = await leaveGroup(conver._id);
+        if (response) {
+          let textMessage = authUser?.profile?.name + ' đã rời khỏi nhóm!';
+          await sendMessage(conver._id, addMessage(textMessage, conver.tag, null), 'sendText')
+          showToastSuccess("Rời nhóm thành công");
+          setIsLoadingLeaveGroup(false);
+          dispatch(setIsGroup())
+          navigation.navigate("ChatComponent");
+        }
+      } catch (error) {
+        console.error(error); setIsLoadingLeaveGroup(false);
+        showToastError("Rời nhóm thất bại");
       }
-    } catch (error) {
-      console.error(error); setIsLoadingLeaveGroup(false);
-      showToastError(
-        "Rời nhóm thất bại"
-      );
     }
   };
   // chọn bạn để add group
@@ -350,7 +348,11 @@ const MessageSettings = ({ navigation, route }) => {
       setIsModeDeleteQTV(!isModeDeleteQTV);
     }
   };
-
+  // Thay đổi admin
+  const toggleModalMakeAdmin = () => {
+    setSelectedAdmin([]);
+    setIsMakeAdmin(!isMakeAdmin);
+  }
   // chọn bạn để làm admin
   const handleFriendSelectionAdmin = (item) => {
     if (selectedAdmin?.includes(item)) {
@@ -376,8 +378,7 @@ const MessageSettings = ({ navigation, route }) => {
     selectedAdmin.map((f) => {
       selectedFr.push(f._id);
       selectedFrName = selectedFrName + f?.profile?.name + ' - ';
-    }
-    )
+    })
     const groupData = {
       members: selectedFr,
       typeChange: type,
@@ -386,29 +387,30 @@ const MessageSettings = ({ navigation, route }) => {
     const rs = await addAdmin(groupData)
     return { rs, selectedFrName };
   }
+  useEffect(() => {
+    if (selectedAdmin.length > 0) {
+      setIsXacNhan(true)
+    } else {
+      setIsXacNhan(false)
+    }
+  }, [selectedAdmin])
+
   // Thêm admin
   const addAdminInGroup = async () => {
     setIsLoadingAddMem(true);
-    if (selectedAdmin.length > 0) {
-      const { rs, selectedFrName } = await handleAddOrDeleteAdmin('add')
-      if (rs) {
-        setSelectedAdmin([]);
-        toggleModalQTV();
-        // getConversationByID(conver.conversation._id);
-        let textMessage = authUser?.profile?.name + ' đã bổ nhiệm ' + selectedFrName + ' làm phó nhóm!!!';
-        await sendMessage(conver._id, addMessage(textMessage, conver.tag, null), 'sendText');
-        dispatch(setIsGroup())
-      } else {
-        toggleModalQTV();
-        setSelectedAdmin([]);
-        console.log("phân quyền admin vào nhóm thất bại");
-      }
-      setIsLoadingAddMem(false);
+    const { rs, selectedFrName } = await handleAddOrDeleteAdmin('add')
+    if (rs) {
+      setSelectedAdmin([]);
+      toggleModalQTV();
+      let textMessage = authUser?.profile?.name + ' đã bổ nhiệm ' + selectedFrName + ' làm phó nhóm!';
+      await sendMessage(conver._id, addMessage(textMessage, conver.tag, null), 'sendText');
+      dispatch(setIsGroup())
     } else {
       toggleModalQTV();
-      setIsLoadingAddMem(false);
-      console.log("Bạn chưa chọn thành viên");
+      setSelectedAdmin([]);
+      showToastError("phân quyền admin vào nhóm thất bại");
     }
+    setIsLoadingAddMem(false);
   };
   // Xóa admin
   const removeAdmin = async () => {
@@ -423,11 +425,38 @@ const MessageSettings = ({ navigation, route }) => {
     } else {
       setIsModeDeleteQTV(false);
       setSelectedAdmin([]);
-      console.log("Xóa quyền admin thất bại");
+      showToastError("Xóa quyền admin thất bại");
     }
     setIsLoadingAddMem(false);
   };
-
+  // Chuyển quyền admin
+  const makeMemberToAdmin = async () => {
+    if (selectedAdmin.length > 1) {
+      showToastError("Chỉ được chọn một thành viên")
+    }
+    else {
+      setIsLoadingAddMem(true);
+      const response = await changeAdmins(conver._id, selectedAdmin[0]._id)
+      if (response) {
+        showToastSuccess("Chuyển quyền trưởng nhóm cho " + selectedAdmin[0].profile.name + " thành công")
+        toggleModalMakeAdmin()
+        let textMessage = authUser?.profile?.name + ' đã chuyển quyền trưởng nhóm cho ' + selectedAdmin[0].profile.name + '.';
+        await sendMessage(conver._id, addMessage(textMessage, conver.tag, null), 'sendText');
+        dispatch(setIsGroup())
+        handleSetAdmin(response.group, false)
+      } else {
+        toggleModalMakeAdmin()
+        showToastError("Chuyển quyền trưởng nhóm thất bại")
+      }
+      setIsLoadingAddMem(false);
+    }
+  }
+  const handleSetAdmin = (group, isAdmin) => {
+    setConver({ ...conver, createBy: group.createBy, admins: group.admins })
+    setIdGroupAdmin(group.createBy._id)
+    setIsGroupAdmin(isAdmin)
+    setListAdmin(group.admins)
+  }
   useEffect(() => {
     const fetchSocket = async () => {
       if (isNewSocket === "add-to-group") {
@@ -495,6 +524,14 @@ const MessageSettings = ({ navigation, route }) => {
           setName(group.name)
         }
       }
+      if (isNewSocket === "member-to-admin") {
+        const group = newSocketData
+        console.log("member-to-admin", group);
+        if (group && group.group.id === conver._id && group.group.createBy._id === authUser._id) {
+          showToastSuccess("Bạn đã trở thành trưởng nhóm")
+          handleSetAdmin(group.group, true)
+        }
+      }
     }
     fetchSocket()
   }, [isNewSocket, newSocketData])
@@ -510,11 +547,7 @@ const MessageSettings = ({ navigation, route }) => {
       >
         <View style={{ padding: 10 }}>
           <Image
-            source={{
-              uri: item.avatar
-                ? item.avatar
-                : "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
-            }}
+            source={{ uri: item.avatar || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}
             style={{ width: 50, height: 50, borderRadius: 25 }}
           />
         </View>
@@ -538,8 +571,7 @@ const MessageSettings = ({ navigation, route }) => {
   );
 
   const handleShowAddMember = () => {
-    fetchFriends()
-    console.log("showFriend");
+    filterFriendToAdd()
     setModalAddMember(true);
   };
 
@@ -607,6 +639,8 @@ const MessageSettings = ({ navigation, route }) => {
     }
     else if (isModeDeleteQTV) {
       removeAdmin()
+    } else if (isMakeAdmin) {
+      makeMemberToAdmin()
     }
   }
 
@@ -616,7 +650,10 @@ const MessageSettings = ({ navigation, route }) => {
         <View style={{ backgroundColor: "white", alignItems: "center", paddingTop: 10, }}       >
           <View style={{ justifyContent: "center" }}>
             <Pressable onPress={openModal}>
-              <Image source={{ uri: conver.avatar }} style={{ width: 100, height: 100, borderRadius: 50, borderWidth: 2, borderColor: "#ccc", }} />
+              <Image
+                source={conver.avatar === "https://res.cloudinary.com/dq3pxd9eq/image/upload/group_avatar.jpg" ? avatarGr : { uri: conver.avatar }}
+                style={{ width: 100, height: 100, borderRadius: 50, borderWidth: 2, borderColor: "#ccc", }}
+              />
             </Pressable>
           </View>
           <View style={{ display: 'flex', justifyContent: "center", alignItems: "center", paddingTop: 10, }}     >
@@ -653,7 +690,10 @@ const MessageSettings = ({ navigation, route }) => {
             )}
           </View>
           {conver.tag === 'friend' ? (<View>
-            <Pressable onPress={() => navigation.navigate("FriendProfile", { user: conver })}><Text>Xem trang cá nhân</Text></Pressable>
+            <Pressable style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }} onPress={() => navigation.navigate("FriendProfile", { user: conver })}>
+              <Ionicons name="person-circle-outline" size={26} color='black'></Ionicons>
+              <Text style={{ fontSize: 16, marginLeft: 4, fontWeight: '500' }}>Xem trang cá nhân</Text>
+            </Pressable>
           </View>) : (
             <View style={{ flexDirection: "row", alignItems: "center", width: "90%", borderWidth: 1, borderColor: "orange", borderRadius: 20, marginTop: 20, marginHorizontal: 10, padding: 10, justifyContent: "center", }} >
               <Text>{"Quản Trị Viên :"}</Text>
@@ -678,7 +718,7 @@ const MessageSettings = ({ navigation, route }) => {
               <View style={{ flexDirection: "row", alignItems: "center", padding: 10, backgroundColor: "#eee", borderRadius: 10, marginBottom: 5, }}>
                 <View style={{ flexDirection: "row", alignItems: "center", width: '90%' }}>
                   <Image
-                    source={{ uri: member.profile?.avatar?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}
+                    source={{ uri: member.profile?.avatar?.url || member.profile?.avatar || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}
                     style={{ width: 50, height: 50, borderRadius: 25, borderWidth: 1, borderColor: "black", }} />
                   <View style={{ width: '80%' }}>
                     <View style={{ flexDirection: 'row' }}>
@@ -686,25 +726,25 @@ const MessageSettings = ({ navigation, route }) => {
                       {member._id === authUser._id ? <Text style={{ marginLeft: 5, color: 'gray', fontWeight: '600' }}>(Bạn)</Text> : null}
                     </View>
                     <View style={{ paddingTop: 5, marginLeft: 5 }}>
-                      {conver.createBy?._id === member._id ? (
+                      {conver.tag === "group" &&
+                        conver.createBy?._id === member._id ? (
                         <View style={{ flexDirection: 'row', width: '42%', justifyContent: 'space-between' }}>
                           <FontAwesome5 name="key" size={16} color="#ffcd03" />
                           <Text style={{ color: 'gray' }}>Trưởng nhóm</Text>
                         </View>
                       ) : (
                         <View>
-                          {
-                            listAdmin?.includes(member._id) && (
-                              // onPress={isGroupAdmin ? handleDeleteGroup : handleLeaveGroup}
-                              <View style={{ flexDirection: 'row', width: '35%', justifyContent: 'space-between' }}>
-                                <Pressable
-                                  onPress={isGroupAdmin ? () => { toggleModalXoa() }
-                                    : null}>
-                                  <FontAwesome5 name="key" size={16} color="black" regular={false} />
-                                </Pressable>
-                                <Text style={{ color: 'gray' }}>Phó nhóm</Text>
-                              </View>
-                            )}</View>
+                          {listAdmin?.includes(member._id) && (
+                            // onPress={isGroupAdmin ? handleDeleteGroup : handleLeaveGroup}
+                            <View style={{ flexDirection: 'row', width: '35%', justifyContent: 'space-between' }}>
+                              <Pressable
+                                onPress={isGroupAdmin ? () => { toggleModalXoa() }
+                                  : null}>
+                                <FontAwesome5 name="key" size={16} color="black" regular={false} />
+                              </Pressable>
+                              <Text style={{ color: 'gray' }}>Phó nhóm</Text>
+                            </View>
+                          )}</View>
                       )}
                     </View>
                   </View>
@@ -712,13 +752,12 @@ const MessageSettings = ({ navigation, route }) => {
                 <View style={{ flexDirection: "row", width: '10%' }}>
                   {(isGroupAdmin || isPhoAdmin) && (member._id !== authUser._id) && (member._id !== idGroupAdmin && (
                     <View >
-                      {(isModeQTV && !listAdmin?.includes(member?._id)) ? (
+                      {(isModeQTV && !listAdmin?.includes(member?._id)) || (isModeDeleteQTV && listAdmin?.includes(member?._id)) || (isMakeAdmin) ? (
                         <Pressable onPress={() => { handleFriendSelectionAdmin(member) }}>
                           <View style={{ padding: 13, width: 30, height: 30, backgroundColor: '#F3F5F6', borderRadius: 50, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#37333A' }}>
                             {isAdminSelected(member) ? (
                               <Pressable style={{ width: 30, height: 30, backgroundColor: '#0091FF', borderRadius: 50, alignItems: 'center', justifyContent: 'center' }}
-                                onPress={() => handleDeleteAdminSelected(member)}
-                              >
+                                onPress={() => handleDeleteAdminSelected(member)}>
                                 <Ionicons color='white' size={27} name="checkmark-circle" />
                               </Pressable>
                             ) : (
@@ -726,24 +765,9 @@ const MessageSettings = ({ navigation, route }) => {
                             )}
                           </View>
                         </Pressable>
-                      ) : (isModeDeleteQTV && listAdmin?.includes(member?._id)) ? (
-                        <Pressable onPress={() => { handleFriendSelectionAdmin(member) }}>
-                          <View style={{ padding: 13, width: 30, height: 30, backgroundColor: '#F3F5F6', borderRadius: 50, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#37333A' }}>
-                            {isAdminSelected(member) ? (
-                              <Pressable style={{ width: 30, height: 30, backgroundColor: '#0091FF', borderRadius: 50, alignItems: 'center', justifyContent: 'center' }}
-                                onPress={() => handleDeleteAdminSelected(member)}
-                              >
-                                <Ionicons color='white' size={27} name="checkmark-circle" />
-                              </Pressable>
-                            ) : (
-                              <View></View>
-                            )}
-                          </View>
-                        </Pressable>
-                      ) :
-                        (<Pressable onPress={() => { setMemberSelected(member); toggleModal(); }}>
-                          <Ionicons name="person-remove" size={20} color="#ff1637" />
-                        </Pressable>)
+                      ) : (<Pressable onPress={() => { setMemberSelected(member); toggleModal(); }}>
+                        <Ionicons name="person-remove" size={20} color="#ff1637" />
+                      </Pressable>)
                       }
                     </View>
                   )
@@ -766,20 +790,22 @@ const MessageSettings = ({ navigation, route }) => {
             <View>
               {isGroupAdmin && (
                 <View>
-                  {isModeQTV || isModeDeleteQTV ? (
+                  {isModeQTV || isModeDeleteQTV || isMakeAdmin ? (
                     <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', marginTop: 5 }}>
                       <Pressable style={{ justifyContent: "center", alignItems: 'center', width: 80, height: 40, borderRadius: 10, backgroundColor: '#abe9fa' }}
-                        onPress={() => { setIsModeQTV(false);; setIsModeDeleteQTV(false); }}>
+                        onPress={() => { setIsModeQTV(false);; setIsModeDeleteQTV(false); setIsMakeAdmin(false) }}>
                         <Text style={{ color: "gray", fontSize: 16, fontWeight: 'bold' }}> Hủy </Text>
                       </Pressable>
-                      <Pressable style={{ justifyContent: "center", alignItems: 'center', width: 90, height: 40, borderRadius: 10, backgroundColor: '#abe9fa' }}
-                        onPress={handlePhanQuyen}>
-                        {isLoadingAddMem ? (
-                          <ActivityIndicator color="white" size="large" />
-                        ) : (
-                          <Text style={{ color: "gray", fontSize: 16, fontWeight: 'bold' }}>Xác nhận</Text>
-                        )}
-                      </Pressable>
+                      {isXacNhan &&
+                        <Pressable style={{ justifyContent: "center", alignItems: 'center', width: 90, height: 40, borderRadius: 10, backgroundColor: '#abe9fa' }}
+                          onPress={handlePhanQuyen}>
+                          {isLoadingAddMem ? (
+                            <ActivityIndicator color="white" size="large" />
+                          ) : (
+                            <Text style={{ color: "gray", fontSize: 16, fontWeight: 'bold' }}>Xác nhận</Text>
+                          )}
+                        </Pressable>
+                      }
                     </View>) : (
                     <View>
                       <Pressable style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 10, paddingHorizontal: 20, }}
@@ -788,16 +814,27 @@ const MessageSettings = ({ navigation, route }) => {
                       <Pressable style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 10, paddingHorizontal: 20, }}
                         onPress={toggleModalDeleteQTV} >
                         <Text style={{ color: "gray", marginLeft: 10, fontSize: 16, fontWeight: 'bold' }}>Xoá bổ nhiệm phó nhóm</Text></Pressable>
+                      <Pressable style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 10, paddingHorizontal: 20, }}
+                        onPress={toggleModalMakeAdmin} >
+                        <Text style={{ color: "gray", marginLeft: 10, fontSize: 16, fontWeight: 'bold' }}>Chuyển quyền trưởng nhóm</Text></Pressable>
                     </View>)}
                 </View>
               )}
               <Pressable style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 10, paddingHorizontal: 20, }}
-                onPress={isGroupAdmin ? handleDeleteGroup : handleLeaveGroup}>
+                onPress={handleLeaveGroup}>
                 {isLoadingLeaveGroup ? (
-                  <ActivityIndicator color="blue" size="large" />
+                  <ActivityIndicator color="black" size="small" />
+                ) : (
+                  <Text style={{ color: "red", marginLeft: 10, fontSize: 16, fontWeight: 'bold' }}>Rời nhóm</Text>
+                )}
+              </Pressable>
+              <Pressable style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 10, paddingHorizontal: 20, }}
+                onPress={handleDeleteGroup}>
+                {isLoadingRemoveGroup ? (
+                  <ActivityIndicator color="black" size="small" />
                 ) : (
                   <Text style={{ color: "red", marginLeft: 10, fontSize: 16, fontWeight: 'bold' }}>
-                    {isGroupAdmin ? "Giải tán nhóm" : "Rời nhóm"}
+                    {isGroupAdmin && "Giải tán nhóm"}
                   </Text>
                 )}
               </Pressable>
@@ -922,6 +959,24 @@ const MessageSettings = ({ navigation, route }) => {
                 )}
               </Pressable>
             </View>
+          </View>
+        </View>
+      </Modal>
+      {/* Modal thông báo chuyển quyền trưởng nhóm trước khi rời nhóm */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isModalMakeAdminToOut}
+        onRequestClose={() => setIsModalMakeAdminToOut(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalHeaderText}>
+              Bạn đang là trưởng nhóm. Hãy chuyển quyền trưởng nhóm trước khi rời!
+            </Text>
+            <Pressable style={{ alignItems: 'center' }} onPress={() => setIsModalMakeAdminToOut(false)}>
+              <Text style={styles.modalButton}>OK</Text>
+            </Pressable>
           </View>
         </View>
       </Modal>

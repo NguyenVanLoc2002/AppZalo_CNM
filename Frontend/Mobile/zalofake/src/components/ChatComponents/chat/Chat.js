@@ -16,22 +16,18 @@ import { useSocketContext } from "../../../contexts/SocketContext";
 import useConversation from "../../../hooks/useConversation";
 import useGroup from "../../../hooks/useGroup";
 import useMessage from '../../../hooks/useMessage'
-import useCreateGroup from "../../../hooks/useCreateGroup";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 
 function Chat({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
   const { conversations, getConversations } = useConversation();
   const { groups, getGroups } = useGroup();
   const [listFriends, setListFriends] = useState([]);
-  const [isLoad, SetIsLoad] = useState(false);
   const { authUser } = useAuthContext();
-  const { getUserById } = useCreateGroup()
   const { isNewSocket, newSocketData, setNewSocketData } = useSocketContext();
-  const { showToastSuccess, handleGetTimeInChat } = useMessage();
-  var isGroup = useSelector(state => state.isGroup.isGroup);
-  const dispatch = useDispatch();
-
+  const { showToastSuccess, handleGetTimeInChat, setDataChat, sortTime } = useMessage();
+  var isGroupRedux = useSelector(state => state.isGroup.isGroup);
+  
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -104,10 +100,10 @@ function Chat({ navigation }) {
     });
 
     const listGroup = groups.map((group) => {
-      return addDataToGroup(group)
+      return addDataToGroup(group);
     });
     listChat.push(...listGroup);
-    fetchDataConver(listChat)
+    fetchDataConver(listChat);
   };
   const addDataToGroup = (group) => {
     return {
@@ -115,13 +111,12 @@ function Chat({ navigation }) {
       conversation: group.conversation,
       name: group.groupName,
       avatar: group.avatar.url,
-      background: group.avatar.url,
       lastMessage: group.lastMessage || group.conversation.lastMessage,
       tag: group.conversation.tag,
       createBy: group.createBy,
       createAt: group?.createAt,
     };
-  }
+  };
   useEffect(() => {
     fetchDataChat();
   }, [conversations, groups]);
@@ -131,9 +126,7 @@ function Chat({ navigation }) {
     let int = listChat.length;
 
     for (let index = 0; index < int; index++) {
-
       const conver = listChat[index];
-
       if (conver.lastMessage) {
         const dataChat = await setDataChat(conver.lastMessage, false);
         const conversationNew = {
@@ -142,46 +135,12 @@ function Chat({ navigation }) {
           time: handleGetTimeInChat(conver?.lastMessage?.timestamp)
         };
         data.push(conversationNew);
-
       }
-
     };
     sortTime(data)
     setListFriends(data);
   };
 
-  const sortTime = (data) => {
-    data.sort((a, b) => {
-      const timeA = a.chat.lastMessage.timestamp || a.createAt;
-      const timeB = b.chat.lastMessage.timestamp || b.createAt;
-      return timeB.localeCompare(timeA);
-    });
-    return data;
-  }
-  const setDataChat = async (conver, isDelete) => {
-    let dataChat = '';
-    const getUser = await getUserById(conver.senderId)
-    if (authUser.profile.name === getUser.user.profile.name) {
-      dataChat = "Bạn"
-    } else {
-      dataChat = getUser.user.profile.name
-    }
-    if (isDelete) {
-      dataChat = dataChat + ": đã thu hồi tin nhắn";
-    }
-    else {
-      if (conver.contents[0].type === "text") {
-        dataChat = dataChat + ': ' + conver.contents[0].data;
-      } else if (conver.contents[0].type === "image") {
-        dataChat = dataChat + ': [Hình ảnh]';
-      } else if (conver.contents[0].type === "video"){
-        dataChat = dataChat + ': [Video]';
-      }else{
-        dataChat = dataChat + ': [File]';
-      }
-    }
-    return dataChat;
-  }
   const updatedListFriends = async (conversationId, message, isDelete) => {
     const updatedListFriends = await Promise.all(listFriends.map(async (item) => {
       if (item.chat.conversation._id === conversationId) {
@@ -201,7 +160,6 @@ function Chat({ navigation }) {
     return updatedListFriends;
   }
   useEffect(() => {
-
     const fetchDataListFriend = async () => {
       try {
         getConversations();
@@ -210,10 +168,10 @@ function Chat({ navigation }) {
         console.log("getFriendError:", error);
       }
     };
-    if (!isLoad) {
-      fetchDataListFriend();
-      SetIsLoad(true);
-    }
+    fetchDataListFriend();
+  }, [isGroupRedux])
+
+  useEffect(() => {
     const fetchSocket = async () => {
       if (isNewSocket === "new_message") {
         const message = newSocketData;
@@ -221,7 +179,9 @@ function Chat({ navigation }) {
           // console.log("new_message:", message);
           const update = await updatedListFriends(message.conversationId, message.retrunMessage, false)
           const sortUpdate = sortTime(update);
-          setListFriends(sortUpdate)
+          setListFriends(sortUpdate);
+          setIsNewSocket(null);
+          setNewSocketData(null);
         }
       }
       if (isNewSocket === "delete_message") {
@@ -232,12 +192,11 @@ function Chat({ navigation }) {
               if (item.chat.conversation._id === conversationId) {
 
               }
-            })
+            });
           } else {
             // console.log("delete_message:", chatRemove);
             const update = await updatedListFriends(conversationId, chatRemove, true)
-            const sortUpdate = sortTime(update);
-            setListFriends(sortUpdate)
+            setListFriends(update)
           }
         }
       }
@@ -247,7 +206,7 @@ function Chat({ navigation }) {
           // console.log("add-to-group", data)
           if (!listFriends.find(item => item.chat._id === data.group._id)) {
             const group = data.group
-            if (data.addMembers.includes(authUser._id)) {
+            if (data.addMembers.includes(authUser._id) && group.createBy._id !== authUser._id) {
               console.log(`Bạn đã tham gia nhóm ${group.groupName}`);
               showToastSuccess(`Bạn đã tham gia nhóm ${group.groupName}`)
               const addGroup = addDataToGroup(group)
@@ -293,16 +252,16 @@ function Chat({ navigation }) {
       }
       if (isNewSocket === "update-group") {
         const group = newSocketData
-        if(group && group.avatar){
+        if (group && group.avatar) {
           // console.log("update-group", group);
           const groupUpdate = listFriends.map((item) => {
-            if(item.chat._id === group.id) {
+            if (item.chat._id === group.id) {
               return {
                 ...item,
                 chat: {
                   ...item.chat,
-                  name : group.name,
-                  avatar : group.avatar
+                  name: group.name,
+                  avatar: group.avatar
                 }
               }
             }
@@ -314,7 +273,6 @@ function Chat({ navigation }) {
     }
 
     fetchSocket()
-    // fetchDataListFriend()
   }, [isNewSocket, newSocketData]);
 
   const handleChatItemPress = (item) => {
@@ -326,7 +284,7 @@ function Chat({ navigation }) {
       <FlatList
         data={listFriends}
         renderItem={({ item }) => (
-          <Pressable onPress={() => handleChatItemPress(item)} >
+          <Pressable onPress={() => handleChatItemPress(item)}>
             <ChatItem item={item} />
           </Pressable>
         )}
@@ -449,7 +407,6 @@ function Chat({ navigation }) {
           </View>
         </Pressable>
       </Modal>
-
     </SafeAreaView>
   );
 }
@@ -463,9 +420,8 @@ const styles = StyleSheet.create({
   modalButtonContainer1: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 20,
-
   },
   headerIcon: {
     padding: 10,
@@ -484,10 +440,10 @@ const styles = StyleSheet.create({
     marginLeft: 40,
   },
   button: {
-    backgroundColor: '#fff'
+    backgroundColor: "#fff",
   },
   pressedButton: {
-    backgroundColor: '#33c4c2'
+    backgroundColor: "#33c4c2",
   },
   modalContainer: {
     flex: 1,
@@ -500,7 +456,7 @@ const styles = StyleSheet.create({
     width: 300,
     padding: 20,
     borderRadius: 10,
-    display: 'flex',
+    display: "flex",
     flexDirection: "column",
   },
   modalHeaderText: {
@@ -514,7 +470,7 @@ const styles = StyleSheet.create({
   modalButtonContainer: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginTop: 20
+    marginTop: 20,
   },
   modalButton: {
     fontWeight: "bold",
@@ -522,9 +478,9 @@ const styles = StyleSheet.create({
     color: "#0091FF",
   },
   pressCol: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row'
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "row",
   },
 });
 

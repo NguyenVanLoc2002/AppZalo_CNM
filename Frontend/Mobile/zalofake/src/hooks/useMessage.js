@@ -4,9 +4,12 @@ import { Video } from 'expo-av';
 import Toast from "react-native-toast-message";
 import moment from 'moment-timezone';
 import axiosInstance from '../api/axiosInstance';
-
+import useGroup from './useGroup';
+import { useAuthContext } from '../contexts/AuthContext';
 
 const useMessage = () => {
+  const { getUserById } = useGroup()
+  const { authUser } = useAuthContext();
 
   const showToastSuccess = (notice) => {
     Toast.show({
@@ -166,7 +169,38 @@ const useMessage = () => {
       return false;
     }
   }
-
+  const setDataChat = async (conver, isDelete) => {
+    let dataChat = '';
+    const getUser = await getUserById(conver.senderId)
+    if (authUser.profile.name === getUser.user.profile.name) {
+      dataChat = "Bạn"
+    } else {
+      dataChat = getUser.user.profile.name
+    }
+    if (isDelete) {
+      dataChat = dataChat + ": đã thu hồi tin nhắn";
+    }
+    else {
+      if (conver.contents[0].type === "text") {
+        dataChat = dataChat + ': ' + conver.contents[0].data;
+      } else if (conver.contents[0].type === "image") {
+        dataChat = dataChat + ': [Hình ảnh]';
+      } else if (conver.contents[0].type === "video"){
+        dataChat = dataChat + ': [Video]';
+      } else {
+        dataChat = dataChat + ': [File]';
+      }
+    }
+    return dataChat;
+  }
+  const sortTime = (data) => {
+    data.sort((a, b) => {
+      const timeA = a?.chat?.lastMessage?.timestamp || a.lastMessage.timestamp 
+      const timeB = b?.chat?.lastMessage?.timestamp || b.lastMessage.timestamp 
+      return timeB.localeCompare(timeA);
+    });
+    return data;
+  }
   return {
     renderMessageContent,
     showToastError,
@@ -175,7 +209,9 @@ const useMessage = () => {
     handleGetTimeInChat,
     handleGetTimeInMessage,
     addMessage,
-    sendMessage
+    sendMessage,
+    setDataChat,
+    sortTime
   };
 };
 

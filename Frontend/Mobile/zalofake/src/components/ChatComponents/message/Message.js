@@ -8,7 +8,7 @@ import {
   StyleSheet,
   ScrollView, ActivityIndicator, Modal,
   Image,
-  LogBox,Linking 
+  Linking,
 } from "react-native";
 import { Video } from 'expo-av';
 import { Ionicons } from "@expo/vector-icons";
@@ -17,29 +17,26 @@ import useMessage from '../../../hooks/useMessage'
 import * as ImagePicker from "expo-image-picker";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useSocketContext } from "../../../contexts/SocketContext"
-import useCreateGroup from "../../../hooks/useCreateGroup";
+import useGroup from "../../../hooks/useGroup";
 import { useAuthContext } from "../../../contexts/AuthContext";
 import * as DocumentPicker from 'expo-document-picker';
 import useConversation from "../../../hooks/useConversation";
 import { useSelector, useDispatch } from "react-redux";
 import { setIsGroup } from "../../../redux/stateCreateGroupSlice";
+import avatarGroup from '../../../../assets/avatarGroup.png'
 
 const Message = ({ navigation, route }) => {
   const { chatItem } = route.params;
   const [conver, setConver] = useState(chatItem)
-  const { getUserById, getAllGroup } = useCreateGroup()
+  const { getGroups, getUserById } = useGroup()
   const { authUser } = useAuthContext()
-  //nhi  
   const [textMessage, setTextMessage] = useState(null)
   const [isColorSend, setIsColorSend] = useState(false)
   const { isNewSocket, newSocketData, setNewSocketData } = useSocketContext();
-  const { getConverHaveParticipants } = useConversation();
+  const { getConversationByID } = useConversation();
   const dispatch = useDispatch();
   var isGroupRedux = useSelector(state => state.isGroup.isGroup);
-  // console.log("isGroup", isGroupRedux);
   const [modalImage, setModalImage] = useState(false);
-
-  //truc
   const [chats, setChats] = useState([]);
   const scrollViewRef = useRef();
   const [contentHeight, setContentHeight] = useState(0);
@@ -56,7 +53,7 @@ const Message = ({ navigation, route }) => {
   const [isLoadThuHoi, setIsLoadThuHoi] = useState(false)
   const [isLoadXoa, setIsLoadXoa] = useState(false)
   const [replyChat, setReplyChat] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [avatarGr] = useState(avatarGroup)
 
   useEffect(() => {
     navigation.setOptions({
@@ -89,14 +86,15 @@ const Message = ({ navigation, route }) => {
         </View>
       ),
       headerTitle: () => (
-        <View style={{ flexDirection: "row", alignItems: "center", width: '55%', marginRight: 200}}>
-          {conver.tag === 'group' ? (
+        <View style={{ flexDirection: "row", alignItems: "center", width: '55%', marginRight: 200 }}>
+          {conver.tag === 'group' && (
             <View style={{ width: '30%' }}>
               <Image
-                source={{ uri: conver.avatar }}
+                source={conver.avatar === "https://res.cloudinary.com/dq3pxd9eq/image/upload/group_avatar.jpg" ? avatarGr : { uri: conver.avatar }}
                 style={{ width: 45, height: 40, borderRadius: 25 }}
-              /></View>
-          ) : (<View></View>)}
+              />
+            </View>
+          )}
           <Text style={{ fontSize: 19, color: "white", fontWeight: 'bold' }}>{conver.name}</Text>
         </View>
       ),
@@ -118,16 +116,16 @@ const Message = ({ navigation, route }) => {
   const toggleModalFriend = () => {
     setIsModalFriendVisible(!isModalFriendVisible);
   };
+
   const fetchConversation = async () => {
     if (chatItem.conversation !== null) {
-      const fetchConver = await getConverHaveParticipants(chatItem.conversation?._id, conver, true)
-      setConver(fetchConver)
+      const fetchConver = await getConversationByID(chatItem.conversation?._id)
+      setConver({ ...conver, participants: fetchConver.participants, messages: fetchConver.messages })
     }
-
   }
   useEffect(() => {
     fetchConversation()
-  }, [chatItem, isGroupRedux])
+  }, [isGroupRedux])
 
   useEffect(() => {
     if (isLoad === true) {
@@ -194,7 +192,7 @@ const Message = ({ navigation, route }) => {
       console.log("FetchGroupError: ", error);
     }
     try {
-      const allGr = await getAllGroup();
+      const allGr = await getGroups();
       const newGroup = await Promise.all(allGr.map(async (group) => {
         return {
           _id: group._id,
@@ -215,10 +213,7 @@ const Message = ({ navigation, route }) => {
       scrollViewRef.current.scrollToEnd({ animated: true });
     }
   }
-  // useEffect(() => {
-  //   fetchChats();
-  // }, [isGroupRedux])
-  // console.log("cover", JSON.stringify(conver));
+
   useEffect(() => {
     const fetchSocket = async () => {
 
@@ -236,6 +231,7 @@ const Message = ({ navigation, route }) => {
         }
       }
       if (isNewSocket === "delete_message") {
+        console.log("delete");
         const { conversationId, isDeleted } = newSocketData;
         console.log(("conversationId", conversationId));
         console.log("isDeleted", isDeleted);
@@ -278,6 +274,7 @@ const Message = ({ navigation, route }) => {
           dispatch(setIsGroup())
         }
       }
+
     }
     fetchSocket()
   }, [isNewSocket, newSocketData]);
@@ -398,7 +395,6 @@ const Message = ({ navigation, route }) => {
     handleSendMessage();
   };
 
-  //nhi
   const appendData = (formData, asset) => {
     const fileName = asset.uri.split('/').pop();
     let type = null
@@ -446,6 +442,7 @@ const Message = ({ navigation, route }) => {
         setChat(response.data.data.message)
         setReplyChat(null);
         setIsLoadMess(false)
+        dispatch(setIsGroup())
         scrollToEnd();
       } else {
         console.log(`${typeSend} fail`);
@@ -460,7 +457,6 @@ const Message = ({ navigation, route }) => {
     try {
       const file = await DocumentPicker.getDocumentAsync();
       if (file.canceled === false) {
-        setSelectedFile(file);
         handleSendFile(file, 'sendFiles')
       }
     } catch (error) {
@@ -483,7 +479,6 @@ const Message = ({ navigation, route }) => {
     }
   }
   const handleSendFile = async (file, typeSend) => {
-    // setIsLoadMess(true)
     const formData = new FormData()
     const formDataVideo = new FormData()
     let isVideo = false
@@ -585,7 +580,8 @@ const Message = ({ navigation, route }) => {
                             style={{ width: 35, height: 35, justifyContent: "center", alignItems: "center", marginLeft: 10, marginRight: 10 }} >
                             <Image
                               source={{ uri: message.sender.profile.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}
-                              style={{ width: 35, height: 35, borderRadius: 25 }} />
+                              style={{ width: 35, height: 35, borderRadius: 25 }}
+                            />
                           </View>)}
                         <View style={[
                           handleCheckIsSend(message) ? styles.styleSender : styles.styleRecive
@@ -613,36 +609,29 @@ const Message = ({ navigation, route }) => {
                                           {message?.nameReply}
                                         </Text>
                                         <Text style={{ paddingLeft: 10, fontSize: 13, color: '#000' }}>
-                                          [{content.type}]
+                                          [{content.type === 'image' ? 'Hình ảnh' : content.type}]
                                         </Text>
                                       </View>
                                     </View>
                                   )}
                                 </View>
                               ))}
-
                             </View>)
                           }
                           {message.chat.contents.map((content, i) => (
                             <Pressable key={i}
                               onPress={() => handlePressIn(message)}>
-
                               <View>
                                 {renderMessageContent(content)}
-                                {/* {console.log(content)} */}
                                 <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 5 }}><Text style={{ fontSize: 14 }}>{handleGetTimeInMessage(message.chat.timestamp)}</Text></View>
                               </View>
                             </Pressable>
                           ))}
                         </View>
-
                       </View>
                     )
                   }
                 </View>
-
-
-
               ))) : (<View><Text style={{ fontSize: 16, fontWeight: '600', textAlign: 'center', paddingVertical: 10 }}>Chưa có tin nhắn nào!</Text></View>)}
 
           </View>
@@ -652,19 +641,21 @@ const Message = ({ navigation, route }) => {
         {replyChat === null ?
           (<Text></Text>) :
           (
-            <View style={{ backgroundColor: '#f5c4f2', marginLeft: 50, marginTop: 10 }}>
-              <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ paddingLeft: 15, fontSize: 13, color: '#000' }}>
-                  Trả lời: <Text style={{ paddingLeft: 15, fontSize: 12, color: 'gray' }}>{replyChat?.sender?.name} </Text>
-                </Text>
-                <Pressable onPress={() => { setReplyChat(null) }} style={{ marginRight: 20 }}><Text>Hủy</Text></Pressable>
-              </View>
-              <View
-              >{replyChat.chat.contents.map((content, i) => (
-                <View key={i} >
-                  {renderMessageContentReply(content)}
+            <View style={{ backgroundColor: 'white', padding: 10 }}>
+              <View style={{ borderLeftWidth: 2, marginLeft: 10 }}>
+                <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <Text style={{ paddingLeft: 15, fontSize: 14, color: '#000' }}>
+                    Trả lời: <Text style={{ paddingLeft: 15, fontSize: 14, color: 'gray', fontWeight: 'bold' }}>{replyChat?.sender?.profile.name} </Text>
+                  </Text>
+                  <Pressable onPress={() => { setReplyChat(null) }} style={{ marginRight: 20 }}><Ionicons name="close" size={30} color="gray" /></Pressable>
                 </View>
-              ))}</View>
+                <View>
+                  {replyChat.chat.contents.map((content, i) => (
+                    <View key={i} >
+                      {renderMessageContentReply(content)}
+                    </View>
+                  ))}</View>
+              </View>
             </View>
           )}
       </View>
@@ -693,6 +684,7 @@ const Message = ({ navigation, route }) => {
               fontSize: 17
             }}
             placeholder="Tin nhắn"
+            placeholderTextColor="gray"
           />
         </View>
 
@@ -827,7 +819,7 @@ const Message = ({ navigation, route }) => {
                     <Text style={styles.modalButton}>Xem video</Text>
                   </Pressable>
                 )}
-                {
+              {
                 messageSelected?.chat?.contents[0].type === 'file'
                 && (
                   <Pressable style={styles.pressCol} onPress={handleXemFile}>

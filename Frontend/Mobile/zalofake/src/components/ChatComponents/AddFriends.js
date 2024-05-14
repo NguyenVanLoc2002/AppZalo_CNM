@@ -6,6 +6,7 @@ import {
   TextInput,
   Pressable,
   FlatList,
+  ActivityIndicator
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
@@ -16,9 +17,6 @@ const AddFriends = () => {
   const { authUser, reloadAuthUser } = useAuthContext();
   const {
     friends,
-    recommendedFriends,
-    loading,
-    setLoading,
     getAllFriends,
     getFriendByPhone,
     addFriend,
@@ -32,6 +30,7 @@ const AddFriends = () => {
   const [phone, setPhone] = useState("");
   const [searchedUser, setSearchedUser] = useState(null);
   const [sentRequest, setSentRequest] = useState(false);
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     const fetchFriends = async () => {
@@ -71,20 +70,24 @@ const AddFriends = () => {
   };
 
   const handleAddFriend = async (friend) => {
+    setIsLoading(true)
     try {
       await addFriend(friend.phone);
       Toast.show({
         text1: "Đã gửi lời mời kết bạn",
         type: "success",
       });
+      setIsLoading(false)
       setSentRequest(true);
       reloadAuthUser();
     } catch (error) {
       console.log(error);
       Toast.show("Gửi lời mời không thành công!");
+      setIsLoading(false)
     }
   };
   const handleCancelFriendRequest = async (friend) => {
+    setIsLoading(true)
     try {
       await cancelFriendRequest(friend.phone);
       Toast.show({
@@ -92,10 +95,12 @@ const AddFriends = () => {
         type: "success",
       });
       setSentRequest(true);
+      setIsLoading(false)
       reloadAuthUser();
     } catch (error) {
       console.log(error);
       Toast.show("Hủy kết bạn không thành công!");
+      setIsLoading(false)
     }
   };
 
@@ -149,82 +154,48 @@ const AddFriends = () => {
 
     return (
       <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          padding: 10,
-          borderBottomWidth: 1,
-        }}
-      >
-        <Image
-          source={{
-            uri:
-              item?.avatar ||
-              "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
-          }}
-          style={{ width: 50, height: 50, borderRadius: 25 }}
-        />
+        style={{ flexDirection: "row", alignItems: "center", padding: 10, borderBottomWidth: 1, }}>
+        <Image source={{ uri: item?.avatar || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png", }}
+          style={{ width: 50, height: 50, borderRadius: 25 }} />
         <Text style={{ marginLeft: 10 }}>{item.profile.name}</Text>
         {isFriend ? (
           <Pressable
             onPress={() => handleUnFriend(item)}
-            style={{
-              marginLeft: "auto",
-              paddingVertical: 10,
-              paddingHorizontal: 20,
-              backgroundColor: "red",
-            }}
-          >
+            style={{ marginLeft: "auto", paddingVertical: 10, paddingHorizontal: 20, backgroundColor: "red", }}>
             <Text style={{ color: "white" }}>Hủy kết bạn</Text>
           </Pressable>
         ) : isSent ? (
           <Pressable
             onPress={() => handleCancelFriendRequest(item)}
-            style={{
-              marginLeft: "auto",
-              paddingVertical: 10,
-              paddingHorizontal: 20,
-              backgroundColor: "orange",
-            }}
-          >
-            <Text style={{ color: "white" }}>Hủy lời mời</Text>
+            style={{ marginLeft: "auto", paddingVertical: 10, paddingHorizontal: 20, backgroundColor: "orange", }}>
+            {isLoading ? (
+              <ActivityIndicator color="black" size="small" />
+            ) : (
+              <Text style={{ color: "white" }}>Hủy lời mời</Text>
+            )}
           </Pressable>
         ) : isReceived ? (
           <View style={{ flexDirection: "row", marginLeft: "auto" }}>
             <Pressable
               onPress={() => handleAcceptFriend(item)}
-              style={{
-                marginLeft: "auto",
-                paddingVertical: 10,
-                paddingHorizontal: 20,
-                backgroundColor: "green",
-              }}
-            >
+              style={{ marginLeft: "auto", paddingVertical: 10, paddingHorizontal: 20, backgroundColor: "green", }}>
               <Text style={{ color: "green" }}>Chấp nhận</Text>
             </Pressable>
             <Pressable
               onPress={() => handleRejectFriend(item)}
-              style={{
-                marginLeft: "auto",
-                paddingVertical: 10,
-                paddingHorizontal: 20,
-                backgroundColor: "yellow",
-              }}
-            >
+              style={{ marginLeft: "auto", paddingVertical: 10, paddingHorizontal: 20, backgroundColor: "yellow", }}>
               <Text style={{ color: "white" }}>Từ chối</Text>
             </Pressable>
           </View>
         ) : (
           <Pressable
             onPress={() => handleAddFriend(item)}
-            style={{
-              marginLeft: "auto",
-              paddingVertical: 10,
-              paddingHorizontal: 20,
-              backgroundColor: "green",
-            }}
-          >
-            <Text style={{ color: "white" }}>Kết bạn</Text>
+            style={{ marginLeft: "auto", paddingVertical: 10, paddingHorizontal: 20, backgroundColor: "green", }}>
+            {isLoading ? (
+              <ActivityIndicator color="black" size="small" />
+            ) : (
+              <Text style={{ color: "white" }}>Kết bạn</Text>
+            )}
           </Pressable>
         )}
       </View>
@@ -233,38 +204,15 @@ const AddFriends = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#E5E9EB" }}>
-      <View
-        style={{
-          height: 60,
-          backgroundColor: "white",
-          marginTop: 2,
-          flexDirection: "row",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <TextInput
-          style={{
-            height: 40,
-            width: "80%",
-            borderRadius: 10,
-            color: "black",
-            backgroundColor: "#F2F2F2",
-            paddingStart: 20,
-          }}
+      <View style={{ height: 60, backgroundColor: "white", marginTop: 2, flexDirection: "row", justifyContent: "center", alignItems: "center", }}>
+        <TextInput style={{ height: 40, width: "80%", borderRadius: 10, color: "black", backgroundColor: "#F2F2F2", paddingStart: 20, }}
           placeholder="Nhập số điện thoại"
           placeholderTextColor="#8B8B8B"
           onChangeText={(text) => setPhone(text)}
           value={phone}
         />
-        <Pressable
-          style={{
-            backgroundColor: "#F2F2F2",
-            borderRadius: 50,
-            marginLeft: 10,
-          }}
-          onPress={handleSearch}
-        >
+        <Pressable style={{ backgroundColor: "#F2F2F2", borderRadius: 50, marginLeft: 10, }}
+          onPress={handleSearch}>
           <Ionicons name="arrow-forward" size={22} style={{ margin: 10 }} />
         </Pressable>
       </View>

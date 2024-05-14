@@ -70,6 +70,8 @@ export const SocketContextProvider = ({ children }) => {
       socket.on("leave-group", handleLeaveGroup);
       socket.on("delete-group", handleDeleteGroup);
       socket.on("change-admins", handleChangeAdminGroup);
+      socket.on("update-group", handleUpdateGroup);
+      socket.on("member-to-admin", handleMakeAdmin);
 
       return () => {
         socket.off("force_logout");
@@ -89,14 +91,15 @@ export const SocketContextProvider = ({ children }) => {
         socket.off("leave-group", handleLeaveGroup);
         socket.off("delete-group", handleDeleteGroup);
         socket.off("change-admins", handleChangeAdminGroup);
-
+        socket.off("update-group", handleUpdateGroup);
+        socket.off("member-to-admin", handleMakeAdmin);
       };
     }
   }, [socket, authUser]);
 
   const handleReceiveFriendRequest = async (sender) => {
     Toast.show({
-      text1: `${sender.sender.name} has sent you a friend request`,
+      text1: `${sender.sender.name} đã gửi một yêu cầu kết bạn`,
       type: "success",
     });
     await reloadAuthUser();
@@ -104,7 +107,7 @@ export const SocketContextProvider = ({ children }) => {
 
   const handleFriendAcceptAction = async (sender) => {
     Toast.show({
-      text1: `${sender.sender.name} has accepted your friend request`,
+      text1: `${sender.sender.name} đã chấp nhận yêu cầu kết bạn`,
       type: "success",
     });
     await reloadAuthUser();
@@ -112,7 +115,7 @@ export const SocketContextProvider = ({ children }) => {
   const handleFriendRejectAction = async (sender) => {
     console.log("reject", sender);
     Toast.show({
-      text1: `${sender.sender.name} has rejected your friend request`,
+      text1: `${sender.sender.name} đã từ chối yêu cầu kết bạn`,
       type: "error",
     });
     await reloadAuthUser();
@@ -145,6 +148,7 @@ export const SocketContextProvider = ({ children }) => {
   const handleRemoveFromGroup = ({ group }) => {
     setIsNewSocket("remove-from-group");
     setNewSocketData(group);
+    setIsNewSocket(null);
   };
 
   const handleLeaveGroup = ({ group }) => {
@@ -159,11 +163,13 @@ export const SocketContextProvider = ({ children }) => {
     setIsNewSocket("change-admins");
     setNewSocketData({ group, members, typeChange });
   }
-
+  const handleMakeAdmin = ({ group }) => {
+    setIsNewSocket("member-to-admin");
+    setNewSocketData({ group });
+  }
   return (
     <SocketContext.Provider
-      value={{ socket, onlineFriends, isNewSocket, newSocketData, setNewSocketData }}
-    >
+      value={{ socket, onlineFriends, isNewSocket, newSocketData, setNewSocketData }}>
       {children}
     </SocketContext.Provider>
   );

@@ -17,9 +17,6 @@ import LoginMain from "../components/LoginComponents/LoginMain";
 import MainComponent from "../pages/MainComponent";
 import Chat from "../components/ChatComponents/Chat/Chat";
 import Info from "../components/InfoComponents/Info";
-import News from "../components/NewsComponents/News";
-import Notice from "../components/NewsComponents/Notice";
-import PostStatus from "../components/NewsComponents/PostStatus";
 import PersonalPage from "../components/InfoComponents/PersonalPage";
 import PersonalDetail from "../components/InfoComponents/PersonalDetail";
 import PersonalInfo from "../components/InfoComponents/PersoncalInfo";
@@ -47,11 +44,7 @@ export default function RootComponent() {
 
       <Stack.Screen name="SearchFriends" component={SearchFriends} />
       <Stack.Screen name="Message" component={Message} />
-      <Stack.Screen
-        name="FriendProfileSettings"
-        component={FriendProfileSettings}
-      />
-
+      <Stack.Screen name="FriendProfileSettings" component={FriendProfileSettings} />
       <Stack.Screen name="MessageSettings" component={MessageSettings} />
       <Stack.Screen name="FriendProfile" component={FriendProfile} />
       <Stack.Screen name="AddFriends" component={AddFriends} />
@@ -59,9 +52,9 @@ export default function RootComponent() {
       <Stack.Screen name="FriendRequest" component={FriendRequest} />
 
       <Stack.Screen name="ChatContent" component={Chat} />
-      <Stack.Screen name="News" component={News} />
-      <Stack.Screen name="Notice" component={Notice} />
-      <Stack.Screen name="PostStatus" component={PostStatus} />
+      {/* <Stack.Screen name="News" component={News} /> */}
+      {/* <Stack.Screen name="Notice" component={Notice} />
+      <Stack.Screen name="PostStatus" component={PostStatus} /> */}
       <Stack.Screen name="Info" component={Info} />
       <Stack.Screen name="PersonalPage" component={PersonalPage} />
       <Stack.Screen name="PersonalDetail" component={PersonalDetail} />
