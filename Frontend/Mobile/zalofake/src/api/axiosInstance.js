@@ -42,25 +42,20 @@ axiosInstance.interceptors.response.use(
         const refreshToken = JSON.parse(
           await AsyncStorage.getItem("refreshToken")
         );
+        const refreshedTokenResponse = await axiosInstance.post(
+          "/auth/refreshToken",
+          {
+            refreshToken: refreshToken,
+          }
+        );
+        const newAccessToken = refreshedTokenResponse.data.newAccessToken;
+        await AsyncStorage.setItem(
+          "accessToken",
+          JSON.stringify(newAccessToken)
+        );
 
-        Promise.all([refreshToken]).then(async (values) => {
-          const refreshedTokenResponse = await axiosInstance.post(
-            "/auth/refreshToken",
-            {
-              refreshToken: values[0],
-            }
-          );
-  
-          const newAccessToken = refreshedTokenResponse.data.newAccessToken;
-          await AsyncStorage.setItem(
-            "accessToken",
-            JSON.stringify(newAccessToken)
-          );
-  
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          return axiosInstance(originalRequest);
-        });
-
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return axiosInstance(originalRequest);
       } catch (refreshError) {
         // console.error("Refresh token failed:", refreshError);
         showErrorToast("Your session has expired. Please login again.");

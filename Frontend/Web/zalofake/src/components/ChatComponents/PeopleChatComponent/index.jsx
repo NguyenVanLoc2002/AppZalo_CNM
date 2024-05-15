@@ -11,7 +11,7 @@ import {
 } from "react-icons/io5";
 import { HiMagnifyingGlass } from "react-icons/hi2";
 import { LuPencilLine, LuSticker } from "react-icons/lu";
-import { MdOutlineCancel, MdOutlinePublishedWithChanges  } from "react-icons/md";
+import { MdOutlineCancel, MdOutlinePublishedWithChanges } from "react-icons/md";
 import { PiTagSimpleLight } from "react-icons/pi";
 import { RiDoubleQuotesR } from "react-icons/ri";
 import { FaArrowRotateLeft } from "react-icons/fa6";
@@ -253,21 +253,22 @@ function PeopleChatComponent({
       }
       if (isNewSocket === "member-to-admin") {
         const group = newSocketData;
-        console.log("group on socket :", group);
+        console.log("group", group);
         if (group?.id === thisUser.id) {
-          console.log("thisUser on socket :", thisUser);
-
           setThisUser({
             ...thisUser,
-            creator: group?.createBy
+            creator: group?.createBy,
+            admins: group?.admins,
           });
+          if (group?.createBy._id === authUser._id) {
+            setIsCreator(true);
+          } else {
+            setIsCreator(false);
+          }
         }
       }
-
     }
   }, [isNewSocket, newSocketData]);
-
-  console.log("thisUser", thisUser);
 
   const scrollToBottom = () => {
     if (scrollRef.current) {
@@ -529,6 +530,15 @@ function PeopleChatComponent({
             ? "Cập nhật thông tin nhóm thành công"
             : "Update group info successfully"
         );
+        sendMessage(
+          {
+            type: "text",
+            data: `${authUser?.profile?.name} đã cập nhật thông tin nhóm`,
+          },
+          thisUser?.id,
+          null,
+          true
+        );
       }
       setIsChangeAvatar(false);
     } catch (error) {
@@ -546,7 +556,6 @@ function PeopleChatComponent({
     try {
       const response = await removeMember(thisUser.id, { members: [memberId] });
       if (response) {
-        getConversationByID(response.group?.conversation?._id);
         setThisUser({
           ...thisUser,
           admins: response.group?.admins,
@@ -556,6 +565,16 @@ function PeopleChatComponent({
           language === "vi"
             ? "Xóa thành viên khỏi nhóm thành công"
             : "Remove member from group successfully"
+        );
+        const member = listMembers.find((m) => m._id === memberId);
+        sendMessage(
+          {
+            type: "text",
+            data: `${authUser?.profile?.name} đã xóa ${member?.profile?.name} khỏi nhóm`,
+          },
+          thisUser?.id,
+          null,
+          true
         );
       }
     } catch (error) {
@@ -610,6 +629,15 @@ function PeopleChatComponent({
             ? "Rời khỏi nhóm thành công"
             : "Leave group successfully"
         );
+        sendMessage(
+          {
+            type: "text",
+            data: `${authUser?.profile?.name} đã rời khỏi nhóm`,
+          },
+          thisUser?.id,
+          null,
+          true
+        );
         setSidebarVisible(false);
         setThisUser(null);
       }
@@ -657,6 +685,16 @@ function PeopleChatComponent({
             ? "Thay đổi quyền quản trị viên thành công"
             : "Change admin successfully"
         );
+        const type = typeChange === "remove" ? "thu hồi" : "thêm";
+        sendMessage(
+          {
+            type: "text",
+            data: `${authUser?.profile?.name} đã ${type} quyền quản trị ${response.group?.createBy?.profile?.name}`,
+          },
+          thisUser?.id,
+          null,
+          true
+        );
       }
     } catch (error) {
       console.error(error);
@@ -683,6 +721,15 @@ function PeopleChatComponent({
             ? "Thay đổi quyền quản trị viên thành công"
             : "Change admin successfully"
         );
+        sendMessage(
+          {
+            type: "text",
+            data: `${authUser?.profile?.name} đã chuyển quyền quản trị cho ${response.group?.createBy?.profile?.name}`,
+          },
+          thisUser?.id,
+          null,
+          true
+        );
       }
     } catch (error) {
       console.error(error);
@@ -692,7 +739,7 @@ function PeopleChatComponent({
           : "Change admin failed"
       );
     }
-  }
+  };
 
   return (
     <>
@@ -895,7 +942,9 @@ function PeopleChatComponent({
                             const imagesCount = message.contents.filter(
                               (c) => c.type === "image"
                             ).length;
-                            const imagesPerRow = Math.ceil(imagesCount / maxImagesPerRow); 
+                            const imagesPerRow = Math.ceil(
+                              imagesCount / maxImagesPerRow
+                            );
                             const imageWidth = `calc(100% / ${imagesPerRow})`;
                             const imageHeight = "auto";
                             return (
@@ -1190,7 +1239,9 @@ function PeopleChatComponent({
                             const imagesCount = message.contents.filter(
                               (c) => c.type === "image"
                             ).length;
-                            const imagesPerRow = Math.ceil(imagesCount / maxImagesPerRow); 
+                            const imagesPerRow = Math.ceil(
+                              imagesCount / maxImagesPerRow
+                            );
                             const imageWidth = `calc(100% / ${imagesPerRow})`;
                             const imageHeight = "auto";
 
@@ -1605,7 +1656,9 @@ function PeopleChatComponent({
                 }
 
                 ${
-                  isChangeAvatar ? "loading loading-spinner bg-blue-400 loading-sm" : ""
+                  isChangeAvatar
+                    ? "loading loading-spinner bg-blue-400 loading-sm"
+                    : ""
                 }
                 
                 `}
@@ -1923,7 +1976,7 @@ function PeopleChatComponent({
                               handleChangeAdmin(member._id, "remove");
                             }}
                           >
-                            {grLoading   ? (
+                            {grLoading ? (
                               <span className="loading loading-spinner loading-sm"></span>
                             ) : (
                               <IoPersonRemoveOutline size={20} color="red" />
@@ -1964,7 +2017,7 @@ function PeopleChatComponent({
                       </div>
                     )
                   );
-                }else{
+                } else {
                   return (
                     !isMe && (
                       <div
@@ -1989,7 +2042,10 @@ function PeopleChatComponent({
                             {grLoading ? (
                               <span className="loading loading-spinner loading-sm"></span>
                             ) : (
-                              <MdOutlinePublishedWithChanges  size={22} color="orange" />
+                              <MdOutlinePublishedWithChanges
+                                size={22}
+                                color="orange"
+                              />
                             )}
                           </button>
                         </div>
