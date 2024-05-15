@@ -10,41 +10,30 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
-
 import axiosInstance from "../../api/axiosInstance";
 import { useAuthContext } from "../../contexts/AuthContext";
 import useFriend from "../../hooks/useFriend";
 import useConversation from "../../hooks/useConversation";
+import { useSelector } from "react-redux";
+import { useSocketContext } from "../../contexts/SocketContext";
 
 const FriendDirectory = ({ navigation }) => {
   const { getConversationsByParticipants } = useConversation();
-  // const [conversation, setConversation] = useState();
-  const {
-    recommendedFriends,
-    loading,
-    getAllFriends,
-    getFriendByPhone,
-    getRecommendedFriends,
-    addFriend,
-    acceptFriend,
-    unFriend,
-    rejectFriend,
-    cancelFriendRequest,
-  } = useFriend();
-  const [friend, setFriend] = useState("");
+  const { unFriend, getFriendById, showSuccessToast} = useFriend();
   const [friends, setFriends] = useState([]);
-  const { authUser, reloadAuthUser } = useAuthContext();
+  const { reloadAuthUser } = useAuthContext();
   const [totalFriends, setTotalFriends] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [modalPosition, setModalPosition] = useState({});
   const [selectedFriendPhone, setSelectedFriendPhone] = useState(null);
+  var isGroupRedux = useSelector(state => state.isGroup.isGroup);
+  const { socket } = useSocketContext()
 
   const toggleModal = (index, friendPhone) => {
     setSelectedFriendPhone(friendPhone);
     setModalPosition({ top: index * 70 + 300 });
     setModalVisible(!modalVisible);
   };
-
   useEffect(() => {
     const fetchFriends = async () => {
       try {
@@ -55,7 +44,7 @@ const FriendDirectory = ({ navigation }) => {
       }
     };
     fetchFriends();
-  }, []);
+  }, [isGroupRedux]);
 
   useEffect(() => {
     setTotalFriends(friends.length);
@@ -66,43 +55,72 @@ const FriendDirectory = ({ navigation }) => {
 
     try {
       await unFriend(selectedFriendPhone);
+      showSuccessToast("Huỷ kết bạn thành công")
       // Cập nhật danh sách bạn bè sau khi hủy kết bạn thành công
       const updatedFriends = friends.filter(
-        (friend) => friend.phone !== selectedFriendPhone
-      );
+        (friend) => friend.phone !== selectedFriendPhone);
       setFriends(updatedFriends);
       // Thực hiện reloadAuthUser ở đây nếu cần
       reloadAuthUser();
-      Toast.show({
-        text1: "Đã hủy kết bạn",
-        type: "info",
-      });
     } catch (error) {
       console.log(error);
-      Toast.show("Hủy kết bạn thất bại!");
+      showSuccessToast("Hủy kết bạn thất bại!");
     }
     setModalVisible(false);
   };
 
+  const handleFriendMessage = async (friend) => {
+    let conversation;
 
-  const handleFriendMessage  =async (friend) => { 
-    let conversation ;
     conversation = await getConversationsByParticipants(friend.userId);
-
-    // console.log(conversation);
-    const conversationNew = {
-      id: friend.userId,
-      conversation: conversation,
-      name: friend?.profile.name,
-      avatar: friend?.profile.avatar?.url,
-      background: friend?.profile.background?.url,
-      lastMessage: conversation.lastMessage,
-      tag: conversation.tag,
-    };
-    // console.log(conversationNew);
-    navigation.navigate("Message",{ conver :conversationNew });
+    if (conversation === null) {
+      const conversationNew = {
+        _id: friend.userId,
+        conversation: null,
+        name: friend?.profile.name,
+        avatar: friend?.profile.avatar?.url,
+        background: friend?.profile.background?.url,
+        tag: 'friend',
+      };
+      navigation.navigate("Message", { chatItem: conversationNew });
+    }
+    else{
+      const conversationNew = {
+        _id: friend.userId,
+        conversation: conversation,
+        name: friend?.profile.name,
+        avatar: friend?.profile.avatar?.url,
+        background: friend?.profile.background?.url,
+        lastMessage: conversation.lastMessage,
+        tag: conversation.tag,
+      };
+      navigation.navigate("Message", { chatItem: conversationNew });
+    }
   };
 
+  useEffect(() => {
+    if(socket){
+      socket.on("accept-request-add-friend", async (sender) => {
+         // console.log("accept-request-sender", sender);
+        const getUser = await getFriendById(sender.sender.userId)
+        const newFriend = {
+          email: getUser.email,
+          phone: getUser.phone,
+          profile: getUser.profile,
+          userId: getUser.id
+        }
+        setFriends([...friends, newFriend])
+      })
+      socket.on("unfriend", async (sender) => {
+        // console.log("unfriend-sender", sender);
+        setFriends((prevFriend) => prevFriend.filter((item) => item.userId !== sender.sender.userId))
+      })
+      return () => {
+        socket.off("accept-request-add-friend")
+        socket.off("unfriend")
+      }
+    }
+  }, [socket])
 
   return (
     <ScrollView style={styles.container}>
@@ -172,25 +190,14 @@ const FriendDirectory = ({ navigation }) => {
           animationType="slide"
           transparent={true}
           visible={modalVisible}
-          onRequestClose={() => setModalVisible(!modalVisible)}
-        >
+          onRequestClose={() => setModalVisible(!modalVisible)}>
           <Pressable
             style={styles.modalBackdrop}
-            onPress={() => setModalVisible(!modalVisible)}
-          >
+            onPress={() => setModalVisible(!modalVisible)}>
             <View
-              style={[
-                styles.centeredView,
-                modalPosition,
-                { position: "absolute", right: 10 },
-              ]}
-            >
+              style={[styles.centeredView, modalPosition, { position: "absolute", right: 10 }]}>
               <Pressable
-                style={styles.modalView}
-                onPress={() => {
-                  handleUnFriend();
-                }}
-              >
+                onPress={() => { handleUnFriend(); }}>
                 <Text style={{ fontSize: 20, backgroundColor: "white" }}>
                   Hủy kết bạn
                 </Text>

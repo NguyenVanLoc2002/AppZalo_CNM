@@ -12,10 +12,13 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import axiosInstance from "../../api/axiosInstance";
-import moment from 'moment-timezone';
 import Toast from "react-native-toast-message";
-import useCreateGroup from "../../hooks/useCreateGroup";
 import { useAuthContext } from "../../contexts/AuthContext";
+import useMessage from "../../hooks/useMessage";
+import useGroup from "../../hooks/useGroup";
+import { useSocketContext } from "../../contexts/SocketContext";
+import { useSelector } from "react-redux";
+import avatarGroup from '../../../assets/avatarGroup.png'
 
 const GroupDirectory = ({ navigation }) => {
   const [listFriends, setListFriends] = useState([])
@@ -29,77 +32,43 @@ const GroupDirectory = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [isHidden, setIsHidden] = useState(false)
   const [groupAll, setGroupAll] = useState([])
-  const { getAllGroup, getConversationById, createGroup, getUserById } = useCreateGroup()
+  const { getGroups, createGroup } = useGroup()
+  const { handleGetTimeInChat, setDataChat, showToastSuccess, showToastError, sortTime } = useMessage()
   const { authUser } = useAuthContext();
+  const { isNewSocket, newSocketData, setNewSocketData } = useSocketContext();
+  var isGroupRedux = useSelector(state => state.isGroup.isGroup);
+  const [avatarGr] = useState(avatarGroup)
 
   const fetchGroup = async () => {
     try {
-      const allGr = await getAllGroup();
+      const allGr = await getGroups();
       let dem = 0
-      let sender
       const newGroup = await Promise.all(allGr.map(async (group) => {
-        dem++;
-        let lastMessage;
-        if (group?.lastMessage?.contents[0].type === 'text') {
-          lastMessage = group?.lastMessage?.contents[0].data
-        } else if (group?.lastMessage?.contents[0].type === 'image') {
-          lastMessage = " [Hình ảnh]"
-        } else {
-          lastMessage = " [Video]"
-        }
-        const getUser = await getUserById(group?.lastMessage?.senderId)
-        if (authUser.profile.name === getUser.user.profile.name) {
-          sender = "Bạn"
-        } else {
-          sender = getUser.user.profile.name
-        }
-
-        return {
-          _id: group._id,
-          group : group,
-          name: group.groupName,
-          avatar: group.avatar.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
-          conversation: group.conversation,
-          createBy: group.createBy,
-          lastMessage: lastMessage,
-          sender: sender,
-          timeSend: handleGetTime(group.lastMessage.timestamp),
-          tag: group.conversation.tag,
-          admins: group?.admins
-        }
+        dem++
+        const dataChat = await setDataChat(group.lastMessage, false);
+        return addDataToGroup(group, dataChat)
       }))
-     
-      newGroup.sort((a, b) => {
-        const timeA = a.group.lastMessage.timestamp || ""
-        const timeB = b.group.lastMessage.timestamp || ""
-        return timeB.localeCompare(timeA);
-      });
+
+      sortTime(newGroup)
       setGroupAll(newGroup)
       setLengthGroup(dem)
     } catch (error) {
       console.log("FetchGroupError: ", error);
     }
   }
-
-  const handleGetTime = (time) => {
-    const currentTime = moment().tz('Asia/Ho_Chi_Minh'); // Lấy thời gian hiện tại ở múi giờ Việt Nam
-    const vietnamDatetime = moment(time).tz('Asia/Ho_Chi_Minh'); // Chuyển đổi thời gian đã cho sang múi giờ Việt Nam
-    const timeDifference = moment.duration(currentTime.diff(vietnamDatetime)); // Tính khoảng cách thời gian
-
-    const days = Math.floor(timeDifference.asDays()); // Số ngày
-    const hours = Math.abs(timeDifference.hours()); // Số giờ (dương)
-    const minutes = Math.abs(timeDifference.minutes()); // Số phút (dương)
-
-    if (days >= 1) {
-      return `${days} ngày`;
+  const addDataToGroup = (group, dataChat) => {
+    return {
+      _id: group._id,
+      conversation: group.conversation,
+      lastMessage: group?.lastMessage || group.conversation.lastMessage,
+      name: group.groupName,
+      avatar: group.avatar.url,
+      createBy: group.createBy,
+      dataChat: dataChat,
+      timeSend: handleGetTimeInChat(group?.lastMessage?.timestamp || group.conversation.createdAt),
+      tag: group.conversation.tag,
     }
-    else if (hours >= 1) {
-      return `${hours} giờ`;
-    }
-    else {
-      return `${minutes} phút`;
-    }
-  };
+  }
   const fetchFriend = async () => {
     try {
       const response = await axiosInstance.get("/users/get/friends");
@@ -122,20 +91,11 @@ const GroupDirectory = ({ navigation }) => {
   useEffect(() => {
     fetchFriend()
     fetchGroup()
-  }, [])
-  const showToast = (notice, type) => {
-    Toast.show({
-      text1: notice,
-      type: type,
-      topOffset: 0,
-      position: "top",
+  }, [isGroupRedux])
 
-    });
-  };
   const handleSearch = () => {
-    console.log("press");
     if (!textSearch) {
-      showToast("Bạn chưa nhập", "error")
+      showToastError("Bạn chưa nhập")
     }
     else {
       const filteredFriends = listFriends.filter((friend) => {
@@ -150,7 +110,7 @@ const GroupDirectory = ({ navigation }) => {
         }))
         setListSearch(newRadioButtons)
       } else {
-        showToast("Không tìm thấy", "error")
+        showToastError("Không tìm thấy")
       }
     }
   }
@@ -161,7 +121,6 @@ const GroupDirectory = ({ navigation }) => {
     } else {
       setSelectedFriends(prevState => [...prevState, item]);
     }
-    setIsHidden(true)
   };
   const isFriendSelected = (friend) => {
     return selectedFriends.includes(friend);
@@ -170,8 +129,10 @@ const GroupDirectory = ({ navigation }) => {
     setSelectedFriends(selectedFriends.filter(friend => friend._id !== item._id));
   }
   useEffect(() => {
-    if (selectedFriends.length === 0) {
+    if (selectedFriends.length < 2) {
       setIsHidden(false);
+    } else {
+      setIsHidden(true);
     }
   }, [selectedFriends]);
 
@@ -182,9 +143,10 @@ const GroupDirectory = ({ navigation }) => {
 
         <View style={{ padding: 10 }}>
           <Image
-            source={{ uri: item.avatar ? item.avatar : "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}
+            source={{ uri: item.avatar || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png" }}
             style={{ width: 50, height: 50, borderRadius: 25 }}
-          /></View>
+          />
+        </View>
         <Text style={{ fontWeight: "500", marginLeft: 0 }}>{item.name}</Text>
       </View>
       <Pressable
@@ -210,7 +172,7 @@ const GroupDirectory = ({ navigation }) => {
   const handleCreate = async () => {
     setIsLoading(true)
     if (!nameGroup) {
-      showToast("Vui lòng đặt tên nhóm", "error")
+      showToastError("Vui lòng đặt tên nhóm")
       setIsLoading(false)
       return;
     }
@@ -219,45 +181,133 @@ const GroupDirectory = ({ navigation }) => {
       for (const id of selectedFriends) {
         idUser.push(id._id)
       }
-      if (idUser.length < 2) {
-        showToast("Group phải từ 2 người trở lên", "error")
-        setIsLoading(false)
-      } else {
-        try {
-          const response = await createGroup(nameGroup, idUser)
-          if (response) {
-            setIsLoading(false)
-            setNameGroup(null)
-            setTextSearch(null)
-            setIsHidden(false)
-            setSelectedFriends([])
-            setModalCreateGr(false)
-            fetchGroup()
-
-            const group = {
-              _id: response.group._id,
-              name: response.group.groupName,
-              createAt: handleGetTime(response.group.createAt),
-              createBy: response.group.createBy,
-              avatar: response.group?.avatar?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
-              conversation: response.group.conversation,
-              tag: response.group.conversation.tag
-
-            }
-            navigation.navigate("Message", { conver: group })
-          }
-        } catch (error) {
-          console.log("CreateGroupError:", error);
+      try {
+        const response = await createGroup(nameGroup, idUser)
+        if (response) {
           setIsLoading(false)
+          setNameGroup(null)
+          setTextSearch(null)
+          setIsHidden(false)
+          setSelectedFriends([])
+          setModalCreateGr(false)
+          fetchGroup()
+          const group = {
+            _id: response.group._id,
+            name: response.group.groupName,
+            createAt: handleGetTimeInChat(response.group.createAt),
+            createBy: response.group.createBy,
+            avatar: response.group.avatar.url,
+            conversation: response.group.conversation,
+            tag: response.group.conversation.tag,
+          }
+          navigation.navigate("Message", { chatItem: group })
         }
+      } catch (error) {
+        console.log("CreateGroupError:", error);
+        setIsLoading(false)
       }
     }
   }
+  const updatedListChats = async (conversationId, message, isDelete) => {
+    const updatedListChats = await Promise.all(groupAll.map(async (item) => {
+      if (item.conversation._id === conversationId) {
+        const dataChat = await setDataChat(message, isDelete);
+        return {
+          ...item,
+          lastMessage: message,
+          dataChat: dataChat,
+          timeSend: handleGetTimeInChat(message?.timestamp)
+        };
+      }
+      return item;
+    }));
+    return updatedListChats;
+  }
+  useEffect(() => {
+    const fetchSocket = async () => {
+      if (isNewSocket === "new_message") {
+        const message = newSocketData;
+        if (message && message.retrunMessage) {
+          // console.log("new_message:", message);
+          const update = await updatedListChats(message.conversationId, message.retrunMessage, false)
+          const sortUpdate = sortTime(update);
+          setGroupAll(sortUpdate)
+        }
+      }
+      if (isNewSocket === "delete_message") {
+        const { chatRemove, conversationId, isDeleted } = newSocketData;
+        if (chatRemove) {
+          if (isDeleted) {
 
+          } else {
+            // console.log("delete_message:", chatRemove);
+            const update = await updatedListChats(conversationId, chatRemove, true)
+            setGroupAll(update)
+          }
+        }
+      }
+      if (isNewSocket === "add-to-group") {
+        const data = newSocketData;
+        if (data && data.addMembers) {
+          // console.log("add-to-group", data)
+          if (!groupAll.find(item => item._id === data.group._id)) {
+            const group = data.group
+            if (data.addMembers.includes(authUser._id) && group.createBy._id !== authUser._id) {
+              showToastSuccess(`Bạn đã tham gia nhóm ${group.groupName}`)
+              const addGroup = addDataToGroup(group, "Chưa có tin nhắn")
+              const newListChats = [addGroup, ...groupAll]
+              setGroupAll(newListChats);
+              setNewSocketData(null);
+            }
+          }
+        }
+      }
+      if (isNewSocket === "remove-from-group") {
+        const group = newSocketData
+        if (group && group.removeMembers) {
+          // console.log("remove-from-group", group);
+          if (group.removeMembers.includes(authUser._id)) {
+            showToastSuccess(`Bạn đã bị xoá khỏi nhóm ${group.name}`)
+            const updatedListChats = groupAll.filter(item => item._id !== group.id);
+            setGroupAll(updatedListChats)
+            setNewSocketData(null);
+          }
+        }
+      }
+      if (isNewSocket === "delete-group") {
+        const group = newSocketData;
+        // console.log("delete-group", group);
+        if (group && group.name) {
+          showToastSuccess(`Nhóm ${group.name} đã giải tán`)
+          const updatedListChats = groupAll.filter(item => item._id !== group.id);
+          setGroupAll(updatedListChats)
+          setNewSocketData(null);
+        }
+      }
+      if (isNewSocket === "update-group") {
+        const group = newSocketData
+        if (group && group.avatar) {
+          // console.log("update-group", group);
+          const groupUpdate = groupAll.map((item) => {
+            if (item._id === group.id) {
+              return {
+                ...item,
+                name: group.name,
+                avatar: group.avatar
+              }
+            }
+            return item;
+          })
+          setGroupAll(groupUpdate)
+        }
+      }
+    }
+
+    fetchSocket()
+  }, [isNewSocket, newSocketData]);
 
   return (
     <View style={styles.container}>
-      {/* <Toast/> */}
       <ScrollView>
         <View style={styles.section}>
           <Pressable style={styles.item} onPress={() => setModalCreateGr(true)}>
@@ -283,18 +333,18 @@ const GroupDirectory = ({ navigation }) => {
             </Pressable>
           </View>
           {groupAll?.map((group, index) => (
-            <Pressable key={index} style={styles.groupItem} onPress={() => navigation.navigate("Message", { conver: group })}>
+            <Pressable key={index} style={styles.groupItem} onPress={() => navigation.navigate("Message", { chatItem: group })}>
               <Image
+                source={group.avatar === "https://res.cloudinary.com/dq3pxd9eq/image/upload/group_avatar.jpg" ? avatarGr : { uri: group.avatar }}
                 style={styles.avatar}
-                source={{ uri: group.avatar }}
               />
               <View style={styles.groupTextContainer}>
                 <View style={{ flexDirection: 'row' }}>
                   <Ionicons name="people" size={20} color="gray" />
                   <Text style={styles.groupTitle}>{group.name}</Text>
                 </View>
-                <Text style={styles.groupDescription}>
-                  {group.sender ? `${group.sender}: ${group.lastMessage}` : "Chưa có tin nhắn nào"}
+                <Text style={styles.groupDescription} numberOfLines={1}>
+                  {group.dataChat}
                 </Text>
               </View>
               <Text style={styles.timeText}>{group.timeSend === "0 phút" ? "vừa xong" : `${group.timeSend} `}</Text>
@@ -312,7 +362,7 @@ const GroupDirectory = ({ navigation }) => {
           <View style={styles.modalContent}>
             <Toast />
             <View style={{ width: '100%', height: 50, alignItems: 'flex-end' }}>
-              <Pressable style={styles.pressClose} onPress={() => { setModalCreateGr(false) }}>
+              <Pressable style={styles.pressClose} onPress={() => { setModalCreateGr(false); setSelectedFriends([]), setNameGroup(null), setIsHidden(false) }}>
                 <Ionicons name="close" size={30} color="black" />
               </Pressable>
             </View>
@@ -340,7 +390,7 @@ const GroupDirectory = ({ navigation }) => {
                 placeholder="Tìm tên hoặc số điện thoại"
                 placeholderTextColor='gray'
                 style={{ fontSize: 18, height: '80%', width: '80%', paddingHorizontal: 10 }}></TextInput>
-              <Pressable onPress={() => { setTextSearch(null) }}>
+              <Pressable onPress={() => { setTextSearch(null); setListSearch([]) }}>
                 <Ionicons name="close-circle" size={30} color="gray" />
               </Pressable>
             </View>

@@ -15,15 +15,12 @@ const DirectoryComponents = ({ navigation }) => {
         <View style={styles.headerRightContainer}>
           <Pressable
             style={styles.headerIcon}
-            onPress={() => {
-              navigation.navigate("AddFriends");
-            }}
-          >
+            onPress={() => { navigation.navigate("AddFriends"); }}>
             <Ionicons
               name="person-add-outline"
               size={22}
               color="white"
-              // style={{ marginRight: 10 }}
+            // style={{ marginRight: 10 }}
             />
           </Pressable>
         </View>

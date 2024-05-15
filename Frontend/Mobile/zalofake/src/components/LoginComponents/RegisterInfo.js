@@ -8,8 +8,6 @@ import {
   Modal,
   StyleSheet,
   ActivityIndicator,
-  TouchableOpacity,
-  FlatList,
   Linking
 } from "react-native";
 import { CheckBox } from "react-native-elements";
@@ -18,10 +16,10 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import OTPTextView from "react-native-otp-textinput";
 import useRegister from "../../hooks/useRegister";
 import apiConfig from "../../api/config";
+import useLogin from "../../hooks/useLogin";
 
 const RegisterInfo = ({ navigation, route }) => {
   const [isCheckedUse, setIsCheckedUse] = useState(false);
-  const [isCheckedInter, setIsCheckedInter] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
   const [isModalLoginVisible, setModalLoginVisible] = useState(false);
   const [isModalAuthCode, setModalAuthCode] = useState(false);
@@ -31,31 +29,15 @@ const RegisterInfo = ({ navigation, route }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showRetypePassword, setShowRetypePassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
+  const { login} = useLogin();
   const [timeLeft, setTimeLeft] = useState(60);
   const [isCounting, setIsCounting] = useState(false);
   const [otp, setOtp] = useState("");
   const { name, textPhone, textEmail } = route.params;
-
-
-  const [showModal, setShowModal] = useState(false);
-  const [selectedDate, setSelectedDate] = useState((new Date()).getDate());
-  const [selectedMonth, setSelectedMonth] = useState((new Date()).getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState((new Date()).getFullYear());
-  const [dob, setDob] = useState(new Date());
+  const [dob, setDob] = useState(new Date('2000-01-01'));
   const [isPreSendCode, setIsPreSendCode] = useState(false);
-
-  // date of birth
-  const flatlistRefs = {
-    day: useRef(null),
-    month: useRef(null),
-    year: useRef(null),
-  };
-
-  const days = Array.from({ length: 31 }, (_, i) => i + 1);
-  const months = Array.from({ length: 12 }, (_, i) => i + 1);
-  const years = Array.from({ length: 122 }, (_, i) => 2024 - i);
-  const {showToastError, showToastSuccess, getOTP, verifyEmailAndRegister } =
+  const [checkValid, setCheckValid] = useState(false);
+  const { showToastError, showToastSuccess, getOTP, verifyEmailAndRegister } =
     useRegister();
 
   // tiến hành gửi mã otp, nếu đã gửi sẽ hiển thị modal cho nhập email
@@ -65,11 +47,11 @@ const RegisterInfo = ({ navigation, route }) => {
       toggleModal();
       setIsLoading(false);
       handlesendAuthCode();
-    }else{
+    } else {
       toggleModal();
       setIsLoading(false);
     }
-    
+
   };
   // tiến hành gửi lại mã otp, nếu đã gửi sẽ hiển thị modal cho nhập email
   const pressPreSendOTP = async (e) => {
@@ -85,6 +67,7 @@ const RegisterInfo = ({ navigation, route }) => {
   };
   // xác thực email và tiến hành đăng ký
   const handleSubmitEmail = async (e) => {
+    setIsLoading(true);
     const response = await verifyEmailAndRegister(
       textEmail,
       otp,
@@ -98,12 +81,12 @@ const RegisterInfo = ({ navigation, route }) => {
       toggleModalLogin();
       toggleModalAuthCode();
     }
+    setIsLoading(false);
   };
   // button khi nhấn vào xác nhận emai để gửi email
   const handleXacNhan = async () => {
     setIsLoading(true);
     pressSendOTP();
-
   };
 
   const handlesendAuthCode = async (e) => {
@@ -118,10 +101,12 @@ const RegisterInfo = ({ navigation, route }) => {
   };
   // kiểm tra otp có đầy đủ không
   const handleVerifyOTP = () => {
-    if (otp.length === 6) {
+    setIsLoading(true);
+    if (otp.length === 6) {     
       handleSubmitEmail();
     } else {
       showToastError("Hãy nhập đủ mã xác thực");
+      setIsLoading(false);
     }
   };
 
@@ -159,11 +144,6 @@ const RegisterInfo = ({ navigation, route }) => {
   };
 
 
-  const handleGenderSelect = (gender) => {
-    setSelectedGender(gender);
-  };
-
-
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
     setIsLoading(false)
@@ -177,13 +157,10 @@ const RegisterInfo = ({ navigation, route }) => {
   };
 
   const handleCheckUse = () => {
+    check(textPW, textRetypePW, !isCheckedUse)
     setIsCheckedUse(!isCheckedUse);
-  };
 
-  const handleCheckInter = () => {
-    setIsCheckedInter(!isCheckedInter);
   };
-
 
   const handlePressablePress = () => {
     if (!/^[A-Za-z\d@$!%*?&#]{6,}$/.test(textPW)) {
@@ -194,11 +171,9 @@ const RegisterInfo = ({ navigation, route }) => {
       )
     ) {
       showToastError("MK chứa ít nhất 1 chữ,1 số,1 ký tự đặc biệt");
-    } else if (!checkDOB(dob)) {
-      showToastError("Bạn phải trên 16 tuổi để đăng ký tài khoản");
     } else if (!(textPW === textRetypePW)) {
       showToastError("Vui lòng nhập xác nhận mật khẩu trùng khớp");
-    } else if (!isCheckedInter || !isCheckedUse) {
+    } else if (!isCheckedUse) {
       showToastError("Vui lòng chấp nhận các điều khoản");
     } else {
 
@@ -206,9 +181,33 @@ const RegisterInfo = ({ navigation, route }) => {
     }
   };
 
-  const handleXacNhanLogin = () => {
+  const check = (pw, rtpw, checkUse) => {
+    if (!/^[A-Za-z\d@$!%*?&#]{6,}$/.test(pw)) {
+      setCheckValid(false)
+    } else if (
+      !/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{6,}$/.test(
+        pw
+      )
+    ) {
+      setCheckValid(false)
+    } else if (!(pw === rtpw)) {
+      setCheckValid(false)
+    } else if (!checkUse) {
+      setCheckValid(false)
+    } else {
+      setCheckValid(true)
+    }
+  };
+  const handleXacNhanLogin = async() => {
     toggleModalLogin();
-    navigation.navigate("Login");
+    // navigation.navigate("Login");
+    await login(textPhone, textPW)
+      .then(() => {
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        setIsLoading(false);
+      });
   };
   const handleXacNhanLoginMain = () => {
     toggleModalLogin();
@@ -221,140 +220,12 @@ const RegisterInfo = ({ navigation, route }) => {
     setShowRetypePassword(!showRetypePassword);
   };
   const handleTextPWChange = (input) => {
+    check(input, textRetypePW, isCheckedUse)
     setTextPW(input);
   };
   const handleTextRetypePWChange = (input) => {
+    check(textPW, input, isCheckedUse)
     setTextRetypePW(input);
-  };
-
-
-  const handleDateSelect = () => {
-    setShowModal(false);
-  };
-
-  const getItemLayout = (data, index) => ({
-    length: 40,
-    offset: 40 * index,
-    index,
-  });
-
-  const scrollToIndex = (flatListRef, index) => {
-    if (flatListRef && flatListRef.current && index >= 0) {
-      flatListRef.current.scrollToIndex({ animated: true, index: index });
-    }
-  };
-  const scrollToFirstPosition = (ref, item) => {
-    scrollToIndex(ref, item - 1);
-  };
-  const handleShowModalDate = () => {
-    setShowModal(true)
-  };
-  useEffect(() => {
-    // Kiểm tra xem modal đã được mở hay chưa
-    if (showModal) {
-      scrollToFirstPosition(flatlistRefs.day, days.indexOf(selectedDate));
-      scrollToFirstPosition(flatlistRefs.month, months.indexOf(selectedMonth));
-      scrollToFirstPosition(flatlistRefs.year, years.indexOf(selectedYear));
-    }
-  }, [showModal]);
-
-  const renderDatePicker = () => {
-    return (
-      <Modal visible={showModal} transparent={true} animationType="slide">
-        <View style={styles.modalContainer1}>
-          <View style={styles.modalContent1}>
-            <View style={styles.dateContainer}>
-              <FlatList
-                ref={flatlistRefs.day}
-                data={days}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={[
-                      styles.dateItem,
-                      item === selectedDate && styles.selectedItem,
-                    ]}
-                    onPress={() => {
-                      setSelectedDate(item);
-                      // handleSetDate()
-                      dob.setDate(item)
-                      scrollToFirstPosition(flatlistRefs.day, item - 1);
-                    }}
-                  >
-                    <Text style={styles.TextDateItem}>{item}</Text>
-                  </TouchableOpacity>
-                )}
-                keyExtractor={(item) => item.toString()}
-                numColumns={1} // Chỉ hiển thị một cột
-                contentContainerStyle={styles.flatlistContainer}
-                getItemLayout={getItemLayout}
-              />
-              <FlatList
-                ref={flatlistRefs.month}
-                data={months}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={[
-                      styles.dateItem,
-                      item === selectedMonth && styles.selectedItem,
-                    ]}
-                    onPress={() => {
-                      setSelectedMonth(item);
-                      // handleSetDate()
-                      dob.setMonth(item - 1)
-                      scrollToFirstPosition(flatlistRefs.month, item - 1);
-                    }}
-                  >
-                    <Text style={styles.TextDateItem}>{item}</Text>
-                  </TouchableOpacity>
-                )}
-                keyExtractor={(item) => item.toString()}
-                numColumns={1} // Chỉ hiển thị một cột
-                contentContainerStyle={styles.flatlistContainer}
-                getItemLayout={getItemLayout}
-              />
-              <FlatList
-                ref={flatlistRefs.year}
-                data={years}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={[
-                      styles.dateItem,
-                      item === selectedYear && styles.selectedItem,
-                    ]}
-                    onPress={() => {
-                      setSelectedYear(item);
-                      // handleSetDate()
-                      dob.setFullYear(item)
-                      scrollToFirstPosition(flatlistRefs.year, years.indexOf(item));
-                    }}
-                  >
-                    <Text style={styles.TextDateItem}>{item}</Text>
-                  </TouchableOpacity>
-                )}
-                keyExtractor={(item) => item.toString()}
-                numColumns={1} // Chỉ hiển thị một cột
-                contentContainerStyle={styles.flatlistContainer}
-                getItemLayout={getItemLayout}
-              />
-            </View>
-            <TouchableOpacity
-              style={styles.confirmButton}
-              onPress={handleDateSelect}
-            >
-              <Text style={styles.confirmText}>Xác nhận</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    );
-  };
-
-  const checkDOB = (dob) => {
-    // const currentDate = new Date();
-    if (new Date().getFullYear() - dob.getFullYear() < 16) {
-      return false;
-    }
-    return true;
   };
 
   return (
@@ -365,7 +236,7 @@ const RegisterInfo = ({ navigation, route }) => {
 
       <View style={styles.header}>
         <Text style={styles.headerText}>
-          Nhập số điện thoại của bạn để tạo tài khoản mới
+          Nhập mật khẩu để tạo tài khoản mới
         </Text>
       </View>
 
@@ -402,72 +273,12 @@ const RegisterInfo = ({ navigation, route }) => {
           </Text>
         </Pressable>
       </View>
-      <View style={styles.inputContainer}>
-        <Text style={styles.textGender}>Ngày sinh:</Text>
-        <TouchableOpacity
-          style={styles.dateButton}
-          onPress={() => handleShowModalDate()
-          }
-        >
-          <Text>
-            {selectedDate}/{selectedMonth}/{selectedYear}
-          </Text>
-        </TouchableOpacity>
-        {renderDatePicker()}
-      </View>
-
-      <View style={styles.radioRow}>
-        <Text style={styles.textGender}>Giới tính:</Text>
-        <Pressable
-          onPress={() => handleGenderSelect("male")}
-          style={[styles.radioButton, selectedGender === "male"]}
-        >
-          <FontAwesome5
-            name={selectedGender === "male" ? "dot-circle" : "circle"}
-            size={20}
-            color="black"
-            style={{ marginRight: 8 }}
-          />
-          <Text style={styles.textGenderOption}>Nam</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => handleGenderSelect("female")}
-          style={[styles.radioButton, selectedGender === "female"]}
-        >
-          <FontAwesome5
-            name={selectedGender === "female" ? "dot-circle" : "circle"}
-            size={20}
-            color="black"
-            style={{ marginRight: 8 }}
-          />
-          <Text style={styles.textGenderOption}>Nữ</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => handleGenderSelect("other")}
-          style={[styles.radioButton, selectedGender === "other"]}
-        >
-          <FontAwesome5
-            name={selectedGender === "other" ? "dot-circle" : "circle"}
-            size={20}
-            color="black"
-            style={{ marginRight: 8 }}
-          />
-          <Text style={styles.textGenderOption}>Khác</Text>
-        </Pressable>
-      </View>
 
       <View style={styles.checkBoxContainer}>
         <CheckBox
           checked={isCheckedUse}
           onPress={handleCheckUse}
           title="Tôi đồng ý với các điều khoản sử dụng Zola"
-          containerStyle={styles.checkBox}
-          textStyle={styles.checkBoxText}
-        />
-        <CheckBox
-          checked={isCheckedInter}
-          onPress={handleCheckInter}
-          title="Tôi đồng ý với các điều khoản Mạng xã hội của Zola"
           containerStyle={styles.checkBox}
           textStyle={styles.checkBoxText}
         />
@@ -481,10 +292,10 @@ const RegisterInfo = ({ navigation, route }) => {
       <Pressable
         style={[
           styles.button,
-          {
-            backgroundColor: "#0091FF",
-          },
+          checkValid ? styles.validButton : styles.invalidButton
+
         ]}
+        disabled={!checkValid}
         onPress={handlePressablePress}
       >
         {isLoading ? (
@@ -509,7 +320,7 @@ const RegisterInfo = ({ navigation, route }) => {
               Xác nhận email: {textEmail}?
             </Text>
             <Text style={styles.modalText}>
-              Email này sẽ được sử dụng để gửi mã xác thực 
+              Email này sẽ được sử dụng để gửi mã xác thực
             </Text>
             <View style={styles.modalButtonContainer}>
               <Pressable onPress={toggleModal}>
@@ -517,7 +328,7 @@ const RegisterInfo = ({ navigation, route }) => {
               </Pressable>
               <Pressable onPress={handleXacNhan}>
                 {isLoading ? (
-                  <ActivityIndicator color="white" />
+                  <ActivityIndicator color="blue" />
                 ) : (
                   <Text style={styles.modalButton}>XÁC NHẬN</Text>
                 )}
@@ -561,7 +372,7 @@ const RegisterInfo = ({ navigation, route }) => {
                   Đang gửi mã xác thực đến email: {textEmail}
                 </Text>
                 {isLoading ? (
-                  <ActivityIndicator color="blue"/>
+                  <ActivityIndicator color="blue" />
                 ) : (
                   <Text></Text>
                 )}
@@ -639,11 +450,13 @@ const RegisterInfo = ({ navigation, route }) => {
                     }}
                     onPress={handleVerifyOTP}
                   >
-
-                    <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                      Tiếp tục
-                    </Text>
-
+                    {isLoading ? (
+                      <ActivityIndicator color="white" />
+                    ) : (
+                      <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                        Tiếp tục
+                      </Text>
+                    )}
 
                   </Pressable>
                 </View>
@@ -672,7 +485,12 @@ const RegisterInfo = ({ navigation, route }) => {
                 <Text style={styles.modalButton}>Trang chủ</Text>
               </Pressable>
               <Pressable onPress={handleXacNhanLogin}>
-                <Text style={styles.modalButton}>Đăng nhập</Text>
+              {isLoading ? (
+                  <ActivityIndicator color="blue"/>
+                ) : (
+                  <Text style={styles.modalButton}>Đăng nhập</Text>
+                )}
+                
               </Pressable>
             </View>
           </View>
@@ -701,7 +519,7 @@ const styles = StyleSheet.create({
     margin: 20,
     borderBottomWidth: 2,
     borderBottomColor: "#64D6EA",
-    
+
   },
   input: {
     flex: 1,
@@ -736,6 +554,12 @@ const styles = StyleSheet.create({
   buttonIcon: {
     width: 40,
     height: 40,
+  },
+  validButton: {
+    backgroundColor: "#0091FF",
+  },
+  invalidButton: {
+    backgroundColor: "#BFD3F8",
   },
   modalContainer: {
     flex: 1,
@@ -826,12 +650,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   dateButton: {
-    width:"78%",
+    width: "78%",
     // borderWidth: 1,
     // borderRadius: 5,
     padding: 10,
 
-    
+
   },
   modalContainer1: {
     flex: 1,

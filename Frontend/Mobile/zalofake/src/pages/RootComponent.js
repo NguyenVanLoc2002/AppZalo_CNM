@@ -44,11 +44,7 @@ export default function RootComponent() {
 
       <Stack.Screen name="SearchFriends" component={SearchFriends} />
       <Stack.Screen name="Message" component={Message} />
-      <Stack.Screen
-        name="FriendProfileSettings"
-        component={FriendProfileSettings}
-      />
-
+      <Stack.Screen name="FriendProfileSettings" component={FriendProfileSettings} />
       <Stack.Screen name="MessageSettings" component={MessageSettings} />
       <Stack.Screen name="FriendProfile" component={FriendProfile} />
       <Stack.Screen name="AddFriends" component={AddFriends} />

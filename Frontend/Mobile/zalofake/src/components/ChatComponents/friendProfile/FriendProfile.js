@@ -8,8 +8,8 @@ import {
   Modal,
   Switch,
 } from "react-native";
+import axiosInstance from "../../../api/axiosInstance";
 import { Ionicons } from "@expo/vector-icons";
-
 const FriendProfile = ({ navigation, route }) => {
   const { user } = route.params;
   const [isAnNhatKy, setAnNhatKy] = useState(false);
@@ -17,6 +17,16 @@ const FriendProfile = ({ navigation, route }) => {
   const [isChanXem, setChanXem] = useState(false);
   const chanXem = () => setChanXem(!isChanXem);
   const [isModalVisible, setModalVisible] = useState(false);
+  
+  const fetchFriend = async () => {
+    try {
+      const response = await axiosInstance.get(`/users/get/uid/${user._id}`);
+      navigation.navigate("FriendProfileSettings", { user: response.data.user }  )
+      
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const PostItem = ({ post }) => (
     <View
@@ -138,7 +148,11 @@ const FriendProfile = ({ navigation, route }) => {
             />
           </Pressable>
           <Pressable
-            onPress={() => navigation.navigate("FriendProfileSettings")}
+            onPress={() => 
+              {
+                fetchFriend();
+              }
+              }
           >
             <Ionicons
               name="ellipsis-horizontal-sharp"
@@ -250,12 +264,12 @@ const FriendProfile = ({ navigation, route }) => {
     <View style={{ flex: 1 }}>
       <ScrollView style={{ backgroundColor: "#F4F4F4", height: "100%" }}>
         <Image
-          source={{ uri: user.url }}
+          source={{ uri: user.background }}
           style={{ height: 220, width: "100%" }}
           resizeMode="cover"
         />
         <Image
-          source={{ uri: user.url }}
+          source={{ uri: user.avatar }}
           style={{
             height: 120,
             width: 120,
@@ -268,7 +282,7 @@ const FriendProfile = ({ navigation, route }) => {
         />
         <View style={{ flexDirection: "row", justifyContent: "center" }}>
           <Text style={{ fontSize: 25, paddingStart: 45, fontWeight: "500" }}>
-            {user.ten}
+            {user.name}
           </Text>
           <Ionicons
             name="pencil"
