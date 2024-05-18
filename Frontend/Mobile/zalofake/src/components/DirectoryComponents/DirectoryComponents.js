@@ -15,15 +15,12 @@ const DirectoryComponents = ({ navigation }) => {
         <View style={styles.headerRightContainer}>
           <Pressable
             style={styles.headerIcon}
-            onPress={() => {
-              navigation.navigate("AddFriends");
-            }}
-          >
+            onPress={() => { navigation.navigate("AddFriends"); }}>
             <Ionicons
               name="person-add-outline"
               size={22}
               color="white"
-              // style={{ marginRight: 10 }}
+            // style={{ marginRight: 10 }}
             />
           </Pressable>
         </View>
@@ -64,9 +61,9 @@ const DirectoryComponents = ({ navigation }) => {
   }, [navigation]);
 
   return (
-    <Tab.Navigator initialRouteName="Bạn bè" tabBarPosition="top">
-      <Tab.Screen name="Bạn bè" component={FriendDirectory} />
-      <Tab.Screen name="Nhóm" component={GroupDirectory} />
+    <Tab.Navigator initialRouteName="FriendDirectory" tabBarPosition="top">
+      <Tab.Screen name="FriendDirectory" component={FriendDirectory} />
+      <Tab.Screen name="GroupDirectory" component={GroupDirectory} />
     </Tab.Navigator>
   );
 };

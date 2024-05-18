@@ -1,8 +1,8 @@
-import axios from 'axios';
-import config from './config';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from "axios";
+import config from "./config";
+import { toast } from "react-hot-toast";
 
-
+// localStorage.clear()
 const axiosInstance = axios.create({
   baseURL: config.baseURL,
 });
@@ -33,6 +33,8 @@ axiosInstance.interceptors.response.use(
         const refreshToken = JSON.parse(localStorage.getItem("refreshToken"));
         if (!refreshToken) {
           toast.error("Your session has expired. Please login again.");
+          localStorage.clear();
+          window.location.reload();
           throw new Error("No refresh token available.");
         }
 
@@ -51,6 +53,7 @@ axiosInstance.interceptors.response.use(
         console.error("Refresh token failed:", refreshError);
         toast.error("Your session has expired. Please login again.");
         localStorage.clear();
+        window.location.reload();
         return Promise.reject(refreshError);
       }
     }
@@ -58,4 +61,4 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-export  default  axiosInstance ;
+export default axiosInstance;

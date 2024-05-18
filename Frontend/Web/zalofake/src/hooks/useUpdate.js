@@ -8,27 +8,17 @@ const useUpdate = () => {
   const [loading, setLoading] = useState(false);
   const [systemOTP, setSystemOTP] = useState(null);
 
-  const { setAuthUser } = useAuthContext();
+  const { reloadAuthUser } = useAuthContext();
 
-  const updateAvatar = async (file, authToken) => {
+  const  updateAvatar = async (file) => {
     setLoading(true);
     try {
-      if (!authToken) {
-        throw new Error("Authentication token not found");
-      }
-
       const formData = new FormData();
       formData.append("avatar", file);
 
       const response = await axiosInstance.post(
         "/users/upload-avatar",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        formData
       );
 
       const { data, status } = response;
@@ -36,42 +26,35 @@ const useUpdate = () => {
       if (status === 200) {
         const { avatar } = data;
         if (avatar) {
-          // toast.success("Avatar updated successfully");
+          toast.success("Avatar updated successfully");
+          await reloadAuthUser();
         } else {
           throw new Error("Failed to update avatar");
         }
       } else {
         throw new Error(data.message || "Failed to update avatar");
       }
+      setLoading(false);
     } catch (error) {
       console.error(error);
       toast.error(
-        error.message || "Failed to update avatar! Please try again."
+        error.response.data.message ||
+          "Failed to update avatar! Please try again."
       );
     } finally {
       setLoading(false);
     }
   };
 
-  const updateBackground = async (file, authToken) => {
+  const updateBackground = async (file) => {
     setLoading(true);
     try {
-      if (!authToken) {
-        throw new Error("Authentication token not found");
-      }
-
       const formData = new FormData();
       formData.append("background", file);
 
       const response = await axiosInstance.post(
         "/users/upload-background",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        formData
       );
 
       const { data, status } = response;
@@ -79,9 +62,8 @@ const useUpdate = () => {
       if (status === 200) {
         const { background } = data;
         if (background) {
-          // Cập nhật ảnh bìa thành công
-          // Thực hiện các thao tác cần thiết sau khi cập nhật ảnh bìa
-          // Ví dụ: hiển thị thông báo, cập nhật state, v.v.
+          toast.success("Background updated successfully");
+          await reloadAuthUser();
         } else {
           throw new Error("Failed to update background");
         }
@@ -110,8 +92,10 @@ const useUpdate = () => {
       if (status === 200) {
         const { user } = data;
         if (user) {
-          setAuthUser(user);
           toast.success("Profile updated successfully");
+          const rs = await reloadAuthUser();
+          return rs;
+
         } else {
           throw new Error("Failed to update profile");
         }
@@ -168,7 +152,14 @@ const useUpdate = () => {
     }
   };
 
-  return { updateAvatar, updateBackground, updateProfile, loading, getOTP, verifyOTP};
+  return {
+    updateAvatar,
+    updateBackground,
+    updateProfile,
+    loading,
+    getOTP,
+    verifyOTP,
+  };
 };
 
 export default useUpdate;

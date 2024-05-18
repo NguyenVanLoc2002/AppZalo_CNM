@@ -10,10 +10,10 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   async (config) => {
     try {
-      config.headers["User-Agent"] = "Mobile";
+      config.headers["User-Agent"] += "Mobile";
+
       if (!config.url.includes("/auth/login")) {
         const token = JSON.parse(await AsyncStorage.getItem("accessToken"));
-        // console.log(token);
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -42,24 +42,27 @@ axiosInstance.interceptors.response.use(
         const refreshToken = JSON.parse(
           await AsyncStorage.getItem("refreshToken")
         );
-        if (!refreshToken) {
-          showErrorToast("Your session has expired. Please login again.");
-          throw new Error("No refresh token available.");
-        }
 
-        const refreshedTokenResponse = await axiosInstance.post(
-          "/auth/refreshToken",
-          {
-            refreshToken: refreshToken,
-          }
-        );
-        const newAccessToken = refreshedTokenResponse.data.newAccessToken;
-        AsyncStorage.setItem("accessToken", JSON.stringify(newAccessToken));
+        Promise.all([refreshToken]).then(async (values) => {
+          const refreshedTokenResponse = await axiosInstance.post(
+            "/auth/refreshToken",
+            {
+              refreshToken: values[0],
+            }
+          );
+  
+          const newAccessToken = refreshedTokenResponse.data.newAccessToken;
+          await AsyncStorage.setItem(
+            "accessToken",
+            JSON.stringify(newAccessToken)
+          );
+  
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          return axiosInstance(originalRequest);
+        });
 
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        return axiosInstance(originalRequest);
       } catch (refreshError) {
-        console.error("Refresh token failed:", refreshError);
+        // console.error("Refresh token failed:", refreshError);
         showErrorToast("Your session has expired. Please login again.");
         await AsyncStorage.clear();
         return Promise.reject(refreshError);

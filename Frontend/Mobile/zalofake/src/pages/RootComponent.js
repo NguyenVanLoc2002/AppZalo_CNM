@@ -17,9 +17,6 @@ import LoginMain from "../components/LoginComponents/LoginMain";
 import MainComponent from "../pages/MainComponent";
 import Chat from "../components/ChatComponents/Chat/Chat";
 import Info from "../components/InfoComponents/Info";
-import News from "../components/NewsComponents/News";
-import Notice from "../components/NewsComponents/Notice";
-import PostStatus from "../components/NewsComponents/PostStatus";
 import PersonalPage from "../components/InfoComponents/PersonalPage";
 import PersonalDetail from "../components/InfoComponents/PersonalDetail";
 import PersonalInfo from "../components/InfoComponents/PersoncalInfo";
@@ -28,6 +25,7 @@ import AccountVsSecurity from "../components/InfoComponents/AccoutVsSecurity";
 import PersonalSetting from "../components/InfoComponents/PersonalSetting";
 import ChangePassword from "../components/InfoComponents/ChangePassword";
 import ForgotPassword from "../components/InfoComponents/ForgotPassword";
+import FriendRequest from "../components/ChatComponents/FriendRequest";
 
 const Stack = createNativeStackNavigator();
 
@@ -46,20 +44,17 @@ export default function RootComponent() {
 
       <Stack.Screen name="SearchFriends" component={SearchFriends} />
       <Stack.Screen name="Message" component={Message} />
-      <Stack.Screen
-        name="FriendProfileSettings"
-        component={FriendProfileSettings}
-      />
-
+      <Stack.Screen name="FriendProfileSettings" component={FriendProfileSettings} />
       <Stack.Screen name="MessageSettings" component={MessageSettings} />
       <Stack.Screen name="FriendProfile" component={FriendProfile} />
       <Stack.Screen name="AddFriends" component={AddFriends} />
       <Stack.Screen name="CreateGroup" component={CreateGroup} />
+      <Stack.Screen name="FriendRequest" component={FriendRequest} />
 
       <Stack.Screen name="ChatContent" component={Chat} />
-      <Stack.Screen name="News" component={News} />
-      <Stack.Screen name="Notice" component={Notice} />
-      <Stack.Screen name="PostStatus" component={PostStatus} />
+      {/* <Stack.Screen name="News" component={News} /> */}
+      {/* <Stack.Screen name="Notice" component={Notice} />
+      <Stack.Screen name="PostStatus" component={PostStatus} /> */}
       <Stack.Screen name="Info" component={Info} />
       <Stack.Screen name="PersonalPage" component={PersonalPage} />
       <Stack.Screen name="PersonalDetail" component={PersonalDetail} />
@@ -69,7 +64,6 @@ export default function RootComponent() {
       <Stack.Screen name="PersonalSetting" component={PersonalSetting} />
       <Stack.Screen name="ChangePassword" component={ChangePassword} />
       <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
-
     </Stack.Navigator>
   ) : (
     <Stack.Navigator initialRouteName="LoginMain">
@@ -113,17 +107,17 @@ export default function RootComponent() {
           title: "Đăng nhập",
         }}
       />
-       <Stack.Screen 
-       name="ResetPassword" 
-       component={ResetPassword}
-       options={{
-        headerStyle: {
-          backgroundColor: "#0091FF",
-        },
-        headerTintColor: "#fff",
-        title: "Lấy lại mật khẩu", 
-        }} />
-       
+      <Stack.Screen
+        name="ResetPassword"
+        component={ResetPassword}
+        options={{
+          headerStyle: {
+            backgroundColor: "#0091FF",
+          },
+          headerTintColor: "#fff",
+          title: "Lấy lại mật khẩu",
+        }}
+      />
     </Stack.Navigator>
   );
 }

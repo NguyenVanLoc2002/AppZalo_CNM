@@ -3,10 +3,8 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 
 import Chat from "../components/ChatComponents/Chat/Chat";
-import News from "../components/NewsComponents/News";
 import DirectoryComponents from "../components/DirectoryComponents/DirectoryComponents";
 import Info from "../components/InfoComponents/Info";
-import { useAuthContext } from "../contexts/AuthContext";
 
 const Tab = createBottomTabNavigator();
 
@@ -37,7 +35,6 @@ const MainComponent = () => {
     >
       <Tab.Screen name="ChatList" component={Chat} />
       <Tab.Screen name="Contact" component={DirectoryComponents} />
-      <Tab.Screen name="News" component={News} />
       <Tab.Screen name="Info" component={Info} />
     </Tab.Navigator>
   );

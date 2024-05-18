@@ -2,6 +2,8 @@ const cloudinary = require("../configs/Cloudinary.config");
 const User = require("../models/User");
 const { getUserIdFromToken } = require("../utils/generateToken.utils");
 const { io, getReciverSocketId } = require("../socket/socket.io");
+const Conversation = require("../models/Conversation");
+const Chats = require("../models/Chat");
 
 exports.getUserByPhoneOrId = async (req, res) => {
   const uid = req.params.uid;
@@ -18,7 +20,7 @@ exports.getUserByPhoneOrId = async (req, res) => {
     }
 
     const returnUser = {
-      userId: user._id,
+      id: user._id,
       profile: user.profile,
       email: user.email,
       phone: user.phone,
@@ -27,6 +29,56 @@ exports.getUserByPhoneOrId = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(400).json({ message: "Can't not get this user" });
+  }
+};
+
+exports.getMe = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const userId = getUserIdFromToken(token);
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const {
+      password,
+      friends,
+      groups,
+      createdAt,
+      status,
+      lastActive,
+      ...userWithoutPassword
+    } = user.toObject();
+    return res.status(200).json({ user: userWithoutPassword });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({ message: "Can't get this user" });
+  }
+};
+
+exports.getRandomUsersNotFriend = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const userId = getUserIdFromToken(token);
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const users = await User.find({ _id: { $nin: user.friends } });
+    const returnUsers = users.map((user) => {
+      return (userWithoutPassword = {
+        userId: user._id,
+        profile: user.profile,
+        email: user.email,
+        phone: user.phone,
+      });
+    });
+    const randomUsers = returnUsers.sort(() => 0.5 - Math.random());
+    let selectedUsers = randomUsers.slice(0, 10);
+    return res.status(200).json({ users: selectedUsers });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({ message: "Can't get random users" });
   }
 };
 
@@ -166,7 +218,7 @@ exports.sendRequestAddFriend = async (req, res) => {
     const token = req.headers.authorization.split(" ")[1];
     const userId = getUserIdFromToken(token);
     const user = await User.findById(userId);
-    const friend = await User.findOne(phone);
+    const friend = await User.findOne({ phone });
 
     if (!user || !friend) {
       return res.status(404).json({ message: "User not found" });
@@ -185,10 +237,13 @@ exports.sendRequestAddFriend = async (req, res) => {
     await user.save();
     await friend.save();
 
-    const reciverSocketId = getReciverSocketId(friend._id);
+    const reciverSocketId = await getReciverSocketId(friend._id);
     if (reciverSocketId) {
-      io.to(reciverSocketId).emit("receive-request-add-friend", {
-        sender: userId,
+      io.to(reciverSocketId.socket_id).emit("receive-request-add-friend", {
+        sender: {
+          userId: userId,
+          name: user.profile.name,
+        },
       });
     }
     return res.status(200).json({ message: "Request sent successfully" });
@@ -198,13 +253,48 @@ exports.sendRequestAddFriend = async (req, res) => {
   }
 };
 
+exports.cancelRequestAddFriend = async (req, res) => {
+  try {
+    const { phone } = req.body;
+    const token = req.headers.authorization.split(" ")[1];
+    const userId = getUserIdFromToken(token);
+    const user = await User.findById(userId);
+    const friend = await User.findOne({ phone });
+
+    if (!user || !friend) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (!user.requestSent.includes(friend._id)) {
+      return res.status(400).json({ message: "Request not found" });
+    }
+
+    console.log(user.requestSent, friend._id);
+    user.requestSent = user.requestSent.filter(
+      (id) => id.toString() !== friend._id.toString()
+    );
+    friend.requestReceived = friend.requestReceived.filter(
+      (id) => id.toString() !== userId
+    );
+    await user.save();
+    await friend.save();
+    const reciverSocketId = await getReciverSocketId(friend._id);
+    if (reciverSocketId) {
+      io.to(reciverSocketId.socket_id).emit("cancel-request-add-friend");
+    }
+    return res.status(200).json({ message: "Request canceled successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({ message: "Can't cancel request add friend" });
+  }
+};
+
 exports.acceptRequestAddFriend = async (req, res) => {
   try {
     const { phone } = req.body;
     const token = req.headers.authorization.split(" ")[1];
     const userId = getUserIdFromToken(token);
     const user = await User.findById(userId);
-    const friend = await User.findOne(phone);
+    const friend = await User.findOne({ phone });
 
     if (!user || !friend) {
       return res.status(404).json({ message: "User not found" });
@@ -218,17 +308,20 @@ exports.acceptRequestAddFriend = async (req, res) => {
     user.friends.push(friend._id);
     friend.friends.push(userId);
     user.requestReceived = user.requestReceived.filter(
-      (id) => id.toString() !== friend._id
+      (id) => id.toString() !== friend._id.toString()
     );
     friend.requestSent = friend.requestSent.filter(
       (id) => id.toString() !== userId
     );
     await user.save();
     await friend.save();
-    const reciverSocketId = getReciverSocketId(friend._id);
+    const reciverSocketId = await getReciverSocketId(friend._id);
     if (reciverSocketId) {
-      io.to(reciverSocketId).emit("accept-request-add-friend", {
-        sender: userId,
+      io.to(reciverSocketId.socket_id).emit("accept-request-add-friend", {
+        sender: {
+          userId: userId,
+          name: user.profile.name,
+        },
       });
     }
 
@@ -239,13 +332,51 @@ exports.acceptRequestAddFriend = async (req, res) => {
   }
 };
 
+exports.rejectRequestAddFriend = async (req, res) => {
+  try {
+    const { phone } = req.body;
+    const token = req.headers.authorization.split(" ")[1];
+    const userId = getUserIdFromToken(token);
+    const user = await User.findById(userId);
+    const friend = await User.findOne({ phone });
+
+    if (!user || !friend) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (!user.requestReceived.includes(friend._id)) {
+      return res.status(400).json({ message: "Request not found" });
+    }
+    user.requestReceived = user.requestReceived.filter(
+      (id) => id.toString() !== friend._id.toString()
+    );
+    friend.requestSent = friend.requestSent.filter(
+      (id) => id.toString() !== userId
+    );
+    await user.save();
+    await friend.save();
+    const reciverSocketId = await getReciverSocketId(friend._id);
+    if (reciverSocketId) {
+      io.to(reciverSocketId.socket_id).emit("reject-request-add-friend", {
+        sender: {
+          userId: userId,
+          name: user.profile.name,
+        },
+      });
+    }
+    return res.status(200).json({ message: "Request rejected successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({ message: "Can't reject request add friend" });
+  }
+};
+
 exports.unfriend = async (req, res) => {
   try {
     const { phone } = req.body;
     const token = req.headers.authorization.split(" ")[1];
     const userId = getUserIdFromToken(token);
     const user = await User.findById(userId);
-    const friend = await User.findOne(phone);
+    const friend = await User.findOne({ phone });
 
     if (!user || !friend) {
       return res.status(404).json({ message: "User not found" });
@@ -253,18 +384,55 @@ exports.unfriend = async (req, res) => {
     if (!user.friends.includes(friend._id)) {
       return res.status(400).json({ message: "You are not friend" });
     }
-    user.friends = user.friends.filter((id) => id.toString() !== friend._id);
+    user.friends = user.friends.filter(
+      (id) => id.toString() !== friend._id.toString()
+    );
     friend.friends = friend.friends.filter((id) => id.toString() !== userId);
+
+    // delete conversation between user and friend
+    const conversation = await Conversation.findOne({
+      participants: { $all: [userId, friend._id] },
+    });
+    if (conversation) {
+      await conversation.deleteOne({
+        participants: { $all: [userId, friend._id] },
+      });
+    }
+    const messages = await Chats.find({
+      senderId: userId,
+      receiverId: friend._id,
+    });
+    if (messages) {
+      await Chats.deleteMany({
+        senderId: userId,
+        receiverId: friend._id,
+      });
+    }
+    const messages2 = await Chats.find({
+      senderId: friend._id,
+      receiverId: userId,
+    });
+    if (messages2) {
+      await Chats.deleteMany({
+        senderId: friend._id,
+        receiverId: userId,
+      });
+    }
+
     await user.save();
     await friend.save();
-    const reciverSocketId = getReciverSocketId(friend._id);
+    const reciverSocketId = await getReciverSocketId(friend._id);
     if (reciverSocketId) {
-      io.to(reciverSocketId).emit("unfriend", {
-        sender: userId,
+      io.to(reciverSocketId.socket_id).emit("unfriend", {
+        sender: {
+          userId: userId,
+          name: user.profile.name,
+        },
       });
     }
     return res.status(200).json({ message: "Unfriend successfully" });
   } catch (error) {
+    console.log(error);
     res.status(400).json({ message: "Can't unfriend" });
   }
 };

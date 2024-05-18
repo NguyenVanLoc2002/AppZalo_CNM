@@ -27,18 +27,18 @@ const PersonalInfo = ({ navigation }) => {
   const [usGender, setUsGender] = useState(authUser?.profile.gender);
   const [usName, setUsName] = useState(authUser?.profile?.name);
   const [usEmail, setUsEmail] = useState(authUser?.email);
-  const { updateProfile, loading } = useUpdate();
+  const { updateProfile } = useUpdate();
   const [timeLeft, setTimeLeft] = useState(60);
   const [isCounting, setIsCounting] = useState(false);
   const [otp, setOtp] = useState("");
-  // const [showModalSendCode, setShowModal] = useState(false);
   const [isPreSendCode, setIsPreSendCode] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  //  const [isModalLoginVisible, setModalLoginVisible] = useState(false);
   const [isModalAuthCode, setModalAuthCode] = useState(false);
+  const [isModalSuccess, setIsModalSuccess] = useState(false);
   const { showToastError, showToastSuccess, getOTP, verifyOTP, GetSystemOTP } =
     useRegister();
   const [isLoading, setIsLoading] = useState(false);
+
 
   useEffect(() => {
     setOriginalProfile({
@@ -216,8 +216,7 @@ const PersonalInfo = ({ navigation }) => {
       const selectedDate = new Date(selectedYear, selectedMonth, selectedDay);
 
       await updateProfile(usName, usEmail, usGender, selectedDate);
-
-      setModalVisible(false);
+      setIsModalSuccess(true)
     } catch (error) {
       console.error("Error updating profile:", error);
     }
@@ -289,8 +288,6 @@ const PersonalInfo = ({ navigation }) => {
     });
   }, [navigation]);
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [showModal, setShowModal] = useState(false);
 
   const radioButtons = useMemo(
     () => [
@@ -319,14 +316,18 @@ const PersonalInfo = ({ navigation }) => {
     []
   );
 
+
+
+
   return (
     <View style={{ backgroundColor: "#EFEFEF", flex: 1 }}>
       <ScrollView>
         <View>
-          <Image
+          {/* <Image
             source={{
-              uri: authUser?.profile?.background?.url ||
-              "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+              uri:
+                authUser?.profile?.background?.url ||
+                "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
             }}
             style={{ width: "100%", height: 250 }}
           />
@@ -343,8 +344,9 @@ const PersonalInfo = ({ navigation }) => {
             <Pressable onPress={() => setModalVisible(true)}>
               <Image
                 source={{
-                  uri: authUser?.profile?.avatar?.url ||
-                  "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+                  uri:
+                    authUser?.profile?.avatar?.url ||
+                    "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
                 }}
                 style={{ width: 75, height: 75, borderRadius: 48 }}
               />
@@ -361,17 +363,17 @@ const PersonalInfo = ({ navigation }) => {
                 {authUser?.profile?.name}
               </Text>
             </View>
-          </View>
+          </View> */}
           <View
             style={{ backgroundColor: "#fff", paddingTop: 15, paddingLeft: 10 }}
           >
             <Text
-              style={{ fontSize: 18, fontWeight: "500", paddingBottom: 10 }}
+              style={{ fontSize: 18, fontWeight: "bold", paddingBottom: 10 }}
             >
               Thông tin cá nhân
             </Text>
             <View>
-              <Text style={{ width: "30%", fontSize: 16, fontWeight: "400" }}>
+              <Text style={{ width: "30%", fontSize: 16, fontWeight: "500" }}>
                 Tên hiển thị:
               </Text>
               <View
@@ -384,12 +386,12 @@ const PersonalInfo = ({ navigation }) => {
                 }}
               >
                 <TextInput
-                  style={{ fontSize: 18, width: 370 }}
+                  style={{ fontSize: 18, width: 370, color: 'gray', fontWeight: 'bold' }}
                   defaultValue={usName}
                   onChangeText={handleNameChange}
                 />
               </View>
-              <Text style={{ width: "30%", fontSize: 16, fontWeight: "400" }}>
+              <Text style={{ width: "30%", fontSize: 16, fontWeight: "500" }}>
                 Email hiển thị:
               </Text>
               <View
@@ -402,13 +404,13 @@ const PersonalInfo = ({ navigation }) => {
                 }}
               >
                 <TextInput
-                  style={{ fontSize: 18, width: 370 }}
+                  style={{ fontSize: 18, width: 370, color: 'gray', fontWeight: 'bold' }}
                   defaultValue={usEmail}
                   onChangeText={handleEmailChange}
                 />
               </View>
 
-              <Text style={{ width: "30%", fontSize: 16, fontWeight: "400" }}>
+              <Text style={{ width: "30%", fontSize: 16, fontWeight: "500" }}>
                 Giới tính
               </Text>
               <View
@@ -439,7 +441,7 @@ const PersonalInfo = ({ navigation }) => {
                 </View>
               </View>
 
-              <Text style={{ width: "30%", fontSize: 16, fontWeight: "400" }}>
+              <Text style={{ width: "30%", fontSize: 16, fontWeight: "500" }}>
                 Ngày sinh
               </Text>
               <View
@@ -580,7 +582,7 @@ const PersonalInfo = ({ navigation }) => {
                   flexDirection: "row",
                 }}
               >
-                <Text style={{ width: "30%", fontSize: 16, fontWeight: "400" }}>
+                <Text style={{ width: "30%", fontSize: 16, fontWeight: "500" }}>
                   Điện thoại
                 </Text>
                 <View
@@ -590,7 +592,7 @@ const PersonalInfo = ({ navigation }) => {
                     flexDirection: "column",
                   }}
                 >
-                  <Text style={{ fontSize: 16, fontWeight: "400" }}>
+                  <Text style={{ fontSize: 16, fontWeight: "400", color: 'gray', fontWeight: 'bold' }}>
                     +84 {authUser?.phone.substring(1)}
                   </Text>
                   <Text
@@ -914,6 +916,25 @@ const PersonalInfo = ({ navigation }) => {
               </View>
             </View>
           </View>
+        </Modal>
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={isModalSuccess}
+          onRequestClose={() => setIsModalSuccess(false)}
+        >
+          <Pressable style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalHeaderText}>
+                Cập nhật thông tin cá nhân thành công
+              </Text>
+              <View style={{ flexDirection: "row", justifyContent: "center", }}>
+                <Pressable style={{ backgroundColor: '#0091FF', alignItems: 'center', borderRadius: 10 }} onPress={() => { navigation.navigate("PersonalPage") }}>
+                  <Text style={{ fontWeight: "bold", paddingVertical: 10, paddingHorizontal: 20, color: "white", }}>OK</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Pressable>
         </Modal>
       </View>
     </View>

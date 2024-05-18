@@ -6,60 +6,137 @@ import {
   Image,
   ScrollView,
   StyleSheet,
+  Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import Toast from "react-native-toast-message";
 import axiosInstance from "../../api/axiosInstance";
 import { useAuthContext } from "../../contexts/AuthContext";
+import useFriend from "../../hooks/useFriend";
+import useConversation from "../../hooks/useConversation";
+import { useSelector } from "react-redux";
+import { useSocketContext } from "../../contexts/SocketContext";
+
 const FriendDirectory = ({ navigation }) => {
-  const [friend, setFriend] = useState("");
+  const { getConversationsByParticipants } = useConversation();
+  const { unFriend, getFriendById, showSuccessToast} = useFriend();
   const [friends, setFriends] = useState([]);
-  const { authUser } = useAuthContext();
+  const { reloadAuthUser } = useAuthContext();
   const [totalFriends, setTotalFriends] = useState("");
-  console.log(authUser);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalPosition, setModalPosition] = useState({});
+  const [selectedFriendPhone, setSelectedFriendPhone] = useState(null);
+  var isGroupRedux = useSelector(state => state.isGroup.isGroup);
+  const { socket } = useSocketContext()
+
+  const toggleModal = (index, friendPhone) => {
+    setSelectedFriendPhone(friendPhone);
+    setModalPosition({ top: index * 70 + 300 });
+    setModalVisible(!modalVisible);
+  };
   useEffect(() => {
     const fetchFriends = async () => {
       try {
-        const response = await axiosInstance.get('/users/get/friends');
+        const response = await axiosInstance.get("/users/get/friends");
         setFriends(response.data.friends);
       } catch (error) {
         console.log(error);
       }
     };
     fetchFriends();
-  }, []);
+  }, [isGroupRedux]);
+
   useEffect(() => {
-    setTotalFriends(friends.length)
+    setTotalFriends(friends.length);
   }, [friends]);
+
+  const handleUnFriend = async () => {
+    if (!selectedFriendPhone) return;
+
+    try {
+      await unFriend(selectedFriendPhone);
+      showSuccessToast("Huỷ kết bạn thành công")
+      // Cập nhật danh sách bạn bè sau khi hủy kết bạn thành công
+      const updatedFriends = friends.filter(
+        (friend) => friend.phone !== selectedFriendPhone);
+      setFriends(updatedFriends);
+      // Thực hiện reloadAuthUser ở đây nếu cần
+      reloadAuthUser();
+    } catch (error) {
+      console.log(error);
+      showSuccessToast("Hủy kết bạn thất bại!");
+    }
+    setModalVisible(false);
+  };
+
+  const handleFriendMessage = async (friend) => {
+    let conversation;
+
+    conversation = await getConversationsByParticipants(friend.userId);
+    if (conversation === null) {
+      const conversationNew = {
+        _id: friend.userId,
+        conversation: null,
+        name: friend?.profile.name,
+        avatar: friend?.profile.avatar?.url,
+        background: friend?.profile.background?.url,
+        tag: 'friend',
+      };
+      navigation.navigate("Message", { chatItem: conversationNew });
+    }
+    else{
+      const conversationNew = {
+        _id: friend.userId,
+        conversation: conversation,
+        name: friend?.profile.name,
+        avatar: friend?.profile.avatar?.url,
+        background: friend?.profile.background?.url,
+        lastMessage: conversation.lastMessage,
+        tag: conversation.tag,
+      };
+      navigation.navigate("Message", { chatItem: conversationNew });
+    }
+  };
+
+  useEffect(() => {
+    if(socket){
+      socket.on("accept-request-add-friend", async (sender) => {
+         // console.log("accept-request-sender", sender);
+        const getUser = await getFriendById(sender.sender.userId)
+        const newFriend = {
+          email: getUser.email,
+          phone: getUser.phone,
+          profile: getUser.profile,
+          userId: getUser.id
+        }
+        setFriends([...friends, newFriend])
+      })
+      socket.on("unfriend", async (sender) => {
+        // console.log("unfriend-sender", sender);
+        setFriends((prevFriend) => prevFriend.filter((item) => item.userId !== sender.sender.userId))
+      })
+      return () => {
+        socket.off("accept-request-add-friend")
+        socket.off("unfriend")
+      }
+    }
+  }, [socket])
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.topSection}>
-        <Pressable style={styles.buttonRow}>
+        <Pressable
+          style={styles.buttonRow}
+          onPress={() => navigation.navigate("FriendRequest")}
+        >
           <Ionicons name={"people-circle-sharp"} size={40} color={"#0091FF"} />
           <Text style={styles.buttonText}>Lời mời kết bạn</Text>
-        </Pressable>
-        <Pressable style={styles.buttonRow}>
-          <Image
-            style={styles.iconImage}
-            resizeMode="contain"
-            source={require("../../../assets/contacts.png")}
-          />
-          <Text style={styles.buttonText}>Danh bạ máy</Text>
-        </Pressable>
-        <Pressable style={styles.buttonRow}>
-          <Image
-            style={styles.iconImage}
-            resizeMode="contain"
-            source={require("../../../assets/cake.png")}
-          />
-          <Text style={styles.buttonText}>Lịch sinh nhật</Text>
         </Pressable>
       </View>
       <View style={styles.buttonBar}>
         <Pressable style={styles.roundedButton}>
           <Text style={styles.whiteText}>Tất cả {totalFriends}</Text>
         </Pressable>
-
       </View>
 
       {/* List danh bạ nè */}
@@ -69,11 +146,16 @@ const FriendDirectory = ({ navigation }) => {
         </View>
         {friends.map((friend, index) => (
           <View key={index} style={styles.friendRow}>
-            <Pressable style={styles.friendItem}>
+            <Pressable
+              style={styles.friendItem}
+              onPress={() => handleFriendMessage(friend)}
+            >
               <View style={styles.friendInfo}>
                 <Image
                   source={{
-                    uri: friend?.profile?.avatar?.url,
+                    uri:
+                      friend?.profile?.avatar?.url ||
+                      "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
                   }}
                   style={styles.friendAvatar}
                 />
@@ -90,10 +172,39 @@ const FriendDirectory = ({ navigation }) => {
                     color={"black"}
                   />
                 </View>
+                <Pressable
+                  style={styles.actionIcon}
+                  onPress={() => toggleModal(index, friend.phone)}
+                >
+                  <Ionicons
+                    name={"ellipsis-vertical"}
+                    size={25}
+                    color={"black"}
+                  />
+                </Pressable>
               </View>
             </Pressable>
           </View>
         ))}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(!modalVisible)}>
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setModalVisible(!modalVisible)}>
+            <View
+              style={[styles.centeredView, modalPosition, { position: "absolute", right: 10 }]}>
+              <Pressable
+                onPress={() => { handleUnFriend(); }}>
+                <Text style={{ fontSize: 20, backgroundColor: "white" }}>
+                  Hủy kết bạn
+                </Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Modal>
       </View>
     </ScrollView>
   );
@@ -200,6 +311,12 @@ const styles = StyleSheet.create({
   },
   actionIcon: {
     marginRight: 20,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.0)",
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 

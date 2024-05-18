@@ -11,15 +11,19 @@ import {
 } from "../../utils/validation";
 import toast from "react-hot-toast";
 import { HiMiniLockClosed } from "react-icons/hi2";
-import { TiArrowSync } from "react-icons/ti";
-import { FaDatabase } from "react-icons/fa";
-import { IoSettingsSharp } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 
 function ModalComponent({ showModal, language, userInfo, typeModal }) {
   const [showUpdate, setShowUpdate] = useState(false);
-  const { updateProfile, loading, getOTP, verifyOTP } = useUpdate();
-  const { changePassword, isLoading } = useChangePassword();
+  const {
+    updateProfile,
+    loading,
+    getOTP,
+    verifyOTP,
+    updateAvatar,
+    updateBackground,
+  } = useUpdate();
+  const { changePassword } = useChangePassword();
   const navigate = useNavigate();
 
   const [usName, setUsName] = useState(userInfo?.profile.name);
@@ -33,10 +37,13 @@ function ModalComponent({ showModal, language, userInfo, typeModal }) {
   const [isSendOTP, setIsSendOTP] = useState(false);
   const [isVerifyOTP, setIsVerifyOTP] = useState(false);
 
-  const background = userInfo?.profile.background?.url || "./zalo.svg";
-  const avatar = userInfo?.profile.avatar?.url || "./zalo.svg";
-
-  const [isOpenSecurity, setIsSecurity] = useState(false);
+  const [avatar, setAvatar] = useState(
+    userInfo?.profile.avatar?.url || "./zalo.svg"
+  );
+  const [background, setBackground] = useState(
+    userInfo?.profile.background?.url || "./zalo.svg"
+  );
+  const [isOpenSecurity, setIsSecurity] = useState(true);
   const [showChangePassword, setShowChangePassword] = useState(false);
 
   const [passwordCurrent, setPasswordCurrent] = useState("");
@@ -47,6 +54,11 @@ function ModalComponent({ showModal, language, userInfo, typeModal }) {
 
   const [passwordReNew, setPasswordReNew] = useState("");
   const [showPasswordReNew, setShowPasswordReNew] = useState(false);
+  const [showModalUpAVT, setShowModalUpAVT] = useState(false);
+
+  const [loadingButtonAVT, setLoadingButtonAVT] = useState(false);
+  const [showModalUpBgr, setShowModalUpBgr] = useState(false);
+  const [loadingButtonBgr, setLoadingButtonBgr] = useState(false);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -89,11 +101,13 @@ function ModalComponent({ showModal, language, userInfo, typeModal }) {
       name: usName,
       email: usEmail,
       gender: usGender,
-      dob: selectedDate,
-      dob: selectedDate,
+      dob: selectedDate
+    }).then((rs) => {
+      if (rs) {
+        handleCancel();
+        showModal(false);
+      }
     });
-
-    handleCancel();
   };
 
   const handleCancel = () => {
@@ -177,12 +191,63 @@ function ModalComponent({ showModal, language, userInfo, typeModal }) {
         toast.success("Đổi mật khẩu thành công, vui lòng đăng nhập lại");
         setShowChangePassword(false);
         localStorage.clear();
-        navigate("/login", {state: {emailFromChangePassword: usEmail}});
+        navigate("/login", { state: { emailFromChangePassword: usEmail } });
         window.location.reload();
-        
       }
     }
   };
+
+  const handleOpenModalUpAVT = () => {
+    setShowModalUpAVT(true);
+  };
+
+  const handleCloseModalUpAVT = () => {
+    setShowModalUpAVT(false);
+  };
+  const handleUpdateAvatar = async (event) => {
+    try {
+      setLoadingButtonAVT(true);
+      const file = event.target.files[0];
+      const newAvatarUrl = URL.createObjectURL(file);
+      setAvatar(newAvatarUrl);
+      await updateAvatar(file);
+      setShowModalUpAVT(false);
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+    } finally {
+      setLoadingButtonAVT(false);
+    }
+  };
+  const handleOpenModalBgr = () => {
+    setShowModalUpBgr(true);
+  };
+
+  const handleCloseModalUpBgr = () => {
+    setShowModalUpBgr(false);
+  };
+  const handleUpdateBackground = async (event) => {
+    try {
+      setLoadingButtonBgr(true);
+      const file = event.target.files[0];
+      const newBackgroundUrl = URL.createObjectURL(file);
+      setBackground(newBackgroundUrl);
+      await updateBackground(file);
+      setShowModalUpBgr(false);
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+    } finally {
+      setLoadingButtonBgr(false);
+    }
+  };
+
+  const showNoti = () => {
+    toast.error(
+      language === "vi"
+        ? "Tính năng chưa hoàn thiện"
+        : "Function is not complete"
+    );
+  };
+
 
   return typeModal === "profile" ? (
     <>
@@ -351,10 +416,16 @@ function ModalComponent({ showModal, language, userInfo, typeModal }) {
             ) : (
               <div className="bg-gray-200">
                 <div className="h-[170px]">
-                  <img
-                    src={background}
-                    className="object-cover h-full w-full"
-                  />
+                  <button
+                    onClick={handleOpenModalBgr}
+                    className="h-full w-full"
+                  >
+                    <img
+                      src={background}
+                      className="object-cover h-full w-full"
+                      alt="Background"
+                    />
+                  </button>
                 </div>
                 <div className="-mt-6 ">
                   <div className="flex bg-white px-3">
@@ -367,6 +438,7 @@ function ModalComponent({ showModal, language, userInfo, typeModal }) {
                       <CiCamera
                         className="absolute bottom-3 right-0 border-spacing-4 rounded-full border-white bg-gray-300"
                         size={26}
+                        onClick={handleOpenModalUpAVT}
                       />
                     </div>
                     <div className="flex items-center">
@@ -429,6 +501,63 @@ function ModalComponent({ showModal, language, userInfo, typeModal }) {
                       <h1 className="w-2/3">{userInfo.email}</h1>
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* modal upload ảnh đại diện */}
+            {showModalUpAVT && (
+              <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-gray-500 bg-opacity-75 z-50">
+                <div className="bg-white p-4 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <h1 className="text-lg font-semibold">Profile Picture</h1>
+                    <button
+                      className="text-red-500"
+                      onClick={() => handleCloseModalUpAVT()}
+                      disabled={loadingButtonAVT} // Disable nút khi đang trong quá trình loading
+                    >
+                      {loadingButtonAVT ? "Loading..." : "Close"}{" "}
+                      {/* Điều chỉnh nội dung của nút */}
+                    </button>
+                  </div>
+                  <img
+                    src={avatar}
+                    className="mt-4 object-cover h-40 w-full rounded-lg"
+                    alt="Avatar"
+                  />
+                  <input
+                    type="file"
+                    onChange={handleUpdateAvatar}
+                    accept="image/*"
+                  />
+                </div>
+              </div>
+            )}
+            {/* modal upload ảnh bìa */}
+            {showModalUpBgr && (
+              <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-gray-500 bg-opacity-75 z-50">
+                <div className="bg-white p-4 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <h1 className="text-lg font-semibold">Cập nhật ảnh bìa</h1>
+                    <button
+                      className="text-red-500"
+                      onClick={() => handleCloseModalUpBgr()}
+                      disabled={loadingButtonBgr}
+                    >
+                      {loadingButtonBgr ? "Loading..." : "Close"}{" "}
+                      {/* Điều chỉnh nội dung của nút */}
+                    </button>
+                  </div>
+                  <img
+                    src={background}
+                    className="mt-4 object-cover h-40 w-full rounded-lg"
+                    alt="Avatar"
+                  />
+                  <input
+                    type="file"
+                    onChange={handleUpdateBackground}
+                    accept="image/*"
+                  />
                 </div>
               </div>
             )}
@@ -579,59 +708,26 @@ function ModalComponent({ showModal, language, userInfo, typeModal }) {
       <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
     </>
   ) : (
-    <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/5 h-[90%] bg-gray-100 rounded-lg shadow-lg ">
-      {/* Content */}
-      <div className="absolute left-0 top-0 h-full w-5/12  border-r border-gray-300 bg-gray-100 overflow-auto">
-        {/* Nội dung ở bên trái */}
+    <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/5 h-[60%] bg-white border rounded-lg shadow-lg ">
+      <div className="absolute left-0 top-0 h-full w-5/12  border-r bg-wihite overflow-auto">
         <div className="flex p-2 items-center h-20 ">
           <p className="text-xl font-semibold">Cài đặt</p>
         </div>
-        <div
-          className="flex items-center justify-start h-12  hover:bg-sky-100"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <IoSettingsSharp size={20} className="mr-5 ml-5" />
-          <p className="text-base font-semibold">Cài đặt chung</p>
-        </div>
+
         <div
           className="flex items-center justify-start h-12 hover:bg-sky-100"
           onClick={(e) => {
-            // e.stopPropagation();
             toggleModalSecurity();
           }}
         >
           <HiMiniLockClosed size={20} className="mr-5 ml-5" />
           <p className="text-base font-semibold">Riêng tư và bảo mật</p>
         </div>
-
-        <div
-          className="flex items-center justify-start h-12 hover:bg-sky-100"
-          onClick={(e) => {
-            // e.stopPropagation();
-          }}
-        >
-          <TiArrowSync size={20} className="mr-5 ml-5" />
-          <p className="text-base font-semibold">Đồng bộ tin nhắn</p>
-        </div>
-
-        <div
-          className="flex items-center justify-start h-12 hover:bg-sky-100"
-          onClick={(e) => {
-            // e.stopPropagation();
-          }}
-        >
-          <FaDatabase size={20} className="mr-5 ml-5" />
-          <p className="text-base font-semibold">Quản lý dữ liệu</p>
-        </div>
       </div>
-      <div
-        className="absolute right-0 top-0 h-full w-7/12 overflow-auto"
-        // onClick={(e) => e.stopPropagation()}
-      >
+      <div className="absolute right-0 top-0 h-full w-7/12 overflow-auto">
         <div className="flex p-2 justify-end h-15" onClick={showModal}>
-          <p className="text-2xl ">x</p>
+          <button className="text-2xl mr-3">x</button>
         </div>
-        {/* Nội dung ở bên phải */}
 
         {isOpenSecurity && (
           <div className="p-2">
@@ -708,14 +804,14 @@ function ModalComponent({ showModal, language, userInfo, typeModal }) {
 
                   <div className="flex justify-end mt-6">
                     <button
-                      className="flex items-center justify-center text-lg font-semibold p-2 pl-3 pr-3 mr-5 bg-gray-200 rounded hover:bg-gray-400"
+                      className="flex items-center justify-center text-lg font-semibold p-2 pl-3 pr-3 mr-5 bg-gray-200 rounded-lg hover:bg-gray-400"
                       onClick={() => setShowChangePassword(false)}
                     >
                       Hủy
                     </button>
-                    <button className="flex items-center justify-center text-lg font-semibold p-2 pl-3 pr-3  bg-sky-200 rounded hover:bg-sky-400"
-                    
-                    onClick={handleChangePassword}
+                    <button
+                      className="flex items-center justify-center text-lg font-semibold p-2 pl-3 pr-3  bg-primary rounded-lg hover:bg-blue-500 text-white"
+                      onClick={handleChangePassword}
                     >
                       Cập nhật
                     </button>
@@ -730,7 +826,7 @@ function ModalComponent({ showModal, language, userInfo, typeModal }) {
                 Khóa màn hình Zalo của bạn bằng Ctrl + L, khi bạn không sử dụng
                 máy tính.
               </p>
-              <button className="rounded mt-5 bg-sky-100 p-2 font-semibold text-sky-600 hover:bg-sky-200">
+              <button className="rounded mt-5 bg-sky-100 p-2 font-semibold text-sky-600 hover:bg-sky-200" onClick={showNoti}>
                 Tạo mã khóa màn hình
               </button>
             </div>
@@ -742,7 +838,7 @@ function ModalComponent({ showModal, language, userInfo, typeModal }) {
                   Sau khi bật, bạn sẽ được yêu cầu nhập mã OTP hoặc xác thực từ
                   thiết bị di động sau khi đăng nhập trên thiết bị lạ.
                 </p>
-                <div className="form-control">
+                <div className="form-control" onClick={showNoti}>
                   <label className="label cursor-pointer">
                     <input
                       type="checkbox"

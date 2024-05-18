@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Toast from "react-native-toast-message";
+import axiosInstance from "../api/axiosInstance";
 
 const AuthContext = createContext();
 
@@ -34,6 +36,7 @@ export const AuthContextProvider = ({ children }) => {
     };
 
     loadData();
+    reloadAuthUser();
   }, []);
   useEffect(() => {
     const saveData = async () => {
@@ -42,6 +45,7 @@ export const AuthContextProvider = ({ children }) => {
           await AsyncStorage.setItem("authUser", JSON.stringify(authUser));
         }
         if (accessToken) {
+          // console.log("save accessToken", accessToken);
           await AsyncStorage.setItem(
             "accessToken",
             JSON.stringify(accessToken)
@@ -69,7 +73,7 @@ export const AuthContextProvider = ({ children }) => {
         avatar: {
           ...prevUser.profile.avatar,
           url: newAvatarUrl,
-          public_id:publicId
+          public_id: publicId,
         },
       },
     }));
@@ -83,10 +87,23 @@ export const AuthContextProvider = ({ children }) => {
         background: {
           ...prevUser.profile.background,
           url: backgroundUrl,
-          public_id:publicId
+          public_id: publicId,
         },
       },
     }));
+  };
+  const reloadAuthUser = async () => {
+    try {
+      const response = await axiosInstance.get("users/get/me");
+      if (response.status === 200) {
+        setAuthUser(response.data.user);
+        return true;
+      }
+    } catch (error) {
+      console.log(error);
+      // Toast.error("Failed to get user information");
+      return false;
+    }
   };
   return (
     <AuthContext.Provider
@@ -98,7 +115,8 @@ export const AuthContextProvider = ({ children }) => {
         refreshToken,
         setRefreshToken,
         updateAvatar,
-        updateBia
+        updateBia,
+        reloadAuthUser,
       }}
     >
       {children}

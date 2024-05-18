@@ -141,6 +141,17 @@ const useRegister = () => {
     return systemOTP;
   };
 
+  const checkMail = async (email) => {
+    const checkEmai = await check_mail(email);
+    if (checkEmai) {
+      showToastError("Email already exists");
+      setIsLoading(false);
+      return false;
+    } else {
+      return true;
+    }
+  };
+
   return {
     isOTPVerified,
     getOTP,
@@ -149,6 +160,7 @@ const useRegister = () => {
     showToastSuccess,
     verifyOTP,
     GetSystemOTP,
+    checkMail
   };
 };
 

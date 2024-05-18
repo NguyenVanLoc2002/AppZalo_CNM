@@ -1,7 +1,10 @@
-import React from "react";
-import { Text, View, Image } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Text, View, Image, LogBox } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import avatarGroup from '../../../../assets/avatarGroup.png'
 
 const ChatItem = ({ item }) => {
+  const [avatar] = useState(avatarGroup)
   return (
     <View
       style={{
@@ -10,15 +13,12 @@ const ChatItem = ({ item }) => {
         paddingHorizontal: 20,
         paddingVertical: 10,
         backgroundColor: "white",
-      }}
-    >
+      }}>
       <View
-        style={{ width: "15%", justifyContent: "center", alignItems: "center" }}
-      >
+        style={{ width: "15%", justifyContent: "center", alignItems: "center" }}>
         <Image
-          source={{ uri: item.url }}
-          style={{ width: 55, height: 55, borderRadius: 25 }}
-        />
+          source={item.chat.avatar === "https://res.cloudinary.com/dq3pxd9eq/image/upload/group_avatar.jpg" ? avatar : { uri: item.chat.avatar }}
+          style={{ width: 55, height: 55, borderRadius: 25 }} />
       </View>
       <View
         style={{
@@ -27,7 +27,10 @@ const ChatItem = ({ item }) => {
           paddingLeft: 20,
         }}
       >
-        <Text style={{ fontSize: 20, marginBottom: 5 }}>{item.ten}</Text>
+        <View style={{ flexDirection: 'row' }}>
+          {item.chat.tag === 'group' ? <Ionicons name="people" size={20} color="gray" /> : <View></View>}
+          <Text style={{ fontSize: 18, marginBottom: 5, paddingLeft: 5, fontWeight: 'bold' }}>{item.chat.name}</Text>
+        </View>
         <Text
           style={{
             fontSize: 14,
@@ -35,7 +38,7 @@ const ChatItem = ({ item }) => {
           }}
           numberOfLines={1}
         >
-          {item.tinNhan}
+          {item.dataChat}
         </Text>
       </View>
       <View
@@ -46,9 +49,9 @@ const ChatItem = ({ item }) => {
         }}
       >
         <Text style={{ marginBottom: 5 }}>
-          {item.thoiGian === 0 ? "vừa xong" : `${item.thoiGian} phút`}
+          {item.time}
         </Text>
-        <Text
+        {/* <Text
           style={{
             backgroundColor: "red",
             width: 20,
@@ -60,8 +63,8 @@ const ChatItem = ({ item }) => {
             display: item.soTNChuaDoc === 0 ? "none" : "flex",
           }}
         >
-          {item.soTNChuaDoc}
-        </Text>
+          {/* {item.soTNChuaDoc} */}
+        {/* </Text> */}
       </View>
     </View>
   );

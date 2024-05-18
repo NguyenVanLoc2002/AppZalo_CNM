@@ -7,14 +7,27 @@ import {
   TextInput,
   Pressable,
   Modal,
-  SafeAreaView,
+  SafeAreaView
 } from "react-native";
 import ChatItem from "./ChatItem";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useAuthContext } from "../../../contexts/AuthContext";
+import { useSocketContext } from "../../../contexts/SocketContext";
+import useConversation from "../../../hooks/useConversation";
+import useGroup from "../../../hooks/useGroup";
+import useMessage from '../../../hooks/useMessage'
+import { useSelector } from "react-redux";
 
 function Chat({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
-
+  const { conversations, getConversations } = useConversation();
+  const { groups, getGroups } = useGroup();
+  const [listFriends, setListFriends] = useState([]);
+  const { authUser } = useAuthContext();
+  const { isNewSocket, newSocketData, setNewSocketData } = useSocketContext();
+  const { showToastSuccess, handleGetTimeInChat, setDataChat, sortTime } = useMessage();
+  var isGroupRedux = useSelector(state => state.isGroup.isGroup);
+  
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -70,97 +83,212 @@ function Chat({ navigation }) {
     });
   }, [navigation]);
 
-  // Mảng dữ liệu mẫu
-  const [users, setUsers] = useState([
-    {
-      ten: "Nguyen Van A",
-      url: "https://randomuser.me/api/portraits/men/68.jpg",
-      tinNhan: "Hello",
-      soTNChuaDoc: 6,
-      thoiGian: 2,
-    },
-    {
-      ten: "Luong thi Tho",
-      url: "https://randomuser.me/api/portraits/men/70.jpg",
-      tinNhan: "Khoe khong",
-      soTNChuaDoc: 0,
-      thoiGian: 6,
-    },
-    {
-      ten: "Nguyen Van Teo",
-      url: "https://randomuser.me/api/portraits/men/80.jpg",
-      tinNhan: "An com chua",
-      soTNChuaDoc: 0,
-      thoiGian: 0,
-    },
-    {
-      ten: "Le Van Ty",
-      url: "https://randomuser.me/api/portraits/men/90.jpg",
-      tinNhan: "Dang lam gi the",
-      soTNChuaDoc: 5,
-      thoiGian: 8,
-    },
-    {
-      ten: "Huynh Quoc Hao",
-      url: "https://randomuser.me/api/portraits/men/10.jpg",
-      tinNhan:
-        "Cupidatat do aliquip excepteur magna Lorem pariatur. Qui aliqua adipisicing dolore sint qui dolor elit cillum. Labore Lorem velit ullamco proident aliquip labore ad ad. Fugiat sunt aute labore dolor et laboris. Consectetur velit Lorem minim anim adipisicing irure. Lorem adipisicing aliquip dolor pariatur dolore velit id sit id incididunt dolore.",
-      soTNChuaDoc: 7,
-      thoiGian: 0,
-    },
-    {
-      ten: "Bui Tri Thuc",
-      url: "https://randomuser.me/api/portraits/men/20.jpg",
-      tinNhan:
-        "Nisi ipsum aute commodo laboris pariatur amet ut. Enim cillum eiusmod ex esse Lorem anim minim pariatur reprehenderit anim reprehenderit commodo. Cillum Lorem voluptate adipisicing Lorem ullamco commodo commodo deserunt sit ullamco culpa ex dolore. Nostrud enim ullamco nostrud occaecat non elit consequat non pariatur nostrud voluptate aute duis. Do ut consequat mollit ipsum consequat ullamco aute aute quis ullamco deserunt enim proident.",
-      soTNChuaDoc: 3,
-      thoiGian: 12,
-    },
-    {
-      ten: "Thanh Tam",
-      url: "https://randomuser.me/api/portraits/men/53.jpg",
-      tinNhan: "lam bai tap chua",
-      soTNChuaDoc: 0,
-      thoiGian: 5,
-    },
-    {
-      ten: "Hung Dung",
-      url: "https://randomuser.me/api/portraits/men/62.jpg",
-      tinNhan: "lam bai tap chua",
-      soTNChuaDoc: 4,
-      thoiGian: 0,
-    },
-    {
-      ten: "Nam",
-      url: "https://randomuser.me/api/portraits/men/26.jpg",
-      tinNhan: "lam bai tap chua",
-      soTNChuaDoc: 7,
-      thoiGian: 2,
-    },
-    {
-      ten: "Hau",
-      url: "https://randomuser.me/api/portraits/men/63.jpg",
-      tinNhan: "lam bai tap chua",
-      soTNChuaDoc: 0,
-      thoiGian: 3,
-    },
-  ]);
+  const fetchDataChat = async () => {
+    const listChat = conversations.map((conversation) => {
+      const friend = conversation.participants.find(
+        (participant) => participant.phone !== authUser.phone
+      );
+      return {
+        _id: friend?._id,
+        conversation: conversation,
+        name: friend?.profile.name,
+        avatar: friend?.profile.avatar?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+        background: friend?.profile.background?.url || "https://fptshop.com.vn/Uploads/Originals/2021/6/23/637600835869525914_thumb_750x500.png",
+        lastMessage: conversation?.lastMessage,
+        tag: conversation.tag,
+      };
+    });
+
+    const listGroup = groups.map((group) => {
+      return addDataToGroup(group);
+    });
+    listChat.push(...listGroup);
+    fetchDataConver(listChat);
+  };
+  const addDataToGroup = (group) => {
+    return {
+      _id: group._id,
+      conversation: group.conversation,
+      name: group.groupName,
+      avatar: group.avatar.url,
+      lastMessage: group.lastMessage || group.conversation.lastMessage,
+      tag: group.conversation.tag,
+      createBy: group.createBy,
+      createAt: group?.createAt,
+    };
+  };
+  useEffect(() => {
+    fetchDataChat();
+  }, [conversations, groups]);
+
+  const fetchDataConver = async (listChat) => {
+    let data = [];
+    let int = listChat.length;
+
+    for (let index = 0; index < int; index++) {
+      const conver = listChat[index];
+      if (conver.lastMessage) {
+        const dataChat = await setDataChat(conver.lastMessage, false);
+        const conversationNew = {
+          chat: conver,
+          dataChat: dataChat,
+          time: handleGetTimeInChat(conver?.lastMessage?.timestamp)
+        };
+        data.push(conversationNew);
+      }
+    };
+    sortTime(data)
+    setListFriends(data);
+  };
+
+  const updatedListFriends = async (conversationId, message, isDelete) => {
+    const updatedListFriends = await Promise.all(listFriends.map(async (item) => {
+      if (item.chat.conversation._id === conversationId) {
+        const dataChat = await setDataChat(message, isDelete);
+        return {
+          ...item,
+          chat: {
+            ...item?.chat,
+            lastMessage: message
+          },
+          dataChat: dataChat,
+          time: handleGetTimeInChat(message?.timestamp)
+        };
+      }
+      return item;
+    }));
+    return updatedListFriends;
+  }
+  useEffect(() => {
+    const fetchDataListFriend = async () => {
+      try {
+        getConversations();
+        getGroups();
+      } catch (error) {
+        console.log("getFriendError:", error);
+      }
+    };
+    fetchDataListFriend();
+  }, [isGroupRedux])
+
+  useEffect(() => {
+    const fetchSocket = async () => {
+      if (isNewSocket === "new_message") {
+        const message = newSocketData;
+        if (message && message.retrunMessage) {
+          // console.log("new_message:", message);
+          const update = await updatedListFriends(message.conversationId, message.retrunMessage, false)
+          const sortUpdate = sortTime(update);
+          setListFriends(sortUpdate);
+          setIsNewSocket(null);
+          setNewSocketData(null);
+        }
+      }
+      if (isNewSocket === "delete_message") {
+        const { chatRemove, conversationId, isDeleted } = newSocketData;
+        if (chatRemove) {
+          if (isDeleted) {
+            const updatedListFriends = listFriends.map((item) => {
+              if (item.chat.conversation._id === conversationId) {
+
+              }
+            });
+          } else {
+            // console.log("delete_message:", chatRemove);
+            const update = await updatedListFriends(conversationId, chatRemove, true)
+            setListFriends(update)
+          }
+        }
+      }
+      if (isNewSocket === "add-to-group") {
+        const data = newSocketData;
+        if (data && data.addMembers) {
+          // console.log("add-to-group", data)
+          if (!listFriends.find(item => item.chat._id === data.group._id)) {
+            const group = data.group
+            if (data.addMembers.includes(authUser._id) && group.createBy._id !== authUser._id) {
+              console.log(`Bạn đã tham gia nhóm ${group.groupName}`);
+              showToastSuccess(`Bạn đã tham gia nhóm ${group.groupName}`)
+              const addGroup = addDataToGroup(group)
+              let dataChat
+              if (addGroup?.lastMessage?.senderId) {
+                dataChat = await setDataChat(addGroup.lastMessage, false);
+              }
+              const conversationNew = {
+                chat: addGroup,
+                dataChat: dataChat || 'Chưa có tin nhắn',
+                time: handleGetTimeInChat(addGroup?.lastMessage?.timestamp || addGroup.createAt)
+              };
+              const newListFriends = [conversationNew, ...listFriends]
+              setListFriends(newListFriends);
+              setNewSocketData(null);
+            }
+          }
+        }
+      }
+
+      if (isNewSocket === "remove-from-group") {
+        const group = newSocketData
+        if (group && group.removeMembers) {
+          // console.log("remove-from-group", group);
+          if (group.removeMembers.includes(authUser._id)) {
+            console.log(`Bạn đã bị xoá khỏi nhóm ${group.name}`);
+            showToastSuccess(`Bạn đã bị xoá khỏi nhóm ${group.name}`)
+            const updatedConversationList = listFriends.filter(item => item.chat._id !== group.id);
+            setListFriends(updatedConversationList)
+            setNewSocketData(null);
+          }
+        }
+      }
+      if (isNewSocket === "delete-group") {
+        const group = newSocketData;
+        // console.log("delete-group", group);
+        if (group && group.name) {
+          showToastSuccess(`Nhóm ${group.name} đã giải tán`)
+          const updatedConversationList = listFriends.filter(item => item.chat._id !== group.id);
+          setListFriends(updatedConversationList)
+          setNewSocketData(null);
+        }
+      }
+      if (isNewSocket === "update-group") {
+        const group = newSocketData
+        if (group && group.avatar) {
+          // console.log("update-group", group);
+          const groupUpdate = listFriends.map((item) => {
+            if (item.chat._id === group.id) {
+              return {
+                ...item,
+                chat: {
+                  ...item.chat,
+                  name: group.name,
+                  avatar: group.avatar
+                }
+              }
+            }
+            return item;
+          })
+          setListFriends(groupUpdate)
+        }
+      }
+    }
+
+    fetchSocket()
+  }, [isNewSocket, newSocketData]);
 
   const handleChatItemPress = (item) => {
-    // Chuyển đến trang Message
-    navigation.navigate("Message", { user: item });
+    navigation.navigate("Message", { chatItem: item.chat });
   };
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <FlatList
-        data={users}
+        data={listFriends}
         renderItem={({ item }) => (
           <Pressable onPress={() => handleChatItemPress(item)}>
             <ChatItem item={item} />
           </Pressable>
         )}
-        keyExtractor={(item) => item.url}
+        keyExtractor={(item) => item.chat.conversation._id}
       />
       <Modal
         animationType="none"
@@ -289,6 +417,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: 10,
   },
+  modalButtonContainer1: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 20,
+  },
   headerIcon: {
     padding: 10,
   },
@@ -304,6 +438,49 @@ const styles = StyleSheet.create({
     color: "gray",
     fontSize: 18,
     marginLeft: 40,
+  },
+  button: {
+    backgroundColor: "#fff",
+  },
+  pressedButton: {
+    backgroundColor: "#33c4c2",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    width: 300,
+    padding: 20,
+    borderRadius: 10,
+    display: "flex",
+    flexDirection: "column",
+  },
+  modalHeaderText: {
+    fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  modalText: {
+    marginBottom: 20,
+  },
+  modalButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginTop: 20,
+  },
+  modalButton: {
+    fontWeight: "bold",
+    marginHorizontal: 10,
+    color: "#0091FF",
+  },
+  pressCol: {
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "row",
   },
 });
 
