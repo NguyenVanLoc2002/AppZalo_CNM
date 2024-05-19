@@ -180,7 +180,6 @@ function Chat({ navigation }) {
           const update = await updatedListFriends(message.conversationId, message.retrunMessage, false)
           const sortUpdate = sortTime(update);
           setListFriends(sortUpdate);
-          setIsNewSocket(null);
           setNewSocketData(null);
         }
       }

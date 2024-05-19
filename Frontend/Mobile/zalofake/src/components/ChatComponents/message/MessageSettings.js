@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -31,7 +31,7 @@ const MessageSettings = ({ navigation, route }) => {
   const [isGroupAdmin, setIsGroupAdmin] = useState(false);
   const [isPhoAdmin, setIsPhoAdmin] = useState(false);
   const { authUser } = useAuthContext();
-  const [textSearch, setTextSearch] = useState(null);
+  const [textSearch, setTextSearch] = useState('');
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [selectedAdmin, setSelectedAdmin] = useState([]);
   const [listSearch, setListSearch] = useState([]);
@@ -58,6 +58,8 @@ const MessageSettings = ({ navigation, route }) => {
   const [allFriend, setAllFriend] = useState([])
   const [isXacNhan, setIsXacNhan] = useState(false)
   const [avatarGr] = useState(avatarGroup)
+  const searchInputRef = useRef(null);
+  const [isSearch, setIsSearch] = useState(false)
 
   useEffect(() => {
     navigation.setOptions({
@@ -240,9 +242,10 @@ const MessageSettings = ({ navigation, route }) => {
     setListFriendCanSearch(filterFriend)
   }
   // Search bạn để add vào group
-  const handleSearch = () => {
-    if (!textSearch) {
-      showToastError("Bạn chưa nhập");
+  useEffect(() => {
+    if (textSearch === '') {
+      setListSearch(listFriendCanSearch)
+      setIsSearch(false)
     } else {
       const filteredFriends = listFriendCanSearch.filter((friend) => {
         return (
@@ -250,8 +253,8 @@ const MessageSettings = ({ navigation, route }) => {
         );
       });
       if (filteredFriends.length === 0) {
-        showToastError("Không tìm thấy");
-      } else {
+        setIsSearch(true)
+      } else if (filteredFriends.length > 0) {
         const newRadioButtons = [];
         for (const friend of filteredFriends) {
           const item = {
@@ -263,9 +266,11 @@ const MessageSettings = ({ navigation, route }) => {
           newRadioButtons.push(item);
         }
         setListSearch(newRadioButtons);
+        setIsSearch(false)
       }
     }
-  };
+  }, [textSearch])
+
   //giải tán nhóm
   const handleDeleteGroup = async () => {
     try {
@@ -316,11 +321,6 @@ const MessageSettings = ({ navigation, route }) => {
   };
   const isFriendSelected = (friend) => {
     return selectedFriends?.includes(friend);
-  };
-
-  const handleRemoveSearch = () => {
-    setTextSearch(null);
-    setListSearch(listFriendCanSearch);
   };
 
   const handleDeleteFriendSelected = (item) => {
@@ -526,7 +526,7 @@ const MessageSettings = ({ navigation, route }) => {
       }
       if (isNewSocket === "member-to-admin") {
         const group = newSocketData
-        console.log("member-to-admin", group);
+        // console.log("member-to-admin", group);
         if (group && group.group.id === conver._id && group.group.createBy._id === authUser._id) {
           showToastSuccess("Bạn đã trở thành trưởng nhóm")
           handleSetAdmin(group.group, true)
@@ -651,7 +651,7 @@ const MessageSettings = ({ navigation, route }) => {
           <View style={{ justifyContent: "center" }}>
             <Pressable onPress={openModal}>
               <Image
-                source={conver.avatar === "https://res.cloudinary.com/dq3pxd9eq/image/upload/group_avatar.jpg" ? avatarGr : { uri: conver.avatar }}
+                source={conver.avatar === "https://res.cloudinary.com/dq3pxd9eq/image/upload/v1715763881/Zalo_Fake_App/qhncxk41jtp39iknujyz.png" ? avatarGr : { uri: conver.avatar }}
                 style={{ width: 100, height: 100, borderRadius: 50, borderWidth: 2, borderColor: "#ccc", }}
               />
             </Pressable>
@@ -862,24 +862,32 @@ const MessageSettings = ({ navigation, route }) => {
             </View>
 
             <View style={{ flexDirection: "row", width: "85%", height: "7%", alignItems: "center", backgroundColor: "#f5f5f5", paddingHorizontal: 5, }}>
-              <Pressable onPress={handleSearch}>
+              <Pressable>
                 <Ionicons name="search-outline" size={30} color="black" />
               </Pressable>
               <TextInput
-                value={textSearch}
-                onChangeText={setTextSearch}
+                ref={searchInputRef}
+                onChangeText={(text) => setTextSearch(text)}
                 placeholder="Tìm tên hoặc số điện thoại"
                 placeholderTextColor="gray"
                 style={{
                   fontSize: 18, height: "80%", width: "80%", paddingHorizontal: 10,
                 }}
               ></TextInput>
-              <Pressable onPress={() => { handleRemoveSearch() }}>
-                <Ionicons name="close" size={30} color="black" />
+              <Pressable onPress={() => {
+                setTextSearch('');
+                setListSearch(listFriendCanSearch);
+                if (searchInputRef.current) {
+                  searchInputRef.current.clear();
+                }
+              }}>
+                <Ionicons name="close-circle" size={28} color="gray" />
               </Pressable>
             </View>
             <ScrollView style={{ height: "65%", width: "100%" }}>
-              {listSearch.map((item, index) => renderListItem(item, index))}
+              {isSearch ? (<View></View>) : (
+                listSearch.map((item, index) => renderListItem(item, index))
+              )}
             </ScrollView>
             <View style={{ width: "95%", height: "7%", justifyContent: "space-evenly", flexDirection: "row", paddingHorizontal: 10, marginBottom: 10 }}>
               <Pressable style={{ width: "45%", height: "90%", justifyContent: "center", alignItems: "center", backgroundColor: "#FF1744", borderRadius: 10, }}
