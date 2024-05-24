@@ -223,7 +223,7 @@ const Message = ({ navigation, route }) => {
           // console.log("socket new messagae", message);
           if (
             message.conversationId === conver.conversation._id &&
-            message.retrunMessage.receiverId === authUser._id && message.retrunMessage.senderId !== authUser._id
+            message.retrunMessage.receiverId === conver._id && message.retrunMessage.senderId !== authUser._id
           ) {
             setChat(message.retrunMessage)
             scrollToEnd()
