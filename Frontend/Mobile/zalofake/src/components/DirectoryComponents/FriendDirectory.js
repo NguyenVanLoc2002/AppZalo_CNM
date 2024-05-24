@@ -9,7 +9,6 @@ import {
   Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import Toast from "react-native-toast-message";
 import axiosInstance from "../../api/axiosInstance";
 import { useAuthContext } from "../../contexts/AuthContext";
 import useFriend from "../../hooks/useFriend";
@@ -18,7 +17,7 @@ import { useSelector } from "react-redux";
 import { useSocketContext } from "../../contexts/SocketContext";
 
 const FriendDirectory = ({ navigation }) => {
-  const { getConversationsByParticipants } = useConversation();
+  const { handleFriendMessage } = useConversation();
   const { unFriend, getFriendById, showSuccessToast} = useFriend();
   const [friends, setFriends] = useState([]);
   const { reloadAuthUser } = useAuthContext();
@@ -69,33 +68,9 @@ const FriendDirectory = ({ navigation }) => {
     setModalVisible(false);
   };
 
-  const handleFriendMessage = async (friend) => {
-    let conversation;
-
-    conversation = await getConversationsByParticipants(friend.userId);
-    if (conversation === null) {
-      const conversationNew = {
-        _id: friend.userId,
-        conversation: null,
-        name: friend?.profile.name,
-        avatar: friend?.profile.avatar?.url,
-        background: friend?.profile.background?.url,
-        tag: 'friend',
-      };
-      navigation.navigate("Message", { chatItem: conversationNew });
-    }
-    else{
-      const conversationNew = {
-        _id: friend.userId,
-        conversation: conversation,
-        name: friend?.profile.name,
-        avatar: friend?.profile.avatar?.url,
-        background: friend?.profile.background?.url,
-        lastMessage: conversation.lastMessage,
-        tag: conversation.tag,
-      };
-      navigation.navigate("Message", { chatItem: conversationNew });
-    }
+  const handlePageNavigation = async (friend) => {
+      const response = await handleFriendMessage(friend)
+      navigation.navigate("Message", { chatItem: response });
   };
 
   useEffect(() => {
@@ -148,7 +123,7 @@ const FriendDirectory = ({ navigation }) => {
           <View key={index} style={styles.friendRow}>
             <Pressable
               style={styles.friendItem}
-              onPress={() => handleFriendMessage(friend)}
+              onPress={() => handlePageNavigation(friend)}
             >
               <View style={styles.friendInfo}>
                 <Image

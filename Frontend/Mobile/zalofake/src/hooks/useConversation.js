@@ -34,14 +34,11 @@ const useConversation = () => {
     try {
       const participants = []
       participants.push(participant)
-      // console.log(participants)
       const response = await axiosInstance.post(
         "/conversations/getByParticipants", { participants }
       );
       if (response.status === 200) {
         return response.data;
-        // setConversation(response.data);
-        // console.log(conversation)
       }
     } catch (error) {
       return null;
@@ -76,7 +73,34 @@ const useConversation = () => {
       return null;
     }
   };
+  const handleFriendMessage = async (friend) => {
+    let conversation;
 
+    conversation = await getConversationsByParticipants(friend.userId);
+    if (conversation === null) {
+      const conversationNew = {
+        _id: friend.userId,
+        conversation: null,
+        name: friend?.profile.name,
+        avatar: friend?.profile.avatar?.url,
+        background: friend?.profile.background?.url,
+        tag: 'friend',
+      };
+      return conversationNew;
+    }
+    else {
+      const conversationNew = {
+        _id: friend.userId,
+        conversation: conversation,
+        name: friend?.profile.name,
+        avatar: friend?.profile.avatar?.url,
+        background: friend?.profile.background?.url,
+        lastMessage: conversation.lastMessage,
+        tag: conversation.tag,
+      };
+      return conversationNew;
+    }
+  };
 
   return {
     conversations,
@@ -85,6 +109,7 @@ const useConversation = () => {
     deleteConversation,
     getConversationByID,
     getConversationsByParticipants,
+    handleFriendMessage
   };
 };
 
