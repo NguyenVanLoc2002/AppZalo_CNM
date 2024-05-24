@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -25,7 +25,7 @@ const GroupDirectory = ({ navigation }) => {
   const [lengthGroup, setLengthGroup] = useState(0)
   const [modalCreateGr, setModalCreateGr] = useState(false)
   const [nameGroup, setNameGroup] = useState(null)
-  const [textSearch, setTextSearch] = useState(null)
+  const [textSearch, setTextSearch] = useState('')
   const [radioButton, setRadioButton] = useState([]);
   const [listSearch, setListSearch] = useState([])
   const [selectedFriends, setSelectedFriends] = useState([]);
@@ -38,6 +38,8 @@ const GroupDirectory = ({ navigation }) => {
   const { isNewSocket, newSocketData, setNewSocketData } = useSocketContext();
   var isGroupRedux = useSelector(state => state.isGroup.isGroup);
   const [avatarGr] = useState(avatarGroup)
+  const searchInputRef = useRef(null);
+  const [isSearch, setIsSearch] = useState(false);
 
   const fetchGroup = async () => {
     try {
@@ -93,15 +95,14 @@ const GroupDirectory = ({ navigation }) => {
     fetchGroup()
   }, [isGroupRedux])
 
-  const handleSearch = () => {
-    if (!textSearch) {
-      showToastError("Bạn chưa nhập")
+  useEffect(() => {
+    if (textSearch.trim() === '') {
+      setListSearch([])
     }
     else {
       const filteredFriends = listFriends.filter((friend) => {
         return friend.profile.name.toLowerCase().includes(textSearch.toLowerCase()) || friend.phone === textSearch;
       });
-
       if (filteredFriends.length > 0) {
         const newRadioButtons = filteredFriends.map(friend => ({
           _id: friend.userId,
@@ -109,11 +110,12 @@ const GroupDirectory = ({ navigation }) => {
           avatar: friend?.profile?.avatar?.url
         }))
         setListSearch(newRadioButtons)
+        setIsSearch(true)
       } else {
-        showToastError("Không tìm thấy")
+        setIsSearch(false)
       }
     }
-  }
+  }, [textSearch])
 
   const handleFriendSelection = (item) => {
     if (selectedFriends.includes(item)) {
@@ -186,7 +188,7 @@ const GroupDirectory = ({ navigation }) => {
         if (response) {
           setIsLoading(false)
           setNameGroup(null)
-          setTextSearch(null)
+          setTextSearch('')
           setIsHidden(false)
           setSelectedFriends([])
           setModalCreateGr(false)
@@ -381,25 +383,29 @@ const GroupDirectory = ({ navigation }) => {
               </TextInput>
             </View>
             <View style={styles.viewSearch}>
-              <Pressable onPress={handleSearch}>
+              <Pressable>
                 <Ionicons name="search-outline" size={30} color="black" />
               </Pressable>
               <TextInput
-                value={textSearch}
-                onChangeText={setTextSearch}
+                ref={searchInputRef}
+                onChangeText={(text) => setTextSearch(text)}
                 placeholder="Tìm tên hoặc số điện thoại"
                 placeholderTextColor='gray'
                 style={{ fontSize: 18, height: '80%', width: '80%', paddingHorizontal: 10 }}></TextInput>
-              <Pressable onPress={() => { setTextSearch(null); setListSearch([]) }}>
+              <Pressable onPress={() => {
+                setTextSearch(''); setListSearch([]);
+                if (searchInputRef.current) {
+                  searchInputRef.current.clear();
+                }
+              }}>
                 <Ionicons name="close-circle" size={30} color="gray" />
               </Pressable>
             </View>
             <View style={styles.viewScroll}>
               <ScrollView>
-                {textSearch === null || textSearch.trim() === '' ? (
-                  radioButton.map(renderListItem)
+                {textSearch.trim() === '' ? (radioButton.map(renderListItem)
                 ) : (
-                  listSearch.map(renderListItem)
+                  isSearch ? (listSearch.map(renderListItem)) : (<View></View>)
                 )}
               </ScrollView>
               {isHidden ? (

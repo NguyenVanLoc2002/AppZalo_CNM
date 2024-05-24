@@ -90,7 +90,7 @@ const Message = ({ navigation, route }) => {
           {conver.tag === 'group' && (
             <View style={{ width: '30%' }}>
               <Image
-                source={conver.avatar === "https://res.cloudinary.com/dq3pxd9eq/image/upload/group_avatar.jpg" ? avatarGr : { uri: conver.avatar }}
+                source={conver.avatar === "https://res.cloudinary.com/dq3pxd9eq/image/upload/v1715763881/Zalo_Fake_App/qhncxk41jtp39iknujyz.png" ? avatarGr : { uri: conver.avatar }}
                 style={{ width: 45, height: 40, borderRadius: 25 }}
               />
             </View>
