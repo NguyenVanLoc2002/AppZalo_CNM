@@ -826,7 +826,7 @@ function PeopleChatComponent({
                         className={
                           authUser._id === message.senderId
                             ? "chat chat-end"
-                            : "chat chat-start w-fit"
+                            : "chat chat-start"
                         }
                         onContextMenu={(e) => handleContextMenu(e, message._id)}
                       >
@@ -849,7 +849,7 @@ function PeopleChatComponent({
                         })}
 
                         <div
-                          className={`flex flex-col chat-bubble md:max-w-[70%] max-w-[50%] ${
+                          className={`flex flex-col chat-bubble ${
                             authUser._id === message.senderId
                               ? "bg-[#e5efff]"
                               : "bg-white"
@@ -1020,9 +1020,12 @@ function PeopleChatComponent({
                                 ) : (
                                   <div>
                                     <DocViewer
-                                      documents={{ uri: content.data }}
+                                      documents={[{ uri: content.data }]}
                                       pluginRenderers={DocViewerRenderers}
-                                      style={{ height: "400px" }}
+                                      style={{
+                                        height: "400px",
+                                        width: "400px",
+                                      }}
                                     />
                                   </div>
                                 )}
@@ -1146,7 +1149,7 @@ function PeopleChatComponent({
                         })}
 
                         <div
-                          className={`flex flex-col chat-bubble border  ${
+                          className={`flex flex-col chat-bubble border ${
                             authUser._id === message.senderId
                               ? "bg-[#e5efff]"
                               : "bg-white"
@@ -1321,7 +1324,10 @@ function PeopleChatComponent({
                                     <DocViewer
                                       documents={[{ uri: content.data }]}
                                       pluginRenderers={DocViewerRenderers}
-                                      style={{ height: "400px" }}
+                                      style={{
+                                        height: "400px",
+                                        width: "400px",
+                                      }}
                                     />
                                   </div>
                                 )}
