@@ -13,9 +13,11 @@ axiosInstance.interceptors.request.use(
       config.headers["User-Agent"] += "Mobile";
 
       if (!config.url.includes("/auth/login")) {
-        const token = JSON.parse(await AsyncStorage.getItem("accessToken"));
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+        const accessToken = JSON.parse(
+          await AsyncStorage.getItem("accessToken")
+        );
+        if (accessToken) {
+          config.headers.Authorization = `Bearer ${accessToken}`;
         }
       }
       return config;
@@ -43,24 +45,25 @@ axiosInstance.interceptors.response.use(
           await AsyncStorage.getItem("refreshToken")
         );
 
-        Promise.all([refreshToken]).then(async (values) => {
-          const refreshedTokenResponse = await axiosInstance.post(
-            "/auth/refreshToken",
-            {
-              refreshToken: values[0],
-            }
-          );
-  
-          const newAccessToken = refreshedTokenResponse.data.newAccessToken;
+        const refreshedTokenResponse = await axiosInstance.post(
+          "/auth/refreshToken",
+          {
+            refreshToken,
+          }
+        );
+        const newAccessToken = refreshedTokenResponse.data.newAccessToken;
+        if (!newAccessToken) {
+          showErrorToast("Your session has expired. Please login again.");
+          await AsyncStorage.clear();
+          return Promise.reject(error);
+        } else {
           await AsyncStorage.setItem(
             "accessToken",
             JSON.stringify(newAccessToken)
           );
-  
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          return axiosInstance(originalRequest);
-        });
-
+        }
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return axiosInstance(originalRequest);
       } catch (refreshError) {
         // console.error("Refresh token failed:", refreshError);
         showErrorToast("Your session has expired. Please login again.");
